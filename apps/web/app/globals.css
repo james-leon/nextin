@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+/*
+ * NextIn design system — Apple Human Interface Guidelines.
+ * Les couleurs sémantiques sont des variables CSS : le thème clair/sombre est porté par
+ * <html data-theme="light|dark"> (résolu avant le premier rendu par un script inline),
+ * avec repli sur prefers-color-scheme si JavaScript est indisponible.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+
+  /* Fonds */
+  --bg-grouped: #f2f2f7;
+  --bg-grouped-secondary: #ffffff;
+  --bg-grouped-tertiary: #f2f2f7;
+  --bg-elevated: #ffffff;
+
+  /* Libellés */
+  --label: #000000;
+  /* Gris secondaire « accessible » d'Apple (opaque) : contraste AA sur fonds blanc et groupé. */
+  --label-secondary: #6c6c70;
+  /* Tertiaire : icônes, chevrons, placeholders uniquement — jamais pour du texte informatif. */
+  --label-tertiary: rgb(60 60 67 / 0.3);
+  --label-on-accent: #ffffff;
+
+  /* Séparateurs et remplissages */
+  --separator: rgb(60 60 67 / 0.29);
+  --separator-opaque: #c6c6c8;
+  --fill: rgb(120 120 128 / 0.2);
+  --fill-secondary: rgb(120 120 128 / 0.16);
+  --fill-tertiary: rgb(118 118 128 / 0.12);
+
+  /* Matériaux translucides (barres) */
+  --material-bar: rgb(249 249 249 / 0.78);
+  --material-sheet: rgb(255 255 255 / 0.92);
+  --overlay: rgb(0 0 0 / 0.4);
+
+  /* Accents Wintek. *-fill = fond (texte blanc AA), *-text = texte/icône sur fond neutre (AA). */
+  --navy: #0d2c54;
+  --accent-fill: #1a6bb5;
+  --accent-fill-pressed: #155894;
+  --accent-text: #1a6bb5;
+  --accent-tint: rgb(26 107 181 / 0.12);
+  --accent-on-tint: #155894;
+  --orange-fill: #f58b1f;
+  --orange-text: #a3550a;
+  --orange-tint: rgb(245 139 31 / 0.15);
+  --green-fill: #2ec04e;
+  --green-text: #1b7a32;
+  --green-tint: rgb(46 192 78 / 0.15);
+  --red-fill: #d70015;
+  --red-text: #d70015;
+  --red-tint: rgb(255 59 48 / 0.12);
+
+  --elev-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
+  --elev-floating: 0 8px 32px rgb(0 0 0 / 0.12), 0 2px 6px rgb(0 0 0 / 0.06);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-grouped: #000000;
+  --bg-grouped-secondary: #1c1c1e;
+  --bg-grouped-tertiary: #2c2c2e;
+  --bg-elevated: #1c1c1e;
+  --label: #ffffff;
+  --label-secondary: rgb(235 235 245 / 0.6);
+  --label-tertiary: rgb(235 235 245 / 0.3);
+  --separator: rgb(84 84 88 / 0.65);
+  --separator-opaque: #38383a;
+  --fill: rgb(120 120 128 / 0.36);
+  --fill-secondary: rgb(120 120 128 / 0.32);
+  --fill-tertiary: rgb(118 118 128 / 0.24);
+  --material-bar: rgb(22 22 24 / 0.78);
+  --material-sheet: rgb(28 28 30 / 0.94);
+  --overlay: rgb(0 0 0 / 0.6);
+  --accent-fill: #1a6bb5;
+  --accent-fill-pressed: #2a7cc6;
+  --accent-text: #5ea8f0;
+  --accent-tint: rgb(94 168 240 / 0.18);
+  --accent-on-tint: #6fb2f2;
+  --orange-text: #ffaa55;
+  --orange-tint: rgb(245 139 31 / 0.22);
+  --green-text: #5fd97a;
+  --green-tint: rgb(46 192 78 / 0.22);
+  --red-fill: #d70015;
+  --red-text: #ff6961;
+  --red-tint: rgb(255 69 58 / 0.2);
+  --elev-card: none;
+  --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
+}
+
+/* Repli sans JavaScript */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg-grouped: #000000;
+    --bg-grouped-secondary: #1c1c1e;
+    --bg-grouped-tertiary: #2c2c2e;
+    --label: #ffffff;
+    --label-secondary: rgb(235 235 245 / 0.6);
+    --separator: rgb(84 84 88 / 0.65);
+    --accent-text: #5ea8f0;
+  }
+}
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", Roboto,
+    system-ui, sans-serif;
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+
+  --color-grouped: var(--bg-grouped);
+  --color-grouped-secondary: var(--bg-grouped-secondary);
+  --color-grouped-tertiary: var(--bg-grouped-tertiary);
+  --color-elevated: var(--bg-elevated);
+  --color-label: var(--label);
+  --color-label-secondary: var(--label-secondary);
+  --color-label-tertiary: var(--label-tertiary);
+  --color-on-accent: var(--label-on-accent);
+  --color-separator: var(--separator);
+  --color-separator-opaque: var(--separator-opaque);
+  --color-fill: var(--fill);
+  --color-fill-secondary: var(--fill-secondary);
+  --color-fill-tertiary: var(--fill-tertiary);
+  --color-bar: var(--material-bar);
+  --color-sheet: var(--material-sheet);
+  --color-overlay: var(--overlay);
+  --color-navy: var(--navy);
+  --color-accent: var(--accent-fill);
+  --color-accent-pressed: var(--accent-fill-pressed);
+  --color-accent-text: var(--accent-text);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-on-tint: var(--accent-on-tint);
+  --color-orange: var(--orange-fill);
+  --color-orange-text: var(--orange-text);
+  --color-orange-tint: var(--orange-tint);
+  --color-green: var(--green-fill);
+  --color-green-text: var(--green-text);
+  --color-green-tint: var(--green-tint);
+  --color-red: var(--red-fill);
+  --color-red-text: var(--red-text);
+  --color-red-tint: var(--red-tint);
+
+  /* Échelle typographique iOS (en rem : suit la taille de texte de l'utilisateur) */
+  --text-large-title: 2.125rem;
+  --text-large-title--line-height: 2.5625rem;
+  --text-large-title--letter-spacing: 0.0234em;
+  --text-title1: 1.75rem;
+  --text-title1--line-height: 2.125rem;
+  --text-title1--letter-spacing: 0.0122em;
+  --text-title2: 1.375rem;
+  --text-title2--line-height: 1.75rem;
+  --text-title2--letter-spacing: -0.0118em;
+  --text-title3: 1.25rem;
+  --text-title3--line-height: 1.5625rem;
+  --text-title3--letter-spacing: -0.0225em;
+  --text-headline: 1.0625rem;
+  --text-headline--line-height: 1.375rem;
+  --text-headline--letter-spacing: -0.0254em;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.375rem;
+  --text-body--letter-spacing: -0.0254em;
+  --text-callout: 1rem;
+  --text-callout--line-height: 1.3125rem;
+  --text-callout--letter-spacing: -0.0194em;
+  --text-subheadline: 0.9375rem;
+  --text-subheadline--line-height: 1.25rem;
+  --text-subheadline--letter-spacing: -0.0153em;
+  --text-footnote: 0.8125rem;
+  --text-footnote--line-height: 1.125rem;
+  --text-footnote--letter-spacing: -0.0062em;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--letter-spacing: 0;
+  --text-hero: 5.5rem;
+  --text-hero--line-height: 1;
+  --text-hero--letter-spacing: -0.03em;
+
+  /* Rayons continus */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-card: var(--elev-card);
+  --shadow-floating: var(--elev-floating);
+
+  /* Ressort iOS (amortissement critique léger) */
+  --ease-spring: linear(
+    0,
+    0.013 0.6%,
+    0.05 1.2%,
+    0.2 2.6%,
+    0.4 4.3%,
+    0.6 6.5%,
+    0.78 9.2%,
+    0.9 12.3%,
+    0.96 15.6%,
+    0.99 19.5%,
+    1.005 24%,
+    1.01 30%,
+    1.004 42%,
+    1
+  );
+  --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  --animate-sheet-in: sheet-in 420ms var(--ease-spring);
+  --animate-pop-in: pop-in 320ms var(--ease-spring);
+  --animate-fade-in: fade-in 200ms var(--ease-ios);
+  --animate-banner-in: banner-in 480ms var(--ease-spring);
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(1.12);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes banner-in {
+    from {
+      opacity: 0;
+      transform: translateY(-120%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--bg-grouped);
+  }
+  body {
+    @apply bg-grouped text-label font-sans text-body antialiased;
+    font-feature-settings: "kern";
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 3px solid var(--accent-text);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--accent-tint);
+  }
+}
+
+@utility hairline-b {
+  box-shadow: inset 0 -0.5px 0 var(--separator);
+}
+@utility hairline-t {
+  box-shadow: inset 0 0.5px 0 var(--separator);
+}
+@utility material-blur {
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+@utility squircle {
+  corner-shape: squircle;
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility pressable {
+  transition:
+    transform 220ms var(--ease-spring),
+    opacity 150ms var(--ease-ios),
+    background-color 150ms var(--ease-ios);
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
