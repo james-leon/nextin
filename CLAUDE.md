@@ -1,0 +1,67 @@
+# NextIn by Wintek — conventions du projet
+
+Plateforme SaaS de files d'attente virtuelles (Cameroun) : PWA web d'abord, app Expo au M11.
+Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
+
+## Règles absolues
+- **Aucun secret dans le code ni dans Git.** Variables listées dans `.env.example` (sans valeurs). Les fichiers `.env*` (sauf `.env.example`) et `supabase/.env` sont ignorés.
+- **Jamais d'URL en dur** : toute URL absolue passe par `getAppUrl()` / `absoluteUrl()` (`@nextin/shared`), qui lisent `APP_URL`.
+- **Un module à la fois** (M1 → M11), arrêt et validation à la fin de chaque module.
+- **Migrations progressives** : un module ne crée que les tables dont il a besoin.
+- Code complet uniquement, pas de TODO non signalé. Messages de commit clairs, en anglais, à l'impératif.
+- Ne jamais annoncer, afficher sur TV ni envoyer le nom d'un client.
+
+## Monorepo
+- `apps/web` — Next.js 16 (App Router, Turbopack), Tailwind v4, composants maison façon shadcn (Radix + cva), next-intl.
+- `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
+- `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
+- `scripts/` — `seed-demo.ts` (idempotent), `db-test.sh`.
+- Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
+
+## Commandes
+| | |
+|---|---|
+| `pnpm dev` / `pnpm build` | app web |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` | ESLint, TypeScript, Vitest (tous les paquets) |
+| `pnpm test:e2e` | Playwright (après `pnpm build`) — projets `mobile` et `desktop` |
+| `pnpm --filter @nextin/web screenshots` | captures → `docs/captures/<module>/` |
+| `pnpm db:start` · `pnpm db:reset` · `pnpm db:test` · `pnpm db:types` | Supabase local (Docker), tests pgTAP, types TS |
+| `pnpm db:link` · `pnpm db:push` | lier et migrer le projet distant (`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`) |
+| `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
+
+En local, la CLI Supabase lit `SUPABASE_DB_PASSWORD` s'il est défini : les scripts `db:*` locaux le retirent (`env -u`).
+Captcha local : clés de test officielles Cloudflare Turnstile dans `supabase/.env` et `apps/web/.env.local` (non versionnés).
+
+## Base de données et sécurité
+- RLS activée sur **toutes** les tables (vérifié par pgTAP). Isolation par `organization_id` présent sur chaque table métier.
+- Fonctions d'autorisation `SECURITY DEFINER`, `set search_path = ''` : `is_platform_admin()`, `has_org_role(org, roles)`, `can_access_branch(org, branch, roles)`, `can_manage_member(org, branch, role)`.
+- Écritures sensibles **uniquement via RPC** `SECURITY DEFINER` (pas de policy INSERT/UPDATE directe sur les tables critiques). `EXECUTE` révoqué par défaut sur les fonctions : accorder explicitement.
+- Sessions anonymes (clients) : rôle `authenticated` + claim `is_anonymous` — toujours les exclure des droits du personnel (`public.is_anonymous()`).
+- Journal d'audit append-only (`public.audit(...)`) pour toute action sensible. Rate limiting : `public.check_rate_limit(key, max, window)`.
+- Validation Zod côté client **et** serveur (schémas dans `@nextin/shared/schemas`). Turnstile vérifié côté serveur (`lib/security/turnstile.ts`).
+- Données personnelles purgées après `organizations.data_retention_days` (défaut 30 j) — statistiques anonymisées uniquement.
+- Chaque nouvelle table : RLS + policies + test pgTAP d'isolation entre deux organisations.
+
+## Design — Apple Human Interface Guidelines (obligatoire)
+Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). Tokens : `apps/web/app/globals.css`.
+- **Principes** : clarté, déférence au contenu, profondeur. **Une action principale par écran.** Beaucoup d'espace blanc, hiérarchie typographique forte.
+- **Typo** système (`-apple-system`, SF Pro, Inter en repli), échelle iOS en `rem` (suit la taille de texte de l'utilisateur) : `text-large-title` 34, `text-title1` 28, `text-title2` 22, `text-title3` 20, `text-headline` 17 semibold, `text-body` 17, `text-callout` 16, `text-subheadline` 15, `text-footnote` 13, `text-caption` 12, `text-hero` pour le numéro de ticket. Chiffres : `tabular`.
+- **Couleurs** : uniquement via tokens sémantiques (`bg-grouped`, `bg-grouped-secondary`, `text-label`, `text-label-secondary`, `bg-separator`, `bg-fill-*`…). Jamais de couleur en dur dans un composant.
+- Accents Wintek **avec parcimonie** : Navy `#0D2C54` (marque), Blue `#1A6BB5` = **seule couleur d'action** (`bg-accent`, `text-accent-text`, `text-accent-on-tint` sur fond teinté), Orange `#F58B1F` (attention), Green `#2EC04E` (succès). Orange/Green en fond ou icône ; pour du texte, utiliser `text-orange-text` / `text-green-text` (AA).
+- `text-label-tertiary` : icônes, chevrons, placeholders seulement — jamais pour du texte informatif (contraste).
+- **Formes** : fond groupé `#F2F2F7`, cartes blanches, rayons continus 12–22 px (`rounded-[var(--radius-*)]` + `squircle`), séparateurs 0,5 px (`hairline-*`), ombres très douces (`shadow-card`).
+- **Composants** (`components/ui`) : `Button` (filled/tinted/gray/plain/destructive/navy), `IconButton` (label obligatoire), `ListSection`/`ListRow`/`ListSwitchRow`, `Card`, `Switch`, `SegmentedControl`, `TextField`/`SearchField`, `NavigationBar` (grand titre réductible + retour en haut à gauche), `TabBar` (translucide, en bas sur mobile), `Sheet` (vaul), `AlertDialog`, `Badge`/`StatusDot`, `Skeleton`, `Spinner`, `ToastProvider`, `TicketHero`. Réutiliser avant de créer.
+- **Mouvement** : ressort CSS `ease-[var(--ease-spring)]`, 200–420 ms, jamais gratuit ; retour tactile immédiat (`pressable`) ; `prefers-reduced-motion` respecté.
+- **Clair et sombre** sur chaque écran (`data-theme` sur `<html>`, préférence Auto/Clair/Sombre).
+- **Accessibilité** : cibles ≥ 44 px (testé), contrastes AA (axe testé en clair et sombre), `aria-label` sur tout bouton icône, libellés associés aux champs, navigation clavier (`:focus-visible`), rôles ARIA corrects (ex. `ListSection radioGroupLabel` pour les choix exclusifs).
+- **Icônes** : lucide au trait fin (style SF Symbols), `aria-hidden` si décoratives. **Jamais d'emoji.**
+- **Client** : le numéro de ticket et l'attente estimée sont les héros visuels. Pages client < 200 Ko au premier chargement, utilisables en 3G : RSC, JS client minimal, pas de bibliothèque d'animation.
+- Maquette de référence : `design/mockups/` (exports Claude Design) — à suivre fidèlement.
+
+## i18n
+- Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).
+- Langue sans préfixe d'URL : cookie `NEXTIN_LOCALE`, sinon `Accept-Language`, sinon `fr`. Fuseau `Africa/Douala`. Monnaie XAF entière (`formatXaf`). Téléphones E.164 +237 (`normalizeCameroonPhone`).
+- Ne transmettre au client que les espaces de noms nécessaires (`NextIntlClientProvider messages={…}`).
+
+## Tests exigés à chaque module
+Vitest (logique), pgTAP (RLS / RPC), Playwright (parcours du module, axe, cibles tactiles), captures dans `docs/captures/<module>/`, données de démo à jour, note `docs/modules/<module>.md`.
