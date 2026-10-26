@@ -43,8 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_URL: http://localhost:3100
-      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-not-used-by-design-page
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -52,6 +50,13 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api,realtime
+      - name: Use the local Supabase keys
+        run: |
+          supabase status -o env | sed -n 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p; s/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nextin/web exec playwright install --with-deps chromium
       - run: pnpm build

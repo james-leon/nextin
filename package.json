@@ -18,7 +18,8 @@
     "db:push": "npx supabase db push --password \"$SUPABASE_DB_PASSWORD\"",
     "db:link": "npx supabase link --project-ref \"$SUPABASE_PROJECT_REF\" --password \"$SUPABASE_DB_PASSWORD\"",
     "seed:demo": "tsx scripts/seed-demo.ts",
-    "db:types": "env -u SUPABASE_DB_PASSWORD npx supabase gen types typescript --local --schema public > packages/shared/src/types/database.tmp && (echo '// G\u00e9n\u00e9r\u00e9 par `pnpm db:types` (supabase gen types) \u2014 ne pas modifier \u00e0 la main.'; cat packages/shared/src/types/database.tmp) > packages/shared/src/types/database.ts && rm packages/shared/src/types/database.tmp"
+    "db:types": "env -u SUPABASE_DB_PASSWORD npx supabase gen types typescript --local --schema public > packages/shared/src/types/database.tmp && (echo '// G\u00e9n\u00e9r\u00e9 par `pnpm db:types` (supabase gen types) \u2014 ne pas modifier \u00e0 la main.'; cat packages/shared/src/types/database.tmp) > packages/shared/src/types/database.ts && rm packages/shared/src/types/database.tmp",
+    "e2e:local": "bash scripts/local-env.sh pnpm --filter @nextin/web build && bash scripts/local-env.sh pnpm --filter @nextin/web test:e2e"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.118.0",
