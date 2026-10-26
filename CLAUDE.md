@@ -44,6 +44,7 @@ Tests et dev **contre le Supabase local** : préfixer par `node scripts/local-en
 - Validation Zod côté client **et** serveur (schémas dans `@nextin/shared/schemas`). Turnstile vérifié côté serveur (`lib/security/turnstile.ts`).
 - Données personnelles purgées après `organizations.data_retention_days` (défaut 30 j) — statistiques anonymisées uniquement.
 - Chaque nouvelle table : RLS + policies + test pgTAP d'isolation entre deux organisations.
+- Tables rattachées à une agence : `organization_id` + clé étrangère composite `(organization_id, branch_id)` vers `branches(organization_id, id)` (cohérence multi-tenant garantie par la base).
 - **Abonnements (M10a, `docs/PLAN.md` §11)** : aucun prix, quota ni limite de formule en dur — tout vient de `plans` / `platform_settings` (modifiables par le super admin). Limites vérifiées côté serveur (`org_entitlements`). Aucune dégradation d'abonnement appliquée pendant les heures d'ouverture. Webhooks de paiement signés et idempotents. Factures jamais supprimées.
 
 ## Design — Apple Human Interface Guidelines (obligatoire)
@@ -65,6 +66,12 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - **Listes groupées** : séparateurs inset (`list-separator`) alignés sur le texte après la pastille, jamais sous la dernière ligne ; seul le `<li>` porte `group/row`.
 - **Mon ticket** : « Recevoir mes alertes sur WhatsApp » (tinted, icône message) juste sous la carte du ticket ; actions du bas dans `TicketBottomActions` (BottomBar toujours visible) ; « Je suis en route » uniquement si `canSignalOnMyWay(source)` (ticket à distance).
 - **Marque** : tuile bleue à flèche blanche + « NextIn » (`Logo`), aussi utilisée pour les icônes PWA.
+
+## Back-office (`/app/o/[orgId]/…`)
+- Contexte et droits : `getOrgContext(orgId)` (`lib/admin/context.ts`), `getBranch(orgId, branchId)` ; 404 si l'établissement ou l'agence n'est pas accessible.
+- Mutations : server actions dans `app/(staff)/app/o/[orgId]/_actions/` (Zod → Supabase sous RLS → `revalidatePath` → redirection `?saved=1`). Toujours `.select(...)` après un update/delete et refuser si aucune ligne n'est touchée (RLS silencieuse).
+- Gabarit `AdminPage`, formulaires clients avec `useActionState` + `useFormErrors`, action principale dans `BottomBar` (décalée de la barre latérale via `--shell-sidebar`), confirmations par `ConfirmAction`.
+- PDF : `@react-pdf/renderer` (`lib/pdf/`), police Inter embarquée ; QR codes vectoriels via `qrMatrix` (`lib/qr/matrix.ts`), URL toujours `qrEntryUrl(token)`.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).
