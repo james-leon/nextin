@@ -78,7 +78,7 @@ export function ListRow({
   const content = (
     <>
       {icon}
-      <span className="relative flex min-h-11 flex-1 items-center gap-3 py-2.5 pr-4 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-px after:origin-bottom after:scale-y-50 after:bg-separator group-last/row:after:hidden">
+      <span className="relative flex min-h-11 flex-1 items-center gap-3 py-2.5 pr-4 list-separator">
         <span className="flex min-w-0 flex-1 flex-col">
           <span className={cn("truncate text-body", destructive && "text-red-text")}>{title}</span>
           {subtitle ? <span className="truncate text-subheadline text-label-secondary">{subtitle}</span> : null}
@@ -98,7 +98,7 @@ export function ListRow({
     </>
   );
 
-  const base = cn("group/row flex w-full items-center gap-3 pl-4 text-left", className);
+  const base = cn("flex w-full items-center gap-3 pl-4 text-left", className);
   const interactive = "transition-colors active:bg-fill-tertiary hover:bg-fill-tertiary/50";
 
   if (href) {
@@ -125,5 +125,5 @@ export function ListRow({
       </li>
     );
   }
-  return <li className={base}>{content}</li>;
+  return <li className={cn("group/row", base)}>{content}</li>;
 }

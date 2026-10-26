@@ -25,7 +25,7 @@ export function ListSwitchRow({
   return (
     <li className="group/row flex w-full items-center gap-3 pl-4">
       {icon}
-      <span className="relative flex min-h-11 flex-1 items-center gap-3 py-1 pr-4 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-px after:origin-bottom after:scale-y-50 after:bg-separator group-last/row:after:hidden">
+      <span className="relative flex min-h-11 flex-1 items-center gap-3 py-1 pr-4 list-separator">
         <span className="flex min-w-0 flex-1 flex-col">
           <label htmlFor={id} className="text-body">
             {title}

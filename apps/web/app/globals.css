@@ -284,6 +284,33 @@
   }
 }
 
+/*
+ * Séparateur de liste groupée iOS : filet inset aligné sur le texte (après la pastille), absent
+ * sous la dernière ligne. 0,5 px sur écran haute densité, 1 px sinon pour rester visible.
+ * La ligne porteuse doit être dans un <li class="group/row">.
+ */
+@utility list-separator {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--separator);
+    pointer-events: none;
+  }
+  @media (min-resolution: 2dppx) {
+    &::after {
+      height: 0.5px;
+    }
+  }
+  :where(.group\/row:last-child) &::after {
+    display: none;
+  }
+}
+
 @utility hairline-b {
   box-shadow: inset 0 -0.5px 0 var(--separator);
 }
