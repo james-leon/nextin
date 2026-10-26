@@ -45,3 +45,25 @@ export async function signInViaUi(page: Page, email: string, password = PASSWORD
   await page.getByLabel("Mot de passe", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Se connecter" }).click();
 }
+
+/** Crée un compte directeur puis un établissement ; renvoie l'URL racine du back-office. */
+export async function createOrgViaUi(page: Page, { orgName, email, type = "Clinique" }: { orgName: string; email: string; type?: string }) {
+  await signUpViaUi(page, { name: "Directrice Test", email });
+  await page.goto("/app/new");
+  await page.getByLabel("Nom de l'établissement").fill(orgName);
+  await page.getByRole("radio", { name: type, exact: true }).click();
+  await page.getByRole("button", { name: "Créer l'établissement" }).click();
+  await page.waitForURL(/\/app\?created=/);
+  const orgId = new URL(page.url()).searchParams.get("created")!;
+  return `/app/o/${orgId}`;
+}
+
+/** Crée une agence et renvoie son URL. */
+export async function createBranchViaUi(page: Page, root: string, name: string) {
+  await page.goto(`${root}/branches/new`);
+  await page.getByLabel("Nom de l'agence").fill(name);
+  await page.getByLabel("Ville").fill("Douala");
+  await page.getByRole("button", { name: "Créer l'agence" }).click();
+  await page.waitForURL(/\/branches\/[0-9a-f-]{36}\?saved=1$/);
+  return new URL(page.url()).pathname;
+}
