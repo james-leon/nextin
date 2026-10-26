@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(44);
+select plan(50);
 
 -- ─── Aides de test ───────────────────────────────────────────────────────────
 create schema tests;
@@ -55,42 +55,44 @@ select throws_ok($$ select public.create_organization('Spam SARL', 'spam-sarl', 
 select tests.login_as('a0000000-0000-0000-0000-00000000000a');
 create temp table ids (name text primary key, id uuid) on commit drop;
 grant all on ids to authenticated;
-insert into ids select 'clinic', public.create_organization('Douala Clinic', 'douala-clinic', 'clinic');
+insert into ids select 'clinic', public.create_organization('Douala Clinic', 'pgtap-douala-clinic', 'clinic');
 select is((select status::text from public.organizations where id = (select id from ids where name = 'clinic')),
-  'pending', 'un nouvel établissement est en attente de validation');
+  'active', 'un nouvel établissement est actif immédiatement (aucune validation manuelle)');
 select is((select role::text from public.memberships where organization_id = (select id from ids where name = 'clinic')
   and user_id = 'a0000000-0000-0000-0000-00000000000a'), 'org_admin', 'le créateur devient org_admin');
 
 select tests.login_as('b0000000-0000-0000-0000-00000000000b');
-insert into ids select 'eneo', public.create_organization('Eneo Cameroon', 'eneo-cameroon', 'utility');
+insert into ids select 'eneo', public.create_organization('Eneo Cameroon', 'pgtap-eneo-cameroon', 'utility');
 
 -- ─── Isolation ───────────────────────────────────────────────────────────────
 select is((select count(*)::int from public.organizations), 1, 'Eneo ne voit que son établissement');
 select is((select count(*)::int from public.memberships), 1, 'Eneo ne voit que ses membres');
-select is((select count(*)::int from public.organizations where slug = 'douala-clinic'), 0,
+select is((select count(*)::int from public.organizations where slug = 'pgtap-douala-clinic'), 0,
   'Eneo ne voit pas Douala Clinic');
 
-update public.organizations set name = 'Piratage' where slug = 'douala-clinic';
+update public.organizations set name = 'Piratage' where slug = 'pgtap-douala-clinic';
 select tests.logout();
-select is((select name from public.organizations where slug = 'douala-clinic'), 'Douala Clinic',
+select is((select name from public.organizations where slug = 'pgtap-douala-clinic'), 'Douala Clinic',
   'Eneo ne peut pas modifier Douala Clinic');
 
 select tests.login_as('a0000000-0000-0000-0000-00000000000a');
-select throws_ok($$ update public.organizations set status = 'active' where slug = 'douala-clinic' $$,
-  '42501', null, 'un org_admin ne peut pas valider son propre établissement');
-select lives_ok($$ update public.organizations set name = 'DOUALA CLINIC', data_retention_days = 60 where slug = 'douala-clinic' $$,
+select throws_ok($$ update public.organizations set status = 'suspended' where slug = 'pgtap-eneo-cameroon' or slug = 'pgtap-douala-clinic' $$,
+  '42501', null, 'un org_admin ne peut pas changer le statut de son établissement');
+select lives_ok($$ update public.organizations set name = 'DOUALA CLINIC', data_retention_days = 60 where slug = 'pgtap-douala-clinic' $$,
   'un org_admin modifie les informations de son établissement');
-select throws_ok($$ update public.organizations set data_retention_days = 2 where slug = 'douala-clinic' $$,
+select throws_ok($$ update public.organizations set data_retention_days = 2 where slug = 'pgtap-douala-clinic' $$,
   '23514', null, 'la durée de conservation est bornée (7 à 365 jours)');
 select throws_ok($$ insert into public.organizations (name, slug, type) values ('X', 'xxx', 'other') $$,
   '42501', null, 'insertion directe interdite (passer par create_organization)');
 
 -- ─── Super admin ─────────────────────────────────────────────────────────────
 select tests.login_as('99999999-0000-0000-0000-000000000099');
-select is((select count(*)::int from public.organizations), 2, 'le super admin voit tous les établissements');
-select lives_ok($$ update public.organizations set status = 'active', validated_at = now(),
-  validated_by = '99999999-0000-0000-0000-000000000099' where slug = 'douala-clinic' $$,
-  'le super admin valide un établissement');
+select is((select count(*)::int from public.organizations where slug like 'pgtap-%'), 2,
+  'le super admin voit les établissements des deux organisations');
+select lives_ok($$ update public.organizations set status = 'suspended', suspended_reason = 'test'
+  where slug = 'pgtap-douala-clinic' $$, 'le super admin suspend un établissement');
+select lives_ok($$ update public.organizations set status = 'active', suspended_reason = null
+  where slug = 'pgtap-douala-clinic' $$, 'le super admin réactive un établissement');
 
 -- ─── Personnel et rôles ──────────────────────────────────────────────────────
 select tests.login_as('a0000000-0000-0000-0000-00000000000a');
@@ -132,7 +134,7 @@ select throws_ok($$ delete from public.memberships where user_id = 'a0000000-000
 
 -- ─── Invitations ─────────────────────────────────────────────────────────────
 create temp table tokens (name text primary key, token text) on commit drop;
-grant all on tokens to authenticated;
+grant all on tokens to authenticated, anon;
 insert into tokens values
   ('email', public.create_invitation((select id from ids where name = 'clinic'), 'receptionist',
      '11111111-1111-1111-1111-111111111111', 'ADMIN@eneo.test')),
@@ -140,13 +142,26 @@ insert into tokens values
      '11111111-1111-1111-1111-111111111111', 'admin@eneo.test'));
 select tests.logout();
 update public.invitations set expires_at = now() - interval '1 minute' where role = 'agent';
-select is((select count(*)::int from public.invitations where token_hash ~ '^[0-9a-f]{64}$'), 2,
+select is((select count(*)::int from public.invitations
+  where organization_id = (select id from ids where name = 'clinic') and token_hash ~ '^[0-9a-f]{64}$'), 2,
   'seule l''empreinte SHA-256 du jeton est stockée');
 
 select tests.login_as('d0000000-0000-0000-0000-00000000000d');
 select throws_ok(format('select public.accept_invitation(%L)', (select token from tokens where name = 'email')),
   '42501', null, 'une invitation nominative ne peut être acceptée par une autre adresse');
 
+select tests.logout();
+set local role anon;
+select is((select state from public.get_invitation((select token from tokens where name = 'email'))), 'valid',
+  'un visiteur non connecté voit l''état d''une invitation');
+select is((select organization_name from public.get_invitation((select token from tokens where name = 'email'))), 'DOUALA CLINIC',
+  'l''aperçu donne le nom de l''établissement');
+select is((select email_hint from public.get_invitation((select token from tokens where name = 'email'))), 'a•••@eneo.test',
+  'l''adresse invitée est masquée');
+select is((select state from public.get_invitation((select token from tokens where name = 'expired'))), 'expired',
+  'une invitation expirée est signalée');
+select is((select count(*)::int from public.get_invitation('jeton-inconnu')), 0, 'un jeton inconnu ne renvoie rien');
+select tests.logout();
 select tests.login_as('b0000000-0000-0000-0000-00000000000b');
 select throws_ok(format('select public.accept_invitation(%L)', (select token from tokens where name = 'expired')),
   'P0002', null, 'une invitation expirée est refusée');
@@ -163,7 +178,7 @@ select ok((select count(*) from public.audit_log where action = 'org.create') = 
 select ok(exists (select 1 from public.audit_log where action = 'member.add'
   and diff ->> 'role' = 'agent'), 'les ajouts de membres sont journalisés');
 select ok(exists (select 1 from public.audit_log where action = 'org.status_change'),
-  'la validation par le super admin est journalisée');
+  'la suspension par le super admin est journalisée');
 select throws_ok($$ update public.audit_log set action = 'org.tampered' $$,
   '42501', null, 'le journal d''audit n''est pas modifiable depuis l''API');
 select throws_ok($$ delete from public.audit_log $$,

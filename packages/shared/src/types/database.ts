@@ -149,6 +149,11 @@ isOneToOne: false
 "create_organization":
 { Args: { "p_data_retention_days"?: number,"p_default_locale"?: string,"p_name": string,"p_slug": string,"p_type": Database["public"]['Enums']["org_type"] }; Returns: string
                            },
+"get_invitation":
+{ Args: { "p_token": string }; Returns: {
+              "email_hint": string,"expires_at": string,"organization_name": string,"role": Database["public"]['Enums']["member_role"],"state": string
+            }[]
+                           },
 "has_org_role":
 { Args: { "p_org": string,"p_roles"?: (Database["public"]['Enums']["member_role"])[] }; Returns: boolean
                            },

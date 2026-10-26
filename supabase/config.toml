@@ -213,9 +213,11 @@ web3 = 30
 
 # Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
 # Cloudflare Turnstile invisible (création de session anonyme, connexion, inscription).
-# En local : clés de test officielles Cloudflare dans supabase/.env (non versionné).
+# Désactivé en local et en CI (Cloudflare injoignable depuis les conteneurs de test).
+# En production, il est activé dans Supabase → Authentication → Attack Protection → Captcha,
+# avec la clé secrète TURNSTILE_SECRET_KEY ; l'application envoie alors le jeton (captchaToken).
 [auth.captcha]
-enabled = true
+enabled = false
 provider = "turnstile"
 secret = "env(TURNSTILE_SECRET_KEY)"
 
