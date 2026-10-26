@@ -56,6 +56,8 @@ select tests.login_as('a0000000-0000-0000-0000-00000000000a');
 create temp table ids (name text primary key, id uuid) on commit drop;
 grant all on ids to authenticated;
 insert into ids select 'clinic', public.create_organization('Douala Clinic', 'pgtap-douala-clinic', 'clinic');
+insert into ids select 'branch1', public.create_branch((select id from ids where name = 'clinic'), 'Akwa');
+insert into ids select 'branch2', public.create_branch((select id from ids where name = 'clinic'), 'Bonapriso');
 select is((select status::text from public.organizations where id = (select id from ids where name = 'clinic')),
   'active', 'un nouvel établissement est actif immédiatement (aucune validation manuelle)');
 select is((select role::text from public.memberships where organization_id = (select id from ids where name = 'clinic')
@@ -98,7 +100,7 @@ select lives_ok($$ update public.organizations set status = 'active', suspended_
 select tests.login_as('a0000000-0000-0000-0000-00000000000a');
 insert into public.memberships (organization_id, user_id, role, branch_id)
 values ((select id from ids where name = 'clinic'), 'c0000000-0000-0000-0000-00000000000c', 'branch_manager',
-        '11111111-1111-1111-1111-111111111111');
+        (select id from ids where name = 'branch1'));
 select is((select count(*)::int from public.memberships), 2, 'l''org_admin ajoute un responsable d''agence');
 
 select throws_ok($$ insert into public.memberships (organization_id, user_id, role)
@@ -108,11 +110,11 @@ select throws_ok($$ insert into public.memberships (organization_id, user_id, ro
 select tests.login_as('c0000000-0000-0000-0000-00000000000c');
 select lives_ok($$ insert into public.memberships (organization_id, user_id, role, branch_id)
   values ((select id from ids where name = 'clinic'), 'd0000000-0000-0000-0000-00000000000d', 'agent',
-          '11111111-1111-1111-1111-111111111111') $$,
+          (select id from ids where name = 'branch1')) $$,
   'le responsable ajoute un agent dans son agence');
 select throws_ok($$ insert into public.memberships (organization_id, user_id, role, branch_id)
   values ((select id from ids where name = 'clinic'), 'd0000000-0000-0000-0000-00000000000d', 'receptionist',
-          '22222222-2222-2222-2222-222222222222') $$,
+          (select id from ids where name = 'branch2')) $$,
   '42501', null, 'le responsable ne peut pas recruter dans une autre agence');
 select throws_ok($$ insert into public.memberships (organization_id, user_id, role)
   values ((select id from ids where name = 'clinic'), 'd0000000-0000-0000-0000-00000000000d', 'org_admin') $$,
@@ -137,9 +139,9 @@ create temp table tokens (name text primary key, token text) on commit drop;
 grant all on tokens to authenticated, anon;
 insert into tokens values
   ('email', public.create_invitation((select id from ids where name = 'clinic'), 'receptionist',
-     '11111111-1111-1111-1111-111111111111', 'ADMIN@eneo.test')),
+     (select id from ids where name = 'branch1'), 'ADMIN@eneo.test')),
   ('expired', public.create_invitation((select id from ids where name = 'clinic'), 'agent',
-     '11111111-1111-1111-1111-111111111111', 'admin@eneo.test'));
+     (select id from ids where name = 'branch1'), 'admin@eneo.test'));
 select tests.logout();
 update public.invitations set expires_at = now() - interval '1 minute' where role = 'agent';
 select is((select count(*)::int from public.invitations

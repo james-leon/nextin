@@ -26,6 +26,118 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"branch_closures": {
+                  Row: {
+                    "branch_id": string,"date": string,"id": string,"organization_id": string,"reason": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"date": string,"id"?: string,"organization_id": string,"reason"?: string | null
+                  }
+                  Update: {
+                    "branch_id"?: string,"date"?: string,"id"?: string,"organization_id"?: string,"reason"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "branch_closures_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"branch_settings": {
+                  Row: {
+                    "almost_turn_threshold": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_tickets_enabled": boolean,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "almost_turn_threshold"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "almost_turn_threshold"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "branch_settings_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"branches": {
+                  Row: {
+                    "active": boolean,"address": string | null,"city": string | null,"created_at": string,"id": string,"location": unknown,"name": string,"organization_id": string,"phone_e164": string | null,"sort_order": number,"timezone": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"created_at"?: string,"id"?: string,"location"?: unknown,"name": string,"organization_id": string,"phone_e164"?: string | null,"sort_order"?: number,"timezone"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"created_at"?: string,"id"?: string,"location"?: unknown,"name"?: string,"organization_id"?: string,"phone_e164"?: string | null,"sort_order"?: number,"timezone"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "branches_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"counter_services": {
+                  Row: {
+                    "counter_id": string,"organization_id": string,"service_id": string,"weight": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "counter_id": string,"organization_id": string,"service_id": string,"weight"?: number
+                  }
+                  Update: {
+                    "counter_id"?: string,"organization_id"?: string,"service_id"?: string,"weight"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "counter_services_organization_id_counter_id_fkey"
+      columns: ["organization_id","counter_id"]
+isOneToOne: false
+      referencedRelation: "counters"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "counter_services_organization_id_service_id_fkey"
+      columns: ["organization_id","service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"counters": {
+                  Row: {
+                    "active": boolean,"branch_id": string,"created_at": string,"current_agent_id": string | null,"default_practitioner_id": string | null,"id": string,"kind": Database["public"]['Enums']["counter_kind"],"label": string | null,"number": number,"organization_id": string,"sort_order": number,"status": Database["public"]['Enums']["counter_status"],"status_changed_at": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"branch_id": string,"created_at"?: string,"current_agent_id"?: string | null,"default_practitioner_id"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["counter_kind"],"label"?: string | null,"number": number,"organization_id": string,"sort_order"?: number,"status"?: Database["public"]['Enums']["counter_status"],"status_changed_at"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"branch_id"?: string,"created_at"?: string,"current_agent_id"?: string | null,"default_practitioner_id"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["counter_kind"],"label"?: string | null,"number"?: number,"organization_id"?: string,"sort_order"?: number,"status"?: Database["public"]['Enums']["counter_status"],"status_changed_at"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "counters_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "counters_organization_id_default_practitioner_id_fkey"
+      columns: ["organization_id","default_practitioner_id"]
+isOneToOne: false
+      referencedRelation: "practitioners"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
                 },"invitations": {
                   Row: {
                     "accepted_at": string | null,"accepted_by": string | null,"branch_id": string | null,"created_at": string,"email": string | null,"expires_at": string,"id": string,"invited_by": string | null,"organization_id": string,"phone_e164": string | null,"role": Database["public"]['Enums']["member_role"],"token_hash": string
@@ -39,6 +151,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "invitations_branch_fk"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
       foreignKeyName: "invitations_organization_id_fkey"
       columns: ["organization_id"]
 isOneToOne: false
@@ -59,11 +177,37 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "memberships_branch_fk"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
       foreignKeyName: "memberships_organization_id_fkey"
       columns: ["organization_id"]
 isOneToOne: false
       referencedRelation: "organizations"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"opening_hours": {
+                  Row: {
+                    "branch_id": string,"closes_at": string,"id": string,"opens_at": string,"organization_id": string,"weekday": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"closes_at": string,"id"?: string,"opens_at": string,"organization_id": string,"weekday": number
+                  }
+                  Update: {
+                    "branch_id"?: string,"closes_at"?: string,"id"?: string,"opens_at"?: string,"organization_id"?: string,"weekday"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "opening_hours_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
     }
                   ]
                 },"organizations": {
@@ -94,6 +238,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"practitioners": {
+                  Row: {
+                    "active": boolean,"branch_id": string,"created_at": string,"display_name": string,"id": string,"organization_id": string,"sort_order": number,"specialty_id": string | null,"title": string | null,"updated_at": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"branch_id": string,"created_at"?: string,"display_name": string,"id"?: string,"organization_id": string,"sort_order"?: number,"specialty_id"?: string | null,"title"?: string | null,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "active"?: boolean,"branch_id"?: string,"created_at"?: string,"display_name"?: string,"id"?: string,"organization_id"?: string,"sort_order"?: number,"specialty_id"?: string | null,"title"?: string | null,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "practitioners_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "practitioners_organization_id_specialty_id_fkey"
+      columns: ["organization_id","specialty_id"]
+isOneToOne: false
+      referencedRelation: "specialties"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_path": string | null,"created_at": string,"full_name": string | null,"id": string,"locale": string,"phone_e164": string | null,"updated_at": string
@@ -108,6 +278,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"qr_codes": {
+                  Row: {
+                    "active": boolean,"branch_id": string,"created_at": string,"created_by": string | null,"id": string,"organization_id": string,"revoked_at": string | null,"service_id": string | null,"short_code": string,"token": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"branch_id": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"organization_id": string,"revoked_at"?: string | null,"service_id"?: string | null,"short_code": string,"token": string
+                  }
+                  Update: {
+                    "active"?: boolean,"branch_id"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"organization_id"?: string,"revoked_at"?: string | null,"service_id"?: string | null,"short_code"?: string,"token"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "qr_codes_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "qr_codes_organization_id_service_id_fkey"
+      columns: ["organization_id","service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
                 },"rate_limits": {
                   Row: {
                     "count": number,"key": string,"window_start": string
@@ -121,6 +317,52 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"services": {
+                  Row: {
+                    "active": boolean,"allow_priority": boolean,"allow_remote": boolean,"branch_id": string,"color": string,"created_at": string,"default_service_seconds": number,"description": string | null,"id": string,"max_daily_tickets": number | null,"name": string,"name_en": string | null,"organization_id": string,"prefix": string,"sort_order": number,"specialty_id": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"allow_priority"?: boolean,"allow_remote"?: boolean,"branch_id": string,"color"?: string,"created_at"?: string,"default_service_seconds": number,"description"?: string | null,"id"?: string,"max_daily_tickets"?: number | null,"name": string,"name_en"?: string | null,"organization_id": string,"prefix": string,"sort_order"?: number,"specialty_id"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"allow_priority"?: boolean,"allow_remote"?: boolean,"branch_id"?: string,"color"?: string,"created_at"?: string,"default_service_seconds"?: number,"description"?: string | null,"id"?: string,"max_daily_tickets"?: number | null,"name"?: string,"name_en"?: string | null,"organization_id"?: string,"prefix"?: string,"sort_order"?: number,"specialty_id"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "services_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "services_organization_id_specialty_id_fkey"
+      columns: ["organization_id","specialty_id"]
+isOneToOne: false
+      referencedRelation: "specialties"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"specialties": {
+                  Row: {
+                    "active": boolean,"created_at": string,"id": string,"name": string,"name_en": string | null,"organization_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"created_at"?: string,"id"?: string,"name": string,"name_en"?: string | null,"organization_id": string
+                  }
+                  Update: {
+                    "active"?: boolean,"created_at"?: string,"id"?: string,"name"?: string,"name_en"?: string | null,"organization_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "specialties_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }
@@ -137,11 +379,17 @@ isOneToOne: false
 "can_access_branch":
 { Args: { "p_branch": string,"p_org": string,"p_roles"?: (Database["public"]['Enums']["member_role"])[] }; Returns: boolean
                            },
+"can_manage_branch":
+{ Args: { "p_branch": string,"p_org": string }; Returns: boolean
+                           },
 "can_manage_member":
 { Args: { "p_branch": string,"p_org": string,"p_role": Database["public"]['Enums']["member_role"] }; Returns: boolean
                            },
 "check_rate_limit":
 { Args: { "p_key": string,"p_max": number,"p_window": string }; Returns: boolean
+                           },
+"create_branch":
+{ Args: { "p_address"?: string,"p_city"?: string,"p_lat"?: number,"p_lng"?: number,"p_name": string,"p_org": string,"p_phone_e164"?: string }; Returns: string
                            },
 "create_invitation":
 { Args: { "p_branch"?: string,"p_email"?: string,"p_org": string,"p_phone_e164"?: string,"p_role": Database["public"]['Enums']["member_role"] }; Returns: string
@@ -166,8 +414,32 @@ isOneToOne: false
 "is_privileged_context":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"issue_qr_code":
+{ Args: { "p_branch": string,"p_service"?: string }; Returns: {
+              "active": boolean,
+"branch_id": string,
+"created_at": string,
+"created_by": string | null,
+"id": string,
+"organization_id": string,
+"revoked_at": string | null,
+"service_id": string | null,
+"short_code": string,
+"token": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "qr_codes"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "jsonb_row_diff":
 { Args: { "p_new": Json,"p_old": Json }; Returns: Json
+                           },
+"list_org_members":
+{ Args: { "p_org": string }; Returns: {
+              "active": boolean,"branch_id": string,"created_at": string,"email": string,"full_name": string,"membership_id": string,"role": Database["public"]['Enums']["member_role"],"user_id": string
+            }[]
                            },
 "purge_inactive_anonymous_users":
 { Args: { "p_inactive_for"?: string }; Returns: number
@@ -175,12 +447,37 @@ isOneToOne: false
 "purge_rate_limits":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"random_string":
+{ Args: { "p_alphabet": string,"p_length": number }; Returns: string
+                           },
+"regenerate_qr_code":
+{ Args: { "p_branch": string,"p_service"?: string }; Returns: {
+              "active": boolean,
+"branch_id": string,
+"created_at": string,
+"created_by": string | null,
+"id": string,
+"organization_id": string,
+"revoked_at": string | null,
+"service_id": string | null,
+"short_code": string,
+"token": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "qr_codes"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"set_branch_location":
+{ Args: { "p_branch": string,"p_lat": number,"p_lng": number }; Returns: undefined
+                           },
 "shares_org_with":
 { Args: { "p_user": string }; Returns: boolean
                            }
           }
           Enums: {
-            "member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other"
+            "counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -296,7 +593,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"]
+            "counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"]
           }
         }
 } as const
