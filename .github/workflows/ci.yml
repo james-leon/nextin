@@ -36,7 +36,7 @@ jobs:
         with:
           version: 2.122.0
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
-      - run: bash scripts/db-test.sh
+      - run: node scripts/db-test.mjs
 
   e2e:
     name: Playwright

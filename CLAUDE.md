@@ -15,7 +15,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 - `apps/web` — Next.js 16 (App Router, Turbopack), Tailwind v4, composants maison façon shadcn (Radix + cva), next-intl.
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
-- `scripts/` — `seed-demo.ts` (idempotent), `db-test.sh`.
+- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-test.mjs`, `db-types.mjs`, `supabase-remote.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
 
 ## Commandes
@@ -30,9 +30,9 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 | `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
 | `pnpm e2e:local` | build + Playwright contre le Supabase local |
 
-En local, la CLI Supabase lit `SUPABASE_DB_PASSWORD` s'il est défini : les scripts `db:*` locaux le retirent (`env -u`).
+En local, la CLI Supabase lit `SUPABASE_DB_PASSWORD` s'il est défini : les scripts `db:*` locaux passent par `scripts/local-env.mjs`, qui le retire.
 Captcha : désactivé en local et en CI (Cloudflare injoignable depuis les conteneurs) ; activé en production dès que `NEXT_PUBLIC_TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` sont présentes (et dans Supabase Auth). Un `APP_URL` public sans clé est refusé.
-Tests et dev **contre le Supabase local** : préfixer par `bash scripts/local-env.sh` (retire les variables du projet distant, qui priment sur `.env.local`) ; `pnpm e2e:local` fait build + Playwright.
+Tests et dev **contre le Supabase local** : préfixer par `node scripts/local-env.mjs` (retire les variables du projet distant, qui priment sur `.env.local`) ; `pnpm dev:local`, `pnpm e2e:local` (build + Playwright), `pnpm seed:demo:local`. `pnpm seed:demo` charge `apps/web/.env.local` s'il existe.
 
 ## Base de données et sécurité
 - RLS activée sur **toutes** les tables (vérifié par pgTAP). Isolation par `organization_id` présent sur chaque table métier.
