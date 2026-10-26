@@ -26,6 +26,9 @@ export default async function StaffLayout({ children }: { children: React.ReactN
         qr: m.qr,
         practitioners: m.practitioners,
         staffMgmt: m.staffMgmt,
+        theme: m.theme,
+        settings: m.settings,
+        testDesk: m.testDesk,
       }}
     >
       <ToastProvider>{children}</ToastProvider>

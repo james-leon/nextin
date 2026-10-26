@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "screenshots": "SCREENSHOTS=1 playwright test --project=mobile --project=desktop"
+    "screenshots": "playwright test --grep @screenshots --grep-invert @never-matches"
   },
   "dependencies": {
     "@nextin/shared": "workspace:*",
@@ -25,6 +25,7 @@
     "@supabase/supabase-js": "2.118.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "jsqr": "1.4.0",
     "lucide-react": "1.61.0",
     "next": "16.4.3",
     "next-intl": "4.14.9",

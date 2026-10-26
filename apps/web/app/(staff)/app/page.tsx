@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, LogOut, Plus } from "lucide-react";
+import { Building2, CheckCircle2, Plus, Settings } from "lucide-react";
 import type { MemberRole } from "@nextin/shared";
 import type { Database } from "@nextin/shared/database";
-import { signOut } from "@/app/(auth)/actions";
 import { OrgTypeIcon } from "@/components/staff/org-type-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
   const t = await getTranslations("staff");
   const tr = await getTranslations("roles");
   const tt = await getTranslations("orgTypes");
-  const ta = await getTranslations("auth");
+  const ts = await getTranslations("settings");
 
   const supabase = await getSupabaseServerClient();
   const { data } = await supabase
@@ -53,11 +52,12 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-12">
       <div className="flex h-11 items-center justify-between">
         <Logo />
-        <form action={signOut}>
-          <Button type="submit" variant="plain" size="md" leadingIcon={<LogOut aria-hidden className="size-5" />}>
-            {ta("signOut")}
-          </Button>
-        </form>
+        <Button asChild variant="plain" size="md">
+          <Link href="/app/settings">
+            <Settings aria-hidden className="size-5" />
+            {ts("open")}
+          </Link>
+        </Button>
       </div>
 
       <header className="pt-6 pb-4">

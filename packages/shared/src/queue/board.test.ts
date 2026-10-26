@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { branchBoardSchema, ticketProgressFromBoard, type BranchBoard } from "./board";
+import { branchBoardSchema, ticketProgressFromBoard, type BranchBoard } from "./index";
 
 const SERVICE = "6f1c1d2e-8a3b-4c5d-9e6f-7a8b9c0d1e2f";
 const board: BranchBoard = {

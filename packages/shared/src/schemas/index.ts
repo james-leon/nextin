@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { MEMBER_ROLES } from "../roles";
 import { normalizeCameroonPhone } from "../phone";
-import { PRIORITY_REASONS } from "../queue/board";
+import { PRIORITY_REASONS } from "../queue/live";
 
 export const ORG_TYPES = ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"] as const;
 export const orgTypeSchema = z.enum(ORG_TYPES);

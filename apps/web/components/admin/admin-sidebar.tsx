@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, ChevronLeft, LayoutGrid, Stethoscope, UsersRound } from "lucide-react";
+import { Building2, ChevronLeft, LayoutGrid, Settings, Stethoscope, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Logo } from "@/components/ui/logo";
 
@@ -23,6 +23,7 @@ export function adminNavItems(orgId: string) {
 /** Barre latérale du back-office (maquette 06), visible à partir de la largeur tablette paysage. */
 export function AdminSidebar({ orgId, orgName }: { orgId: string; orgName: string }) {
   const t = useTranslations("admin");
+  const ts = useTranslations("settings");
   const pathname = usePathname();
   const items = adminNavItems(orgId);
   const activeKey =
@@ -66,6 +67,13 @@ export function AdminSidebar({ orgId, orgName }: { orgId: string; orgName: strin
           })}
         </ul>
       </nav>
+      <Link
+        href={`/app/settings?from=${encodeURIComponent(pathname)}`}
+        className="pressable mt-auto flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-body text-label hover:bg-fill-tertiary"
+      >
+        <Settings aria-hidden className="size-5 stroke-[1.75]" />
+        {ts("open")}
+      </Link>
     </aside>
   );
 }

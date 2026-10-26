@@ -1,46 +1,11 @@
-import { randomUUID } from "node:crypto";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { PASSWORD, uniqueEmail } from "./helpers";
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const opts = { auth: { persistSession: false, autoRefreshToken: false } };
-
-async function rpc<T>(client: SupabaseClient, fn: string, args: Record<string, unknown>): Promise<T> {
-  const { data, error } = await client.rpc(fn, args);
-  if (error) throw new Error(`${fn}: ${error.message}`);
-  return data as T;
-}
-
-/** Agence ouverte en permanence, un service « Consultation » et un cabinet ouvert. */
-async function setUpBranch() {
-  const staff = createClient(url, anonKey, opts);
-  const { error } = await staff.auth.signUp({ email: uniqueEmail("m3"), password: PASSWORD });
-  expect(error).toBeNull();
-  const orgId = await rpc<string>(staff, "create_organization", { p_name: "Clinique M3", p_slug: `m3-${randomUUID().slice(0, 8)}`, p_type: "clinic" });
-  const branchId = await rpc<string>(staff, "create_branch", { p_org: orgId, p_name: "Akwa" });
-  await staff.from("opening_hours").upsert(
-    [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ organization_id: orgId, branch_id: branchId, weekday, opens_at: "00:00", closes_at: "23:59:59" })),
-    { onConflict: "branch_id,weekday" },
-  );
-  const service = await staff
-    .from("services")
-    .insert({ organization_id: orgId, branch_id: branchId, name: "Consultation", prefix: "C", default_service_seconds: 600 })
-    .select("id")
-    .single();
-  const counter = await staff.from("counters").insert({ organization_id: orgId, branch_id: branchId, kind: "cabinet", number: 3 }).select("id").single();
-  await staff.from("counter_services").insert({ organization_id: orgId, counter_id: counter.data!.id, service_id: service.data!.id });
-  await rpc(staff, "open_counter", { p_counter: counter.data!.id });
-  const qr = await staff.from("qr_codes").select("token").eq("branch_id", branchId).eq("active", true).single();
-  return { staff, serviceId: service.data!.id, counterId: counter.data!.id, entryCode: qr.data!.token };
-}
+import { anonClient, rpc, setUpBranch } from "./queue-helpers";
 
 test.describe("M3 — prise de ticket et appel en deux temps", () => {
   test("API /api/tickets → alerte → admission", async ({ request }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "parcours API, indépendant de l'appareil");
     const { staff, serviceId, counterId, entryCode } = await setUpBranch();
-    const visitor = createClient(url, anonKey, opts);
+    const visitor = anonClient();
     const { data: anon, error } = await visitor.auth.signInAnonymously();
     expect(error).toBeNull();
     const headers = { Authorization: `Bearer ${anon.session!.access_token}` };
