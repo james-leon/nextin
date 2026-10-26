@@ -112,7 +112,7 @@ Conventions : `uuid` (`gen_random_uuid()`), `timestamptz`, `created_at`/`updated
 
 ```
 org_type          : clinic | hospital | telecom | bank | utility | administration | other
-org_status        : pending | active | suspended
+org_status        : pending | active | suspended   (pending conservé pour compatibilité, plus utilisé : activation immédiate, §11)
 member_role       : org_admin | branch_manager | receptionist | agent
 counter_kind      : cabinet | guichet | caisse | laboratoire | accueil
 counter_status    : closed | open | paused
@@ -124,9 +124,13 @@ notif_event       : ticket_confirmed | almost_turn | your_turn | ticket_moved_ba
 job_status        : queued | sending | sent | delivered | read | failed | skipped
 display_status    : pending | active | revoked
 campaign_status   : draft | pending_review | approved | rejected | active | paused | ended
-payment_provider  : mtn_momo | orange_money
+payment_provider  : fake | notchpay | fapshi | mesomb | flutterwave   (agrégateurs ; voir §11.5)
 payment_status    : pending | successful | failed | expired
-subscription_status: trialing | active | past_due | suspended | cancelled
+payment_channel   : mtn_momo | orange_money
+billing_period    : monthly | annual
+invoice_status    : draft | open | paid | void
+reminder_kind     : trial_end | renewal | grace | read_only | deletion
+subscription_status: trialing | active | past_due | read_only | suspended | cancelled
 ```
 
 ### 3.2 Identité, tenants, personnel
@@ -135,7 +139,7 @@ subscription_status: trialing | active | past_due | suspended | cancelled
 |---|---|---|
 | `profiles` | `id` (= auth.users.id), `full_name`, `phone_e164`, `locale`, `avatar_path` | créé par trigger sur `auth.users` (sauf anonymes) |
 | `platform_admins` | `user_id` PK, `granted_by`, `granted_at` | non modifiable par l'app (service role uniquement) |
-| `organizations` | `name`, `slug` unique, `type org_type`, `status org_status` (défaut `pending`), `logo_path`, `country` (`CM`), `currency` (`XAF`), `default_locale` (`fr`), `data_retention_days` (défaut **30**, 7-365), `validated_at`, `validated_by` | idx `status` |
+| `organizations` | `name`, `slug` unique, `type org_type`, `status org_status` (défaut **`active`** : aucune validation manuelle, §11 ; `suspended` = suspension de modération par Wintek), `logo_path`, `country` (`CM`), `currency` (`XAF`), `default_locale` (`fr`), `data_retention_days` (défaut **30**, 7-365), `validated_at`, `validated_by` | idx `status` |
 | `memberships` | `organization_id`, `user_id`, `role member_role`, `branch_id` (NULL = toutes agences), `active` | unique (`organization_id`,`user_id`,`branch_id`) ; idx (`user_id`) |
 | `invitations` | `organization_id`, `email`/`phone_e164`, `role`, `branch_id`, `token_hash`, `expires_at`, `accepted_at` | unique `token_hash` |
 
@@ -214,14 +218,22 @@ Flux d'appairage : l'écran `/tv` génère un code à 6 chiffres via `POST /api/
 
 « Visites » : le commerce reçoit un code promo / QR « j'y suis » ; sa saisie ou son scan en magasin crée l'événement `visit`.
 
-### 3.8 Abonnements et paiements
+### 3.8 Abonnements et paiements (détail du fonctionnement : §11)
 
 | Table | Colonnes clés | Contraintes / index |
 |---|---|---|
-| `plans` | `code` unique, `name`, `price_xaf_monthly`, `limits jsonb` (agences, guichets, écrans, tickets/mois), `features jsonb` (remote, ads_free, sms_quota), `active` | |
-| `subscriptions` | `organization_id`, `plan_id`, `status`, `current_period_start`, `current_period_end`, `assigned_by` | unique partiel 1 active / org |
-| `invoices` | `number` unique, `organization_id` ou `advertiser_id`, `subscription_id` ou `campaign_id`, `amount_xaf`, `status`, `due_at`, `paid_at` | CHECK exactement un payeur |
-| `payments` | `invoice_id`, `provider payment_provider`, `msisdn`, `amount_xaf`, `status`, `external_id` unique (idempotence), `provider_ref`, `raw jsonb` | idx (`invoice_id`) |
+| `plans` | `code` unique (`essentiel`, `pro`, `entreprise`), `name`, `base_price_xaf` (prix mensuel), `included_branches`, `extra_branch_price_xaf` (NULL = pas d'agence en plus), `max_counters_per_branch` / `max_displays_per_branch` (NULL = illimité), `features jsonb` (`voice_announcements`, `appointments`, `remote_tickets`, `advanced_stats`, `export`, `dedicated_support`), `whatsapp_quota_per_branch` (messages / mois), `annual_free_months` (défaut 2), `trial_eligible`, `active`, `sort_order` | valeurs initiales insérées par une migration de données, **modifiables par le super admin** (jamais lues depuis le code) |
+| `subscriptions` | `organization_id` **unique**, `plan_id`, `billing_period`, `status subscription_status`, `trial_ends_at`, `current_period_start`, `current_period_end`, `grace_ends_at`, `read_only_since`, `suspended_since`, `deletion_due_at`, `pending_status` + `pending_status_after` (changement différé à la fermeture), `discount_id`, `cancelled_at` | idx (`status`, `current_period_end`) ; idx (`pending_status_after`) WHERE `pending_status IS NOT NULL` |
+| `subscription_events` | `subscription_id`, `organization_id`, `type` (trial_started, invoice_issued, paid, renewed, grace_started, read_only, suspended, reactivated, days_granted, discount_applied, plan_changed, deleted), `actor_user_id`, `payload jsonb` | historique + base des revenus |
+| `trial_claims` | `phone_hash` **unique**, `organization_id` **unique**, `claimed_at` | un seul essai par numéro et par établissement |
+| `phone_verifications` | `user_id`, `phone_hash`, `code_hash`, `attempts` (max 5), `expires_at` (10 min), `verified_at` | rate limit 3 codes / heure / numéro |
+| `invoice_sequences` | `year`, `last_number` | PK (`year`) — numérotation **continue sans trou** (`FAC-2026-000123`), attribuée à l'émission |
+| `invoices` | `number` unique, `organization_id` ou `advertiser_id`, `subscription_id` ou `campaign_id`, `period_start`, `period_end`, `billing_period`, `lines jsonb`, `subtotal_xaf`, `discount_xaf`, `tax_xaf`, `total_xaf`, `status invoice_status`, `due_at`, `paid_at`, `pay_token_hash` (lien de paiement), `pdf_path`, `buyer_snapshot jsonb`, `seller_snapshot jsonb` (raison sociale, RC, NIU, adresse Wintek au moment de l'émission) | CHECK exactement un payeur ; **jamais supprimées** (obligation comptable) |
+| `payments` | `invoice_id`, `provider payment_provider`, `channel payment_channel`, `msisdn_masked`, `amount_xaf`, `status payment_status`, `external_id` unique (idempotence), `provider_ref`, `raw jsonb` | idx (`invoice_id`) |
+| `discounts` | `organization_id` (NULL = code promo global), `code`, `kind` (`percent` / `fixed_xaf`), `value`, `remaining_invoices`, `expires_at`, `created_by`, `reason` | |
+| `billing_reminders` | `subscription_id`, `kind reminder_kind`, `offset_days` (7, 3, 1), `target_date`, `channel`, `sent_at` | unique (`subscription_id`,`kind`,`offset_days`,`target_date`,`channel`) — idempotence |
+| `messaging_usage` | `organization_id`, `month`, `whatsapp_sent`, `sms_sent` | PK (`organization_id`,`month`) — quotas |
+| `platform_settings` | ligne unique : `company_legal_name`, `company_rc`, `company_niu`, `company_address`, `invoice_footer`, `trial_days` (14), `grace_days` (7), `retention_after_suspension_days` (30), `default_closing_time` (22:00), `vat_rate` | modifiable par le super admin uniquement |
 
 ### 3.9 Plateforme
 
@@ -249,7 +261,7 @@ is_advertiser_member(adv uuid)
 
 | Tables | SELECT | INSERT / UPDATE / DELETE |
 |---|---|---|
-| `organizations` | membres de l'org ; super admin | INSERT : utilisateur authentifié non anonyme (statut forcé `pending`) ; UPDATE : `org_admin` (sauf `status`, `validated_*` → super admin uniquement, via trigger de garde) |
+| `organizations` | membres de l'org ; super admin | INSERT : via `create_organization` / `self_service_signup` uniquement (statut `active`) ; UPDATE : `org_admin` (sauf `status` → super admin uniquement, via trigger de garde) |
 | `memberships`, `invitations` | membres de l'org | `org_admin` ; `branch_manager` pour son agence et rôles ≤ au sien |
 | `branches`, `branch_settings`, `announcement_settings`, `opening_hours`, `services`, `counters`, `counter_services`, `qr_codes`, `displays`, `display_services` | staff de l'agence | `org_admin` ; `branch_manager` sur son agence |
 | `counters.status` / sessions | staff de l'agence | via RPC `open_counter`, `pause_counter`, `close_counter` |
@@ -258,8 +270,9 @@ is_advertiser_member(adv uuid)
 | `notification_*`, `provider_webhook_events`, `client_ops`, `rate_limits` | staff (contacts : numéro masqué via vue) / aucun | service role uniquement |
 | `advertisers`, `ad_campaigns`, `ad_creatives`, `ad_schedules` | membres annonceur ; super admin | membres annonceur tant que `draft`/`rejected` ; transitions de statut par RPC (`submit_campaign`, `approve_campaign` super admin) |
 | `ad_events`, `ad_daily_stats` | membres annonceur (stats agrégées) ; super admin | service role |
-| `plans` | tous (actifs) | super admin |
-| `subscriptions`, `invoices`, `payments` | `org_admin` / membres annonceur concernés ; super admin | RPC + Edge Function `payments-callback` |
+| `plans`, `platform_settings` | tous (formules actives, mentions légales) | super admin |
+| `subscriptions`, `subscription_events`, `invoices`, `payments`, `messaging_usage` | `org_admin` / membres annonceur concernés ; super admin | RPC + Edge Functions `payments-webhook` et `billing-daily` (service role) |
+| `trial_claims`, `phone_verifications`, `invoice_sequences`, `billing_reminders`, `discounts` | super admin (sauf `phone_verifications` : aucun) | RPC / service role uniquement |
 | `audit_log` | `org_admin` (son org) ; super admin | INSERT par triggers/RPC uniquement |
 | `storage` : `voices` (lecture publique), `ad-creatives` (lecture publique si campagne approuvée, écriture membres annonceur), `org-assets` (logos : écriture `org_admin`) | | |
 | `realtime.messages` (topics privés `staff:branch:{id}`, `org:{id}`) | `can_access_branch` / `has_org_role` | — |
@@ -335,7 +348,8 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | **M7** | Notifications | Abstraction fournisseurs, `whatsapp-webhook`, `notify-dispatcher`, web push (VAPID), SMS secours, STOP | Vitest signature + bascule, tests d'intégration avec faux fournisseur |
 | **M8** | Tableau de bord | Affluence horaire, attentes, performance par praticien, absents, notes, export CSV, temps réel | Vitest agrégats, Playwright dashboard |
 | **M9** | Distance | Établissements à proximité (PostGIS), ticket à distance, « quand partir », confirmation de présence, recul/annulation | pgTAP sweeper, Playwright parcours distance |
-| **M10** | Pub + abonnements + super admin | Espace annonceur, ciblage, modération, diffusion TV/app, stats ; plans, abonnements, MTN MoMo / Orange Money ; super admin (validation, plans, revenus, suspension) | Paiements en sandbox, Playwright campagne → modération → diffusion |
+| **M10a** | Abonnements automatiques + paiements + super admin | Inscription en libre-service (téléphone vérifié par WhatsApp, Turnstile), essai Pro 14 j, assistant de démarrage, rappels J-7/J-3/J-1, paiement MTN MoMo / Orange Money via agrégateur, webhook signé et idempotent, factures PDF numérotées, grâce → lecture seule → suspension → suppression, limites des formules côté serveur, super admin (abonnements, revenus, jours offerts, remises, formules) — détail §11 | Vitest tarification + machine d'états, pgTAP limites / transitions différées / idempotence, Playwright inscription → essai → paiement simulé → activation → facture |
+| **M10b** | Publicité | Espace annonceur, ciblage, modération, diffusion TV/app, stats ; paiement des campagnes avec le même agrégateur | Playwright campagne → modération → paiement simulé → diffusion |
 | **M11** | App Expo | Client + agent, réutilise `packages/shared` | Tests Jest/Detox de base |
 
 ### 7.1 Tables créées par module (migrations progressives)
@@ -349,7 +363,8 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | M6 | `displays`, `display_services`, `announcement_settings`, bucket `voices` |
 | M7 | `notification_contacts`, `notification_jobs`, `provider_webhook_events`, `whatsapp_opt_outs` |
 | M8 | `daily_branch_stats`, `daily_counter_stats`, vues `v_service_live` |
-| M10 | `advertisers`, `advertiser_members`, `ad_*`, `plans`, `subscriptions`, `invoices`, `payments`, buckets `ad-creatives`, `org-assets` |
+| M10a | `plans`, `subscriptions`, `subscription_events`, `trial_claims`, `phone_verifications`, `invoice_sequences`, `invoices`, `payments`, `discounts`, `billing_reminders`, `messaging_usage`, `platform_settings`, bucket privé `invoices`, bucket `org-assets` |
+| M10b | `advertisers`, `advertiser_members`, `ad_*`, bucket `ad-creatives` |
 
 **Données de démo** (script idempotent, enrichi à chaque module) : **DOUALA CLINIC** (Akwa, Douala — Consultation générale `C`, Pédiatrie `P`, Laboratoire `L`, Caisse `K` ; cabinets 1-4, labo 1, caisse 1) et **Eneo — Agence Bonanjo, Douala** (Réclamations `R`, Abonnements `A`, Paiement facture `F` ; guichets 1-5).
 
@@ -367,7 +382,8 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID_FR`, `ELEVENLABS_VOICE_ID_EN`, `ELEVENLABS_MODEL_ID` | M6 | elevenlabs.io → Profile → API Keys / Voice Library |
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `NEXT_PUBLIC_WHATSAPP_NUMBER` | M7 | Meta for Developers → app → WhatsApp → API Setup / App Settings → Basic |
 | `SMS_PROVIDER` + clés du fournisseur | M7 | faux fournisseur `console` en attendant le choix au M7 |
-| `MTN_MOMO_*`, `ORANGE_MONEY_*` | M10 | momodeveloper.mtn.com ; developer.orange.com |
+| `PAYMENT_PROVIDER` (`fake` par défaut) + clés de l'agrégateur retenu (ex. `NOTCHPAY_PUBLIC_KEY`, `NOTCHPAY_PRIVATE_KEY`, `NOTCHPAY_WEBHOOK_SECRET`) | M10a | tableau de bord de l'agrégateur choisi (§11.5) |
+| `EMAIL_PROVIDER` + clés (ex. `RESEND_API_KEY`, `EMAIL_FROM`) | M10a (rappels, factures) | fournisseur d'e-mails transactionnels à choisir (§11.10) |
 
 ---
 
@@ -377,7 +393,7 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 2. **Hébergement** : Vercel ; domaine communiqué avant M2, `APP_URL` en attendant.
 3. **SMS** : faux fournisseur `console` jusqu'au M7.
 4. **Imprimante** : impression navigateur 80 mm (CSS print) pour la V1.
-5. **Tarifs** : définis au M10.
+5. **Tarifs et abonnements** : parcours automatique sans validation manuelle, formules et prix en base (§11).
 
 ## 10. Ajustements validés
 
@@ -386,3 +402,87 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 3. **Durée de service par défaut** saisie par le directeur pour chaque service (champ obligatoire), utilisée tant que l'historique est insuffisant (< 10 services), puis fondue progressivement dans la moyenne réelle (§3.4).
 4. **Protection des données** : `organizations.data_retention_days` (défaut 30). pg_cron quotidien `purge_personal_data()` : passé ce délai, suppression des `notification_contacts`, mise à NULL de `tickets.public_token`, `tickets.customer_user_id`, `tickets.rating_comment`, `appointments.phone_e164`/`customer_label`, et des numéros dans `notification_jobs.payload` / `provider_webhook_events.payload`. Seules restent les données anonymisées (numéros de ticket, horodatages, durées, notes chiffrées) qui alimentent les statistiques. `whatsapp_opt_outs` conserve le numéro (obligation de respecter le STOP), haché en SHA-256.
 5. **`APP_URL`** : variable serveur unique, lue par un helper `getAppUrl()` (validé par Zod au démarrage) ; jamais d'URL en dur dans le code.
+
+---
+
+## 11. Abonnements automatiques (M10a)
+
+Objectif : un établissement s'inscrit, essaie, paie et renouvelle **sans aucune intervention de Wintek**. Le super admin supervise et peut suspendre un compte (fraude, abus), mais ne valide plus rien.
+
+### 11.1 Inscription en libre-service (`/signup`)
+1. Compte du directeur : e-mail (confirmé par Supabase Auth) + mot de passe, Turnstile invisible.
+2. Établissement : nom, secteur (`org_type`), téléphone camerounais (`normalizeCameroonPhone`).
+3. Vérification du téléphone par **code WhatsApp à 6 chiffres** (modèle d'authentification Meta `code_verification` FR/EN, envoyé par la couche WhatsApp du M7 ; repli SMS si non remis). Code haché, 10 min, 5 essais, 3 envois / heure / numéro.
+4. RPC `self_service_signup` (transaction) : crée l'organisation (`active`), l'`org_admin`, la `trial_claim`, l'abonnement `trialing` sur Pro, et journalise l'action. Rate limit : 3 inscriptions / jour / IP.
+
+### 11.2 Essai gratuit
+- 14 jours (`platform_settings.trial_days`) sur la formule Pro, sans moyen de paiement.
+- **Un seul essai par numéro** (`trial_claims.phone_hash` unique, SHA-256 salé du numéro E.164) **et par établissement** (`organization_id` unique). Un numéro déjà utilisé peut créer un établissement, mais sans essai : il doit payer directement.
+
+### 11.3 Assistant de démarrage
+Écran plein après l'inscription, une étape à la fois, reprenable : 1) services (préfixe, couleur, durée par défaut), 2) guichets et cabinets, 3) QR code et supports PDF à imprimer (M2), 4) appairage de l'écran TV (M6), 5) récapitulatif. Il réutilise les écrans de M2 et M6 ; la progression est stockée sur l'organisation (`onboarding_step`).
+
+### 11.4 Cycle de vie et machine d'états
+```
+trialing ──paiement──▶ active ──fin de période sans paiement──▶ past_due (grâce 7 j)
+   │                     ▲                                          │
+   └─fin d'essai─────────┼──────────────────────────────────────────┤
+                         │ paiement (immédiat, à toute heure)       ▼
+                         └───────────────── read_only ◀─────────────┘
+                                               │ fin de grâce + 7 j
+                                               ▼
+                                           suspended ──30 j──▶ suppression des données
+```
+- **past_due** : tout fonctionne, bandeau « paiement en attente » pour le personnel.
+- **read_only** : plus d'émission de tickets (`take_ticket` et `reception_create_ticket` refusés, page client « temporairement indisponible »). Le personnel consulte l'historique et les statistiques, et peut payer.
+- **suspended** : accès du personnel limité à la page Abonnement ; écrans TV et pages publiques en message neutre ; QR codes inactifs.
+- **Suppression** : 30 jours après la suspension (`retention_after_suspension_days`), avec rappels à J-7 et J-1 ; l'organisation et ses données sont supprimées en cascade. **Les factures et paiements sont conservés** (obligation comptable), avec l'identité de l'acheteur figée dans `buyer_snapshot`.
+- **Jamais de coupure en pleine journée** : toute dégradation (→ past_due, → read_only, → suspended) est inscrite dans `pending_status`, et `pending_status_after` est calculé comme la plus tardive des heures de fermeture du jour de toutes les agences (`opening_hours`, fuseau Africa/Douala ; repli : `default_closing_time` 22:00). Le job `apply_pending_transitions` (pg_cron, toutes les 15 min) n'applique le changement qu'une fois cette heure passée **et** si aucune agence n'est ouverte. Les **réactivations** (paiement reçu) sont appliquées immédiatement.
+
+### 11.5 Paiement : agrégateur Mobile Money
+- Couche `packages/payments` : interface `PaymentProvider` (`createCheckout(invoice, msisdn, channel)`, `verifyWebhook(headers, rawBody)`, `parseEvent(body)`, `fetchStatus(ref)`), un adaptateur par agrégateur, plus un **faux fournisseur** (`fake`) qui simule succès, échec et délai pour le développement et les tests.
+- Premier adaptateur à brancher **à choisir** parmi Notch Pay, Fapshi, MeSomb et Flutterwave, selon les frais, le KYC exigé, la qualité des webhooks signés et les délais de reversement (à comparer sur leurs offres actuelles avant de trancher).
+- Lien de paiement `{APP_URL}/pay/{token}` (jeton à usage limité, haché en base) : page publique légère sans connexion (le payeur peut être le comptable) — montant, période, choix MTN MoMo / Orange Money, numéro à débiter.
+- **Webhook** `payments-webhook/{provider}` (Edge Function) : signature vérifiée (HMAC du corps brut), événement enregistré dans `provider_webhook_events` (unique par fournisseur et identifiant) → traitement **idempotent** ; en cas de doute, le statut est revérifié auprès de l'agrégateur (`fetchStatus`) avant toute activation. Un paiement confirmé déclenche, dans une transaction : facture `paid`, prolongation de la période, statut `active`, `subscription_events`, puis génération de la facture PDF et envoi.
+- Rattrapage : un job relance `fetchStatus` sur les paiements `pending` de plus de 10 minutes (webhook perdu).
+
+### 11.6 Facturation
+- Facture émise à J-7 de l'échéance (ou à la demande depuis la page Abonnement), numérotée `FAC-AAAA-NNNNNN` sans trou (`invoice_sequences`, verrou transactionnel).
+- PDF (`@react-pdf/renderer`, gabarit Apple sobre, FR/EN) : raison sociale, **RC** et NIU de Wintek, adresse, client, période, lignes, remise, total en FCFA, mention « payée le … via MTN MoMo / Orange Money ». Mentions légales lues dans `platform_settings`, jamais en dur. Stocké dans le bucket privé `invoices`, envoyé par WhatsApp (document) et e-mail, téléchargeable depuis la page Abonnement.
+
+### 11.7 Renouvellement et rappels (pas de prélèvement automatique)
+- Période mensuelle ou annuelle, choisie au paiement ; renouvellement uniquement sur rappel et lien de paiement.
+- Job quotidien `billing-daily` (Edge Function, pg_cron 08:00 Douala) : rappels à **J-7, J-3, J-1** avant la fin de l'essai ou de la période, puis pendant la grâce (J+1, J+4, J+6) et avant la suppression, par **WhatsApp** (modèles `rappel_abonnement`, `paiement_confirme`, `facture_disponible`, FR/EN) **et e-mail**, chacun avec le lien de paiement. Idempotence par `billing_reminders`.
+
+### 11.8 Formules et calcul du prix
+Valeurs initiales (migration de données, **modifiables par le super admin**, jamais lues depuis le code) :
+
+| Formule | Prix mensuel | Agences | Guichets / agence | Écrans / agence | Fonctions |
+|---|---|---|---|---|---|
+| Essentiel | 25 000 FCFA par agence | 1 incluse, +25 000 / agence | 3 | 1 | statistiques de base |
+| Pro | 45 000 FCFA par agence | 1 incluse, +45 000 / agence | 10 | 3 | annonces vocales, rendez-vous, ticket à distance, statistiques avancées |
+| Entreprise | à partir de 120 000 FCFA | 3 incluses, +35 000 / agence | illimités | illimités | tout Pro + export, support dédié |
+
+- Prix mensuel = `base_price_xaf` + max(0, agences − `included_branches`) × `extra_branch_price_xaf`. Prix annuel = prix mensuel × (12 − `annual_free_months`), soit **2 mois offerts**. Remise appliquée ensuite. Fonction pure `computeSubscriptionPrice` (`packages/shared`) et miroir SQL `subscription_price()` utilisé pour facturer, avec test de parité.
+- **Limites vérifiées côté serveur** : fonction `org_entitlements(org)` (formule, statut, limites, fonctions) appelée par des triggers sur `branches`, `counters`, `displays` et par les RPC concernées (`take_ticket` à distance, rendez-vous, annonces vocales). Un dépassement renvoie une erreur explicite, traduite à l'écran avec un lien « Changer de formule ». Pendant l'essai : limites Pro.
+- **Quotas WhatsApp** par formule (`whatsapp_quota_per_branch` × agences, par mois), comptés dans `messaging_usage`. Alerte au directeur à 80 % ; au-delà, les alertes passent par web push. Le message « c'est votre tour » reste prioritaire et toujours envoyé.
+- Changement de formule : montée immédiate (prorata facturé), descente à la prochaine échéance si les limites de la nouvelle formule sont respectées.
+
+### 11.9 Super admin
+- Tableau des abonnements filtrable : essais, actifs, en retard (past_due), lecture seule, suspendus, avec échéance, formule, nombre d'agences et dernier paiement.
+- Revenus : MRR (paiements annuels lissés sur 12 mois), encaissements du mois, répartition par formule, essais convertis.
+- Actions journalisées dans l'audit : **offrir des jours** (prolonge l'essai ou la période), **appliquer une remise** (pourcentage ou montant, sur N factures), changer de formule, suspendre ou réactiver (modération), éditer les formules, quotas et mentions légales (`platform_settings`).
+
+### 11.10 Points à trancher
+1. **Agrégateur** : Notch Pay, Fapshi, MeSomb ou Flutterwave ? Le faux fournisseur suffit jusqu'à ce choix.
+2. **Prix HT ou TTC**, et Wintek est-elle assujettie à la TVA (19,25 % au Cameroun) ? Cela détermine les lignes de la facture (`tax_xaf`, `vat_rate`).
+3. **Interprétation des prix** : Essentiel et Pro sont facturés par agence (2 agences en Pro = 90 000 FCFA par mois), avec des limites de guichets et d'écrans par agence. À confirmer.
+4. **Quotas WhatsApp** : valeurs par formule à fixer (proposition : Essentiel 1 500, Pro 4 000, Entreprise 6 000 messages par agence et par mois, à ajuster selon le coût Meta par conversation).
+5. **Fournisseur d'e-mails transactionnels** (rappels, factures) : par exemple Resend ou Brevo.
+6. **Mentions légales de Wintek** pour les factures : raison sociale, RC, NIU, adresse (saisies dans `platform_settings`).
+
+### 11.11 Effets sur les modules précédents
+- **M1** : `organizations.status` passe à `active` par défaut et `create_organization` n'attend plus de validation ; le super admin garde la suspension. Le changement est appliqué par une nouvelle migration lors de la fin du M1 (écran de création d'établissement), sans modifier les migrations déjà poussées.
+- **Avant M10a**, les établissements créés (démo, pilotes) n'ont pas d'abonnement : `org_entitlements` les traite comme « pilote » avec les limites Pro, et le passage en production exige le M10a.
+- La vérification du téléphone par WhatsApp dépend du M7 : le M10a vient donc après le M7, comme prévu.
+

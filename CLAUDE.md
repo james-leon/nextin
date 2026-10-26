@@ -41,6 +41,7 @@ Captcha local : clés de test officielles Cloudflare Turnstile dans `supabase/.e
 - Validation Zod côté client **et** serveur (schémas dans `@nextin/shared/schemas`). Turnstile vérifié côté serveur (`lib/security/turnstile.ts`).
 - Données personnelles purgées après `organizations.data_retention_days` (défaut 30 j) — statistiques anonymisées uniquement.
 - Chaque nouvelle table : RLS + policies + test pgTAP d'isolation entre deux organisations.
+- **Abonnements (M10a, `docs/PLAN.md` §11)** : aucun prix, quota ni limite de formule en dur — tout vient de `plans` / `platform_settings` (modifiables par le super admin). Limites vérifiées côté serveur (`org_entitlements`). Aucune dégradation d'abonnement appliquée pendant les heures d'ouverture. Webhooks de paiement signés et idempotents. Factures jamais supprimées.
 
 ## Design — Apple Human Interface Guidelines (obligatoire)
 Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). Tokens : `apps/web/app/globals.css`.
