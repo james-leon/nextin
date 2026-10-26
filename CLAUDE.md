@@ -58,6 +58,8 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - **Client** : le numéro de ticket et l'attente estimée sont les héros visuels. Pages client < 200 Ko au premier chargement, utilisables en 3G : RSC, JS client minimal, pas de bibliothèque d'animation.
 - **Maquette de référence** : `design/mockups/` (exports Claude Design) — à suivre fidèlement. 01 scanner (toujours sombre, `bg-scanner`), 02 choisir un service, 03 mon ticket, 04 agent/guichet, 05 écran TV (`bg-tv`), 06 tableau de bord, 07 chevalet A5, 08 affiche A4, 09 parcours. Les écrans 01 à 04 sont reconstruits dans `/design` (section « Écrans de la maquette ») : partir de ces compositions pour les vrais écrans.
 - **Ticket** : format `C-047` (`formatTicketCode`), numéro en Navy (`text-ticket-number`, blanc en sombre), graisse extra-bold, jamais en chiffres tabulaires (le tiret s'élargirait). Couleurs de service : palette `SERVICE_COLORS` (pastille lettre, texte blanc).
+- **Listes groupées** : séparateurs inset (`list-separator`) alignés sur le texte après la pastille, jamais sous la dernière ligne ; seul le `<li>` porte `group/row`.
+- **Mon ticket** : « Recevoir mes alertes sur WhatsApp » (tinted, icône message) juste sous la carte du ticket ; actions du bas dans `TicketBottomActions` (BottomBar toujours visible) ; « Je suis en route » uniquement si `canSignalOnMyWay(source)` (ticket à distance).
 - **Marque** : tuile bleue à flèche blanche + « NextIn » (`Logo`), aussi utilisée pour les icônes PWA.
 
 ## i18n
