@@ -1,31 +1,39 @@
+import { spellTicketCode } from "@nextin/shared";
 import { cn } from "@/lib/cn";
+import { ProgressBar } from "./progress-bar";
 
 /**
- * Héros visuel du parcours client : numéro de ticket et attente estimée.
- * Le numéro est épelé pour les lecteurs d'écran (« C 0 4 7 »), sans dépendre de la mise en forme.
+ * Héros visuel du parcours client (maquette 03) : service, numéro de ticket en Navy, établissement,
+ * « Devant vous » et « Attente estimée », progression et ticket en cours.
+ * Le numéro est épelé pour les lecteurs d'écran (« C 0 4 7 »).
  */
 export function TicketHero({
-  label,
   code,
   service,
-  positionLabel,
-  position,
+  place,
+  aheadLabel,
+  ahead,
   waitLabel,
   wait,
-  footnote,
+  progress,
+  progressLabel,
+  nowServing,
   state = "waiting",
   calledTitle,
   calledBody,
   className,
 }: {
-  label: string;
   code: string;
   service: string;
-  positionLabel: string;
-  position: string;
+  place: string;
+  aheadLabel: string;
+  ahead: number;
   waitLabel: string;
   wait: string;
-  footnote?: string;
+  /** Avancement dans la file, de 0 à 1. */
+  progress: number;
+  progressLabel: string;
+  nowServing?: string;
   state?: "waiting" | "called";
   calledTitle?: string;
   calledBody?: string;
@@ -36,17 +44,24 @@ export function TicketHero({
     <section
       aria-live="polite"
       className={cn(
-        "squircle relative overflow-hidden rounded-[var(--radius-xl)] p-6 text-center shadow-card transition-colors duration-500",
-        called ? "bg-green text-white" : "bg-grouped-secondary",
+        "squircle relative overflow-hidden rounded-[var(--radius-xl)] px-5 pt-7 pb-5 text-center transition-colors duration-500",
+        called ? "bg-green text-white" : "bg-grouped-secondary shadow-floating",
         className,
       )}
     >
-      <p className={cn("text-subheadline font-medium", called ? "text-white/85" : "text-label-secondary")}>{label}</p>
-      <p className="mt-1 font-rounded text-hero font-bold tabular tracking-tight animate-pop-in">
-        <span aria-hidden>{code}</span>
-        <span className="sr-only">{code.split("").join(" ")}</span>
+      <p
+        className={cn(
+          "text-footnote font-semibold tracking-[0.08em] uppercase",
+          called ? "text-white/90" : "text-label-secondary",
+        )}
+      >
+        {service}
       </p>
-      <p className={cn("mt-1 text-headline", called ? "text-white" : "text-label")}>{service}</p>
+      <p className={cn("mt-1 text-hero font-extrabold whitespace-nowrap animate-pop-in", called ? "text-white" : "text-ticket-number")}>
+        <span aria-hidden>{code}</span>
+        <span className="sr-only">{spellTicketCode(code)}</span>
+      </p>
+      <p className={cn("mt-2 text-callout uppercase", called ? "text-white/90" : "text-label-secondary")}>{place}</p>
 
       {called ? (
         <div className="mt-5 rounded-[var(--radius-lg)] bg-white/15 px-4 py-3">
@@ -54,18 +69,21 @@ export function TicketHero({
           <p className="mt-0.5 text-callout">{calledBody}</p>
         </div>
       ) : (
-        <dl className="mt-6 grid grid-cols-2 gap-3">
-          <div className="rounded-[var(--radius-lg)] bg-grouped-tertiary px-3 py-3">
-            <dt className="text-footnote text-label-secondary">{positionLabel}</dt>
-            <dd className="mt-0.5 text-title1 font-bold tabular">{position}</dd>
-          </div>
-          <div className="rounded-[var(--radius-lg)] bg-accent-tint px-3 py-3">
-            <dt className="text-footnote text-accent-on-tint">{waitLabel}</dt>
-            <dd className="mt-0.5 text-title1 font-bold tabular text-accent-on-tint">{wait}</dd>
-          </div>
-        </dl>
+        <>
+          <dl className="mt-6 grid grid-cols-2 gap-3 text-left">
+            <div className="rounded-[var(--radius-lg)] bg-grouped-tertiary px-3.5 py-3">
+              <dt className="text-subheadline text-label-secondary">{aheadLabel}</dt>
+              <dd className="mt-0.5 text-title1 font-bold tabular">{ahead}</dd>
+            </div>
+            <div className="rounded-[var(--radius-lg)] bg-grouped-tertiary px-3.5 py-3">
+              <dt className="text-subheadline text-label-secondary">{waitLabel}</dt>
+              <dd className="mt-0.5 text-title1 font-bold whitespace-nowrap tabular">{wait}</dd>
+            </div>
+          </dl>
+          <ProgressBar value={progress} label={progressLabel} className="mt-5" />
+          {nowServing ? <p className="mt-2 text-left text-subheadline text-label-secondary">{nowServing}</p> : null}
+        </>
       )}
-      {footnote && !called ? <p className="mt-4 text-footnote text-label-secondary">{footnote}</p> : null}
     </section>
   );
 }

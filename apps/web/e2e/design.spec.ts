@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 const SECTIONS = [
+  "Marque",
   "Typographie",
   "Couleurs",
   "Boutons",
@@ -16,6 +17,7 @@ const SECTIONS = [
   "Alertes",
   "Badges et états",
   "Ticket",
+  "Écrans de la maquette",
 ];
 
 async function openDesign(page: Page) {
@@ -81,7 +83,7 @@ test.describe("/design — vitrine du design system", () => {
     await week.click();
     await expect(week).toHaveAttribute("aria-checked", "true");
 
-    const pediatrics = page.getByRole("radio", { name: /Pédiatrie/ });
+    const pediatrics = page.locator("#lists").getByRole("radio", { name: /Pédiatrie/ });
     await pediatrics.click();
     await expect(pediatrics).toHaveAttribute("aria-checked", "true");
   });
@@ -121,9 +123,27 @@ test.describe("/design — vitrine du design system", () => {
   test("ticket : numéro et attente en héros, état « c'est votre tour »", async ({ page }) => {
     await openDesign(page);
     const ticket = page.locator("#ticket");
-    await expect(ticket.getByText("12 min")).toBeVisible();
+    await expect(ticket.getByText("C-047")).toBeVisible();
+    await expect(ticket.getByText("≈ 12 min")).toBeVisible();
+    await expect(ticket.getByRole("progressbar", { name: "Progression dans la file" })).toHaveAttribute("aria-valuenow", "64");
     await ticket.getByRole("radio", { name: "C'est votre tour" }).click();
     await expect(ticket.getByText("Présentez-vous au cabinet 3")).toBeVisible();
+  });
+
+  test("écrans de la maquette reconstruits avec les composants", async ({ page }) => {
+    await openDesign(page);
+    const mockups = page.locator("#mockups");
+    await expect(mockups.locator("figure")).toHaveCount(4);
+    await expect(mockups.getByText("Scannez pour commencer").first()).toBeVisible();
+    await expect(mockups.getByRole("button", { name: "Prendre mon ticket" })).toBeVisible();
+    await expect(mockups.getByText("QR code reconnu")).toBeVisible();
+    await expect(mockups.getByRole("heading", { level: 1, name: "Mon ticket" })).toBeVisible();
+    await expect(mockups.getByRole("button", { name: "Terminer et appeler le suivant" })).toBeVisible();
+    await expect(mockups.getByText("04:12")).toBeVisible();
+    // Choix exclusif dans la maquette 02
+    const lab = mockups.getByRole("radio", { name: /Laboratoire/ });
+    await lab.click();
+    await expect(lab).toHaveAttribute("aria-checked", "true");
   });
 
   test("le grand titre se réduit dans la barre au défilement", async ({ page }) => {

@@ -15,6 +15,10 @@ for (const theme of ["light", "dark"] as const) {
     const page = await context.newPage();
     await page.goto("/design", { waitUntil: "networkidle" });
     await page.screenshot({ path: `${OUT}/design-${info.project.name}-${theme}.png`, fullPage: isMobile });
+    if (!isMobile) {
+      await page.addStyleTag({ content: ".sticky{position:static!important}" });
+      await page.locator("#mockups").screenshot({ path: `${OUT}/mockups-${theme}.png` });
+    }
     if (isMobile) {
       await page.locator("#ticket").scrollIntoViewIfNeeded();
       await page.locator("#ticket").screenshot({ path: `${OUT}/ticket-${theme}.png` });

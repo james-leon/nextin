@@ -18,6 +18,7 @@ const twMerge = extendTailwindMerge({
             "footnote",
             "caption",
             "hero",
+            "display",
           ],
         },
       ],

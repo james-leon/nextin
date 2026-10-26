@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/cn";
 
 const badgeVariants = cva(
-  "inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold [&_svg]:size-3.5 [&_svg]:stroke-[2.25]",
+  "inline-flex shrink-0 items-center gap-1 font-semibold whitespace-nowrap [&_svg]:size-3.5 [&_svg]:stroke-[2.25]",
   {
     variants: {
       tone: {
@@ -14,17 +14,23 @@ const badgeVariants = cva(
         red: "bg-red-tint text-red-text",
         navy: "bg-navy text-white",
       },
+      /** pill : statut (« Ouvert ») ; tag : étiquette compacte (« RDV », « En pause »). */
+      shape: {
+        pill: "h-7 rounded-full px-3 text-subheadline",
+        tag: "h-6 rounded-[6px] px-2 text-footnote",
+      },
     },
-    defaultVariants: { tone: "neutral" },
+    defaultVariants: { tone: "neutral", shape: "tag" },
   },
 );
 
 export function Badge({
   className,
   tone,
+  shape,
   ...props
 }: HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>) {
-  return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
+  return <span className={cn(badgeVariants({ tone, shape }), className)} {...props} />;
 }
 
 /** Pastille d'état (en ligne / hors ligne…). */

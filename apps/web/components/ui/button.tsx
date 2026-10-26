@@ -19,6 +19,7 @@ export const buttonVariants = cva(
         gray: "bg-fill-tertiary text-accent-text",
         plain: "bg-transparent text-accent-text",
         destructive: "bg-red-tint text-red-text",
+        "destructive-plain": "bg-transparent text-red-text",
         "destructive-filled": "bg-red text-on-accent",
         navy: "bg-navy text-white",
       },
@@ -29,7 +30,10 @@ export const buttonVariants = cva(
       },
       block: { true: "w-full" },
     },
-    compoundVariants: [{ variant: "plain", class: "px-2" }],
+    compoundVariants: [
+      { variant: "plain", class: "px-2" },
+      { variant: "destructive-plain", class: "px-2" },
+    ],
     defaultVariants: { variant: "filled", size: "lg" },
   },
 );
@@ -40,10 +44,11 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
     loading?: boolean;
     loadingLabel?: string;
     leadingIcon?: ReactNode;
+    trailingIcon?: ReactNode;
   };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant, size, block, asChild, loading, loadingLabel, leadingIcon, children, disabled, ...props },
+  { className, variant, size, block, asChild, loading, loadingLabel, leadingIcon, trailingIcon, children, disabled, ...props },
   ref,
 ) {
   const Comp = asChild ? Slot : "button";
@@ -62,6 +67,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         <>
           {loading ? <Spinner className="size-[1.1em]" label={loadingLabel} /> : leadingIcon}
           {loading && loadingLabel ? loadingLabel : children}
+          {loading ? null : trailingIcon}
         </>
       )}
     </Comp>
@@ -72,7 +78,7 @@ type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label
   /** Obligatoire : décrit l'action pour les lecteurs d'écran. */
   label: string;
   icon: ReactNode;
-  variant?: "gray" | "plain" | "tinted" | "filled";
+  variant?: "gray" | "plain" | "tinted" | "filled" | "scanner";
 };
 
 /** Bouton icône circulaire 44 × 44 px. */
@@ -93,6 +99,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
         variant === "plain" && "text-accent-text",
         variant === "tinted" && "bg-accent-tint text-accent-on-tint",
         variant === "filled" && "bg-accent text-on-accent",
+        variant === "scanner" && "bg-scanner-control text-white",
         className,
       )}
       {...props}

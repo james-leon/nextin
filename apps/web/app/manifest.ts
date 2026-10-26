@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "any",
     background_color: "#f2f2f7",
-    theme_color: "#0d2c54",
+    theme_color: "#1a6bb5",
     categories: ["productivity", "utilities", "medical"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

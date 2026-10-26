@@ -49,11 +49,21 @@
   --orange-text: #a3550a;
   --orange-tint: rgb(245 139 31 / 0.15);
   --green-fill: #2ec04e;
-  --green-text: #1b7a32;
+  --green-text: #176b2c;
   --green-tint: rgb(46 192 78 / 0.15);
   --red-fill: #d70015;
   --red-text: #d70015;
   --red-tint: rgb(255 59 48 / 0.12);
+
+  /* Numéro de ticket : Navy en clair (maquette), blanc en sombre. */
+  --ticket-number: #0d2c54;
+  /* Surfaces toujours sombres : viseur de scan (maquette 01) et écran TV (maquette 05). */
+  --scanner-bg: #0b0f16;
+  --scanner-surface: #191d23;
+  --scanner-control: #23272d;
+  --tv-bg: #0b1f3b;
+  --tv-surface: #16345e;
+  --on-navy-control: rgb(255 255 255 / 0.14);
 
   --elev-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.12), 0 2px 6px rgb(0 0 0 / 0.06);
@@ -88,6 +98,7 @@
   --red-fill: #d70015;
   --red-text: #ff6961;
   --red-tint: rgb(255 69 58 / 0.2);
+  --ticket-number: #ffffff;
   --elev-card: none;
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
 }
@@ -128,6 +139,13 @@
   --color-sheet: var(--material-sheet);
   --color-overlay: var(--overlay);
   --color-navy: var(--navy);
+  --color-ticket-number: var(--ticket-number);
+  --color-scanner: var(--scanner-bg);
+  --color-scanner-surface: var(--scanner-surface);
+  --color-scanner-control: var(--scanner-control);
+  --color-tv: var(--tv-bg);
+  --color-tv-surface: var(--tv-surface);
+  --color-on-navy-control: var(--on-navy-control);
   --color-accent: var(--accent-fill);
   --color-accent-pressed: var(--accent-fill-pressed);
   --color-accent-text: var(--accent-text);
@@ -177,6 +195,9 @@
   --text-hero: 5.5rem;
   --text-hero--line-height: 1;
   --text-hero--letter-spacing: -0.03em;
+  --text-display: 3.75rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
 
   /* Rayons continus */
   --radius-sm: 8px;

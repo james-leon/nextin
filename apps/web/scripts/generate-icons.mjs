@@ -4,17 +4,18 @@ import sharp from "sharp";
 
 const OUT = new URL("../public/icons/", import.meta.url);
 
-// Monogramme « N » blanc sur Navy Wintek, point orange = « votre tour ».
+// Marque NextIn (maquette) : tuile bleue Wintek, flèche blanche.
 function iconSvg({ size, padding = 0, rounded = true }) {
   const inner = size - padding * 2;
   const r = rounded ? inner * 0.225 : 0;
   const s = inner / 100;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" fill="${rounded ? "none" : "#0D2C54"}"/>
+  <rect width="${size}" height="${size}" fill="${rounded ? "none" : "#1A6BB5"}"/>
   <g transform="translate(${padding} ${padding})">
-    <rect width="${inner}" height="${inner}" rx="${r}" fill="#0D2C54"/>
-    <path transform="scale(${s})" d="M30 72V28h9.5l21 28.5V28H70v44h-9.5l-21-28.5V72z" fill="#fff"/>
-    <circle cx="${76 * s}" cy="${26 * s}" r="${7 * s}" fill="#F58B1F"/>
+    <rect width="${inner}" height="${inner}" rx="${r}" fill="#1A6BB5"/>
+    <g transform="scale(${s})" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M30 50h40"/><path d="M52 32l18 18-18 18"/>
+    </g>
   </g>
 </svg>`;
 }
@@ -22,7 +23,9 @@ function iconSvg({ size, padding = 0, rounded = true }) {
 function badgeSvg(size) {
   const s = size / 100;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <path transform="scale(${s})" d="M22 82V18h14l28 40V18h14v64H64L36 42v40z" fill="#000"/>
+  <g transform="scale(${s})" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 50h56"/><path d="M50 24l26 26-26 26"/>
+  </g>
 </svg>`;
 }
 
