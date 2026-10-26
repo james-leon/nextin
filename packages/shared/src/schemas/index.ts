@@ -87,3 +87,132 @@ export const newOrganizationFormSchema = z.object({
   defaultLocale: z.enum(["fr", "en"]).default("fr"),
   captchaToken: z.string().max(2048).optional(),
 });
+
+/* ─── M2 : structure de l'établissement ─────────────────────────────────── */
+
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null);
+
+const optionalUuid = z
+  .string()
+  .transform((v) => (v === "" ? null : v))
+  .nullable()
+  .optional()
+  .transform((v) => v ?? null)
+  .pipe(z.uuid().nullable());
+
+/** Case à cocher / interrupteur de formulaire HTML ("on", "true" → true). */
+export const formBoolean = z
+  .union([z.literal("on"), z.literal("true"), z.literal("false"), z.literal(""), z.boolean()])
+  .optional()
+  .transform((v) => v === true || v === "on" || v === "true");
+
+const optionalPhone = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v, ctx) => {
+    if (!v) return null;
+    const e164 = normalizeCameroonPhone(v);
+    if (!e164) {
+      ctx.addIssue({ code: "custom", message: "phone_invalid" });
+      return z.NEVER;
+    }
+    return e164;
+  });
+
+export const branchFormSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  address: optionalText(240),
+  city: optionalText(80),
+  phone: optionalPhone,
+  lat: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().min(-90).max(90).optional()),
+  lng: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().min(-180).max(180).optional()),
+});
+
+export const serviceFormSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(80),
+  nameEn: optionalText(80),
+  prefix: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{1,2}$/, "prefix_invalid"),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "generic"),
+  defaultMinutes: z.coerce.number({ error: "duration_invalid" }).int("duration_invalid").min(1, "duration_invalid").max(120, "duration_invalid"),
+  maxDailyTickets: z
+    .union([z.literal(""), z.coerce.number().int().min(1, "quota_invalid").max(9999, "quota_invalid")])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? null : v)),
+  specialtyId: optionalUuid,
+  description: optionalText(280),
+  allowPriority: formBoolean,
+  allowRemote: formBoolean,
+  active: formBoolean,
+});
+
+export const counterFormSchema = z.object({
+  kind: z.enum(["cabinet", "guichet", "caisse", "laboratoire", "accueil"], { error: "kind_required" }),
+  number: z.coerce.number().int().min(1, "number_invalid").max(999, "number_invalid"),
+  label: optionalText(60),
+  defaultPractitionerId: optionalUuid,
+  serviceIds: z.array(z.uuid()).default([]),
+  active: formBoolean,
+});
+
+export const practitionerFormSchema = z.object({
+  title: optionalText(20),
+  displayName: z.string().trim().min(2, "name_too_short").max(120),
+  specialtyId: optionalUuid,
+  branchId: z.uuid({ error: "branch_required" }),
+  active: formBoolean,
+});
+
+export const specialtyFormSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(80),
+  nameEn: optionalText(80),
+});
+
+const timeString = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "time_invalid");
+
+export const openingHoursSchema = z
+  .array(
+    z.object({
+      weekday: z.number().int().min(1).max(7),
+      open: z.boolean(),
+      opensAt: timeString,
+      closesAt: timeString,
+    }),
+  )
+  .length(7)
+  .superRefine((days, ctx) => {
+    days.forEach((d, i) => {
+      if (d.open && d.closesAt <= d.opensAt) ctx.addIssue({ code: "custom", message: "hours_order", path: [i] });
+    });
+  });
+
+export const branchSettingsFormSchema = z.object({
+  remoteTicketsEnabled: formBoolean,
+  prioritiesEnabled: formBoolean,
+  ratingEnabled: formBoolean,
+  almostTurnThreshold: z.coerce.number().int().min(1).max(10),
+});
+
+/** Invitation depuis l'écran Personnel : un rôle d'agence exige une agence, sauf réception/agent « toutes agences ». */
+export const inviteFormSchema = z
+  .object({
+    role: z.enum(MEMBER_ROLES, { error: "role_required" }),
+    branchId: optionalUuid,
+    email: emailSchema,
+  })
+  .superRefine((v, ctx) => {
+    if (v.role === "org_admin" && v.branchId) ctx.addIssue({ code: "custom", message: "generic", path: ["branchId"] });
+    if (v.role === "branch_manager" && !v.branchId) ctx.addIssue({ code: "custom", message: "branch_required", path: ["branchId"] });
+  });

@@ -5,3 +5,4 @@ export * from "./app-url";
 export * from "./ticket";
 export * from "./time";
 export * from "./text";
+export * from "./structure";
