@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MEMBER_ROLES } from "../roles";
 import { normalizeCameroonPhone } from "../phone";
+import { PRIORITY_REASONS } from "../queue/board";
 
 export const ORG_TYPES = ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"] as const;
 export const orgTypeSchema = z.enum(ORG_TYPES);
@@ -216,3 +217,19 @@ export const inviteFormSchema = z
     if (v.role === "org_admin" && v.branchId) ctx.addIssue({ code: "custom", message: "generic", path: ["branchId"] });
     if (v.role === "branch_manager" && !v.branchId) ctx.addIssue({ code: "custom", message: "branch_required", path: ["branchId"] });
   });
+
+/* ─── M3 : prise de ticket ──────────────────────────────────────────────── */
+
+/** Demande de ticket d'un client (route POST /api/tickets). L'accueil passe par la RPC du personnel. */
+export const takeTicketSchema = z
+  .object({
+    serviceId: z.uuid(),
+    source: z.enum(["qr", "short_code", "remote"]),
+    entryCode: z.string().trim().min(6).max(64).regex(/^[A-Za-z0-9]+$/, "invalid_entry").optional(),
+    priorityReason: z.enum(PRIORITY_REASONS).optional(),
+    captchaToken: z.string().max(2048).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.source !== "remote" && !v.entryCode) ctx.addIssue({ code: "custom", message: "invalid_entry", path: ["entryCode"] });
+  });
+export type TakeTicketInput = z.infer<typeof takeTicketSchema>;

@@ -25,7 +25,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` | ESLint, TypeScript, Vitest (tous les paquets) |
 | `pnpm test:e2e` | Playwright (après `pnpm build`) — projets `mobile` et `desktop` |
 | `pnpm --filter @nextin/web screenshots` | captures → `docs/captures/<module>/` |
-| `pnpm db:start` · `pnpm db:reset` · `pnpm db:test` · `pnpm db:types` | Supabase local (Docker), tests pgTAP, types TS |
+| `pnpm db:start` · `pnpm db:reset` · `pnpm db:test` · `pnpm db:types` | Supabase local (Docker, avec Realtime), tests pgTAP puis intégration (`supabase/tests/integration`, `node:test`), types TS. `db:reset` redémarre aussi Kong (cache DNS de Realtime) ; `db:test:sql` = pgTAP seul |
 | `pnpm db:link` · `pnpm db:push` | lier et migrer le projet distant (`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`) |
 | `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
 | `pnpm e2e:local` | build + Playwright contre le Supabase local |
@@ -72,6 +72,15 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Mutations : server actions dans `app/(staff)/app/o/[orgId]/_actions/` (Zod → Supabase sous RLS → `revalidatePath` → redirection `?saved=1`). Toujours `.select(...)` après un update/delete et refuser si aucune ligne n'est touchée (RLS silencieuse).
 - Gabarit `AdminPage`, formulaires clients avec `useActionState` + `useFormErrors`, action principale dans `BottomBar` (décalée de la barre latérale via `--shell-sidebar`), confirmations par `ConfirmAction`.
 - PDF : `@react-pdf/renderer` (`lib/pdf/`), police Inter embarquée ; QR codes vectoriels via `qrMatrix` (`lib/qr/matrix.ts`), URL toujours `qrEntryUrl(token)`.
+
+## File d'attente (M3, `docs/modules/M3.md`)
+- États : `waiting` → `called` (« Alerter le suivant ») → `serving` (« Admettre », chrono `serving_started_at`) → `served` ; `no_show`, `cancelled`, `transferred`. Durées mesurées de l'admission à la fin, jamais depuis l'alerte.
+- Un seul ticket `called`/`serving` par poste (index unique) ; `call_next` refuse `counter_busy` tant que le patient alerté n'est pas traité ; `FOR UPDATE SKIP LOCKED`.
+- Commandes des postes idempotentes via `p_client_op_id` (rejeu hors ligne) ; toute écriture sur `tickets` passe par une RPC.
+- Prise de ticket client : `POST /api/tickets` uniquement (Zod → session cookie ou Bearer → `throttle_ticket_request` → Turnstile → `take_ticket` en service role). Ne jamais exposer `take_ticket` au client.
+- Erreurs métier : message = code (`counter_busy`, `branch_closed`…), SQLSTATE `P04xx` ; `queueErrorCode` / `mapDbError` → dictionnaire `errors`.
+- Estimation : `packages/shared/src/queue/estimate.ts` et `public.estimate_wait_seconds` doivent rester identiques (fixtures partagées, test de parité).
+- Temps réel : topics de `@nextin/shared/queue` (`boardTopic`, `ticketTopic`, `staffTopic`), alimentés par les déclencheurs SQL ; jamais de nom ni d'identifiant client dans une diffusion.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

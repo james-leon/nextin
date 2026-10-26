@@ -1,7 +1,7 @@
 /**
  * Données de démo NextIn — idempotent (relançable sans doublons).
  * Enrichi à chaque module. M1 : comptes, établissements, personnel. M2 : agences, spécialités, praticiens,
- * services, guichets/cabinets, horaires et QR codes.
+ * services, guichets/cabinets, horaires et QR codes. M3 : file du jour (tickets en attente).
  *
  * Usage : NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… SEED_DEMO_PASSWORD=… pnpm seed:demo
  */
@@ -187,7 +187,28 @@ async function ensureBranch(client: Db, orgId: string, seed: BranchSeed) {
       ),
     );
   }
-  return branchId;
+  return { branchId, serviceIds };
+}
+
+/**
+ * File du jour (M3) : quelques tickets en attente créés par l'accueil, seulement si la file du jour est vide
+ * (la numérotation repart chaque jour). Aucun nom de client : les tickets d'accueil n'en portent pas.
+ */
+async function ensureDemoQueue(staffEmail: string, branch: { branchId: string; serviceIds: Map<string, string> }, perService: Record<string, number>) {
+  const staff = createClient(url!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await staff.auth.signInWithPassword({ email: staffEmail, password: password! });
+  if (error) throw error;
+  const active = await must(
+    db.from("tickets").select("id").eq("branch_id", branch.branchId).in("status", ["waiting", "called", "serving"]).limit(1),
+  );
+  if (active.length) return;
+  for (const [prefix, count] of Object.entries(perService)) {
+    for (let i = 0; i < count; i++) {
+      const reason = prefix === "C" && i === 2 ? "pregnancy" : null;
+      await must(staff.rpc("reception_create_ticket", { p_service: branch.serviceIds.get(prefix)!, p_priority_reason: reason as never }));
+    }
+  }
+  await staff.auth.signOut();
 }
 
 const COLORS = { blue: "#1A6BB5", green: "#2E8B57", purple: "#8E5BB5", ochre: "#B5651A", teal: "#13798A" };
@@ -209,7 +230,7 @@ async function main() {
   await ensureMember(eneo, ids.eneoAdmin, "org_admin");
   await ensureMember(eneo, ids.eneoAgent, "agent");
 
-  await ensureBranch(db, clinic, {
+  const akwa = await ensureBranch(db, clinic, {
     name: "Akwa",
     address: "Boulevard de la Liberté",
     city: "Douala",
@@ -241,7 +262,7 @@ async function main() {
     ],
   });
 
-  await ensureBranch(db, eneo, {
+  const bonanjo = await ensureBranch(db, eneo, {
     name: "Bonanjo",
     address: "Avenue du Général de Gaulle",
     city: "Douala",
@@ -268,6 +289,9 @@ async function main() {
       { kind: "guichet", number: 5, services: ["R", "A"] },
     ],
   });
+
+  await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 });
+  await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa) et Eneo — Douala (agence Bonanjo)");
   for (const u of Object.values(USERS)) console.log(`  ${u.email}`);

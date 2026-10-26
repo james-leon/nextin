@@ -26,17 +26,23 @@ jobs:
       - run: pnpm test
 
   database:
-    name: Database (migrations + pgTAP)
+    name: Database (migrations, pgTAP, integration)
     runs-on: ubuntu-latest
     env:
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - uses: supabase/setup-cli@v1
         with:
           version: 2.122.0
-      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
-      - run: node scripts/db-test.mjs
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:test
 
   e2e:
     name: Playwright
@@ -53,10 +59,10 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.122.0
-      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api,realtime
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api
       - name: Use the local Supabase keys
         run: |
-          supabase status -o env | sed -n 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p; s/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
+          supabase status -o env | sed -n 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p; s/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/p; s/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nextin/web exec playwright install --with-deps chromium
       - run: pnpm build

@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./i18n": "./src/i18n/index.ts",
     "./schemas": "./src/schemas/index.ts",
-    "./database": "./src/types/database.ts"
+    "./database": "./src/types/database.ts",
+    "./queue": "./src/queue/index.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",

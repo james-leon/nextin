@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { createOrganizationSchema, inviteMemberSchema, loginCodeVerifySchema, newOrganizationFormSchema, signupSchema } from "./index";
+import {
+  createOrganizationSchema,
+  inviteMemberSchema,
+  loginCodeVerifySchema,
+  newOrganizationFormSchema,
+  signupSchema,
+  takeTicketSchema,
+} from "./index";
 
 describe("schemas", () => {
   it("createOrganization applique les valeurs par défaut", () => {
@@ -77,5 +84,23 @@ describe("M2 schemas", () => {
     expect(v).toMatchObject({ name: "Akwa", address: null, city: "Douala", phone: "+237677123456" });
     expect(v.lat).toBeUndefined();
     expect(branchFormSchema.safeParse({ name: "Akwa", phone: "12345" }).success).toBe(false);
+  });
+});
+
+describe("M3 schemas", () => {
+  const serviceId = "6f1c1f9e-4b8a-4b8f-9a55-3c3c1d2a7b10";
+  it("accepte une demande par QR code", () => {
+    const r = takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "AbCdEfGhIjKlMnOpQrStUv" });
+    expect(r.success).toBe(true);
+  });
+  it("exige un code d'entrée hors ticket à distance", () => {
+    const r = takeTicketSchema.safeParse({ serviceId, source: "short_code" });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("invalid_entry");
+    expect(takeTicketSchema.safeParse({ serviceId, source: "remote" }).success).toBe(true);
+  });
+  it("refuse la source accueil et les motifs inconnus", () => {
+    expect(takeTicketSchema.safeParse({ serviceId, source: "reception", entryCode: "ABCDEF" }).success).toBe(false);
+    expect(takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "ABCDEF", priorityReason: "vip" }).success).toBe(false);
   });
 });

@@ -12,9 +12,9 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @nextin/web test:e2e",
-    "db:start": "node scripts/local-env.mjs npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api,realtime",
-    "db:reset": "node scripts/local-env.mjs npx supabase db reset",
-    "db:test": "node scripts/db-test.mjs",
+    "db:start": "node scripts/local-env.mjs npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api",
+    "db:reset": "node scripts/db-reset.mjs",
+    "db:test": "node scripts/db-test.mjs && node scripts/db-integration.mjs",
     "db:push": "node scripts/supabase-remote.mjs push",
     "db:link": "node scripts/supabase-remote.mjs link",
     "seed:demo": "node --env-file-if-exists=apps/web/.env.local --import tsx scripts/seed-demo.ts",
@@ -22,7 +22,8 @@
     "e2e:local": "node scripts/local-env.mjs pnpm --filter @nextin/web build && node scripts/local-env.mjs pnpm --filter @nextin/web test:e2e",
     "db:stop": "node scripts/local-env.mjs npx supabase stop",
     "seed:demo:local": "node scripts/local-env.mjs node --env-file-if-exists=apps/web/.env.local --import tsx scripts/seed-demo.ts",
-    "dev:local": "node scripts/local-env.mjs pnpm --filter @nextin/web dev"
+    "dev:local": "node scripts/local-env.mjs pnpm --filter @nextin/web dev",
+    "db:test:sql": "node scripts/db-test.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.118.0",

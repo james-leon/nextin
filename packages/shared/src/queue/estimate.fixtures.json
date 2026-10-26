@@ -1,0 +1,11 @@
+[
+  { "ahead": 0, "durations": [600], "busy": [0], "expected": 0 },
+  { "ahead": 0, "durations": [600], "busy": [240], "expected": 240 },
+  { "ahead": 3, "durations": [600], "busy": [0], "expected": 1800 },
+  { "ahead": 3, "durations": [600], "busy": [120], "expected": 1920 },
+  { "ahead": 4, "durations": [600, 600], "busy": [0, 0], "expected": 1200 },
+  { "ahead": 5, "durations": [600, 300], "busy": [0, 0], "expected": 900 },
+  { "ahead": 6, "durations": [900, 600, 300], "busy": [450, 0, 100], "expected": 1000 },
+  { "ahead": 10, "durations": [180, 240], "busy": [60, 200], "expected": 1140 },
+  { "ahead": 1, "durations": [720], "busy": [800], "expected": 1520 }
+]
