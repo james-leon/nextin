@@ -13,14 +13,17 @@ export function BottomBar({
 }: {
   summary?: ReactNode;
   children: ReactNode;
-  position?: "fixed" | "sticky";
+  /** `absolute` : dans un conteneur positionné (aperçus, cadres). */
+  position?: "fixed" | "sticky" | "absolute";
   className?: string;
 }) {
   return (
     <div
       className={cn(
         "safe-bottom z-20 bg-gradient-to-t from-grouped from-70% to-transparent px-4 pt-6 pb-4",
-        position === "fixed" ? "fixed inset-x-0 bottom-0" : "sticky bottom-0",
+        position === "fixed" && "fixed inset-x-0 bottom-0",
+        position === "absolute" && "absolute inset-x-0 bottom-0",
+        position === "sticky" && "sticky bottom-0",
         className,
       )}
     >

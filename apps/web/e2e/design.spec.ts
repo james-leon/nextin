@@ -146,6 +146,76 @@ test.describe("/design — vitrine du design system", () => {
     await expect(lab).toHaveAttribute("aria-checked", "true");
   });
 
+  for (const theme of ["light", "dark"] as const) {
+    test(`listes groupées : séparateurs inset entre les lignes (${theme})`, async ({ browser }) => {
+      const context = await browser.newContext({ colorScheme: theme });
+      const page = await context.newPage();
+      await openDesign(page);
+      const list = page.locator("#lists").getByRole("radiogroup", { name: "Services" });
+      const rows = list.getByRole("radio");
+      await expect(rows).toHaveCount(4);
+      const separators = await rows.evaluateAll((els) =>
+        els.map((row) => {
+          const holder = row.querySelector<HTMLElement>(".list-separator")!;
+          const after = getComputedStyle(holder, "::after");
+          const title = holder.querySelector<HTMLElement>("span > span")!;
+          return {
+            display: after.display,
+            height: parseFloat(after.height),
+            color: after.backgroundColor,
+            holderLeft: holder.getBoundingClientRect().left,
+            titleLeft: title.getBoundingClientRect().left,
+            tileRight: row.querySelector("[aria-hidden]")!.getBoundingClientRect().right,
+          };
+        }),
+      );
+      // Un séparateur entre chaque ligne, aucun sous la dernière.
+      expect(separators.map((s) => s.display)).toEqual(["block", "block", "block", "none"]);
+      for (const s of separators.slice(0, 3)) {
+        expect(s.height).toBeGreaterThan(0);
+        expect(s.height).toBeLessThanOrEqual(1);
+        expect(s.color).not.toBe("rgba(0, 0, 0, 0)");
+        // Décalé : commence après la pastille, aligné sur le texte.
+        expect(s.holderLeft).toBeGreaterThan(s.tileRight);
+        expect(Math.abs(s.holderLeft - s.titleLeft)).toBeLessThanOrEqual(1);
+      }
+      await context.close();
+    });
+  }
+
+  test("Mon ticket : WhatsApp sous la carte, actions du bas visibles sans défilement", async ({ page }) => {
+    await openDesign(page);
+    const frame = page.locator("#mockups figure").filter({ hasText: "03 · Mon ticket" });
+    await frame.scrollIntoViewIfNeeded();
+    const phone = frame.locator("> div").first();
+
+    // Le bouton WhatsApp suit immédiatement la carte du ticket.
+    const whatsapp = frame.getByRole("button", { name: "Recevoir mes alertes sur WhatsApp" });
+    await expect(whatsapp).toBeVisible();
+    const nextToHero = await frame.locator("section[aria-live]").evaluate(
+      (hero) => hero.nextElementSibling?.textContent ?? "",
+    );
+    expect(nextToHero).toContain("Recevoir mes alertes sur WhatsApp");
+
+    // Ticket pris sur place : pas de « Je suis en route ».
+    await expect(frame.getByRole("button", { name: "Je suis en route" })).toHaveCount(0);
+    const cancel = frame.getByRole("button", { name: "Annuler le ticket" });
+    const phoneBox = (await phone.boundingBox())!;
+    const inside = async (name: string) => {
+      const box = (await frame.getByRole("button", { name }).boundingBox())!;
+      expect(box.y).toBeGreaterThanOrEqual(phoneBox.y);
+      expect(box.y + box.height).toBeLessThanOrEqual(phoneBox.y + phoneBox.height);
+    };
+    await expect(cancel).toBeVisible();
+    await inside("Annuler le ticket");
+
+    // Ticket à distance : « Je suis en route » apparaît, les deux actions restent entières.
+    await frame.getByRole("radio", { name: "Pris à distance" }).click();
+    await expect(frame.getByRole("button", { name: "Je suis en route" })).toBeVisible();
+    await inside("Je suis en route");
+    await inside("Annuler le ticket");
+  });
+
   test("le grand titre se réduit dans la barre au défilement", async ({ page }) => {
     await openDesign(page);
     const frame = page.locator("#navigation .overflow-y-auto");

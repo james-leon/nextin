@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SERVICE_COLORS, formatTicketCode, spellTicketCode } from "./ticket";
+import { SERVICE_COLORS, canSignalOnMyWay, formatTicketCode, spellTicketCode } from "./ticket";
 
 function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -30,5 +30,14 @@ describe("formatTicketCode", () => {
 describe("SERVICE_COLORS", () => {
   it.each(Object.entries(SERVICE_COLORS))("%s : texte blanc lisible (AA ≥ 4,5:1 pour du texte gras ≥ 3:1)", (_, hex) => {
     expect(1.05 / (luminance(hex) + 0.05)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("canSignalOnMyWay", () => {
+  it("uniquement pour un ticket à distance", () => {
+    expect(canSignalOnMyWay("remote")).toBe(true);
+    expect(canSignalOnMyWay("qr")).toBe(false);
+    expect(canSignalOnMyWay("short_code")).toBe(false);
+    expect(canSignalOnMyWay("reception")).toBe(false);
   });
 });

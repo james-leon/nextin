@@ -25,3 +25,15 @@ export const SERVICE_COLORS = {
   slate: "#56606F",
 } as const;
 export type ServiceColor = keyof typeof SERVICE_COLORS;
+
+/** Origine d'un ticket (enum SQL `ticket_source`). */
+export const TICKET_SOURCES = ["qr", "short_code", "remote", "reception"] as const;
+export type TicketSource = (typeof TICKET_SOURCES)[number];
+
+/**
+ * « Je suis en route » n'a de sens que pour un ticket pris à distance (M9) :
+ * jamais pour un ticket pris sur place (QR, code court) ni créé à l'accueil.
+ */
+export function canSignalOnMyWay(source: TicketSource): boolean {
+  return source === "remote";
+}

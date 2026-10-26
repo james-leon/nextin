@@ -18,6 +18,9 @@ for (const theme of ["light", "dark"] as const) {
     if (!isMobile) {
       await page.addStyleTag({ content: ".sticky{position:static!important}" });
       await page.locator("#mockups").screenshot({ path: `${OUT}/mockups-${theme}.png` });
+      const ticketFrame = page.locator("#mockups figure").filter({ hasText: "03 · Mon ticket" });
+      await ticketFrame.getByRole("radio", { name: "Pris à distance" }).click();
+      await ticketFrame.screenshot({ path: `${OUT}/mon-ticket-distance-${theme}.png` });
     }
     if (isMobile) {
       await page.locator("#ticket").scrollIntoViewIfNeeded();

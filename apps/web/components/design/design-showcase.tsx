@@ -12,6 +12,7 @@ import {
   Clock,
   DoorOpen,
   Keyboard,
+  MessageCircle,
   MapPin,
   MoreHorizontal,
   QrCode,
@@ -23,10 +24,17 @@ import {
   UserRound,
   WifiOff,
 } from "lucide-react";
-import { SERVICE_COLORS, formatTicketCode, normalizeCameroonPhone } from "@nextin/shared";
+import {
+  SERVICE_COLORS,
+  canSignalOnMyWay,
+  formatTicketCode,
+  normalizeCameroonPhone,
+  type TicketSource,
+} from "@nextin/shared";
 import { setLocale } from "@/i18n/actions";
 import { cn } from "@/lib/cn";
 import { useThemePreference, type ThemePreference } from "@/components/theme/theme";
+import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Badge, StatusDot } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
@@ -613,7 +621,17 @@ function FieldsSection() {
   );
 }
 
-function PhoneFrame({ children, className, label }: { children: ReactNode; className?: string; label?: string }) {
+function PhoneFrame({
+  children,
+  className,
+  label,
+  footer,
+}: {
+  children: ReactNode;
+  className?: string;
+  label?: string;
+  footer?: ReactNode;
+}) {
   return (
     <figure className="flex flex-col items-center gap-3">
       <div
@@ -626,6 +644,7 @@ function PhoneFrame({ children, className, label }: { children: ReactNode; class
         {children}
       </div>
       {label ? <figcaption className="pt-2 text-footnote text-label-secondary">{label}</figcaption> : null}
+      {footer}
     </figure>
   );
 }
@@ -937,7 +956,7 @@ function MockChooseService() {
           </ListSection>
         </div>
       </div>
-      <BottomBar position="sticky" className="absolute inset-x-0 bottom-0" summary={t("people", { count: 6, minutes: 18 })}>
+      <BottomBar position="absolute" summary={t("people", { count: 6, minutes: 18 })}>
         <Button block>{t("take")}</Button>
       </BottomBar>
     </PhoneFrame>
@@ -946,31 +965,47 @@ function MockChooseService() {
 
 function MockMyTicket() {
   const t = useTranslations("design.mockups.ticket");
+  const [source, setSource] = useState<TicketSource>("qr");
   return (
-    <PhoneFrame label={`03 · ${t("title")}`}>
-      <div className="absolute inset-0 overflow-y-auto">
+    <PhoneFrame
+      label={`03 · ${t("title")}`}
+      footer={
+        <SegmentedControl<TicketSource>
+          className="w-72"
+          label={t("source")}
+          value={source}
+          onValueChange={setSource}
+          options={[
+            { value: "qr", label: t("sourceOnSite") },
+            { value: "remote", label: t("sourceRemote") },
+          ]}
+        />
+      }
+    >
+      <div className={cn("absolute inset-0 overflow-y-auto", canSignalOnMyWay(source) ? "pb-44" : "pb-28")}>
         <NavigationBar
           variant="inline"
           title={t("title")}
           back={{ label: t("back"), onClick: () => {} }}
           trailing={<IconButton label={t("share")} icon={<Share />} variant="plain" />}
         />
-        <div className="flex flex-col gap-4 px-4 pt-3 pb-6">
+        <div className="flex flex-col gap-4 px-4 pt-3">
           <DemoTicketHero />
+          <Button block variant="tinted" leadingIcon={<MessageCircle aria-hidden className="size-5" />}>
+            {t("whatsapp")}
+          </Button>
           <CalloutCard icon={<Bell />}>
             {t.rich("alert", { count: 3, b: (chunks) => <strong className="font-semibold">{chunks}</strong> })}
           </CalloutCard>
           <AdRow />
-          <div className="flex flex-col gap-1 pt-2">
-            <Button block variant="tinted">
-              {t("onMyWay")}
-            </Button>
-            <Button block variant="destructive-plain">
-              {t("cancel")}
-            </Button>
-          </div>
         </div>
       </div>
+      <TicketBottomActions
+        position="absolute"
+        source={source}
+        onMyWayLabel={t("onMyWay")}
+        cancelLabel={t("cancel")}
+      />
     </PhoneFrame>
   );
 }
@@ -1026,7 +1061,7 @@ function MockCounter() {
           </div>
         </div>
       </div>
-      <BottomBar position="sticky" className="absolute inset-x-0 bottom-0">
+      <BottomBar position="absolute">
         <Button block trailingIcon={<ArrowRight aria-hidden className="size-5 stroke-[2.25]" />}>
           {t("next")}
         </Button>
