@@ -41,6 +41,8 @@ test.describe("M1 — authentification et établissements", () => {
     await page.goto("/login");
     await expect(page).toHaveURL(/\/app$/);
 
+    // Déconnexion depuis Réglages (M4).
+    await page.getByRole("link", { name: "Réglages" }).click();
     await page.getByRole("button", { name: "Se déconnecter" }).click();
     await expect(page).toHaveURL(/\/login$/);
 
@@ -92,6 +94,8 @@ test.describe("M1 — authentification et établissements", () => {
   test("redirection ouverte refusée après connexion", async ({ page }) => {
     const email = uniqueEmail("redirect");
     await signUpViaUi(page, { name: "Test Redirect", email });
+    // Déconnexion depuis Réglages (M4).
+    await page.getByRole("link", { name: "Réglages" }).click();
     await page.getByRole("button", { name: "Se déconnecter" }).click();
     await page.goto(`/login?next=${encodeURIComponent("https://evil.example/app")}`);
     await signInViaUi(page, email);

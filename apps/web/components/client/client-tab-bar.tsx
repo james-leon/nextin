@@ -1,12 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLiteT } from "@/lib/i18n/lite";
 import { Clock, ScanLine, UserRound } from "lucide-react";
 import { TabBar } from "@/components/ui/tab-bar";
 
 /** Onglets du client (maquette 01) : Scanner, Mon ticket, Profil. */
 export function ClientTabBar({ active, className }: { active: "scan" | "ticket" | "profile"; className?: string }) {
-  const t = useTranslations("client.tabs");
+  const t = useLiteT("client.tabs");
   return (
     <TabBar
       label={t("label")}

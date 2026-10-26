@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { useRouter } from "next/navigation";
 import { Check, Clock } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
@@ -23,9 +23,9 @@ import type { EntryInfo } from "@/lib/client/types";
 
 /** Écran 02 « Choisir un service » : files en direct, accès prioritaire, une action principale. */
 export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; captchaSiteKey: string | null }) {
-  const t = useTranslations("client.service");
-  const te = useTranslations("errors");
-  const locale = useLocale();
+  const t = useLiteT("client.service");
+  const te = useLiteT("errors");
+  const locale = useLiteLocale();
   const router = useRouter();
   const captchaRef = useRef<HTMLDivElement>(null);
   const [board, setBoard] = useState<BranchBoard>(entry.board);
@@ -84,7 +84,7 @@ export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; ca
       return;
     }
     setPending(false);
-    setError(te.has(outcome.error as never) ? te(outcome.error as never) : te("generic"));
+    setError(te.has(outcome.error) ? te(outcome.error) : te("generic"));
   }
 
   return (

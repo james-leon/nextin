@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLiteT } from "@/lib/i18n/lite";
 import { Star } from "lucide-react";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,8 @@ import type { TicketView } from "@/lib/client/types";
 
 /** Note de 1 à 5 après le passage (une seule fois), commentaire facultatif. */
 export function TicketRating({ token, onRated }: { token: string; onRated: (view: TicketView) => void }) {
-  const t = useTranslations("client.ticket");
-  const te = useTranslations("errors");
+  const t = useLiteT("client.ticket");
+  const te = useLiteT("errors");
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [pending, setPending] = useState(false);
@@ -24,7 +24,7 @@ export function TicketRating({ token, onRated }: { token: string; onRated: (view
     const { data, error: e } = await callRpc<TicketView>("rate_ticket", { p_token: token, p_rating: rating, p_comment: comment.trim() || null });
     setPending(false);
     if (data) return onRated(data);
-    setError(te.has(e.message as never) ? te(e.message as never) : te(e.status === 0 ? "network" : "generic"));
+    setError(te.has(e.message) ? te(e.message) : te(e.status === 0 ? "network" : "generic"));
   }
 
   return (

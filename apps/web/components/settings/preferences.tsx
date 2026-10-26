@@ -1,12 +1,22 @@
 "use client";
 
 import { useTransition } from "react";
-import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { setLocale } from "@/i18n/actions";
 import { useThemePreference, type ThemePreference } from "@/components/theme/theme";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Spinner } from "@/components/ui/spinner";
+
+export type PreferencesLabels = {
+  appearance: string;
+  auto: string;
+  light: string;
+  dark: string;
+  appearanceFooter?: string;
+  language: string;
+  french: string;
+  english: string;
+};
 
 function Group({ header, footer, children }: { header: React.ReactNode; footer?: string; children: React.ReactNode }) {
   return (
@@ -20,42 +30,37 @@ function Group({ header, footer, children }: { header: React.ReactNode; footer?:
 
 /**
  * Réglages Apparence (Auto / Clair / Sombre, enregistré sur l'appareil) et Langue (FR / EN, cookie
- * NEXTIN_LOCALE). Utilisé sur le profil client et dans les réglages du personnel.
+ * NEXTIN_LOCALE). Textes fournis par le serveur : utilisable sur les pages client comme dans l'espace du personnel.
  */
-export function Preferences({ appearanceFooter, showAppearance = true }: { appearanceFooter?: string; showAppearance?: boolean }) {
-  const tt = useTranslations("theme");
-  const tc = useTranslations("common");
+export function Preferences({ labels, locale }: { labels: PreferencesLabels; locale: string }) {
   const [pref, setPref] = useThemePreference();
-  const locale = useLocale();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   return (
     <div className="flex flex-col gap-6">
-      {showAppearance ? (
-        <Group header={tt("label")} footer={appearanceFooter}>
-          <SegmentedControl<ThemePreference>
-            label={tt("label")}
-            value={pref}
-            onValueChange={setPref}
-            options={[
-              { value: "auto", label: tt("auto") },
-              { value: "light", label: tt("light") },
-              { value: "dark", label: tt("dark") },
-            ]}
-          />
-        </Group>
-      ) : null}
+      <Group header={labels.appearance} footer={labels.appearanceFooter}>
+        <SegmentedControl<ThemePreference>
+          label={labels.appearance}
+          value={pref}
+          onValueChange={setPref}
+          options={[
+            { value: "auto", label: labels.auto },
+            { value: "light", label: labels.light },
+            { value: "dark", label: labels.dark },
+          ]}
+        />
+      </Group>
       <Group
         header={
           <>
-            {tc("language")}
+            {labels.language}
             {pending ? <Spinner className="size-3.5" /> : null}
           </>
         }
       >
         <SegmentedControl
-          label={tc("language")}
+          label={labels.language}
           value={locale}
           onValueChange={(v) =>
             startTransition(async () => {
@@ -64,8 +69,8 @@ export function Preferences({ appearanceFooter, showAppearance = true }: { appea
             })
           }
           options={[
-            { value: "fr", label: tc("french") },
-            { value: "en", label: tc("english") },
+            { value: "fr", label: labels.french },
+            { value: "en", label: labels.english },
           ]}
         />
       </Group>

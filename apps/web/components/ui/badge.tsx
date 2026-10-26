@@ -11,7 +11,7 @@ const badgeVariants = cva(
         accent: "bg-accent-tint text-accent-on-tint",
         orange: "bg-orange-tint text-orange-text",
         green: "bg-green-tint text-green-text",
-        red: "bg-red-tint text-red-text",
+        red: "bg-red-tint text-red-on-tint",
         navy: "bg-navy text-white",
       },
       /** pill : statut (« Ouvert ») ; tag : étiquette compacte (« RDV », « En pause »). */

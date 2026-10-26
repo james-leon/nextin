@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLiteT } from "@/lib/i18n/lite";
 import { ScanLine, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -15,8 +15,8 @@ const ACTIVE = new Set(["waiting", "called", "serving"]);
 
 /** Onglet « Mon ticket » : ouvre le ticket en cours de cet appareil, sinon invite à scanner. */
 export function MyTicketRedirect() {
-  const t = useTranslations("client.myTickets");
-  const tc = useTranslations("common");
+  const t = useLiteT("client.myTickets");
+  const tc = useLiteT("common");
   const router = useRouter();
   const [empty, setEmpty] = useState(false);
 

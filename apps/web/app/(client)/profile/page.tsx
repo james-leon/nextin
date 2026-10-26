@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { ShieldCheck, UserRound } from "lucide-react";
 import { ClientTabBar } from "@/components/client/client-tab-bar";
 import { Preferences } from "@/components/settings/preferences";
+import { preferencesLabels } from "@/lib/i18n/preferences-labels";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
@@ -19,7 +20,7 @@ export default async function ProfilePage() {
     <main className="min-h-dvh pb-28">
       <NavigationBar title={t("title")} contentClassName="max-w-lg" />
       <div className="mx-auto flex max-w-lg flex-col gap-7 px-4 pt-3">
-        <Preferences appearanceFooter={t("appearanceFooter")} />
+        <Preferences labels={await preferencesLabels(t("appearanceFooter"))} locale={await getLocale()} />
         <section>
           <h3 className="px-4 pb-1.5 text-footnote uppercase text-label-secondary">{t("privacyHeader")}</h3>
           <CalloutCard icon={<ShieldCheck />} tone="green">

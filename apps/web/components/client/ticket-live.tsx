@@ -1,31 +1,38 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
 import { Bell, CheckCircle2, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
 import { callForCode, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { boardTopic, REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
-import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { TicketHero } from "@/components/ui/ticket-hero";
+import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
 import { savedTicket, saveTicket } from "@/lib/client/my-tickets";
 import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib/client/realtime";
 import { callRpc } from "@/lib/client/supabase-public";
 import { waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
-import { TicketRating } from "./ticket-rating";
+
+// Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
+const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
+const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "") ?? "";
 
+const aheadKey = (token: string) => `nextin-ahead-${token}`;
+const noSubscribe = () => () => {};
+
+/** Plus grand nombre de personnes devant vu sur cet appareil (barre de progression). */
 function readMaxAhead(token: string): number {
   try {
-    return Number(localStorage.getItem(`nextin-ahead-${token}`) ?? 0) || 0;
+    return Number(localStorage.getItem(aheadKey(token)) ?? 0) || 0;
   } catch {
     return 0;
   }
@@ -33,18 +40,19 @@ function readMaxAhead(token: string): number {
 
 /** Écran 03 « Mon ticket » : numéro et attente en héros, suivi en temps réel, appel, fin de passage. */
 export function TicketLive({ token, initial }: { token: string; initial: TicketView }) {
-  const t = useTranslations("client.ticket");
-  const tk = useTranslations("counterKinds");
-  const locale = useLocale();
+  const t = useLiteT("client.ticket");
+  const tk = useLiteT("counterKinds");
+  const locale = useLiteLocale();
   const [view, setView] = useState(initial);
   const [board, setBoard] = useState<BranchBoard | null>(null);
   const [status, setStatus] = useState<RealtimeStatus>("connecting");
   const [now, setNow] = useState(() => new Date());
-  const [maxAhead, setMaxAhead] = useState(0);
-  const [entry, setEntry] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [copied, setCopied] = useState(false);
   const lastAlert = useRef<string | null>(null);
+  // Données gardées sur l'appareil, lues sans décalage d'hydratation (null / 0 côté serveur).
+  const entry = useSyncExternalStore(noSubscribe, () => savedTicket(token)?.entry ?? null, () => null);
+  const storedMaxAhead = useSyncExternalStore(noSubscribe, () => readMaxAhead(token), () => 0);
 
   const counterName = (c: CounterRef | Pick<BoardCall, "counter_kind" | "counter_number" | "counter_label">) =>
     "kind" in c ? (c.label ?? `${tk(c.kind)} ${c.number}`) : (c.counter_label ?? `${tk(c.counter_kind)} ${c.counter_number}`);
@@ -69,27 +77,22 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
     };
   }, [token, initial.branch.id]);
 
-  // Lien gardé sur l'appareil (onglet « Mon ticket ») et code d'entrée pour revenir aux services.
+  // Lien gardé sur l'appareil (onglet « Mon ticket »), y compris pour un lien reçu (ticket d'accueil, partage).
   useEffect(() => {
-    const saved = savedTicket(token);
-    setEntry(saved?.entry ?? null);
-    if (!saved) saveTicket({ token, code: initial.display_code, entry: null });
-    setMaxAhead(readMaxAhead(token));
+    if (!savedTicket(token)) saveTicket({ token, code: initial.display_code, entry: null });
   }, [token, initial.display_code]);
 
   const call = board ? callForCode(board, view.display_code) : null;
-  const progress = view.status === "waiting" ? waitingProgress(view, board, maxAhead, now) : null;
+  const progress = view.status === "waiting" ? waitingProgress(view, board, storedMaxAhead, now) : null;
 
   useEffect(() => {
-    if (progress && progress.maxAhead > maxAhead) {
-      setMaxAhead(progress.maxAhead);
-      try {
-        localStorage.setItem(`nextin-ahead-${token}`, String(progress.maxAhead));
-      } catch {
-        // Stockage indisponible : la barre repart du nombre actuel.
-      }
+    if (!progress || progress.maxAhead <= readMaxAhead(token)) return;
+    try {
+      localStorage.setItem(aheadKey(token), String(progress.maxAhead));
+    } catch {
+      // Stockage indisponible : la barre repart du nombre actuel.
     }
-  }, [progress, maxAhead, token]);
+  }, [progress, token]);
 
   // Appel (et chaque rappel) : vibration, son, titre de l'onglet.
   useEffect(() => {
@@ -119,6 +122,7 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
     } else if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(url).then(() => setCopied(true), () => undefined);
     } else {
+      // Page non sécurisée (test en Wi-Fi local) : partage par WhatsApp.
       window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, "_blank", "noopener");
     }
   }
@@ -180,7 +184,10 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
             }
           />
         ) : (
-          <section aria-live="polite" className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center shadow-card">
+          <section
+            aria-live="polite"
+            className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center shadow-card"
+          >
             {view.status === "served" ? (
               <CheckCircle2 aria-hidden className="size-10 stroke-[1.5] text-green" />
             ) : (
@@ -240,16 +247,18 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
             cancelLabel={t("cancel")}
             onCancel={() => setConfirmCancel(true)}
           />
-          <AlertDialog
-            open={confirmCancel}
-            onOpenChange={setConfirmCancel}
-            title={t("cancelTitle")}
-            description={t("cancelBody")}
-            cancelLabel={t("cancelKeep")}
-            actionLabel={t("cancel")}
-            destructive
-            onAction={cancel}
-          />
+          {confirmCancel ? (
+            <AlertDialog
+              open
+              onOpenChange={setConfirmCancel}
+              title={t("cancelTitle")}
+              description={t("cancelBody")}
+              cancelLabel={t("cancelKeep")}
+              actionLabel={t("cancel")}
+              destructive
+              onAction={cancel}
+            />
+          ) : null}
         </>
       ) : null}
     </main>

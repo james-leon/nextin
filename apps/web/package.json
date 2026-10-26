@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "screenshots": "playwright test --grep @screenshots --grep-invert @never-matches"
+    "screenshots": "node ../../scripts/screenshots.mjs"
   },
   "dependencies": {
     "@nextin/shared": "workspace:*",

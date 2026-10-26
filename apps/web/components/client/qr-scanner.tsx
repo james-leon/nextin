@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLiteT } from "@/lib/i18n/lite";
 import { ScannerFrame } from "@/components/ui/scanner-frame";
 import { entryCodeFromScan } from "@/lib/client/entry-code";
 
@@ -15,7 +15,7 @@ type Phase = "idle" | "scanning" | "denied" | "unavailable" | "invalid";
  * La caméra exige une page sécurisée (https) : sinon on invite à utiliser l'appareil photo du téléphone.
  */
 export function QrScanner() {
-  const t = useTranslations("client.scanner");
+  const t = useLiteT("client.scanner");
   const router = useRouter();
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);

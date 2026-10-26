@@ -159,7 +159,7 @@ insert into vals select 'l1', public.take_ticket((select id from ids where name 
   'e3000000-0000-0000-0000-000000000003')->>'public_token';
 select is((select display_code from public.tickets where public_token = (select v from vals where name = 'l1')), 'L-001',
   'chaque service a sa propre numérotation');
-select is(public.next_ticket_number((select id from ids where name = 'lab'), current_date + 1), 1, 'la numérotation repart à 1 chaque jour');
+select is(public.next_ticket_number((select id from ids where name = 'lab'), (now() at time zone 'Africa/Douala')::date + 1), 1, 'la numérotation repart à 1 chaque jour');
 
 select tests.logout();
 update public.services set max_daily_tickets = 1 where id = (select id from ids where name = 'lab');

@@ -103,7 +103,7 @@ export function TestDesk({
 
       <form action={action}>
         <input type="hidden" name="counterId" value={counterId} />
-        <Button type="submit" name="command" value={counterOpen ? "close" : "open"} variant="gray" block disabled={pending || !!current}>
+        <Button type="submit" name="command" value={counterOpen ? "close" : "open"} variant="tinted" block disabled={pending || !!current}>
           {counterOpen ? t("closeCounter") : t("openCounter")}
         </Button>
       </form>

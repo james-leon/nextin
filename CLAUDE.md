@@ -15,7 +15,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 - `apps/web` — Next.js 16 (App Router, Turbopack), Tailwind v4, composants maison façon shadcn (Radix + cva), next-intl.
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
-- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-test.mjs`, `db-types.mjs`, `supabase-remote.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
+- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
 
 ## Commandes
@@ -24,11 +24,12 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 | `pnpm dev` / `pnpm build` | app web |
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` | ESLint, TypeScript, Vitest (tous les paquets) |
 | `pnpm test:e2e` | Playwright (après `pnpm build`) — projets `mobile` et `desktop` |
-| `pnpm --filter @nextin/web screenshots` | captures → `docs/captures/<module>/` |
+| `pnpm --filter @nextin/web screenshots` | captures (`scripts/screenshots.mjs`, tests `@screenshots`) → `docs/captures/<module>/` |
 | `pnpm db:start` · `pnpm db:reset` · `pnpm db:test` · `pnpm db:types` | Supabase local (Docker, avec Realtime), tests pgTAP puis intégration (`supabase/tests/integration`, `node:test`), types TS. `db:reset` redémarre aussi Kong (cache DNS de Realtime) ; `db:test:sql` = pgTAP seul |
 | `pnpm db:link` · `pnpm db:push` | lier et migrer le projet distant (`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`) |
 | `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
 | `pnpm e2e:local` | build + Playwright contre le Supabase local |
+| `pnpm dev:lan` | test sur téléphone (même Wi-Fi) : `APP_URL` et Supabase local sur l'IP du PC (`scripts/dev-lan.mjs`) |
 
 En local, la CLI Supabase lit `SUPABASE_DB_PASSWORD` s'il est défini : les scripts `db:*` locaux passent par `scripts/local-env.mjs`, qui le retire.
 Captcha : désactivé en local et en CI (Cloudflare injoignable depuis les conteneurs) ; activé en production dès que `NEXT_PUBLIC_TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` sont présentes (et dans Supabase Auth). Un `APP_URL` public sans clé est refusé.
@@ -81,6 +82,13 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Erreurs métier : message = code (`counter_busy`, `branch_closed`…), SQLSTATE `P04xx` ; `queueErrorCode` / `mapDbError` → dictionnaire `errors`.
 - Estimation : `packages/shared/src/queue/estimate.ts` et `public.estimate_wait_seconds` doivent rester identiques (fixtures partagées, test de parité).
 - Temps réel : topics de `@nextin/shared/queue` (`boardTopic`, `ticketTopic`, `staffTopic`), alimentés par les déclencheurs SQL ; jamais de nom ni d'identifiant client dans une diffusion.
+
+## Pages client (M4, `docs/modules/M4.md`)
+- `app/(client)` : `/` scanner, `/c` code, `/q/[code]` choix du service, `/t/[token]` ticket, `/t` onglet, `/profile`. RSC + petits composants client.
+- **Budget < 200 Ko** (test Playwright) : pas de supabase-js ni de next-intl côté navigateur sur ces pages. Utiliser `lib/client/*` (`callRpc`, `subscribeBroadcast`, session anonyme, `takeTicket`) et `useLiteT` / `useLiteLocale` (`lib/i18n/lite.tsx`) ; importer `@nextin/shared/queue/live` (sans Zod) plutôt que `@nextin/shared/queue`. Charger à la demande (`next/dynamic`) ce qui ne sert pas au premier affichage.
+- Pas de `crypto.randomUUID`, caméra ni presse-papiers sans repli : le test en Wi-Fi local est en `http`.
+- `Preferences` (apparence + langue) reçoit ses textes du serveur (`preferencesLabels()`). La déconnexion du personnel est dans `/app/settings`.
+- Poste de test temporaire `…/branches/[branchId]/test-desk` : à supprimer au M5.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

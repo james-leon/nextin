@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LogOut, Mail } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { AdminPage } from "@/components/admin/admin-page";
 import { Preferences } from "@/components/settings/preferences";
+import { preferencesLabels } from "@/lib/i18n/preferences-labels";
 import { Button } from "@/components/ui/button";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { requireStaffSession } from "@/lib/auth/session";
@@ -36,7 +37,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             title={session.email ?? ""}
           />
         </ListSection>
-        <Preferences appearanceFooter={t("appearanceFooter")} />
+        <Preferences labels={await preferencesLabels(t("appearanceFooter"))} locale={await getLocale()} />
         <form action={signOut}>
           <Button type="submit" block variant="destructive-plain" leadingIcon={<LogOut aria-hidden className="size-5" />}>
             {ta("signOut")}

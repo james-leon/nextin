@@ -54,6 +54,8 @@
   --red-fill: #d70015;
   --red-text: #d70015;
   --red-tint: rgb(255 59 48 / 0.12);
+  /* Texte rouge sur fond teinté (badges) : AA sur --red-tint. */
+  --red-on-tint: #b3000f;
 
   /* Numéro de ticket : Navy en clair (maquette), blanc en sombre. */
   --ticket-number: #0d2c54;
@@ -100,6 +102,7 @@
   --red-fill: #d70015;
   --red-text: #ff6961;
   --red-tint: rgb(255 69 58 / 0.2);
+  --red-on-tint: #ff8a84;
   --ticket-number: #ffffff;
   --brand-tile: #1a6bb5;
   --elev-card: none;
@@ -163,6 +166,7 @@
   --color-red: var(--red-fill);
   --color-red-text: var(--red-text);
   --color-red-tint: var(--red-tint);
+  --color-red-on-tint: var(--red-on-tint);
 
   /* Échelle typographique iOS (en rem : suit la taille de texte de l'utilisateur) */
   --text-large-title: 2.125rem;

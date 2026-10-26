@@ -123,7 +123,8 @@ test.describe("M4 — parcours client", () => {
     await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le ticket" }).click();
     await expect(page.getByText("Ticket annulé")).toBeVisible();
     await page.getByRole("link", { name: "Prendre un nouveau ticket" }).click();
-    await page.waitForURL(new RegExp(`/q/${shortCode}$`));
+    await page.waitForURL(/\/q\/[A-Za-z0-9]{22}$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Choisir un service" })).toBeVisible();
 
     await page.goto("/t");
     await expect(page.getByText("Aucun ticket en cours")).toBeVisible();
