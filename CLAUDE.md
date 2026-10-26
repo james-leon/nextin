@@ -28,9 +28,11 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 | `pnpm db:start` · `pnpm db:reset` · `pnpm db:test` · `pnpm db:types` | Supabase local (Docker), tests pgTAP, types TS |
 | `pnpm db:link` · `pnpm db:push` | lier et migrer le projet distant (`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`) |
 | `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
+| `pnpm e2e:local` | build + Playwright contre le Supabase local |
 
 En local, la CLI Supabase lit `SUPABASE_DB_PASSWORD` s'il est défini : les scripts `db:*` locaux le retirent (`env -u`).
-Captcha local : clés de test officielles Cloudflare Turnstile dans `supabase/.env` et `apps/web/.env.local` (non versionnés).
+Captcha : désactivé en local et en CI (Cloudflare injoignable depuis les conteneurs) ; activé en production dès que `NEXT_PUBLIC_TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` sont présentes (et dans Supabase Auth). Un `APP_URL` public sans clé est refusé.
+Tests et dev **contre le Supabase local** : préfixer par `bash scripts/local-env.sh` (retire les variables du projet distant, qui priment sur `.env.local`) ; `pnpm e2e:local` fait build + Playwright.
 
 ## Base de données et sécurité
 - RLS activée sur **toutes** les tables (vérifié par pgTAP). Isolation par `organization_id` présent sur chaque table métier.
@@ -38,6 +40,7 @@ Captcha local : clés de test officielles Cloudflare Turnstile dans `supabase/.e
 - Écritures sensibles **uniquement via RPC** `SECURITY DEFINER` (pas de policy INSERT/UPDATE directe sur les tables critiques). `EXECUTE` révoqué par défaut sur les fonctions : accorder explicitement.
 - Sessions anonymes (clients) : rôle `authenticated` + claim `is_anonymous` — toujours les exclure des droits du personnel (`public.is_anonymous()`).
 - Journal d'audit append-only (`public.audit(...)`) pour toute action sensible. Rate limiting : `public.check_rate_limit(key, max, window)`.
+- Redirections après connexion uniquement via `safeNextPath` (jamais de redirection ouverte). Server actions : Zod puis `ActionResult` avec des codes d'erreur du dictionnaire `errors`.
 - Validation Zod côté client **et** serveur (schémas dans `@nextin/shared/schemas`). Turnstile vérifié côté serveur (`lib/security/turnstile.ts`).
 - Données personnelles purgées après `organizations.data_retention_days` (défaut 30 j) — statistiques anonymisées uniquement.
 - Chaque nouvelle table : RLS + policies + test pgTAP d'isolation entre deux organisations.
