@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ["@nextin/shared"],
+  // Génération PDF côté serveur ; les polices Inter (OFL) accompagnent les fonctions serverless.
+  serverExternalPackages: ["@react-pdf/renderer"],
+  outputFileTracingIncludes: { "/**": ["./lib/pdf/fonts/*.woff"] },
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },

@@ -54,11 +54,13 @@ type RowProps = {
   icon?: ReactNode;
   accessory?: "chevron" | "check" | ReactNode;
   href?: string;
+  /** Lien de téléchargement (fichier) : balise <a download> plutôt qu'une navigation. */
+  download?: boolean;
   onClick?: () => void;
   selected?: boolean;
   destructive?: boolean;
   className?: string;
-  /** Rôle ARIA explicite (ex. "radio" dans une liste de choix). */
+  /** Rôle ARIA explicite : "radio" (choix exclusif) ou "checkbox" (choix multiple). */
   role?: string;
 };
 
@@ -69,6 +71,7 @@ export function ListRow({
   icon,
   accessory,
   href,
+  download,
   onClick,
   selected,
   destructive,
@@ -101,6 +104,15 @@ export function ListRow({
   const base = cn("flex w-full items-center gap-3 pl-4 text-left", className);
   const interactive = "transition-colors active:bg-fill-tertiary hover:bg-fill-tertiary/50";
 
+  if (href && download) {
+    return (
+      <li className="group/row">
+        <a href={href} download className={cn(base, interactive)}>
+          {content}
+        </a>
+      </li>
+    );
+  }
   if (href) {
     return (
       <li className="group/row">
@@ -112,12 +124,12 @@ export function ListRow({
   }
   if (onClick) {
     return (
-      <li className="group/row" role={role === "radio" ? "none" : undefined}>
+      <li className="group/row" role={role === "radio" || role === "checkbox" ? "none" : undefined}>
         <button
           type="button"
           onClick={onClick}
           role={role}
-          aria-checked={role === "radio" ? !!selected : undefined}
+          aria-checked={role === "radio" || role === "checkbox" ? !!selected : undefined}
           className={cn(base, interactive)}
         >
           {content}

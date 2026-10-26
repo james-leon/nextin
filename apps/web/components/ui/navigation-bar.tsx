@@ -8,11 +8,11 @@ import { cn } from "@/lib/cn";
 type Back = { href?: string; onClick?: () => void; label: string };
 
 function BackButton({ back }: { back: Back }) {
-  const cls = "pressable -ml-2 flex h-11 min-w-11 items-center pr-2 text-body text-accent-text";
+  const cls = "pressable -ml-2 flex h-11 min-w-11 max-w-full items-center pr-2 text-body text-accent-text";
   const inner = (
     <>
-      <ChevronLeft aria-hidden className="size-7 stroke-[2.25]" />
-      <span>{back.label}</span>
+      <ChevronLeft aria-hidden className="size-7 shrink-0 stroke-[2.25]" />
+      <span className="truncate">{back.label}</span>
     </>
   );
   return back.href ? (

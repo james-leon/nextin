@@ -91,10 +91,11 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
           </section>
         ) : (
           <>
-            <ListSection footer={t("comingSoon")}>
+            <ListSection>
               {orgs.map(({ org, role }) => (
                 <ListRow
                   key={org.id}
+                  href={`/app/o/${org.id}`}
                   icon={
                     <ListIcon color="var(--brand-tile)">
                       <OrgTypeIcon type={org.type} />
@@ -103,7 +104,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                   title={<span className="font-semibold">{org.name}</span>}
                   subtitle={`${tt(org.type)} · ${tr(role)}`}
                   accessory={
-                    org.status === "active" ? undefined : (
+                    org.status === "active" ? "chevron" : (
                       <Badge tone={org.status === "suspended" ? "red" : "orange"}>{t(`status.${org.status}`)}</Badge>
                     )
                   }

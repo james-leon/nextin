@@ -21,7 +21,8 @@ export function BottomBar({
     <div
       className={cn(
         "safe-bottom z-20 bg-gradient-to-t from-grouped from-70% to-transparent px-4 pt-6 pb-4",
-        position === "fixed" && "fixed inset-x-0 bottom-0",
+        // --shell-sidebar : largeur d'une barre latérale éventuelle (back-office), pour centrer sur le contenu.
+        position === "fixed" && "fixed right-0 bottom-0 left-[var(--shell-sidebar,0px)]",
         position === "absolute" && "absolute inset-x-0 bottom-0",
         position === "sticky" && "sticky bottom-0",
         className,
