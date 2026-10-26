@@ -43,3 +43,47 @@ export const inviteMemberSchema = z
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 
 export const turnstileTokenSchema = z.string().min(1).max(2048);
+
+/** Mot de passe du personnel : 10 caractères minimum, lettres et chiffres (aligné sur Supabase Auth). */
+export const passwordSchema = z
+  .string()
+  .min(10, "password_too_short")
+  .max(72, "password_too_long")
+  .regex(/[A-Za-z]/, "password_needs_letter")
+  .regex(/\d/, "password_needs_digit");
+
+export const emailSchema = z.string().trim().toLowerCase().pipe(z.email("email_invalid"));
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "password_required").max(72),
+  next: z.string().optional(),
+  captchaToken: z.string().max(2048).optional(),
+});
+
+export const loginCodeRequestSchema = z.object({
+  email: emailSchema,
+  captchaToken: z.string().max(2048).optional(),
+});
+
+export const loginCodeVerifySchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().regex(/^\d{6}$/, "code_invalid"),
+  next: z.string().optional(),
+});
+
+export const signupSchema = z.object({
+  fullName: z.string().trim().min(2, "name_too_short").max(120),
+  email: emailSchema,
+  password: passwordSchema,
+  next: z.string().optional(),
+  captchaToken: z.string().max(2048).optional(),
+});
+
+/** Formulaire « Nouvel établissement » (le slug est dérivé du nom côté serveur). */
+export const newOrganizationFormSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  type: orgTypeSchema,
+  defaultLocale: z.enum(["fr", "en"]).default("fr"),
+  captchaToken: z.string().max(2048).optional(),
+});
