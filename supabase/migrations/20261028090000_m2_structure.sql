@@ -19,6 +19,9 @@ create table public.branches (
   address text check (char_length(address) <= 240),
   city text check (char_length(city) <= 80),
   location extensions.geography(Point, 4326),
+  -- Coordonnées lisibles par l'application (PostgREST renvoie la géographie en binaire).
+  latitude double precision generated always as (extensions.st_y(location::extensions.geometry)) stored,
+  longitude double precision generated always as (extensions.st_x(location::extensions.geometry)) stored,
   timezone text not null default 'Africa/Douala',
   phone_e164 text check (phone_e164 ~ '^\+237[26][0-9]{8}$'),
   active boolean not null default true,

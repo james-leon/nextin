@@ -57,7 +57,7 @@ select is((select count(*)::int from public.qr_codes where branch_id = (select i
   'une agence reçoit un QR code actif');
 select matches((select short_code from public.qr_codes where branch_id = (select id from ids where name = 'akwa') and active),
   '^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$', 'code court de 6 caractères sans 0/O/1/I');
-select ok((select abs(extensions.st_y(location::extensions.geometry) - 4.05) < 0.0001 from public.branches where id = (select id from ids where name = 'akwa')),
+select ok((select abs(latitude - 4.05) < 0.0001 and abs(longitude - 9.70) < 0.0001 from public.branches where id = (select id from ids where name = 'akwa')),
   'la position GPS est enregistrée');
 select throws_ok($$ select public.create_branch((select id from ids where name = 'eneo'), 'Pirate') $$,
   '42501', null, 'impossible de créer une agence dans un autre établissement');
