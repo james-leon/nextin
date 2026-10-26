@@ -1,6 +1,6 @@
 # NextIn by Wintek — Plan d'architecture (étape 1)
 
-> Statut : **en attente de validation**. Aucun code applicatif n'est écrit avant le feu vert.
+> Statut : **validé le 26/10/2026**, avec les ajustements de la §10 (intégrés dans tout le document).
 > Conventions : identifiants (tables, colonnes, code) en anglais ; interface en français par défaut, bascule EN.
 
 ---
@@ -30,7 +30,7 @@
 
 | Sujet | Décision | Pourquoi |
 |---|---|---|
-| Identité client | **Supabase Anonymous Sign-in** au premier ticket + `public_token` (128 bits) par ticket | Aucun compte, aucune install ; RLS par `auth.uid()` ; lien WhatsApp `/t/{token}` pour rouvrir le ticket sur un autre appareil ; conversion en compte possible plus tard (M11) |
+| Identité client | **Supabase Anonymous Sign-in** au premier ticket + `public_token` (128 bits) par ticket, **protégés par Cloudflare Turnstile invisible** (captcha natif Supabase Auth à la création de la session anonyme + vérification serveur à chaque prise de ticket) ; **tâche pg_cron quotidienne** qui supprime les comptes anonymes inactifs (> 7 jours sans connexion et sans ticket actif) | Aucun compte, aucune install ; RLS par `auth.uid()` ; lien WhatsApp `/t/{token}` pour rouvrir le ticket sur un autre appareil ; anti-abus sans friction ; conversion en compte possible plus tard (M11) |
 | Écritures sensibles | **Uniquement via RPC Postgres `SECURITY DEFINER`** (`take_ticket`, `call_next`, `finish_ticket`…) — aucune policy INSERT/UPDATE directe sur `tickets` | Le moteur de file est transactionnel (verrous `FOR UPDATE SKIP LOCKED`), atomique et non contournable |
 | Source de vérité de la file | SQL (position, numérotation, appel) ; **formule d'estimation** dupliquée en TS (`packages/shared`) et SQL, avec un **test de parité** | L'estimation doit être calculable côté serveur (établissements à proximité) et côté client (affichage optimiste hors ligne) |
 | Temps réel | **Realtime Broadcast émis par triggers DB** (`realtime.send`) plutôt que Postgres Changes | Pas de fuite de colonnes ; topics publics sans données personnelles pour client/TV ; topics privés (RLS sur `realtime.messages`) pour le staff |
@@ -38,9 +38,10 @@
 | API | Route handlers Next.js pour l'app ; **Edge Functions** pour webhooks et workers | URL de webhook stable, indépendante de l'hébergement web |
 | Notifications | Table **outbox** `notification_jobs` alimentée par triggers → `notify-dispatcher` (pg_net + pg_cron chaque minute) → fournisseurs `whatsapp` → `webpush` → `sms` | Retries, déduplication, bascule SMS, statuts tracés |
 | i18n | `next-intl` **sans préfixe d'URL** (cookie + Accept-Language) ; dictionnaires dans `packages/shared/i18n` | Les URL des QR codes imprimés restent stables quelle que soit la langue |
-| PWA | **Serwist** (`@serwist/next`) : precache, runtime cache, Background Sync, web push | Maintenu, compatible App Router |
+| PWA | **Service worker écrit à la main** (`public/sw.js`) : precache de l'app shell, runtime cache, page hors ligne, web push ; manifest via `app/manifest.ts` | Next.js 16 compile avec Turbopack, que les plugins SW basés sur webpack ne supportent pas ; un SW maison reste petit et entièrement maîtrisé |
 | Poids client | Pages client en RSC, JS client minimal, **pas de framer-motion** sur le parcours client (ressorts en CSS `linear()`), polices système | Budget < 200 Ko, 3G |
 | UI | shadcn/ui (Radix) **re-stylé intégralement** selon les tokens iOS ; `vaul` pour les sheets | Accessibilité Radix + rendu Apple HIG |
+| Hébergement | **Vercel** ; URL publique lue dans la variable `APP_URL`, jamais en dur (QR codes, liens WhatsApp, PDF) | Domaine définitif communiqué avant M2 |
 | PDF supports QR | `@react-pdf/renderer` dans un route handler (chevalet A5, affiche A4) | Rendu vectoriel net, génération serveur, pré-rempli |
 | Hors ligne agent | Snapshot de file + **outbox de commandes idempotentes** (`client_op_id`) en IndexedDB, rejouées au retour réseau | Voir §5.4 |
 
@@ -105,6 +106,8 @@ nextin/
 
 Conventions : `uuid` (`gen_random_uuid()`), `timestamptz`, `created_at`/`updated_at` partout (trigger `set_updated_at`), montants en `integer` XAF. **Chaque table métier porte `organization_id`** (dénormalisé si besoin) pour des policies RLS simples et indexées.
 
+> **Migrations progressives** : ce schéma est la cible. Chaque module ne crée **que** les tables dont il a besoin (M1 : socle identité/tenants/audit/rate limit ; M2 : structure + QR ; M3 : file ; etc. — voir §7.1). Aucune table n'est créée « en avance ».
+
 ### 3.1 Énumérations
 
 ```
@@ -132,7 +135,7 @@ subscription_status: trialing | active | past_due | suspended | cancelled
 |---|---|---|
 | `profiles` | `id` (= auth.users.id), `full_name`, `phone_e164`, `locale`, `avatar_path` | créé par trigger sur `auth.users` (sauf anonymes) |
 | `platform_admins` | `user_id` PK, `granted_by`, `granted_at` | non modifiable par l'app (service role uniquement) |
-| `organizations` | `name`, `slug` unique, `type org_type`, `status org_status` (défaut `pending`), `logo_path`, `country` (`CM`), `currency` (`XAF`), `default_locale` (`fr`), `validated_at`, `validated_by` | idx `status` |
+| `organizations` | `name`, `slug` unique, `type org_type`, `status org_status` (défaut `pending`), `logo_path`, `country` (`CM`), `currency` (`XAF`), `default_locale` (`fr`), `data_retention_days` (défaut **30**, 7-365), `validated_at`, `validated_by` | idx `status` |
 | `memberships` | `organization_id`, `user_id`, `role member_role`, `branch_id` (NULL = toutes agences), `active` | unique (`organization_id`,`user_id`,`branch_id`) ; idx (`user_id`) |
 | `invitations` | `organization_id`, `email`/`phone_e164`, `role`, `branch_id`, `token_hash`, `expires_at`, `accepted_at` | unique `token_hash` |
 
@@ -145,7 +148,7 @@ subscription_status: trialing | active | past_due | suspended | cancelled
 | `announcement_settings` (1:1) | `branch_id` PK, `languages text[]` (`{fr,en}`), `volume` 0-100, `repeat_count` 1-3, `chime_enabled`, `quiet_hours jsonb` (`[{from,to}]`) | |
 | `opening_hours` | `branch_id`, `weekday` 0-6, `opens_at time`, `closes_at time` | unique (`branch_id`,`weekday`,`opens_at`) |
 | `branch_closures` | `branch_id`, `date`, `reason` | unique (`branch_id`,`date`) |
-| `services` | `organization_id`, `branch_id`, `name`, `name_en`, `prefix` (1-2 lettres A-Z), `color`, `description`, `default_service_seconds` (600), `allow_priority`, `allow_remote`, `max_daily_tickets`, `active`, `sort_order` | unique (`branch_id`,`prefix`) |
+| `services` | `organization_id`, `branch_id`, `name`, `name_en`, `prefix` (1-2 lettres A-Z), `color`, `description`, `default_service_seconds` (**obligatoire, saisi par le directeur** à la création du service, 60-7200 s), `allow_priority`, `allow_remote`, `max_daily_tickets`, `active`, `sort_order` | unique (`branch_id`,`prefix`) |
 | `counters` | `organization_id`, `branch_id`, `name`, `kind counter_kind`, `number`, `status counter_status`, `current_agent_id`, `status_changed_at` | unique (`branch_id`,`kind`,`number`) |
 | `counter_services` | `counter_id`, `service_id`, `weight` | PK (`counter_id`,`service_id`) |
 | `counter_sessions` | `counter_id`, `agent_id`, `started_at`, `ended_at` | idx (`counter_id`,`started_at`) |
@@ -157,9 +160,9 @@ subscription_status: trialing | active | past_due | suspended | cancelled
 | Table | Colonnes clés | Contraintes / index |
 |---|---|---|
 | `daily_sequences` | `service_id`, `service_day date`, `last_number` | PK (`service_id`,`service_day`) — incrément atomique `INSERT … ON CONFLICT DO UPDATE … RETURNING` ; jour calculé dans le fuseau de l'agence |
-| `tickets` | `organization_id`, `branch_id`, `service_id`, `service_day`, `number`, `display_code` (ex. `C047`), `public_token` unique, `customer_user_id` (anonyme ou compte), `source`, `priority_level` smallint (0 normal, 1 prioritaire), `priority_reason`, `status`, `sort_key bigint`, `counter_id` (guichet qui appelle/sert), `preferred_counter_id` (RDV avec un praticien), `appointment_id`, `created_by` (staff), `called_at`, `serving_started_at`, `finished_at`, `recall_count`, `transferred_from_id`, **distance** : `is_remote`, `presence_confirmed_at`, `delay_count`, **note** : `rating` 1-5, `rating_comment`, `rated_at` | unique (`service_id`,`service_day`,`number`) ; **idx partiel** (`service_id`,`priority_level` DESC,`sort_key`) WHERE `status='waiting'` ; idx (`branch_id`,`service_day`,`status`) ; idx (`customer_user_id`) ; idx (`counter_id`) WHERE `status IN ('called','serving')` |
+| `tickets` | `organization_id`, `branch_id`, `service_id`, `service_day`, `number`, `display_code` (ex. `C047`), `public_token` unique (NULL après purge), `customer_user_id` (anonyme ou compte), `source`, `priority_level` smallint (0 normal, 1 prioritaire), `priority_reason`, `status`, `sort_key bigint`, `counter_id` (guichet qui appelle/sert), `preferred_counter_id` (RDV avec un praticien), `appointment_id`, `created_by` (staff), `called_at`, `serving_started_at`, `finished_at`, `recall_count`, `transferred_from_id`, **distance** : `is_remote`, `presence_confirmed_at`, `delay_count`, **note** : `rating` 1-5, `rating_comment`, `rated_at` | unique (`service_id`,`service_day`,`number`) ; **idx partiel** (`service_id`,`priority_level` DESC,`sort_key`) WHERE `status='waiting'` ; idx (`branch_id`,`service_day`,`status`) ; idx (`customer_user_id`) ; idx (`counter_id`) WHERE `status IN ('called','serving')` |
 | `ticket_events` | `ticket_id`, `organization_id`, `type` (created, called, recalled, serving, served, no_show, transferred, moved_back, cancelled, presence_confirmed, rated), `actor_user_id`, `counter_id`, `payload jsonb` | idx (`ticket_id`) ; idx (`organization_id`,`created_at`) — base des statistiques |
-| `appointments` | `organization_id`, `branch_id`, `service_id`, `counter_id`, `scheduled_at`, `customer_label` (initiales, jamais annoncé), `phone_e164`, `status`, `ticket_id` | idx (`branch_id`,`scheduled_at`) |
+| `appointments` | `organization_id`, `branch_id`, `service_id`, `counter_id`, `scheduled_at`, `customer_label` (initiales, jamais annoncé), `phone_e164` (purgé), `status`, `ticket_id` | idx (`branch_id`,`scheduled_at`) |
 | `service_time_stats` | `service_id`, `counter_id` (NULL = moyenne service), `ewma_seconds`, `samples`, `updated_at` | PK (`service_id`, `counter_id` COALESCE) — mis à jour par trigger à chaque `served` |
 | `client_ops` | `client_op_id` uuid PK, `user_id`, `counter_id`, `op`, `result jsonb`, `created_at` | idempotence des commandes hors ligne (purge 7 j) |
 
@@ -169,7 +172,10 @@ subscription_status: trialing | active | past_due | suspended | cancelled
 
 **Estimation** (fonction pure, `packages/shared/queue/estimate.ts` + miroir SQL `estimate_wait_seconds`) :
 ```
-débit = Σ sur les guichets ouverts servant le service : 1 / ewma(service, guichet)   (repli : ewma service, puis default_service_seconds)
+durée(service, guichet) = default_service_seconds tant que samples < 10 (historique insuffisant),
+                          puis mélange progressif w·ewma + (1−w)·default avec w = min(1, (samples − 10) / 20) + 0,  (w = 1 dès 30 services)
+                          repli guichet sans historique → durée au niveau service
+débit = Σ sur les guichets ouverts servant le service : 1 / durée(service, guichet)
 attente ≈ (position − 1) / débit + temps restant estimé du service en cours (borne ≥ 0)
 EWMA : α = 0,2, valeurs aberrantes écrêtées (< 20 s ou > 4 × moyenne ignorées)
 Aucun guichet ouvert → estimation basée sur 1 guichet + statut « service fermé pour le moment »
@@ -332,6 +338,19 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | **M10** | Pub + abonnements + super admin | Espace annonceur, ciblage, modération, diffusion TV/app, stats ; plans, abonnements, MTN MoMo / Orange Money ; super admin (validation, plans, revenus, suspension) | Paiements en sandbox, Playwright campagne → modération → diffusion |
 | **M11** | App Expo | Client + agent, réutilise `packages/shared` | Tests Jest/Detox de base |
 
+### 7.1 Tables créées par module (migrations progressives)
+
+| Module | Tables / objets créés |
+|---|---|
+| M1 | `profiles`, `platform_admins`, `organizations`, `memberships`, `invitations`, `audit_log`, `rate_limits`, fonctions RLS, purge des anonymes (pg_cron) |
+| M2 | `branches`, `branch_settings`, `opening_hours`, `branch_closures`, `services`, `counters`, `counter_services`, `qr_codes` |
+| M3 | `daily_sequences`, `tickets`, `ticket_events`, `service_time_stats`, `client_ops`, RPC de file, triggers Realtime, `purge_personal_data()` |
+| M5 | `counter_sessions`, `counter_pauses`, `appointments` |
+| M6 | `displays`, `display_services`, `announcement_settings`, bucket `voices` |
+| M7 | `notification_contacts`, `notification_jobs`, `provider_webhook_events`, `whatsapp_opt_outs` |
+| M8 | `daily_branch_stats`, `daily_counter_stats`, vues `v_service_live` |
+| M10 | `advertisers`, `advertiser_members`, `ad_*`, `plans`, `subscriptions`, `invoices`, `payments`, buckets `ad-creatives`, `org-assets` |
+
 **Données de démo** (script idempotent, enrichi à chaque module) : **DOUALA CLINIC** (Akwa, Douala — Consultation générale `C`, Pédiatrie `P`, Laboratoire `L`, Caisse `K` ; cabinets 1-4, labo 1, caisse 1) et **Eneo — Agence Bonanjo, Douala** (Réclamations `R`, Abonnements `A`, Paiement facture `F` ; guichets 1-5).
 
 ---
@@ -341,20 +360,29 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | Variable | Module | Où la trouver |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN` | M1 | ✅ présentes dans la session |
-| `NEXT_PUBLIC_APP_URL` | M2 (URL encodée dans les QR) | domaine de production |
+| `APP_URL` | M1 (lue par les QR, liens et PDF dès M2) | domaine de production Vercel (en local : `http://localhost:3000`) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | M1 (config) / M4 (usage) | Cloudflare → Turnstile → Add widget (mode *Invisible*) ; la clé secrète est aussi à saisir dans Supabase → Authentication → Attack Protection → Captcha (Turnstile). En dev : clés de test officielles Cloudflare |
 | `IP_HASH_SALT` | M3 | chaîne aléatoire que je peux générer, à stocker dans l'environnement |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | M7 | `npx web-push generate-vapid-keys` |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID_FR`, `ELEVENLABS_VOICE_ID_EN`, `ELEVENLABS_MODEL_ID` | M6 | elevenlabs.io → Profile → API Keys / Voice Library |
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `NEXT_PUBLIC_WHATSAPP_NUMBER` | M7 | Meta for Developers → app → WhatsApp → API Setup / App Settings → Basic |
-| `SMS_PROVIDER` + clés du fournisseur | M7 | selon le fournisseur retenu |
+| `SMS_PROVIDER` + clés du fournisseur | M7 | faux fournisseur `console` en attendant le choix au M7 |
 | `MTN_MOMO_*`, `ORANGE_MONEY_*` | M10 | momodeveloper.mtn.com ; developer.orange.com |
 
 ---
 
-## 9. Questions ouvertes (à trancher avant / pendant M1)
+## 9. Décisions prises (ex-questions ouvertes)
 
-1. **Maquette Claude Design** : je n'y ai pas accès depuis cette session. Merci d'exporter les écrans (PNG ou HTML) dans `design/mockups/` du dépôt, ou de m'en donner le lien de partage. Sans elle, je m'appuierai strictement sur les HIG et sur la description fournie.
-2. **Hébergement web** : Vercel (recommandé, compatible Next.js/edge) ? Et le **domaine** de production (ex. `nextin.cm`) — il est encodé dans les QR imprimés.
-3. **SMS de secours** : quel fournisseur (agrégateur local camerounais, Twilio, Infobip…) ? Je livre l'abstraction + un fournisseur « console » de test en attendant.
-4. **Grille tarifaire** des plans et des packs publicitaires (XAF) — nécessaire en M10 seulement.
-5. **Imprimante thermique** : impression navigateur 80 mm (CSS print, fonctionne avec la plupart des pilotes) par défaut ; ESC/POS via WebUSB en option si vous avez un modèle précis.
+1. **Maquette** : écrans exportés en PNG rangés dans `design/mockups/`, à suivre fidèlement.
+2. **Hébergement** : Vercel ; domaine communiqué avant M2, `APP_URL` en attendant.
+3. **SMS** : faux fournisseur `console` jusqu'au M7.
+4. **Imprimante** : impression navigateur 80 mm (CSS print) pour la V1.
+5. **Tarifs** : définis au M10.
+
+## 10. Ajustements validés
+
+1. **Connexion anonyme protégée** : Turnstile invisible à la création de la session anonyme (captcha Supabase Auth) et à chaque prise de ticket (vérification serveur dans le route handler) ; pg_cron `purge_inactive_anonymous_users()` quotidien.
+2. **Migrations progressives** : chaque module ne crée que ses tables.
+3. **Durée de service par défaut** saisie par le directeur pour chaque service (champ obligatoire), utilisée tant que l'historique est insuffisant (< 10 services), puis fondue progressivement dans la moyenne réelle (§3.4).
+4. **Protection des données** : `organizations.data_retention_days` (défaut 30). pg_cron quotidien `purge_personal_data()` : passé ce délai, suppression des `notification_contacts`, mise à NULL de `tickets.public_token`, `tickets.customer_user_id`, `tickets.rating_comment`, `appointments.phone_e164`/`customer_label`, et des numéros dans `notification_jobs.payload` / `provider_webhook_events.payload`. Seules restent les données anonymisées (numéros de ticket, horodatages, durées, notes chiffrées) qui alimentent les statistiques. `whatsapp_opt_outs` conserve le numéro (obligation de respecter le STOP), haché en SHA-256.
+5. **`APP_URL`** : variable serveur unique, lue par un helper `getAppUrl()` (validé par Zod au démarrage) ; jamais d'URL en dur dans le code.
