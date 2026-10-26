@@ -1,0 +1,31 @@
+{
+  "name": "nextin",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @nextin/web test:e2e",
+    "db:start": "npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta",
+    "db:reset": "env -u SUPABASE_DB_PASSWORD npx supabase db reset",
+    "db:test": "bash scripts/db-test.sh",
+    "db:push": "npx supabase db push --password \"$SUPABASE_DB_PASSWORD\"",
+    "db:link": "npx supabase link --project-ref \"$SUPABASE_PROJECT_REF\" --password \"$SUPABASE_DB_PASSWORD\"",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "db:types": "env -u SUPABASE_DB_PASSWORD npx supabase gen types typescript --local --schema public > packages/shared/src/types/database.tmp && (echo '// G\u00e9n\u00e9r\u00e9 par `pnpm db:types` (supabase gen types) \u2014 ne pas modifier \u00e0 la main.'; cat packages/shared/src/types/database.tmp) > packages/shared/src/types/database.ts && rm packages/shared/src/types/database.tmp"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "@types/node": "22.20.5",
+    "supabase": "2.122.0",
+    "tsx": "4.23.15",
+    "turbo": "2.11.10",
+    "typescript": "5.9.3"
+  }
+}
