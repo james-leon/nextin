@@ -152,8 +152,10 @@ subscription_status: trialing | active | past_due | read_only | suspended | canc
 | `announcement_settings` (1:1) | `branch_id` PK, `languages text[]` (`{fr,en}`), `volume` 0-100, `repeat_count` 1-3, `chime_enabled`, `quiet_hours jsonb` (`[{from,to}]`) | |
 | `opening_hours` | `branch_id`, `weekday` 0-6, `opens_at time`, `closes_at time` | unique (`branch_id`,`weekday`,`opens_at`) |
 | `branch_closures` | `branch_id`, `date`, `reason` | unique (`branch_id`,`date`) |
-| `services` | `organization_id`, `branch_id`, `name`, `name_en`, `prefix` (1-2 lettres A-Z), `color`, `description`, `default_service_seconds` (**obligatoire, saisi par le directeur** à la création du service, 60-7200 s), `allow_priority`, `allow_remote`, `max_daily_tickets`, `active`, `sort_order` | unique (`branch_id`,`prefix`) |
-| `counters` | `organization_id`, `branch_id`, `name`, `kind counter_kind`, `number`, `status counter_status`, `current_agent_id`, `status_changed_at` | unique (`branch_id`,`kind`,`number`) |
+| `specialties` | `organization_id`, `name`, `name_en`, `active` | unique (`organization_id`, lower(`name`)) — spécialités médicales ou métiers de guichet (ex. Pédiatrie, Réclamations) |
+| `practitioners` | `organization_id`, `branch_id`, `user_id` (NULL si le praticien n'a pas de compte), `title` (Dr, Pr…), `display_name`, `specialty_id`, `active` | idx (`branch_id`,`specialty_id`) — base de la réorientation automatique (§12.2) et des rendez-vous (§12.3) |
+| `services` | `organization_id`, `branch_id`, `specialty_id` (facultatif), `name`, `name_en`, `prefix` (1-2 lettres A-Z), `color`, `description`, `default_service_seconds` (**obligatoire, saisi par le directeur** à la création du service, 60-7200 s), `allow_priority`, `allow_remote`, `max_daily_tickets`, `active`, `sort_order` | unique (`branch_id`,`prefix`) |
+| `counters` | `organization_id`, `branch_id`, `name`, `kind counter_kind`, `number`, `default_practitioner_id` (cabinet attitré), `status counter_status`, `current_agent_id`, `status_changed_at` | unique (`branch_id`,`kind`,`number`) |
 | `counter_services` | `counter_id`, `service_id`, `weight` | PK (`counter_id`,`service_id`) |
 | `counter_sessions` | `counter_id`, `agent_id`, `started_at`, `ended_at` | idx (`counter_id`,`started_at`) |
 | `counter_pauses` | `session_id`, `started_at`, `ended_at`, `reason` | |
@@ -166,7 +168,7 @@ subscription_status: trialing | active | past_due | read_only | suspended | canc
 | `daily_sequences` | `service_id`, `service_day date`, `last_number` | PK (`service_id`,`service_day`) — incrément atomique `INSERT … ON CONFLICT DO UPDATE … RETURNING` ; jour calculé dans le fuseau de l'agence |
 | `tickets` | `organization_id`, `branch_id`, `service_id`, `service_day`, `number`, `display_code` (ex. `C-047`, format `formatTicketCode`), `public_token` unique (NULL après purge), `customer_user_id` (anonyme ou compte), `source`, `priority_level` smallint (0 normal, 1 prioritaire), `priority_reason`, `status`, `sort_key bigint`, `counter_id` (guichet qui appelle/sert), `preferred_counter_id` (RDV avec un praticien), `appointment_id`, `created_by` (staff), `called_at`, `serving_started_at`, `finished_at`, `recall_count`, `transferred_from_id`, **distance** : `is_remote`, `presence_confirmed_at`, `delay_count`, **note** : `rating` 1-5, `rating_comment`, `rated_at` | unique (`service_id`,`service_day`,`number`) ; **idx partiel** (`service_id`,`priority_level` DESC,`sort_key`) WHERE `status='waiting'` ; idx (`branch_id`,`service_day`,`status`) ; idx (`customer_user_id`) ; idx (`counter_id`) WHERE `status IN ('called','serving')` |
 | `ticket_events` | `ticket_id`, `organization_id`, `type` (created, called, recalled, serving, served, no_show, transferred, moved_back, cancelled, presence_confirmed, rated), `actor_user_id`, `counter_id`, `payload jsonb` | idx (`ticket_id`) ; idx (`organization_id`,`created_at`) — base des statistiques |
-| `appointments` | `organization_id`, `branch_id`, `service_id`, `counter_id`, `scheduled_at`, `customer_label` (initiales, jamais annoncé), `phone_e164` (purgé), `status`, `ticket_id` | idx (`branch_id`,`scheduled_at`) |
+| `appointments` | voir §12.3 (module M5b) | |
 | `service_time_stats` | `service_id`, `counter_id` (NULL = moyenne service), `ewma_seconds`, `samples`, `updated_at` | PK (`service_id`, `counter_id` COALESCE) — mis à jour par trigger à chaque `served` |
 | `client_ops` | `client_op_id` uuid PK, `user_id`, `counter_id`, `op`, `result jsonb`, `created_at` | idempotence des commandes hors ligne (purge 7 j) |
 
@@ -214,7 +216,16 @@ Flux d'appairage : l'écran `/tv` génère un code à 6 chiffres via `POST /api/
 | `ad_schedules` | `campaign_id`, `weekday`, `start_time`, `end_time` | |
 | `ad_campaign_branches` | `campaign_id`, `branch_id` | ciblage matérialisé à l'approbation (`ST_DWithin`) ; PK composite |
 | `ad_events` | `campaign_id`, `creative_id`, `branch_id`, `display_id`, `surface`, `type` (impression/click/visit), `occurred_at` | **partitionnée par mois** ; insertion par lots |
-| `ad_daily_stats` | `campaign_id`, `day`, `branch_id`, `impressions`, `clicks`, `visits` | rollup pg_cron horaire |
+| `ad_daily_stats` | `campaign_id`, `day`, `branch_id`, `impressions`, `clicks`, `visits`, `quiz_plays`, `coupons_issued`, `coupons_redeemed` | rollup pg_cron horaire |
+| `ad_sectors` | `code` (ex. `health`, `pharmacy`, `food`, `telecom`, `beauty`, `betting`, `alcohol`), `name`, `name_en`, `requires_health_visa` | référentiel modifiable par le super admin (§12.4) |
+| `organization_ad_preferences` | `organization_id` PK, `blocked_sectors text[]`, `quiz_enabled` (défaut true), `house_ads_enabled` | réglage par établissement (§12.4, §12.5) |
+| `ad_packages` | `code` (`maison`, `bronze`, `argent`, `or`), `name`, `price_xaf`, `duration_days`, `max_branches`, `share_of_voice`, `surfaces`, `quiz_allowed`, `active` | prix et contenu modifiables par le super admin, jamais en dur |
+| `ad_quizzes` | `campaign_id`, `title`, `reward_text`, `coupon_validity_days`, `max_coupons`, `status` (draft / pending_review / approved / rejected), `reviewed_by` | 3 à 5 questions (contrainte vérifiée à la soumission) |
+| `ad_quiz_questions` | `quiz_id`, `position`, `question`, `question_en`, `answers jsonb` (2 à 4 réponses, une seule correcte) | |
+| `ad_quiz_plays` | `quiz_id`, `branch_id`, `ticket_id`, `score`, `started_at`, `finished_at` | unique (`quiz_id`,`ticket_id`) : une partie par ticket ; aucune donnée personnelle |
+| `ad_coupons` | `campaign_id`, `play_id`, `code` (8 car.) unique, `qr_token` unique, `expires_at`, `redeemed_at`, `redeemed_by` (membre annonceur) | |
+
+`advertisers` reçoit `sector` (référence `ad_sectors`) ; `ad_campaigns` reçoit `sector`, `package_code` (référence `ad_packages`), `health_visa_number` et `health_visa_document_path` (obligatoires si le secteur l'exige).
 
 « Visites » : le commerce reçoit un code promo / QR « j'y suis » ; sa saisie ou son scan en magasin crée l'événement `visit`.
 
@@ -289,8 +300,8 @@ Les tests pgTAP vérifient pour chaque table qu'un membre de l'organisation A ne
 ### 5.1 RPC du moteur de file (toutes transactionnelles, journalisées dans `ticket_events`)
 - `take_ticket(service_id, source, priority_reason?, entry_token?, ip_hash)` : contrôles (service actif, agence ouverte, quota journalier, 1 ticket actif / client / agence, distance autorisée si remote, rate limit 5 tickets / 10 min / IP, 3 / h / uid), numéro via `daily_sequences`, `display_code`, `sort_key`.
 - `reception_create_ticket(service_id, priority_reason?, phone_e164?, consent bool, appointment_id?)` : idem + contact SMS/WhatsApp avec consentement tracé.
-- `call_next(counter_id, client_op_id)` : sélectionne le prochain ticket parmi les services du guichet (`counter_services`, pondération, `preferred_counter_id` prioritaire pour ce guichet), `FOR UPDATE SKIP LOCKED` → `called`, émet les broadcasts TV + client et les jobs `your_turn` + `almost_turn` pour le ticket situé à `almost_turn_threshold` places.
-- `start_serving`, `finish_ticket`, `recall_ticket` (incrémente `recall_count`, ré-annonce), `mark_no_show`, `transfer_ticket(target_service_id)` (nouveau ticket lié, conserve priorité et ancienneté), `set_priority`, `move_back(ticket, places)`.
+- `call_next(counter_id, client_op_id)` — bouton **« Alerter le suivant »** (appel en deux temps, §12.1) : sélectionne le prochain ticket parmi les services du guichet (`counter_services`, pondération, `preferred_counter_id` prioritaire pour ce guichet), `FOR UPDATE SKIP LOCKED` → `called`, émet les broadcasts TV + client et les jobs `your_turn` + `almost_turn` pour le ticket situé à `almost_turn_threshold` places.
+- `admit_ticket` — bouton **« Admettre »** quand le patient entre : `called` → `serving`, le chrono démarre (`serving_started_at`) ; `finish_ticket`, `recall_ticket` (incrémente `recall_count`, ré-annonce), `mark_no_show`, `transfer_ticket(target_service_id)` (nouveau ticket lié, conserve priorité et ancienneté), `set_priority`, `move_back(ticket, places)`.
 - `pause_counter` : le guichet ne tire plus de tickets ; les tickets `preferred_counter_id` de ce guichet repassent en file commune (redistribution naturelle sur les autres guichets) ; `open_counter` / `close_counter`.
 
 ### 5.2 Temps réel (topics Broadcast)
@@ -340,16 +351,17 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | # | Module | Livrables | Tests de fin de module |
 |---|---|---|---|
 | **M1** | Fondations + design system | Monorepo Turborepo/pnpm, Next.js + Tailwind + shadcn re-stylé, Supabase lié (CLI npx), migrations socle (profiles, organizations, memberships, invitations, platform_admins, audit_log, rate_limits) + fonctions RLS, auth (e-mail OTP + mot de passe, anonyme), garde de rôles, i18n FR/EN, PWA (manifest, SW, installable), `CLAUDE.md`, `.env.example`, CI GitHub Actions (lint, typecheck, Vitest, Playwright). **Page `/design` → arrêt pour validation avant tout écran.** | Vitest (helpers), pgTAP RLS socle, Playwright : `/design` rendu clair/sombre + axe |
-| **M2** | Structure établissement + QR | Tables §3.3, écrans admin (agences, services, guichets, horaires, personnel/invitations), QR par agence/service + code court, régénération, PDF chevalet A5 + affiche A4 | pgTAP isolation, Playwright : créer agence → service → guichet → télécharger PDF |
+| **M2** | Structure établissement + QR | Tables §3.3 (dont spécialités et praticiens), écrans admin (agences, services, guichets, horaires, personnel/invitations, praticiens), QR par agence/service + code court, régénération, PDF chevalet A5 + affiche A4 | pgTAP isolation, Playwright : créer agence → service → guichet → télécharger PDF |
 | **M3** | Moteur de file + estimation + temps réel | Tables §3.4, RPC §5.1, triggers broadcast §5.2, EWMA, `packages/shared/queue` | Vitest estimation + parité SQL, pgTAP concurrence `call_next` (pas de double appel), numérotation journalière |
 | **M4** | Parcours client web | `/q/[token]`, `/c` (code), choix service + priorité, ticket héros (numéro + attente), suivi temps réel, pubs placeholders, notation | Playwright 3G simulée : scan → ticket → appel → note ; budget < 200 Ko vérifié en CI |
-| **M5** | Postes réception et agent | Réception (créer ticket, impression thermique 58/80 mm via CSS print, priorités, RDV, réorientation, vue live, ouvrir un guichet), Agent (« Appeler le suivant » une main, chrono, terminer/rappeler/transférer/absent/pause), hors ligne §5.4 | Playwright : parcours complets + coupure réseau / resync |
+| **M5** | Postes réception et agent | Réception (créer ticket, impression thermique 58/80 mm via CSS print, priorités, RDV, réorientation, vue live, ouvrir un guichet), Agent : appel en deux temps « Alerter le suivant » puis « Admettre » (chrono à l'admission), terminer/rappeler/transférer/absent/pause ; absence ou retard d'un praticien avec réorientation automatique (§12.1, §12.2) ; hors ligne §5.4 | Playwright : parcours complets + coupure réseau / resync |
+| **M5b** | Rendez-vous | Créneaux par praticien, prise de RDV (accueil, puis client au M9), arrivée et intégration dans la file selon la règle d'équité, absents, états en attente / reprogrammé (§12.3) | Vitest règle d'équité, pgTAP créneaux et chevauchements, Playwright RDV → arrivée → appel |
 | **M6** | Écran TV + voix | `/tv`, appairage 6 chiffres, menu Écrans (révocation), affichage appels + QR + carrousel, audio §5.6, `scripts/generate-voices.ts` | Vitest séquence audio, Playwright appairage → appel → affichage, révocation |
 | **M7** | Notifications | Abstraction fournisseurs, `whatsapp-webhook`, `notify-dispatcher`, web push (VAPID), SMS secours, STOP | Vitest signature + bascule, tests d'intégration avec faux fournisseur |
 | **M8** | Tableau de bord | Affluence horaire, attentes, performance par praticien, absents, notes, export CSV, temps réel | Vitest agrégats, Playwright dashboard |
 | **M9** | Distance | Établissements à proximité (PostGIS), ticket à distance, « quand partir », confirmation de présence, recul/annulation | pgTAP sweeper, Playwright parcours distance |
 | **M10a** | Abonnements automatiques + paiements + super admin | Inscription en libre-service (téléphone vérifié par WhatsApp, Turnstile), essai Pro 14 j, assistant de démarrage, rappels J-7/J-3/J-1, paiement MTN MoMo / Orange Money via agrégateur, webhook signé et idempotent, factures PDF numérotées, grâce → lecture seule → suspension → suppression, limites des formules côté serveur, super admin (abonnements, revenus, jours offerts, remises, formules) — détail §11 | Vitest tarification + machine d'états, pgTAP limites / transitions différées / idempotence, Playwright inscription → essai → paiement simulé → activation → facture |
-| **M10b** | Publicité | Espace annonceur, ciblage, modération, diffusion TV/app, stats ; paiement des campagnes avec le même agrégateur | Playwright campagne → modération → paiement simulé → diffusion |
+| **M10b** | Publicité | Espace annonceur, ciblage, modération (visa santé obligatoire pour santé et pharmacie), secteurs bloqués par établissement, formules Maison / Bronze / Argent / Or, quiz sponsorisé avec bon de réduction à QR code, diffusion TV/app, stats ; paiement des campagnes avec le même agrégateur (§12.4, §12.5) | Playwright campagne → modération → paiement simulé → diffusion |
 | **M11** | App Expo | Client + agent, réutilise `packages/shared` | Tests Jest/Detox de base |
 
 ### 7.1 Tables créées par module (migrations progressives)
@@ -357,14 +369,15 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | Module | Tables / objets créés |
 |---|---|
 | M1 | `profiles`, `platform_admins`, `organizations`, `memberships`, `invitations`, `audit_log`, `rate_limits`, fonctions RLS, purge des anonymes (pg_cron) |
-| M2 | `branches`, `branch_settings`, `opening_hours`, `branch_closures`, `services`, `counters`, `counter_services`, `qr_codes` |
+| M2 | `branches`, `branch_settings`, `opening_hours`, `branch_closures`, `specialties`, `practitioners`, `services`, `counters`, `counter_services`, `qr_codes`, PostGIS |
 | M3 | `daily_sequences`, `tickets`, `ticket_events`, `service_time_stats`, `client_ops`, RPC de file, triggers Realtime, `purge_personal_data()` |
-| M5 | `counter_sessions`, `counter_pauses`, `appointments` |
+| M5 | `counter_sessions`, `counter_pauses`, `practitioner_absences` |
+| M5b | `practitioner_schedules`, `appointments`, réglages d'équité dans `branch_settings` |
 | M6 | `displays`, `display_services`, `announcement_settings`, bucket `voices` |
 | M7 | `notification_contacts`, `notification_jobs`, `provider_webhook_events`, `whatsapp_opt_outs` |
 | M8 | `daily_branch_stats`, `daily_counter_stats`, vues `v_service_live` |
 | M10a | `plans`, `subscriptions`, `subscription_events`, `trial_claims`, `phone_verifications`, `invoice_sequences`, `invoices`, `payments`, `discounts`, `billing_reminders`, `messaging_usage`, `platform_settings`, bucket privé `invoices`, bucket `org-assets` |
-| M10b | `advertisers`, `advertiser_members`, `ad_*`, bucket `ad-creatives` |
+| M10b | `advertisers`, `advertiser_members`, `ad_*` (dont `ad_sectors`, `ad_packages`, `ad_quizzes`, `ad_quiz_questions`, `ad_quiz_plays`, `ad_coupons`), `organization_ad_preferences`, buckets `ad-creatives` et privé `ad-documents` |
 
 **Données de démo** (script idempotent, enrichi à chaque module) : **DOUALA CLINIC** (Akwa, Douala — Consultation générale `C`, Pédiatrie `P`, Laboratoire `L`, Caisse `K` ; cabinets 1-4, labo 1, caisse 1) et **Eneo — Agence Bonanjo, Douala** (Réclamations `R`, Abonnements `A`, Paiement facture `F` ; guichets 1-5).
 
@@ -485,4 +498,41 @@ Valeurs initiales (migration de données, **modifiables par le super admin**, ja
 - **M1** : `organizations.status` passe à `active` par défaut et `create_organization` n'attend plus de validation ; le super admin garde la suspension. Le changement est appliqué par une nouvelle migration lors de la fin du M1 (écran de création d'établissement), sans modifier les migrations déjà poussées.
 - **Avant M10a**, les établissements créés (démo, pilotes) n'ont pas d'abonnement : `org_entitlements` les traite comme « pilote » avec les limites Pro, et le passage en production exige le M10a.
 - La vérification du téléphone par WhatsApp dépend du M7 : le M10a vient donc après le M7, comme prévu.
+
+---
+
+## 12. Fonctionnalités ajoutées du cahier des charges (27/10/2026)
+
+### 12.1 Appel en deux temps (M5)
+1. **« Alerter le suivant »** (`call_next`) : le ticket passe `called` ; affichage sur l'écran TV, annonce vocale et alerte WhatsApp « c'est votre tour : cabinet X ».
+2. **« Admettre »** (`admit_ticket`) quand le patient entre : `serving`, le chrono démarre à cet instant. La durée de service (EWMA §3.4) est mesurée de l'admission à la fin, jamais depuis l'alerte.
+- Entre les deux : « Rappeler » (nouvelle annonce, `recall_count`), « Absent » (`no_show`) ; l'attente entre alerte et admission est mesurée à part (`called_at` → `serving_started_at`) pour les statistiques.
+- Le poste reste utilisable d'une main : un seul bouton principal qui change de rôle (« Alerter le suivant » → « Admettre » → « Terminer et alerter le suivant »).
+
+### 12.2 Absence ou retard d'un praticien (M5)
+- Déclaration par le praticien lui-même ou par l'accueil : `declare_practitioner_absence(practitioner, kind absent|late, until, reason)` → table `practitioner_absences` (`practitioner_id`, `kind`, `starts_at`, `ends_at` ou `expected_at`, `reason`, `declared_by`).
+- **Réorientation automatique** : ses tickets en attente (`preferred_counter_id` ou rendez-vous) sont réaffectés à un collègue **de la même spécialité** (`practitioners.specialty_id`) présent dans la même agence, en conservant leur ancienneté et leur priorité ; à défaut de collègue, ils rejoignent la file commune du service.
+- **Retard** : les tickets restent rattachés au praticien, l'estimation d'attente intègre l'heure de retour prévue, et les patients sont prévenus.
+- Notification WhatsApp au patient (modèle `praticien_reoriente` / `praticien_en_retard`, FR/EN) avec la nouvelle attente estimée. Action journalisée dans l'audit.
+
+### 12.3 Rendez-vous (module M5b, après M5)
+- **Créneaux par praticien** : `practitioner_schedules` (`practitioner_id`, `weekday`, `starts_at`, `ends_at`, `slot_minutes`, `service_id`) ; les créneaux libres sont calculés à la volée (horaires − rendez-vous − absences − fermetures).
+- `appointments` : `organization_id`, `branch_id`, `practitioner_id`, `service_id`, `starts_at`, `ends_at`, `customer_label` (initiales, jamais annoncé), `phone_e164` (purgé avec les données personnelles), `status` (`scheduled`, `checked_in`, `waiting`, `rescheduled`, `completed`, `no_show`, `cancelled`), `rescheduled_from_id`, `ticket_id`. Exclusion des chevauchements par praticien (contrainte `EXCLUDE` sur la plage horaire).
+- **Arrivée** : scan du QR ou accueil → ticket lié au rendez-vous (`priority_reason = appointment`).
+- **Règle d'équité configurable** par agence (`branch_settings`) : `appointment_walkin_ratio` (après un rendez-vous, au moins N clients sans rendez-vous sont servis, défaut 2), `appointment_early_minutes` (priorité seulement à partir de X minutes avant l'heure, défaut 15), `appointment_late_grace_minutes` (au-delà, le rendez-vous perd sa priorité et devient un ticket ordinaire, défaut 10). Fonction pure partagée + miroir SQL dans `call_next`, avec test de parité.
+- **Absents** : sans arrivée après la tolérance → `no_show` (statistiques par praticien). **Reprogrammé** : nouveau rendez-vous lié à l'ancien. **En attente** : rendez-vous arrivé mais dont le praticien est absent ou en retard (§12.2).
+
+### 12.4 Publicité : secteurs, formules et visa santé (M10b)
+- **Secteurs bloqués par établissement** (`organization_ad_preferences.blocked_sectors`) : une clinique peut refuser, par exemple, les paris ou l'alcool ; le ciblage (`ad_campaign_branches`) exclut ces établissements.
+- **Formules** `ad_packages` : **Maison** (annonces de l'établissement pour ses propres services, sur ses écrans et pages, gratuites), **Bronze**, **Argent**, **Or** (part de diffusion, nombre d'établissements, surfaces TV/app, quiz autorisé ou non, durée). Prix et contenu en base, paramétrés par le super admin.
+- **Visa du ministère de la Santé** : une campagne d'un secteur `requires_health_visa` (santé, pharmacie) ne peut être approuvée (`approve_campaign`) sans numéro de visa et justificatif (bucket privé `ad-documents`) ; contrôle côté serveur, pas seulement dans l'interface.
+
+### 12.5 Quiz sponsorisé pendant l'attente (M10b)
+- Carte **« Jouer en attendant »** sur Mon ticket, sous la carte du ticket et le bouton WhatsApp. Le jeu s'ouvre dans une feuille modale dont l'en-tête garde **toujours visibles le numéro et l'attente estimée** ; il ne remplace jamais la carte du ticket.
+- Quiz de **3 à 5 questions** rattaché à une campagne ; questions créées par l'annonceur, **validées par le super admin** avec la campagne.
+- En fin de partie : **bon de réduction à QR code** (code court + QR, durée de validité). Le commerçant le scanne avec son compte annonceur (`redeem_coupon`) ; parties, bons émis et bons utilisés alimentent les statistiques de l'annonceur.
+- L'alerte **« c'est votre tour » interrompt toujours le jeu** : la feuille se ferme et l'état « appelé » s'affiche (événement temps réel du ticket).
+- **Aucune donnée personnelle** : la partie est liée au ticket (une partie par ticket), sans nom ni téléphone.
+- **Désactivable par établissement** (`organization_ad_preferences.quiz_enabled`).
+- **Léger (3G)** : chargé uniquement à l'ouverture (JSON de quelques Ko, sans image lourde), aucun JS ajouté au premier chargement de Mon ticket.
 
