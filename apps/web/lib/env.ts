@@ -8,8 +8,6 @@ const publicSchema = z.object({
 const serverSchema = publicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
   APP_URL: z.url(),
-  TURNSTILE_SECRET_KEY: z.string().min(1),
-  IP_HASH_SALT: z.string().min(16),
 });
 
 export type PublicEnv = z.infer<typeof publicSchema>;

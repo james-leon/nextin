@@ -7,8 +7,19 @@ import { updateSession } from "@/lib/supabase/proxy";
  */
 export async function proxy(request: NextRequest) {
   const { response, claims } = await updateSession(request);
-  const isStaffArea = /^\/(app|desk|admin|ads)(\/|$)/.test(request.nextUrl.pathname);
-  if (isStaffArea && (!claims || claims.is_anonymous === true)) {
+  const path = request.nextUrl.pathname;
+  const isStaff = !!claims && claims.is_anonymous !== true;
+
+  // Déjà connecté : pas de passage par la connexion ou l'inscription.
+  if (isStaff && (path === "/login" || path === "/signup")) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/app";
+    target.search = "";
+    return NextResponse.redirect(target);
+  }
+
+  const isStaffArea = /^\/(app|desk|admin|ads)(\/|$)/.test(path);
+  if (isStaffArea && !isStaff) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
@@ -18,5 +29,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/desk/:path*", "/admin/:path*", "/ads/:path*", "/login", "/auth/:path*"],
+  matcher: ["/app/:path*", "/desk/:path*", "/admin/:path*", "/ads/:path*", "/login", "/signup", "/invite/:path*", "/auth/:path*"],
 };

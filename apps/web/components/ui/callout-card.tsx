@@ -7,14 +7,17 @@ export function CalloutCard({
   tone = "orange",
   children,
   className,
+  role,
 }: {
   icon: ReactNode;
-  tone?: "orange" | "accent" | "green";
+  tone?: "orange" | "accent" | "green" | "red";
+  /** `alert` pour une erreur à annoncer immédiatement aux lecteurs d'écran. */
+  role?: "alert" | "status";
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("squircle flex items-start gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4", className)}>
+    <div role={role} className={cn("squircle flex items-start gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4", className)}>
       <span
         aria-hidden
         className={cn(
@@ -22,6 +25,7 @@ export function CalloutCard({
           tone === "orange" && "bg-orange-tint text-orange-text",
           tone === "accent" && "bg-accent-tint text-accent-on-tint",
           tone === "green" && "bg-green-tint text-green-text",
+          tone === "red" && "bg-red-tint text-red-text",
         )}
       >
         {icon}

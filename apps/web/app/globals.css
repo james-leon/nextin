@@ -57,6 +57,8 @@
 
   /* Numéro de ticket : Navy en clair (maquette), blanc en sombre. */
   --ticket-number: #0d2c54;
+  /* Pastille de marque (icônes d'établissement) : Navy en clair, bleu d'action en sombre pour rester lisible. */
+  --brand-tile: #0d2c54;
   /* Surfaces toujours sombres : viseur de scan (maquette 01) et écran TV (maquette 05). */
   --scanner-bg: #0b0f16;
   --scanner-surface: #191d23;
@@ -99,6 +101,7 @@
   --red-text: #ff6961;
   --red-tint: rgb(255 69 58 / 0.2);
   --ticket-number: #ffffff;
+  --brand-tile: #1a6bb5;
   --elev-card: none;
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
 }
