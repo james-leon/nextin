@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Clock, DoorOpen, FlaskConical, Info, QrCode, SlidersHorizontal, Stethoscope } from "lucide-react";
+import { Clock, DoorOpen, ConciergeBell, Info, QrCode, SlidersHorizontal, Stethoscope } from "lucide-react";
 import { SERVICE_COLORS, summarizeOpeningHours } from "@nextin/shared";
 import { AdminPage } from "@/components/admin/admin-page";
 import { SavedNotice } from "@/components/admin/saved-notice";
@@ -22,7 +22,7 @@ export default async function BranchPage({ params, searchParams }: Props) {
   const { ctx, branch } = await getBranch(orgId, branchId);
   const t = await getTranslations("branches");
   const th = await getTranslations("hours");
-  const td = await getTranslations("testDesk");
+  const td = await getTranslations("desk");
   const tw = await getTranslations("weekdaysShort");
   const supabase = await getSupabaseServerClient();
   const [services, counters, hours, qr] = await Promise.all([
@@ -82,10 +82,10 @@ export default async function BranchPage({ params, searchParams }: Props) {
       </ListSection>
       <ListSection>
         <ListRow
-          href={`${base}/test-desk`}
-          icon={<ListIcon color="var(--orange-fill)"><FlaskConical /></ListIcon>}
-          title={td("link")}
-          subtitle={td("linkHint")}
+          href={`/desk/reception/${branchId}`}
+          icon={<ListIcon color="var(--orange-fill)"><ConciergeBell /></ListIcon>}
+          title={td("open")}
+          subtitle={td("openHint")}
           accessory="chevron"
         />
       </ListSection>

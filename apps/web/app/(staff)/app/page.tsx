@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, Plus, Settings } from "lucide-react";
+import { Building2, CheckCircle2, DoorOpen, Plus, Settings } from "lucide-react";
 import type { MemberRole } from "@nextin/shared";
 import type { Database } from "@nextin/shared/database";
 import { OrgTypeIcon } from "@/components/staff/org-type-icon";
@@ -29,6 +29,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
   const tr = await getTranslations("roles");
   const tt = await getTranslations("orgTypes");
   const ts = await getTranslations("settings");
+  const td = await getTranslations("desk");
 
   const supabase = await getSupabaseServerClient();
   const { data } = await supabase
@@ -110,6 +111,19 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                   }
                 />
               ))}
+            </ListSection>
+            <ListSection>
+              <ListRow
+                href="/desk"
+                icon={
+                  <ListIcon color="var(--accent-fill)">
+                    <DoorOpen />
+                  </ListIcon>
+                }
+                title={<span className="font-semibold">{td("open")}</span>}
+                subtitle={td("openHint")}
+                accessory="chevron"
+              />
             </ListSection>
             <Button asChild block variant="tinted">
               <Link href="/app/new">

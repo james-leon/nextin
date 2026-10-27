@@ -12,7 +12,8 @@
     "./queue/live": "./src/queue/live.ts",
     "./ticket": "./src/ticket.ts",
     "./queue/realtime": "./src/queue/realtime.ts",
-    "./queue/estimate": "./src/queue/estimate.ts"
+    "./queue/estimate": "./src/queue/estimate.ts",
+    "./desk": "./src/desk/index.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",

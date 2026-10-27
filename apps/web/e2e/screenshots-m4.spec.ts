@@ -2,7 +2,7 @@ import { test, type Page } from "@playwright/test";
 import { signInViaUi } from "./helpers";
 import { rpc, setUpBranch } from "./queue-helpers";
 
-// Captures M4 (parcours client, réglages, poste de test) → docs/captures/m4/. Établissement créé pour l'occasion.
+// Captures M4 (parcours client, réglages) → docs/captures/m4/. Établissement créé pour l'occasion.
 const OUT = "../../docs/captures/m4";
 
 for (const theme of ["light", "dark"] as const) {
@@ -57,10 +57,9 @@ for (const theme of ["light", "dark"] as const) {
     await context.close();
   });
 
-  test(`@screenshots réglages et poste de test M4 ${theme}`, async ({ browser }, info) => {
+  test(`@screenshots réglages M4 ${theme}`, async ({ browser }, info) => {
     test.skip(info.project.name !== "desktop", "espace du personnel : grand écran");
-    const { staff, email, orgId, branchId, serviceId } = await setUpBranch("DOUALA CLINIC");
-    for (let i = 0; i < 3; i++) await rpc(staff, "reception_create_ticket", { p_service: serviceId });
+    const { email } = await setUpBranch("DOUALA CLINIC");
     const context = await browser.newContext({
       colorScheme: theme,
       viewport: { width: 1280, height: 860 },
@@ -77,14 +76,6 @@ for (const theme of ["light", "dark"] as const) {
     await page.waitForURL(/\/app$/);
     await page.goto("/app/settings");
     await shot("05-settings");
-    await page.goto(`/app/o/${orgId}/branches/${branchId}/test-desk`);
-    await page.getByRole("button", { name: "Alerter le suivant" }).click();
-    await page.getByRole("button", { name: "Admettre" }).waitFor();
-    await shot("06-test-desk-called");
-    await page.getByRole("button", { name: "Admettre" }).click();
-    await page.getByText(/Admis · /).waitFor();
-    await page.waitForTimeout(2200);
-    await shot("06b-test-desk-serving");
     await context.close();
   });
 }

@@ -28,7 +28,10 @@ export default async function StaffLayout({ children }: { children: React.ReactN
         staffMgmt: m.staffMgmt,
         theme: m.theme,
         settings: m.settings,
-        testDesk: m.testDesk,
+        desk: m.desk,
+        absence: m.absence,
+        reception: m.reception,
+        client: { service: { reasons: m.client.service.reasons } },
       }}
     >
       <ToastProvider>{children}</ToastProvider>
