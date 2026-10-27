@@ -10,6 +10,14 @@ const responseSchema = z.object({
   hostname: z.string().optional(),
 });
 
+/**
+ * Clés secrètes de test officielles de Cloudflare (1x… réussit, 2x… échoue, 3x… jeton déjà utilisé) :
+ * leur réponse ne contient pas l'action demandée, qui n'est donc pas vérifiée avec ces clés.
+ */
+export function isTurnstileTestSecret(secret: string): boolean {
+  return /^[123]x0{31}AA$/.test(secret);
+}
+
 export type TurnstileResult = { ok: true } | { ok: false; reason: string };
 
 /**
@@ -38,6 +46,8 @@ export async function verifyTurnstile(
   const parsed = responseSchema.safeParse(json);
   if (!parsed.success) return { ok: false, reason: "invalid-response" };
   if (!parsed.data.success) return { ok: false, reason: parsed.data["error-codes"][0] ?? "rejected" };
-  if (options.expectedAction && parsed.data.action !== options.expectedAction) return { ok: false, reason: "action-mismatch" };
+  if (options.expectedAction && !isTurnstileTestSecret(options.secret) && parsed.data.action !== options.expectedAction) {
+    return { ok: false, reason: "action-mismatch" };
+  }
   return { ok: true };
 }

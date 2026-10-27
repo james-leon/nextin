@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { verifyTurnstile } from "./turnstile";
+import { isTurnstileTestSecret, verifyTurnstile } from "./turnstile";
 
 function fakeFetch(payload: unknown, status = 200) {
   return vi.fn(async () => new Response(JSON.stringify(payload), { status })) as unknown as typeof fetch;
@@ -38,5 +38,19 @@ describe("verifyTurnstile", () => {
       throw new TypeError("offline");
     }) as unknown as typeof fetch;
     expect(await verifyTurnstile("tok", { secret: "s", fetchImpl: broken })).toEqual({ ok: false, reason: "network-error" });
+  });
+
+  it("refuse une action différente avec une vraie clé", async () => {
+    const r = await verifyTurnstile("tok", { secret: "0x4AAAAAAAreal", expectedAction: "take_ticket", fetchImpl: fakeFetch({ success: true, action: "login" }) });
+    expect(r).toEqual({ ok: false, reason: "action-mismatch" });
+  });
+
+  it("n'exige pas l'action avec les clés de test Cloudflare", async () => {
+    const secret = "1x0000000000000000000000000000000AA";
+    expect(isTurnstileTestSecret(secret)).toBe(true);
+    expect(isTurnstileTestSecret("2x0000000000000000000000000000000AA")).toBe(true);
+    expect(isTurnstileTestSecret("0x4AAAAAAAreal")).toBe(false);
+    const r = await verifyTurnstile("tok", { secret, expectedAction: "take_ticket", fetchImpl: fakeFetch({ success: true, action: "" }) });
+    expect(r).toEqual({ ok: true });
   });
 });
