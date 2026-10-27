@@ -510,6 +510,7 @@ export const en: Messages = {
       progress: "Progress in the queue",
       nowServing: "Now serving: {code} · {counter}",
       keepOpen: "Keep this page open: it updates by itself and vibrates when it's your turn.",
+      practitionerLate: "Your practitioner is running late: expected back at {time}. Your wait takes this into account.",
       calledTitle: "It's your turn",
       calledBody: "Please go to · {counter}",
       recalled: "Reminder #{count}",

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Bell, CheckCircle2, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { Bell, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
 import { callForCode, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { boardTopic, REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
@@ -218,6 +218,16 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
               {t("whatsapp")}
             </a>
           </Button>
+        ) : null}
+
+        {view.status === "waiting" && view.practitioner_late_until && new Date(view.practitioner_late_until).getTime() > now.getTime() ? (
+          <CalloutCard icon={<Clock />} role="status">
+            {t("practitionerLate", {
+              time: new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }).format(
+                new Date(view.practitioner_late_until),
+              ),
+            })}
+          </CalloutCard>
         ) : null}
 
         {view.status === "waiting" ? <CalloutCard icon={<Bell />}>{t("keepOpen")}</CalloutCard> : null}

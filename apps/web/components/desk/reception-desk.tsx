@@ -106,7 +106,11 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   key={s.id}
                   icon={<ServiceTile letter={s.prefix} color={s.color} />}
                   title={s.name}
-                  subtitle={<span className="tabular">{t("waitingSummary", { count: b?.waiting.length ?? 0, minutes: waitMinutes(b?.wait_seconds ?? 0) })}</span>}
+                  subtitle={
+                    <span className="tabular">
+                      {b?.waiting.length ? t("waitingSummary", { count: b.waiting.length, minutes: waitMinutes(b.wait_seconds) }) : t("queueEmpty")}
+                    </span>
+                  }
                 />
               );
             })}

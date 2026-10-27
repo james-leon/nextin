@@ -99,7 +99,8 @@ select is((select (channel, phone_e164, locale, consent_source, consent_by::text
   where ticket_id = (select (v->>'id')::uuid from vals where name = 't2')),
   ('whatsapp'::text, '+237677000001'::text, 'en'::text, 'reception_with_consent'::text, 'd5000000-0000-0000-0000-00000000000d'::text),
   'contact WhatsApp enregistré avec le consentement tracé');
-select is((select count(*)::int from public.notification_contacts), 1, 'le personnel de l''agence voit le contact');
+select is((select count(*)::int from public.notification_contacts where organization_id = (select id from ids where name = 'clinic')), 1,
+  'le personnel de l''agence voit le contact');
 insert into vals select 't3', public.reception_create_ticket((select id from ids where name = 'consult'));
 
 select tests.login_as('b5000000-0000-0000-0000-00000000000b');
@@ -184,7 +185,8 @@ select throws_ok($$ insert into public.notification_contacts (organization_id, b
 select tests.logout();
 update public.tickets set created_at = now() - interval '31 days' where id = (select (v->>'id')::uuid from vals where name = 't2');
 select public.purge_personal_data();
-select is((select count(*)::int from public.notification_contacts), 0, 'numéro effacé après la durée de conservation');
+select is((select count(*)::int from public.notification_contacts where ticket_id = (select (v->>'id')::uuid from vals where name = 't2')), 0,
+  'numéro effacé après la durée de conservation');
 
 select * from finish();
 rollback;

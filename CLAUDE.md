@@ -89,7 +89,14 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - **Budget < 200 Ko** (test Playwright) : pas de supabase-js ni de next-intl côté navigateur sur ces pages. Utiliser `lib/client/*` (`callRpc`, `subscribeBroadcast`, session anonyme, `takeTicket`) et `useLiteT` / `useLiteLocale` (`lib/i18n/lite.tsx`) ; importer `@nextin/shared/queue/live` (sans Zod) plutôt que `@nextin/shared/queue`. Charger à la demande (`next/dynamic`) ce qui ne sert pas au premier affichage.
 - Pas de `crypto.randomUUID`, caméra ni presse-papiers sans repli : le test en Wi-Fi local est en `http`.
 - `Preferences` (apparence + langue) reçoit ses textes du serveur (`preferencesLabels()`). La déconnexion du personnel est dans `/app/settings`.
-- Poste de test temporaire `…/branches/[branchId]/test-desk` : à supprimer au M5.
+
+## Postes (M5, `docs/modules/M5.md`)
+- `/desk` (choix), `/desk/counter/[counterId]` (agent, maquette 04), `/desk/reception/[branchId]` (accueil), `/desk/print/[ticketId]` (ticket 80/58 mm).
+- **Un seul bouton principal** dont le rôle suit `primaryAction` (`@nextin/shared/desk`) : Ouvrir → Alerter le suivant → Admettre → Terminer et alerter le suivant.
+- Hors ligne : `useDesk` (copie de la file + commandes en attente en IndexedDB, `lib/desk/*`), application locale par `applyOp`, rejeu ordonné ; appel hors ligne = `call_ticket` (conflit → suivant disponible + bandeau). Identifiants de commande : `uuidV4()` (jamais `crypto.randomUUID`).
+- Postes du personnel : supabase-js autorisé (pas de budget), canal privé `staffTopic` + interrogation de secours.
+- Numéro WhatsApp saisi à l'accueil : uniquement avec consentement (`consent_required`), table `notification_contacts`, purgée avec les données personnelles.
+- Absence d'un praticien : réorientation vers un collègue de même spécialité (`reroute_counter`) ; retard : patients gardés, attente ≥ retour prévu (`practitioner_late_until`).
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

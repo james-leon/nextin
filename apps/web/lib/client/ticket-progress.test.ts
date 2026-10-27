@@ -45,4 +45,11 @@ describe("waitingProgress", () => {
     expect(next.progress).toBeGreaterThan(first.progress);
     expect(next.progress).toBeLessThan(1);
   });
+
+  it("n'annonce jamais moins que le retour prévu d'un praticien en retard", () => {
+    const now = new Date("2026-10-30T08:00:00.000Z");
+    const late = { ...view, practitioner_late_until: "2026-10-30T08:40:00.000Z" } as TicketView;
+    const p = waitingProgress(late, board(["C-047"]), 0, now);
+    expect(p).toMatchObject({ waitSeconds: 2400, minutes: 40, imminent: false });
+  });
 });

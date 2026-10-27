@@ -29,6 +29,8 @@ export type TicketView = {
   organization: { name: string; default_locale: string };
   position: number | null;
   wait_seconds: number | null;
+  /** Retour prévu du praticien attitré s'il est en retard (M5). */
+  practitioner_late_until?: string | null;
   counter: CounterRef | null;
   called_at: string | null;
   serving_started_at: string | null;

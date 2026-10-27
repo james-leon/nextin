@@ -56,3 +56,28 @@ export async function setUpBranch(name = "Clinique E2E") {
     shortCode: qr.data!.short_code,
   };
 }
+
+type Branch = Awaited<ReturnType<typeof setUpBranch>>;
+
+/** Deux médecins de même spécialité : Dr Abena au cabinet 3 (existant), Dr Bilong au cabinet 4 (ouvert). */
+export async function addDoctors(b: Branch) {
+  const spec = await b.staff.from("specialties").insert({ organization_id: b.orgId, name: "Médecine générale" }).select("id").single();
+  const docs = await b.staff
+    .from("practitioners")
+    .insert([
+      { organization_id: b.orgId, branch_id: b.branchId, title: "Dr", display_name: "Abena", specialty_id: spec.data!.id },
+      { organization_id: b.orgId, branch_id: b.branchId, title: "Dr", display_name: "Bilong", specialty_id: spec.data!.id },
+    ])
+    .select("id, display_name");
+  const abena = docs.data!.find((d) => d.display_name === "Abena")!.id;
+  const bilong = docs.data!.find((d) => d.display_name === "Bilong")!.id;
+  await b.staff.from("counters").update({ default_practitioner_id: abena }).eq("id", b.counterId).select("id");
+  const cab4 = await b.staff
+    .from("counters")
+    .insert({ organization_id: b.orgId, branch_id: b.branchId, kind: "cabinet", number: 4, default_practitioner_id: bilong })
+    .select("id")
+    .single();
+  await b.staff.from("counter_services").insert({ organization_id: b.orgId, counter_id: cab4.data!.id, service_id: b.serviceId });
+  await rpc(b.staff, "open_counter", { p_counter: cab4.data!.id });
+  return { abena, bilong, cab4: cab4.data!.id };
+}

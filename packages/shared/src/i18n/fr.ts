@@ -508,6 +508,7 @@ export const fr = {
       progress: "Progression dans la file",
       nowServing: "En cours : {code} · {counter}",
       keepOpen: "Gardez cette page ouverte : elle se met à jour toute seule et vibre quand c'est votre tour.",
+      practitionerLate: "Votre praticien a du retard : retour prévu à {time}. Votre attente en tient compte.",
       calledTitle: "C'est votre tour",
       calledBody: "Présentez-vous · {counter}",
       recalled: "Rappel n° {count}",
