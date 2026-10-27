@@ -15,7 +15,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 - `apps/web` — Next.js 16 (App Router, Turbopack), Tailwind v4, composants maison façon shadcn (Radix + cva), next-intl.
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
-- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
+- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
 
 ## Commandes
@@ -28,6 +28,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 | `pnpm db:start` · `pnpm db:reset` · `pnpm db:test` · `pnpm db:types` | Supabase local (Docker, avec Realtime), tests pgTAP puis intégration (`supabase/tests/integration`, `node:test`), types TS. `db:reset` redémarre aussi Kong (cache DNS de Realtime) ; `db:test:sql` = pgTAP seul |
 | `pnpm db:link` · `pnpm db:push` | lier et migrer le projet distant (`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`) |
 | `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
+| `pnpm voices:generate` | voix des annonces TV (ElevenLabs → bucket `voices`, idempotent ; `--dry-run`, `--lang fr`) |
 | `pnpm e2e:local` | build + Playwright contre le Supabase local |
 | `pnpm dev:lan` · `pnpm dev:lan --remote` | test sur téléphone (même Wi-Fi) : `APP_URL` sur l'IP du PC, Supabase local (Docker) ou distant (`--remote` : URL et clés de `apps/web/.env.local` ; « Allow anonymous sign-ins » activé dans Supabase Auth) |
 
@@ -97,6 +98,12 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Postes du personnel : supabase-js autorisé (pas de budget), canal privé `staffTopic` + interrogation de secours.
 - Numéro WhatsApp saisi à l'accueil : uniquement avec consentement (`consent_required`), table `notification_contacts`, purgée avec les données personnelles.
 - Absence d'un praticien : réorientation vers un collègue de même spécialité (`reroute_counter`) ; retard : patients gardés, attente ≥ retour prévu (`practitioner_late_until`).
+
+## Écran TV (M6, `docs/modules/M6.md`)
+- `/tv` sans compte : code à 6 chiffres → `pair_display` (back-office « Écrans ») → jeton d'appareil (seule l'empreinte en base, jamais lisible) ; `GET /api/tv/session` chaque minute, 401 = retour à l'appairage.
+- Affichage par le canal public `boardTopic` filtré sur les services de l'écran ; aucun nom.
+- Annonces : `@nextin/shared/announcements` (segments `fr/word-ticket`, `fr/letter-c`, `fr/47`… + texte de repli) ; voix MP3 dans le bucket public `voices` (`pnpm voices:generate`, ElevenLabs) avec `manifest.json`, sinon synthèse vocale du navigateur ; carillon synthétisé ; « Activer le son » obligatoire.
+- `data-theme="light"` possible sur un sous-arbre (écran TV, ticket imprimé). Choix multiples : `ListSection checkboxGroupLabel`.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

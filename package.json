@@ -24,7 +24,8 @@
     "seed:demo:local": "node scripts/local-env.mjs node --env-file-if-exists=apps/web/.env.local --import tsx scripts/seed-demo.ts",
     "dev:local": "node scripts/local-env.mjs pnpm --filter @nextin/web dev",
     "db:test:sql": "node scripts/db-test.mjs",
-    "dev:lan": "node scripts/dev-lan.mjs"
+    "dev:lan": "node scripts/dev-lan.mjs",
+    "voices:generate": "node --env-file-if-exists=apps/web/.env.local --import tsx scripts/generate-voices.ts"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.118.0",

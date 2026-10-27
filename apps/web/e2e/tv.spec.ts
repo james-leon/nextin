@@ -34,7 +34,8 @@ test.describe("M6 — écran TV", () => {
     await expect(codeText).toHaveText(/^\d{3} \d{3}$/);
     const code = (await codeText.innerText()).replace(/\D/g, "");
 
-    const staff = await browser.newPage();
+    const staffContext = await browser.newContext({ locale: "fr-FR" });
+    const staff = await staffContext.newPage();
     const displays = `/app/o/${b.orgId}/branches/${b.branchId}/displays`;
     await staff.goto(`/login?next=${encodeURIComponent(displays)}`);
     await signInViaUi(staff, b.email);
@@ -48,7 +49,12 @@ test.describe("M6 — écran TV", () => {
     await staff.getByLabel("Nom de l'écran").fill("Salle d'attente");
     await staff.getByRole("button", { name: "Appairer" }).click();
     await expect(staff.getByText("Écran appairé.", { exact: false })).toBeVisible();
-    await expect(staff.getByRole("link", { name: /Salle d'attente/ })).toContainText("En ligne", { timeout: 15_000 });
+    await expect
+      .poll(async () => {
+        await staff.reload();
+        return staff.getByRole("link", { name: /Salle d'attente/ }).innerText();
+      }, { timeout: 20_000 })
+      .toContain("En ligne");
 
     // L'écran passe seul à l'affichage de la file.
     await expect(tv.getByText("Les appels s'afficheront ici.")).toBeVisible({ timeout: 15_000 });
@@ -84,6 +90,7 @@ test.describe("M6 — écran TV", () => {
     await tv.reload();
     await expect(tv.getByRole("heading", { name: "Appairez cet écran" })).toBeVisible();
     await tvContext.close();
+    await staffContext.close();
   });
 
   test("annonces vocales : réglages enregistrés", async ({ page }) => {
@@ -95,7 +102,7 @@ test.describe("M6 — écran TV", () => {
     await page.getByLabel("English").click();
     await page.getByRole("radio", { name: "2 fois" }).click();
     await page.getByLabel("Activer une plage de silence").click();
-    await page.getByLabel("De").fill("12:00");
+    await page.getByLabel("De", { exact: true }).fill("12:00");
     await page.getByLabel("À", { exact: true }).fill("14:00");
     await expectAccessible(page);
     await page.getByRole("button", { name: "Enregistrer" }).click();

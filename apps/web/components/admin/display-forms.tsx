@@ -21,7 +21,7 @@ function ServicesPicker({ services, initial, disabled }: { services: Service[]; 
   const [selected, setSelected] = useState(initial);
   return (
     <>
-      <ListSection header={t("services")} footer={t("servicesHint")}>
+      <ListSection header={t("services")} footer={t("servicesHint")} checkboxGroupLabel={t("services")}>
         {services.map((s) => {
           const checked = selected.includes(s.id);
           return (

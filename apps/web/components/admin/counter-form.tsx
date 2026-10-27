@@ -91,7 +91,7 @@ export function CounterForm({
         />
       ) : null}
 
-      <ListSection header={t("services")} footer={services.length ? t("servicesHint") : t("noServices")}>
+      <ListSection header={t("services")} footer={services.length ? t("servicesHint") : t("noServices")} checkboxGroupLabel={t("services")}>
         {services.map((s) => {
           const checked = selected.includes(s.id);
           return (

@@ -89,7 +89,7 @@ export function TvBoard({
               <>
                 <div key={`${hero.code}-${hero.called_at}`} className="min-w-0 animate-pop-in">
                   <p className="text-[3.2vh] font-bold tracking-[0.08em] text-label-secondary uppercase">{t("called")}</p>
-                  <p className="text-[min(22vh,13vw)] leading-[0.95] font-extrabold whitespace-nowrap">
+                  <p className="text-[min(20vh,11vw)] leading-[0.95] font-extrabold whitespace-nowrap">
                     <span aria-hidden>{hero.code}</span>
                     <span className="sr-only">{spellTicketCode(hero.code)}</span>
                   </p>
@@ -113,8 +113,8 @@ export function TvBoard({
                 <li key={c ? `${c.code}-${c.called_at}` : i} className="squircle flex h-[11vh] items-center justify-between gap-3 rounded-[1.4vw] bg-tv-surface px-[1.8vw]">
                   {c ? (
                     <>
-                      <span className="text-[5vh] font-extrabold">{c.code}</span>
-                      <span className="truncate text-[2.6vh] text-white/80">
+                      <span className="shrink-0 text-[4.4vh] leading-none font-extrabold whitespace-nowrap">{c.code}</span>
+                      <span className="min-w-0 truncate text-[2.4vh] text-white/80">
                         {counterKind(c)} {c.counter_label ? "" : c.counter_number}
                       </span>
                     </>
@@ -132,10 +132,12 @@ export function TvBoard({
               {services.map((s) => (
                 <li key={s.id} className="flex items-center gap-[1.2vw]">
                   <ServiceTile letter={s.prefix} color={s.color} className="size-[6vh] rounded-[1.2vh] text-[3vh]" />
-                  <span className="min-w-0 flex-1 truncate text-[2.8vh] font-semibold">{name(s)}</span>
-                  <span className="shrink-0 text-right text-[2.4vh] text-white/85 tabular">
-                    {t("waiting", { count: s.waiting.length })}
-                    {s.waiting.length ? ` · ${t("wait", { minutes: waitMinutes(s.wait_seconds) })}` : ""}
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-[2.8vh] leading-tight font-semibold">{name(s)}</span>
+                    <span className="truncate text-[2.3vh] text-white/80 tabular">
+                      {t("waiting", { count: s.waiting.length })}
+                      {s.waiting.length ? ` · ${t("wait", { minutes: waitMinutes(s.wait_seconds) })}` : ""}
+                    </span>
                   </span>
                 </li>
               ))}

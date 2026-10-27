@@ -16,7 +16,7 @@ export const buttonVariants = cva(
       variant: {
         filled: "bg-accent text-on-accent hover:bg-accent-pressed",
         tinted: "bg-accent-tint text-accent-on-tint",
-        gray: "bg-fill-tertiary text-accent-text",
+        gray: "bg-fill-tertiary text-accent-on-tint",
         plain: "bg-transparent text-accent-text",
         destructive: "bg-red-tint text-red-text",
         "destructive-plain": "bg-transparent text-red-text",
@@ -95,7 +95,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       className={cn(
         "pressable inline-flex size-11 shrink-0 items-center justify-center rounded-full disabled:opacity-40",
         "[&_svg]:size-[1.25rem] [&_svg]:stroke-[1.75]",
-        variant === "gray" && "bg-fill-tertiary text-accent-text",
+        variant === "gray" && "bg-fill-tertiary text-accent-on-tint",
         variant === "plain" && "text-accent-text",
         variant === "tinted" && "bg-accent-tint text-accent-on-tint",
         variant === "filled" && "bg-accent text-on-accent",
