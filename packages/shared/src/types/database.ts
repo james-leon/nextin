@@ -100,6 +100,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"counter_pauses": {
+                  Row: {
+                    "branch_id": string,"counter_id": string,"ended_at": string | null,"id": string,"organization_id": string,"session_id": string | null,"started_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"counter_id": string,"ended_at"?: string | null,"id"?: string,"organization_id": string,"session_id"?: string | null,"started_at"?: string
+                  }
+                  Update: {
+                    "branch_id"?: string,"counter_id"?: string,"ended_at"?: string | null,"id"?: string,"organization_id"?: string,"session_id"?: string | null,"started_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "counter_pauses_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "counter_pauses_organization_id_counter_id_fkey"
+      columns: ["organization_id","counter_id"]
+isOneToOne: false
+      referencedRelation: "counters"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "counter_pauses_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "counter_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"counter_services": {
                   Row: {
                     "counter_id": string,"organization_id": string,"service_id": string,"weight": number
@@ -123,6 +155,32 @@ isOneToOne: false
       columns: ["organization_id","service_id"]
 isOneToOne: false
       referencedRelation: "services"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"counter_sessions": {
+                  Row: {
+                    "agent_id": string | null,"branch_id": string,"counter_id": string,"ended_at": string | null,"id": string,"organization_id": string,"started_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "agent_id"?: string | null,"branch_id": string,"counter_id": string,"ended_at"?: string | null,"id"?: string,"organization_id": string,"started_at"?: string
+                  }
+                  Update: {
+                    "agent_id"?: string | null,"branch_id"?: string,"counter_id"?: string,"ended_at"?: string | null,"id"?: string,"organization_id"?: string,"started_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "counter_sessions_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "counter_sessions_organization_id_counter_id_fkey"
+      columns: ["organization_id","counter_id"]
+isOneToOne: false
+      referencedRelation: "counters"
       referencedColumns: ["organization_id","id"]
     }
                   ]
@@ -224,6 +282,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"notification_contacts": {
+                  Row: {
+                    "branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"ticket_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"ticket_id": string
+                  }
+                  Update: {
+                    "branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"ticket_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_contacts_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "notification_contacts_organization_id_ticket_id_fkey"
+      columns: ["organization_id","ticket_id"]
+isOneToOne: false
+      referencedRelation: "tickets"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
                 },"opening_hours": {
                   Row: {
                     "branch_id": string,"closes_at": string,"id": string,"opens_at": string,"organization_id": string,"weekday": number
@@ -271,6 +355,32 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"practitioner_absences": {
+                  Row: {
+                    "branch_id": string,"created_at": string,"declared_by": string | null,"ended_at": string | null,"id": string,"kind": Database["public"]['Enums']["absence_kind"],"organization_id": string,"practitioner_id": string,"reason": string | null,"starts_at": string,"until": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"created_at"?: string,"declared_by"?: string | null,"ended_at"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["absence_kind"],"organization_id": string,"practitioner_id": string,"reason"?: string | null,"starts_at"?: string,"until"?: string | null
+                  }
+                  Update: {
+                    "branch_id"?: string,"created_at"?: string,"declared_by"?: string | null,"ended_at"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["absence_kind"],"organization_id"?: string,"practitioner_id"?: string,"reason"?: string | null,"starts_at"?: string,"until"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "practitioner_absences_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "practitioner_absences_organization_id_practitioner_id_fkey"
+      columns: ["organization_id","practitioner_id"]
+isOneToOne: false
+      referencedRelation: "practitioners"
+      referencedColumns: ["organization_id","id"]
+    }
                   ]
                 },"practitioners": {
                   Row: {
@@ -579,8 +689,17 @@ isOneToOne: false
 "broadcast_branch":
 { Args: { "p_branch": string }; Returns: undefined
                            },
+"broadcast_practitioner_tickets":
+{ Args: { "p_practitioner": string }; Returns: undefined
+                           },
 "call_next":
 { Args: { "p_client_op_id"?: string,"p_counter": string,"p_finish_current"?: boolean }; Returns: Json
+                           },
+"call_ticket":
+{ Args: { "p_client_op_id"?: string,"p_counter": string,"p_finish_current"?: boolean,"p_ticket": string }; Returns: Json
+                           },
+"call_ticket_internal":
+{ Args: { "p_counter": string,"p_ticket": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: Json
                            },
 "can_access_branch":
 { Args: { "p_branch": string,"p_org": string,"p_roles"?: (Database["public"]['Enums']["member_role"])[] }; Returns: boolean
@@ -621,8 +740,14 @@ isOneToOne: false
 "create_organization":
 { Args: { "p_data_retention_days"?: number,"p_default_locale"?: string,"p_name": string,"p_slug": string,"p_type": Database["public"]['Enums']["org_type"] }; Returns: string
                            },
+"declare_practitioner_absence":
+{ Args: { "p_kind": Database["public"]['Enums']["absence_kind"],"p_practitioner": string,"p_reason"?: string,"p_until"?: string }; Returns: Json
+                           },
 "effective_duration_seconds":
 { Args: { "p_default": number,"p_ewma": number,"p_samples": number }; Returns: number
+                           },
+"end_practitioner_absence":
+{ Args: { "p_absence": string }; Returns: Json
                            },
 "estimate_wait_seconds":
 { Args: { "p_ahead": number,"p_busy": (number)[],"p_durations": (number)[] }; Returns: number
@@ -763,6 +888,29 @@ isOneToOne: false
               "active": boolean,"branch_id": string,"created_at": string,"email": string,"full_name": string,"membership_id": string,"role": Database["public"]['Enums']["member_role"],"user_id": string
             }[]
                            },
+"lock_counter_for_call":
+{ Args: { "p_counter": string,"p_finish_current": boolean }; Returns: {
+              "active": boolean,
+"branch_id": string,
+"created_at": string,
+"current_agent_id": string | null,
+"default_practitioner_id": string | null,
+"id": string,
+"kind": Database["public"]['Enums']["counter_kind"],
+"label": string | null,
+"number": number,
+"organization_id": string,
+"sort_order": number,
+"status": Database["public"]['Enums']["counter_status"],
+"status_changed_at": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "counters"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "lock_staff_ticket":
 { Args: { "p_allowed": (Database["public"]['Enums']["ticket_status"])[],"p_ticket": string }; Returns: {
               "branch_id": string,
@@ -821,6 +969,72 @@ isOneToOne: false
 "pause_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },
+"pick_next_ticket":
+{ Args: { "p_counter": string }; Returns: {
+              "branch_id": string,
+"called_at": string | null,
+"counter_id": string | null,
+"created_at": string,
+"created_by": string | null,
+"customer_user_id": string | null,
+"delay_count": number,
+"display_code": string,
+"finished_at": string | null,
+"id": string,
+"is_remote": boolean,
+"number": number,
+"organization_id": string,
+"preferred_counter_id": string | null,
+"presence_confirmed_at": string | null,
+"priority_level": number,
+"priority_reason": Database["public"]['Enums']["priority_reason"] | null,
+"public_token": string | null,
+"rated_at": string | null,
+"rating": number | null,
+"rating_comment": string | null,
+"recall_count": number,
+"recalled_at": string | null,
+"service_day": string,
+"service_id": string,
+"serving_started_at": string | null,
+"sort_key": number,
+"source": Database["public"]['Enums']["ticket_source"],
+"status": Database["public"]['Enums']["ticket_status"],
+"transferred_from_id": string | null,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "tickets"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"practitioner_absence_now":
+{ Args: { "p_practitioner": string }; Returns: {
+              "branch_id": string,
+"created_at": string,
+"declared_by": string | null,
+"ended_at": string | null,
+"id": string,
+"kind": Database["public"]['Enums']["absence_kind"],
+"organization_id": string,
+"practitioner_id": string,
+"reason": string | null,
+"starts_at": string,
+"until": string | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "practitioner_absences"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"practitioner_counter":
+{ Args: { "p_practitioner": string }; Returns: string
+                           },
+"practitioner_late_until":
+{ Args: { "p_practitioner": string }; Returns: string
+                           },
 "purge_inactive_anonymous_users":
 { Args: { "p_inactive_for"?: string }; Returns: number
                            },
@@ -840,7 +1054,7 @@ isOneToOne: false
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
                            },
 "reception_create_ticket":
-{ Args: { "p_client_op_id"?: string,"p_priority_reason"?: Database["public"]['Enums']["priority_reason"],"p_service": string }; Returns: Json
+{ Args: { "p_client_op_id"?: string,"p_consent"?: boolean,"p_locale"?: string,"p_phone_e164"?: string,"p_practitioner"?: string,"p_priority_reason"?: Database["public"]['Enums']["priority_reason"],"p_service": string }; Returns: Json
                            },
 "record_service_duration":
 { Args: { "p_counter": string,"p_org": string,"p_seconds": number,"p_service": string }; Returns: undefined
@@ -864,6 +1078,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"reroute_counter":
+{ Args: { "p_practitioner": string }; Returns: string
+                           },
 "resolve_entry":
 { Args: { "p_code": string }; Returns: Json
                            },
@@ -902,6 +1119,9 @@ isOneToOne: false
 "ticket_position":
 { Args: { "p_ticket": string }; Returns: number
                            },
+"ticket_practitioner_late_until":
+{ Args: { "p_ticket": string }; Returns: string
+                           },
 "ticket_view":
 { Args: { "p_ticket": string }; Returns: Json
                            },
@@ -913,7 +1133,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1029,7 +1249,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const

@@ -5,8 +5,8 @@
 import { spawnSync } from "node:child_process";
 import { localEnv, runLocal } from "./local-env.mjs";
 
-const status = runLocal("npx", ["supabase", "db", "reset", ...process.argv.slice(2)]);
-if (status !== 0) process.exit(status);
+const code = runLocal("npx", ["supabase", "db", "reset", ...process.argv.slice(2)]);
+if (code !== 0) process.exit(code);
 const kong = process.env.SUPABASE_KONG_CONTAINER ?? "supabase_kong_nextin";
 spawnSync("docker", ["restart", kong], { stdio: "ignore", shell: process.platform === "win32" });
 

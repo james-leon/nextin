@@ -93,6 +93,7 @@ export const fr = {
     invalid_state: "Ce ticket a changé d'état entre-temps. Actualisez.",
     already_rated: "Vous avez déjà donné votre avis.",
     rating_disabled: "Les avis ne sont pas activés dans cette agence.",
+    consent_required: "Cochez l'accord du patient pour enregistrer son numéro WhatsApp.",
   },
   auth: {
     loginTitle: "Connexion",

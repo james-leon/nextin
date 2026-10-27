@@ -95,6 +95,7 @@ export const en: Messages = {
     invalid_state: "This ticket has changed in the meantime. Refresh.",
     already_rated: "You have already left a review.",
     rating_disabled: "Reviews are not enabled at this branch.",
+    consent_required: "Tick the patient's consent to save their WhatsApp number.",
   },
   auth: {
     loginTitle: "Sign in",

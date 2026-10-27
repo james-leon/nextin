@@ -18,6 +18,8 @@ export const QUEUE_ERROR_CODES = [
   "invalid_state",
   "already_rated",
   "rating_disabled",
+  "consent_required",
+  "phone_invalid",
 ] as const;
 export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
 
