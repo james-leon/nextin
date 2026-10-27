@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Clock, DoorOpen, ConciergeBell, Info, QrCode, SlidersHorizontal, Stethoscope } from "lucide-react";
+import { Clock, ConciergeBell, DoorOpen, Info, QrCode, SlidersHorizontal, Stethoscope, Tv } from "lucide-react";
 import { SERVICE_COLORS, summarizeOpeningHours } from "@nextin/shared";
 import { AdminPage } from "@/components/admin/admin-page";
 import { SavedNotice } from "@/components/admin/saved-notice";
@@ -23,6 +23,7 @@ export default async function BranchPage({ params, searchParams }: Props) {
   const t = await getTranslations("branches");
   const th = await getTranslations("hours");
   const td = await getTranslations("desk");
+  const tv = await getTranslations("displays");
   const tw = await getTranslations("weekdaysShort");
   const supabase = await getSupabaseServerClient();
   const [services, counters, hours, qr] = await Promise.all([
@@ -55,6 +56,13 @@ export default async function BranchPage({ params, searchParams }: Props) {
           icon={<ListIcon color={SERVICE_COLORS.purple}><QrCode /></ListIcon>}
           title={t("qr")}
           subtitle={qr.data ? qr.data.short_code : undefined}
+          accessory="chevron"
+        />
+        <ListRow
+          href={`${base}/displays`}
+          icon={<ListIcon color="var(--brand-tile)"><Tv /></ListIcon>}
+          title={tv("link")}
+          subtitle={tv("linkHint")}
           accessory="chevron"
         />
       </ListSection>

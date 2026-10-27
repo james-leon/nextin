@@ -6,7 +6,27 @@ export type Database = {
   
   "public": {
           Tables: {
-            "audit_log": {
+            "announcement_settings": {
+                  Row: {
+                    "branch_id": string,"chime_enabled": boolean,"languages": (string)[],"organization_id": string,"quiet_hours": NonNullable<Json>,"repeat_count": number,"updated_at": string,"volume": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"chime_enabled"?: boolean,"languages"?: (string)[],"organization_id": string,"quiet_hours"?: NonNullable<Json>,"repeat_count"?: number,"updated_at"?: string,"volume"?: number
+                  }
+                  Update: {
+                    "branch_id"?: string,"chime_enabled"?: boolean,"languages"?: (string)[],"organization_id"?: string,"quiet_hours"?: NonNullable<Json>,"repeat_count"?: number,"updated_at"?: string,"volume"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "announcement_settings_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"audit_log": {
                   Row: {
                     "action": string,"actor_user_id": string | null,"created_at": string,"diff": NonNullable<Json>,"entity_id": string | null,"entity_type": string,"id": number,"ip_hash": string | null,"organization_id": string | null
                   }
@@ -228,6 +248,52 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "services"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"display_services": {
+                  Row: {
+                    "display_id": string,"organization_id": string,"service_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "display_id": string,"organization_id": string,"service_id": string
+                  }
+                  Update: {
+                    "display_id"?: string,"organization_id"?: string,"service_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "display_services_organization_id_display_id_fkey"
+      columns: ["organization_id","display_id"]
+isOneToOne: false
+      referencedRelation: "displays"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "display_services_organization_id_service_id_fkey"
+      columns: ["organization_id","service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"displays": {
+                  Row: {
+                    "app_version": string | null,"branch_id": string | null,"created_at": string,"device_token_hash": string | null,"id": string,"last_seen_at": string | null,"name": string | null,"organization_id": string | null,"paired_at": string | null,"paired_by": string | null,"pairing_code": string | null,"pairing_expires_at": string | null,"poll_secret_hash": string | null,"revoked_at": string | null,"show_ads": boolean,"status": Database["public"]['Enums']["display_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "app_version"?: string | null,"branch_id"?: string | null,"created_at"?: string,"device_token_hash"?: string | null,"id"?: string,"last_seen_at"?: string | null,"name"?: string | null,"organization_id"?: string | null,"paired_at"?: string | null,"paired_by"?: string | null,"pairing_code"?: string | null,"pairing_expires_at"?: string | null,"poll_secret_hash"?: string | null,"revoked_at"?: string | null,"show_ads"?: boolean,"status"?: Database["public"]['Enums']["display_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "app_version"?: string | null,"branch_id"?: string | null,"created_at"?: string,"device_token_hash"?: string | null,"id"?: string,"last_seen_at"?: string | null,"name"?: string | null,"organization_id"?: string | null,"paired_at"?: string | null,"paired_by"?: string | null,"pairing_code"?: string | null,"pairing_expires_at"?: string | null,"poll_secret_hash"?: string | null,"revoked_at"?: string | null,"show_ads"?: boolean,"status"?: Database["public"]['Enums']["display_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "displays_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
     }
                   ]
                 },"invitations": {
@@ -966,6 +1032,9 @@ isOneToOne: false
 "open_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },
+"pair_display":
+{ Args: { "p_branch": string,"p_code": string,"p_name": string,"p_service_ids"?: (string)[],"p_show_ads"?: boolean }; Returns: string
+                           },
 "pause_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },
@@ -1084,6 +1153,9 @@ isOneToOne: false
 "resolve_entry":
 { Args: { "p_code": string }; Returns: Json
                            },
+"revoke_display":
+{ Args: { "p_display": string }; Returns: undefined
+                           },
 "service_counter_loads":
 { Args: { "p_service": string }; Returns: {
               "busy_remaining_seconds": number,"counter_id": string,"duration_seconds": number
@@ -1097,6 +1169,9 @@ isOneToOne: false
                            },
 "set_ticket_priority":
 { Args: { "p_reason": Database["public"]['Enums']["priority_reason"],"p_ticket": string }; Returns: Json
+                           },
+"sha256_hex":
+{ Args: { "p_text": string }; Returns: string
                            },
 "shares_org_with":
 { Args: { "p_user": string }; Returns: boolean
@@ -1130,10 +1205,22 @@ isOneToOne: false
                            },
 "transfer_ticket":
 { Args: { "p_client_op_id"?: string,"p_target_service": string,"p_ticket": string }; Returns: Json
+                           },
+"tv_create_pairing":
+{ Args: { "p_ip_hash": string }; Returns: Json
+                           },
+"tv_poll_pairing":
+{ Args: { "p_display": string,"p_poll_secret": string }; Returns: Json
+                           },
+"tv_session":
+{ Args: { "p_app_version"?: string,"p_device_token": string }; Returns: Json
+                           },
+"update_display":
+{ Args: { "p_display": string,"p_name": string,"p_service_ids": (string)[],"p_show_ads": boolean }; Returns: undefined
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1249,7 +1336,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const

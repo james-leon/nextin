@@ -233,3 +233,34 @@ export const takeTicketSchema = z
     if (v.source !== "remote" && !v.entryCode) ctx.addIssue({ code: "custom", message: "invalid_entry", path: ["entryCode"] });
   });
 export type TakeTicketInput = z.infer<typeof takeTicketSchema>;
+
+/* ─── M6 : écrans TV ────────────────────────────────────────────────────── */
+
+export const pairDisplayFormSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, "pairing_code_invalid"),
+  name: z.string().trim().min(1, "name_too_short").max(60),
+  serviceIds: z.array(z.uuid()).default([]),
+});
+
+export const displayFormSchema = z.object({
+  name: z.string().trim().min(1, "name_too_short").max(60),
+  serviceIds: z.array(z.uuid()).default([]),
+});
+
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "time_invalid");
+
+export const announcementSettingsFormSchema = z
+  .object({
+    languages: z.array(z.enum(["fr", "en"])).min(1, "generic").max(2),
+    volume: z.coerce.number().int().min(0).max(100),
+    repeatCount: z.coerce.number().int().min(1).max(3),
+    chimeEnabled: formBoolean,
+    quietEnabled: formBoolean,
+    quietFrom: hhmm.optional().or(z.literal("")),
+    quietTo: hhmm.optional().or(z.literal("")),
+  })
+  .superRefine((v, ctx) => {
+    if (v.quietEnabled && (!v.quietFrom || !v.quietTo || v.quietFrom === v.quietTo)) {
+      ctx.addIssue({ code: "custom", message: "time_invalid", path: ["quietTo"] });
+    }
+  });

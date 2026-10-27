@@ -9,7 +9,8 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-:root {
+:root,
+[data-theme="light"] {
   color-scheme: light;
 
   /* Fonds */
