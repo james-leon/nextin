@@ -274,6 +274,64 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     }
                   ]
+                },"daily_branch_stats": {
+                  Row: {
+                    "appointment": number,"branch_id": string,"cancelled": number,"day": string,"hourly": (number)[],"issued": number,"max_wait_seconds": number,"no_show": number,"organization_id": string,"rating_count": number,"rating_sum": number,"remote": number,"served": number,"service_count": number,"service_id": string,"service_seconds_sum": number,"transferred": number,"updated_at": string,"wait_count": number,"wait_seconds_sum": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "appointment"?: number,"branch_id": string,"cancelled"?: number,"day": string,"hourly"?: (number)[],"issued"?: number,"max_wait_seconds"?: number,"no_show"?: number,"organization_id": string,"rating_count"?: number,"rating_sum"?: number,"remote"?: number,"served"?: number,"service_count"?: number,"service_id": string,"service_seconds_sum"?: number,"transferred"?: number,"updated_at"?: string,"wait_count"?: number,"wait_seconds_sum"?: number
+                  }
+                  Update: {
+                    "appointment"?: number,"branch_id"?: string,"cancelled"?: number,"day"?: string,"hourly"?: (number)[],"issued"?: number,"max_wait_seconds"?: number,"no_show"?: number,"organization_id"?: string,"rating_count"?: number,"rating_sum"?: number,"remote"?: number,"served"?: number,"service_count"?: number,"service_id"?: string,"service_seconds_sum"?: number,"transferred"?: number,"updated_at"?: string,"wait_count"?: number,"wait_seconds_sum"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "daily_branch_stats_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "daily_branch_stats_organization_id_service_id_fkey"
+      columns: ["organization_id","service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"daily_counter_stats": {
+                  Row: {
+                    "branch_id": string,"called": number,"counter_id": string,"day": string,"no_show": number,"open_seconds": number,"organization_id": string,"pause_seconds": number,"practitioner_id": string | null,"rating_count": number,"rating_sum": number,"served": number,"service_count": number,"service_seconds_sum": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"called"?: number,"counter_id": string,"day": string,"no_show"?: number,"open_seconds"?: number,"organization_id": string,"pause_seconds"?: number,"practitioner_id"?: string | null,"rating_count"?: number,"rating_sum"?: number,"served"?: number,"service_count"?: number,"service_seconds_sum"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "branch_id"?: string,"called"?: number,"counter_id"?: string,"day"?: string,"no_show"?: number,"open_seconds"?: number,"organization_id"?: string,"pause_seconds"?: number,"practitioner_id"?: string | null,"rating_count"?: number,"rating_sum"?: number,"served"?: number,"service_count"?: number,"service_seconds_sum"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "daily_counter_stats_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "daily_counter_stats_organization_id_counter_id_fkey"
+      columns: ["organization_id","counter_id"]
+isOneToOne: false
+      referencedRelation: "counters"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "daily_counter_stats_organization_id_practitioner_id_fkey"
+      columns: ["organization_id","practitioner_id"]
+isOneToOne: false
+      referencedRelation: "practitioners"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
                 },"daily_sequences": {
                   Row: {
                     "last_number": number,"service_day": string,"service_id": string
@@ -930,6 +988,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"assert_stats_access":
+{ Args: { "p_branch": string,"p_org": string }; Returns: undefined
+                           },
 "audit":
 { Args: { "p_action": string,"p_diff"?: Json,"p_entity_id": string,"p_entity_type": string,"p_ip_hash"?: string,"p_org": string }; Returns: undefined
                            },
@@ -1011,6 +1072,59 @@ isOneToOne: false
 "complete_notification_job":
 { Args: { "p_error"?: string,"p_job": string,"p_payload"?: Json,"p_provider_message_id"?: string,"p_retry_in_seconds"?: number,"p_status": Database["public"]['Enums']["job_status"],"p_template_name"?: string }; Returns: undefined
                            },
+"compute_branch_stats":
+{ Args: { "p_branch": string,"p_day": string }; Returns: {
+              "appointment": number,
+"branch_id": string,
+"cancelled": number,
+"day": string,
+"hourly": (number)[],
+"issued": number,
+"max_wait_seconds": number,
+"no_show": number,
+"organization_id": string,
+"rating_count": number,
+"rating_sum": number,
+"remote": number,
+"served": number,
+"service_count": number,
+"service_id": string,
+"service_seconds_sum": number,
+"transferred": number,
+"updated_at": string,
+"wait_count": number,
+"wait_seconds_sum": number
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "daily_branch_stats"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"compute_counter_stats":
+{ Args: { "p_branch": string,"p_day": string }; Returns: {
+              "branch_id": string,
+"called": number,
+"counter_id": string,
+"day": string,
+"no_show": number,
+"open_seconds": number,
+"organization_id": string,
+"pause_seconds": number,
+"practitioner_id": string | null,
+"rating_count": number,
+"rating_sum": number,
+"served": number,
+"service_count": number,
+"service_seconds_sum": number,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "daily_counter_stats"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "configure_notification_dispatch":
 { Args: { "p_secret": string,"p_url": string }; Returns: undefined
                            },
@@ -1022,6 +1136,9 @@ isOneToOne: false
                            },
 "create_organization":
 { Args: { "p_data_retention_days"?: number,"p_default_locale"?: string,"p_name": string,"p_slug": string,"p_type": Database["public"]['Enums']["org_type"] }; Returns: string
+                           },
+"dashboard_stats":
+{ Args: { "p_branch": string,"p_compare_from"?: string,"p_compare_to"?: string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
                            },
 "declare_practitioner_absence":
 { Args: { "p_kind": Database["public"]['Enums']["absence_kind"],"p_practitioner": string,"p_reason"?: string,"p_until"?: string }; Returns: Json
@@ -1450,6 +1567,12 @@ isOneToOne: false
 "revoke_display":
 { Args: { "p_display": string }; Returns: undefined
                            },
+"rollup_daily_stats":
+{ Args: { "p_day"?: string }; Returns: number
+                           },
+"rollup_daily_stats_range":
+{ Args: { "p_from": string,"p_to": string }; Returns: number
+                           },
 "schedule_appointment_notifications":
 { Args: { "p_appointment": string,"p_first": Database["public"]['Enums']["notif_event"] }; Returns: undefined
                            },
@@ -1481,6 +1604,65 @@ isOneToOne: false
                            },
 "staff_ticket_json":
 { Args: { "p_ticket": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: Json
+                           },
+"stats_branch_rows":
+{ Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: {
+              "appointment": number,
+"branch_id": string,
+"cancelled": number,
+"day": string,
+"hourly": (number)[],
+"issued": number,
+"max_wait_seconds": number,
+"no_show": number,
+"organization_id": string,
+"rating_count": number,
+"rating_sum": number,
+"remote": number,
+"served": number,
+"service_count": number,
+"service_id": string,
+"service_seconds_sum": number,
+"transferred": number,
+"updated_at": string,
+"wait_count": number,
+"wait_seconds_sum": number
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "daily_branch_stats"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"stats_counter_rows":
+{ Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: {
+              "branch_id": string,
+"called": number,
+"counter_id": string,
+"day": string,
+"no_show": number,
+"open_seconds": number,
+"organization_id": string,
+"pause_seconds": number,
+"practitioner_id": string | null,
+"rating_count": number,
+"rating_sum": number,
+"served": number,
+"service_count": number,
+"service_seconds_sum": number,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "daily_counter_stats"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"stats_export":
+{ Args: { "p_branch": string,"p_from": string,"p_kind": string,"p_org": string,"p_to": string }; Returns: Json
+                           },
+"stats_totals":
+{ Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
                            },
 "sweep_appointments":
 { Args: Record<PropertyKey, never>; Returns: number
