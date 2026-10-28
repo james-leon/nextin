@@ -318,6 +318,8 @@ Repli : si le WebSocket tombe (3G), la page ticket bascule en polling `get_ticke
 ### 5.3 Ticket à distance (M9)
 Désactivé par défaut (`remote_tickets_enabled = false`). À `remote_confirm_threshold` (3) places : job WhatsApp « confirmez votre présence en scannant le QR ». Worker `remote-sweeper` (pg_cron, chaque minute) : si le ticket arrive en tête sans `presence_confirmed_at` → `move_back(N = remote_penalty_places)`, `delay_count++`, job `ticket_moved_back` ; au 2ᵉ retard (`remote_max_delays`) → `cancelled`. « Quand partir » = attente estimée − temps de trajet (distance à vol d'oiseau, vitesse urbaine paramétrable).
 
+**Réalisé au M9 (`docs/modules/M9.md`)** : le recul est appliqué **au moment de l'appel** (`pick_next_ticket`) plutôt que par le worker — un ticket à distance non confirmé n'est jamais appelé ; s'il est en tête alors qu'un autre patient attend, il recule (ou est annulé au `remote_max_delays`-ième retard) ; seul dans la file, il garde sa place sans pénalité. La tâche minute (`sweep_remote_tickets`) n'envoie que « il est temps de partir ». Trajet = distance × 1,3 à `remote_travel_kmh` (défaut 20), marge `remote_leave_margin_minutes` (défaut 10), modifiable par le client ; aucune coordonnée enregistrée.
+
 ### 5.4 Mode dégradé des postes agent / réception
 - Le poste garde en IndexedDB un **snapshot** de la file de ses services (rafraîchi en continu).
 - Hors ligne, « Appeler le suivant » prend le premier ticket du snapshot, l'affiche immédiatement et enregistre `call_ticket(ticket_id, client_op_id)` dans l'**outbox** ; terminer/absent/rappel idem.

@@ -127,6 +127,14 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Statistiques anonymes uniquement : cumuls `daily_branch_stats` / `daily_counter_stats` (pg_cron nocturne, idempotent) + jour en cours et veille non cumulée calculés en direct (`stats_branch_rows`). Ne jamais lire `tickets` directement pour un indicateur : passer par `compute_*_stats`.
 - Périodes, comparaisons, écarts et CSV : `@nextin/shared/stats` (pur, testé). Graphiques : `components/dashboard/bar-chart.tsx` (une série, pic en orange, infobulle, tableau pour lecteurs d'écran) — pas de bibliothèque de graphiques.
 
+## Distance (M9, `docs/modules/M9.md`)
+- Pages client : `/nearby` (onglet « À proximité », liste + carte), `/b/[branchId]` (agence, ticket à distance), `/b/[branchId]/rdv` (demande de rendez-vous), `/r/[token]` (code WhatsApp puis réponse). Même budget < 200 Ko (testé) : pas de préchargement des pages d'agence depuis la liste, détail des services seulement dans `branch_public`.
+- Position du client : `lib/client/geolocation.ts`, demandée seulement quand elle sert, **jamais enregistrée** (seul `tickets.remote_travel_seconds`). « Quand partir » : `leaveAdvice` (`@nextin/shared/remote`) ; `travelSeconds` identique à `public.remote_travel_seconds`.
+- Carte maison sans bibliothèque (`components/client/nearby-map.tsx`) ; tuiles seulement via `NEXT_PUBLIC_MAP_TILES_URL` (fournisseur sous contrat), sinon plan schématique.
+- Ticket à distance non confirmé : jamais appelé ; recul ou annulation dans `pick_next_ticket` (un autre patient doit attendre). Présence : `confirm_presence` (QR ou code court de l'agence, automatique en ouvrant `/q/<code>` avec un ticket à distance enregistré sur l'appareil) ou `staff_confirm_presence`.
+- Demandes de rendez-vous : `create_appointment_request` (serveur uniquement) → code 6 chiffres (empreinte en base, code effacé de la file après vérification) → `pending` visible de l'accueil → `accept_appointment_request` (créneau demandé = « accepted », autre = « modified ») ou `decline_appointment_request`. Réponse WhatsApp par les événements `request_*` ; modèle `code_verification` en catégorie Authentification (bouton « Copier le code »).
+- Options d'agence désactivées par défaut : `remote_tickets_enabled`, `appointment_requests_enabled` ; `public_listing_enabled` activée.
+
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).
 - Langue sans préfixe d'URL : cookie `NEXTIN_LOCALE`, sinon `Accept-Language`, sinon `fr`. Fuseau `Africa/Douala`. Monnaie XAF entière (`formatXaf`). Téléphones E.164 +237 (`normalizeCameroonPhone`).

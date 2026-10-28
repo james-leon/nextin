@@ -37,3 +37,11 @@ Sur ordinateur, la barre latérale du back-office (`/app/o/[orgId]/…`) s'arrê
 
 ### Bouton « Exporter » du tableau de bord
 Sur ordinateur, le bouton « Exporter » de la barre de navigation du tableau de bord est collé au bord haut de l'écran, voire coupé. Il doit être aligné verticalement avec le titre et garder la marge de la barre de navigation, aussi quand le grand titre se réduit au défilement. Ajouter une capture Playwright à 1440 px qui le vérifie (boîte entièrement visible, marge haute ≥ 8 px).
+
+## Pages client (relevé au M9, 28/10/2026)
+
+### « Mon ticket » sur ordinateur et tablette
+`/t/<jeton>` reste une colonne de téléphone centrée sur grand écran (écran du M4). Prévoir deux colonnes à partir de `lg` : le ticket (héros, attente, « Quand partir ») à gauche ; alertes, itinéraire et actions à droite ; `TicketBottomActions` dans la colonne de droite plutôt qu'en barre fixe.
+
+### Confirmation de présence plus sûre (ticket à distance)
+Aujourd'hui, scanner le QR code imprimé de l'accueil (ou saisir son code court) confirme la présence : un code photographié reste valable. Option : QR code tournant affiché sur l'écran TV (jeton renouvelé chaque minute, accepté par `confirm_presence`), le QR imprimé restant valable pour prendre un ticket sur place.
