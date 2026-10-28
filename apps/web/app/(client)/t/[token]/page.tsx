@@ -13,6 +13,11 @@ type Params = { params: Promise<{ token: string }> };
 
 const TOKEN = /^[A-Za-z0-9]{22}$/;
 
+/** Lecture à l'exécution : un accès calculé n'est pas remplacé au build (contrairement à `process.env.NEXT_PUBLIC_X`). */
+function runtimeEnv(name: string): string | undefined {
+  return process.env[name];
+}
+
 async function load(token: string): Promise<TicketView | null> {
   if (!TOKEN.test(token)) return null;
   const { data } = await callRpc<TicketView | null>("get_ticket", { p_token: token });
@@ -30,7 +35,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function TicketPage({ params }: Params) {
   const { token } = await params;
   const view = await load(token);
-  if (view) return <TicketLive token={token} initial={view} />;
+  if (view) {
+    const whatsappNumber = runtimeEnv("NEXT_PUBLIC_WHATSAPP_NUMBER")?.replace(/\D/g, "") || null;
+    const vapidKey = runtimeEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY") || null;
+    return <TicketLive token={token} initial={view} whatsappNumber={whatsappNumber} vapidKey={vapidKey} />;
+  }
 
   const t = await getTranslations("client.ticket");
   return (

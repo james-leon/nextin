@@ -38,4 +38,6 @@ export type TicketView = {
   rating: number | null;
   rating_enabled: boolean;
   created_at: string;
+  /** Canaux d'alerte actifs (M7). */
+  alerts?: { whatsapp: boolean; push: boolean };
 };

@@ -264,3 +264,51 @@ export const announcementSettingsFormSchema = z
       ctx.addIssue({ code: "custom", message: "time_invalid", path: ["quietTo"] });
     }
   });
+
+/** M7 — abonnement web push depuis « Mon ticket » (jeton du lien + abonnement du navigateur). */
+export const pushSubscribeSchema = z.object({
+  token: z.string().regex(/^[A-Za-z0-9]{22}$/),
+  locale: z.enum(["fr", "en"]).default("fr"),
+  subscription: z.object({
+    endpoint: z.url().startsWith("https://").max(1000),
+    keys: z.object({ p256dh: z.string().min(16).max(200), auth: z.string().min(8).max(100) }),
+  }),
+});
+
+/** M7 — partie utile d'un webhook WhatsApp Cloud API (le reste est ignoré). */
+export const whatsappWebhookSchema = z.object({
+  object: z.literal("whatsapp_business_account"),
+  entry: z.array(
+    z.object({
+      changes: z.array(
+        z.object({
+          field: z.string(),
+          value: z
+            .object({
+              messages: z
+                .array(
+                  z.object({
+                    id: z.string().min(1).max(200),
+                    from: z.string().regex(/^[1-9][0-9]{7,14}$/),
+                    type: z.string(),
+                    text: z.object({ body: z.string().max(4096) }).optional(),
+                    button: z.object({ text: z.string().max(256) }).optional(),
+                  }),
+                )
+                .optional(),
+              statuses: z
+                .array(
+                  z.object({
+                    id: z.string().min(1).max(200),
+                    status: z.string(),
+                    errors: z.array(z.object({ code: z.number().optional(), title: z.string().optional() })).optional(),
+                  }),
+                )
+                .optional(),
+            })
+            .passthrough(),
+        }),
+      ),
+    }),
+  ),
+});

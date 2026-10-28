@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Bell, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { optInLink } from "@nextin/shared/notifications/opt-in";
 import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
@@ -24,8 +25,7 @@ import type { CounterRef, TicketView } from "@/lib/client/types";
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
 const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
 const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
-
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "") ?? "";
+const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
 
 const aheadKey = (token: string) => `nextin-ahead-${token}`;
 const noSubscribe = () => () => {};
@@ -40,7 +40,19 @@ function readMaxAhead(token: string): number {
 }
 
 /** Écran 03 « Mon ticket » : numéro et attente en héros, suivi en temps réel, appel, fin de passage. */
-export function TicketLive({ token, initial }: { token: string; initial: TicketView }) {
+export function TicketLive({
+  token,
+  initial,
+  whatsappNumber,
+  vapidKey,
+}: {
+  token: string;
+  initial: TicketView;
+  /** Numéro WhatsApp de NextIn (opt-in), lu côté serveur ; null : bouton masqué. */
+  whatsappNumber: string | null;
+  /** Clé publique VAPID (web push) ; null : pas de notification sur le téléphone. */
+  vapidKey: string | null;
+}) {
   const t = useLiteT("client.ticket");
   const tk = useLiteT("counterKinds");
   const locale = useLiteLocale();
@@ -210,14 +222,24 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
           </Badge>
         ) : null}
 
-        {active && WHATSAPP_NUMBER ? (
-          <Button asChild block variant="tinted">
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`NEXTIN ${token}`)}`} target="_blank" rel="noopener">
-              <MessageCircle aria-hidden className="size-5" />
-              {t("whatsapp")}
-            </a>
-          </Button>
+        {active && view.alerts?.whatsapp ? (
+          <Badge shape="pill" tone="green" className="self-center" role="status">
+            <Check aria-hidden />
+            {t("whatsappOn")}
+          </Badge>
+        ) : active && whatsappNumber ? (
+          <div className="flex flex-col gap-1.5">
+            <Button asChild block variant="tinted">
+              <a href={optInLink(whatsappNumber, view.display_code, token, locale === "en" ? "en" : "fr")} target="_blank" rel="noopener">
+                <MessageCircle aria-hidden className="size-5" />
+                {t("whatsapp")}
+              </a>
+            </Button>
+            <p className="px-4 text-center text-footnote text-label-secondary">{t("whatsappHint")}</p>
+          </div>
         ) : null}
+
+        {active && vapidKey ? <PushAlerts token={token} vapidKey={vapidKey} subscribed={!!view.alerts?.push} /> : null}
 
         {view.status === "waiting" && view.practitioner_late_until && new Date(view.practitioner_late_until).getTime() > now.getTime() ? (
           <CalloutCard icon={<Clock />} role="status">
@@ -229,7 +251,9 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
           </CalloutCard>
         ) : null}
 
-        {view.status === "waiting" ? <CalloutCard icon={<Bell />}>{t("keepOpen")}</CalloutCard> : null}
+        {view.status === "waiting" ? (
+          <CalloutCard icon={<Bell />}>{view.alerts?.whatsapp || view.alerts?.push ? t("keepOpenAlerts") : t("keepOpen")}</CalloutCard>
+        ) : null}
 
         {view.status === "served" ? (
           view.rating_enabled && view.rating == null ? (

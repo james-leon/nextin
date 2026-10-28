@@ -14,7 +14,9 @@
     "./queue/realtime": "./src/queue/realtime.ts",
     "./queue/estimate": "./src/queue/estimate.ts",
     "./desk": "./src/desk/index.ts",
-    "./announcements": "./src/announcements/index.ts"
+    "./announcements": "./src/announcements/index.ts",
+    "./notifications": "./src/notifications/index.ts",
+    "./notifications/opt-in": "./src/notifications/opt-in.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",

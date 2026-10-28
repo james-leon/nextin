@@ -25,7 +25,10 @@
     "dev:local": "node scripts/local-env.mjs pnpm --filter @nextin/web dev",
     "db:test:sql": "node scripts/db-test.mjs",
     "dev:lan": "node scripts/dev-lan.mjs",
-    "voices:generate": "node --env-file-if-exists=apps/web/.env.local --import tsx scripts/generate-voices.ts"
+    "voices:generate": "node --env-file-if-exists=apps/web/.env.local --import tsx scripts/generate-voices.ts",
+    "notify:configure": "node --env-file-if-exists=apps/web/.env.local scripts/notify-configure.mjs",
+    "notify:outbox": "node --env-file-if-exists=apps/web/.env.local scripts/notify-outbox.mjs",
+    "whatsapp:simulate": "node --env-file-if-exists=apps/web/.env.local scripts/whatsapp-simulate.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.118.0",
