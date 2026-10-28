@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Trash2 } from "lucide-react";
+import { CalendarClock, Trash2 } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PractitionerForm } from "@/components/admin/practitioner-form";
 import { ReadOnlyNotice } from "@/components/admin/read-only-notice";
+import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { manageableBranches } from "@/lib/admin/branches";
 import { getOrgContext } from "@/lib/admin/context";
 import { listSpecialties } from "@/lib/admin/specialties";
@@ -31,10 +32,23 @@ export default async function EditPractitionerPage({ params }: { params: Promise
   const canManage = ctx.canManageBranch(p.branch_id);
   const t = await getTranslations("practitioners");
   const ta = await getTranslations("admin");
+  const ts = await getTranslations("schedule");
   const branchOptions = canManage ? branches : p.branch ? [p.branch] : [];
   return (
     <AdminPage title={[p.title, p.display_name].filter(Boolean).join(" ")} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/practitioners`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
+      <ListSection>
+        <ListRow
+          href={`/app/o/${orgId}/practitioners/${practitionerId}/schedule`}
+          icon={
+            <ListIcon>
+              <CalendarClock />
+            </ListIcon>
+          }
+          title={ts("open")}
+          accessory="chevron"
+        />
+      </ListSection>
       <PractitionerForm
         action={savePractitioner.bind(null, orgId, practitionerId)}
         specialties={specialties}

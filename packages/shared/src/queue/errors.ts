@@ -3,6 +3,9 @@
  * Chaque code est aussi une clé du dictionnaire `errors`.
  */
 export const QUEUE_ERROR_CODES = [
+  "slot_unavailable",
+  "schedule_overlap",
+  "appointment_not_today",
   "not_found",
   "not_allowed",
   "rate_limited",

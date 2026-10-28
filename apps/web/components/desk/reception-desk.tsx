@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, Ban, Plus, Printer, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { ArrowDown, Ban, CalendarDays, Plus, Printer, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { isActiveCall, PRIORITY_REASONS, type PriorityReason } from "@nextin/shared/queue/live";
 import { staffTopic } from "@nextin/shared/queue/realtime";
@@ -30,6 +30,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   const tr = useTranslations("client.service.reasons");
   const tc = useTranslations("common");
   const te = useTranslations("errors");
+  const tap = useTranslations("appointments");
   const locale = useLocale();
   const toast = useToast();
   const supabase = getSupabaseBrowserClient();
@@ -100,6 +101,19 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
       />
       <div className="mx-auto grid max-w-5xl gap-7 px-4 pt-3 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-7">
+          <ListSection>
+            <ListRow
+              href={`/desk/reception/${branchId}/appointments`}
+              icon={
+                <ListIcon>
+                  <CalendarDays />
+                </ListIcon>
+              }
+              title={tap("open")}
+              subtitle={tap("upcoming", { count: data.upcomingAppointments })}
+              accessory="chevron"
+            />
+          </ListSection>
           <ListSection header={t("servicesHeader")}>
             {data.services.map((s) => {
               const b = data.board?.services.find((x) => x.id === s.id);

@@ -211,6 +211,74 @@ async function ensureDemoQueue(staffEmail: string, branch: { branchId: string; s
   await staff.auth.signOut();
 }
 
+/**
+ * Rendez-vous (M5b) : horaires de consultation des médecins d'Akwa (lundi au vendredi, matin et après-midi,
+ * créneaux de 20 min), puis quelques rendez-vous sur les sept prochains jours, pris par l'accueil, seulement
+ * si aucun rendez-vous n'est à venir. Repères de patient fictifs (initiales), jamais de nom.
+ */
+async function ensureDemoAppointments(staffEmail: string, orgId: string, branch: { branchId: string; serviceIds: Map<string, string> }) {
+  const doctors = await must(db.from("practitioners").select("id, display_name").eq("branch_id", branch.branchId));
+  const plan: Record<string, { service: string; ranges: [string, string][] }> = {
+    "Paul Mbarga": { service: "C", ranges: [["08:00", "12:00"], ["14:00", "17:00"]] },
+    "Samuel Nkeng": { service: "C", ranges: [["08:00", "12:00"]] },
+    "Aline Ngo Biyong": { service: "P", ranges: [["08:30", "12:30"], ["14:00", "16:00"]] },
+  };
+  for (const d of doctors) {
+    const p = plan[d.display_name];
+    if (!p) continue;
+    const existing = await must(db.from("practitioner_schedules").select("id").eq("practitioner_id", d.id).limit(1));
+    if (existing.length) continue;
+    await must(
+      db.from("practitioner_schedules").insert(
+        [1, 2, 3, 4, 5].flatMap((weekday) =>
+          p.ranges.map(([starts_at, ends_at]) => ({
+            organization_id: orgId,
+            branch_id: branch.branchId,
+            practitioner_id: d.id,
+            service_id: branch.serviceIds.get(p.service)!,
+            weekday,
+            starts_at,
+            ends_at,
+            slot_minutes: 20,
+          })),
+        ),
+      ),
+    );
+  }
+
+  const upcoming = await must(
+    db.from("appointments").select("id").eq("branch_id", branch.branchId).gte("starts_at", new Date().toISOString()).limit(1),
+  );
+  if (upcoming.length) return;
+  const staff = createClient(url!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await staff.auth.signInWithPassword({ email: staffEmail, password: password! });
+  if (error) throw error;
+  const labels = ["M.N.", "A.T.", "J.K.", "B.E.", "C.F.", "R.M.", "S.O.", "L.D."];
+  let n = 0;
+  const today = new Date().toISOString().slice(0, 10);
+  for (const d of doctors.filter((x) => plan[x.display_name])) {
+    const slots = (await must(staff.rpc("available_slots", { p_practitioner: d.id, p_from: today, p_days: 7 }))) as unknown as { starts_at: string }[];
+    // Deux à trois rendez-vous par jour et par médecin, pour un agenda réaliste sur la semaine.
+    const byDay = new Map<string, { starts_at: string }[]>();
+    for (const slot of slots) byDay.set(slot.starts_at.slice(0, 10), [...(byDay.get(slot.starts_at.slice(0, 10)) ?? []), slot]);
+    const picked = [...byDay.values()].flatMap((daySlots) => daySlots.filter((_, i) => i === 1 || i === 4 || i === 9));
+    for (const slot of picked) {
+      await must(
+        staff.rpc("book_appointment", {
+          p_practitioner: d.id,
+          p_starts_at: slot.starts_at,
+          p_customer_label: labels[n % labels.length]!,
+          p_phone_e164: (n % 4 === 0 ? `+23769900${String(100 + n).padStart(4, "0")}` : null) as string,
+          p_consent: n % 4 === 0,
+          p_locale: "fr",
+        }),
+      );
+      n++;
+    }
+  }
+  await staff.auth.signOut();
+}
+
 const COLORS = { blue: "#1A6BB5", green: "#2E8B57", purple: "#8E5BB5", ochre: "#B5651A", teal: "#13798A" };
 
 async function main() {
@@ -291,6 +359,7 @@ async function main() {
   });
 
   await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 });
+  await ensureDemoAppointments(USERS.clinicReception.email, clinic, akwa);
   await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa) et Eneo — Douala (agence Bonanjo)");

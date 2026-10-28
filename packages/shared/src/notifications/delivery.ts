@@ -6,6 +6,8 @@ import type { NotifEvent } from "./messages";
 
 /** Statuts d'un ticket utiles ici (enum SQL `ticket_status`). */
 type TicketStatus = "waiting" | "called" | "serving" | "served" | "no_show" | "cancelled" | "transferred";
+/** Statuts d'un rendez-vous (enum SQL `appointment_status`). */
+type AppointmentStatus = "confirmed" | "checked_in" | "completed" | "rescheduled" | "cancelled" | "no_show";
 
 /** Délai de garde : sans accusé de remise WhatsApp de « c'est votre tour » après 2 minutes, un SMS part. */
 export const YOUR_TURN_SMS_GUARD_SECONDS = 120;
@@ -24,8 +26,13 @@ export function retryDelaySeconds(attempt: number): number | null {
   return [30, 120][attempt - 1] ?? 120;
 }
 
-/** Un message n'a de sens que si le ticket est toujours dans l'état attendu (sinon il est ignoré). */
-export function isStillRelevant(event: NotifEvent, status: TicketStatus): boolean {
+/**
+ * Un message n'a de sens que si le ticket (ou le rendez-vous) est toujours dans l'état attendu (sinon il est ignoré).
+ * Rendez-vous : confirmé pour la confirmation et les rappels, annulé pour l'annulation.
+ */
+export function isStillRelevant(event: NotifEvent, status: TicketStatus | AppointmentStatus): boolean {
+  if (event === "appointment_cancelled") return status === "cancelled";
+  if (event.startsWith("appointment_")) return status === "confirmed";
   return event === "your_turn" ? status === "called" : status === "waiting";
 }
 

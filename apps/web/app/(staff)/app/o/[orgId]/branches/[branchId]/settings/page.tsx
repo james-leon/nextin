@@ -26,7 +26,17 @@ export default async function BranchSettingsPage({ params }: { params: Promise<{
       <BranchSettingsForm
         action={saveBranchSettings.bind(null, orgId, branchId)}
         disabled={!canManage}
-        initial={{ remote: s.remote_tickets_enabled, priorities: s.priorities_enabled, rating: s.rating_enabled, almostTurn: s.almost_turn_threshold }}
+        initial={{
+          remote: s.remote_tickets_enabled,
+          priorities: s.priorities_enabled,
+          rating: s.rating_enabled,
+          almostTurn: s.almost_turn_threshold,
+          appointmentMode: s.appointment_mode as "ratio" | "strict",
+          walkinRatio: s.appointment_walkin_ratio,
+          early: s.appointment_early_minutes,
+          grace: s.appointment_late_grace_minutes,
+          noShow: s.appointment_no_show_minutes,
+        }}
       />
     </AdminPage>
   );

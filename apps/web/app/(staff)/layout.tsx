@@ -32,6 +32,8 @@ export default async function StaffLayout({ children }: { children: React.ReactN
         absence: m.absence,
         reception: m.reception,
         displays: m.displays,
+        appointments: m.appointments,
+        schedule: m.schedule,
         client: { service: { reasons: m.client.service.reasons } },
       }}
     >

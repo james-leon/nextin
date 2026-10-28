@@ -31,6 +31,8 @@ export type ReceptionData = {
   waiting: ReceptionTicket[];
   practitioners: ReceptionPractitioner[];
   counters: ReceptionCounter[];
+  /** Rendez-vous du jour encore attendus (confirmés, heure à venir ou en cours de tolérance). */
+  upcomingAppointments: number;
 };
 
 /** Données du poste d'accueil d'une agence (sous RLS) ; null si l'agence n'est pas accessible. */
@@ -64,6 +66,14 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       .order("number"),
     supabase.from("practitioner_absences").select("id, practitioner_id, kind, until, created_at").eq("branch_id", branchId).is("ended_at", null),
   ]);
+  const today = serviceDay(branch.timezone);
+  const { count: upcoming } = await supabase
+    .from("appointments")
+    .select("id", { count: "exact", head: true })
+    .eq("branch_id", branchId)
+    .eq("status", "confirmed")
+    .gte("starts_at", new Date(Date.now() - 60 * 60_000).toISOString())
+    .lt("starts_at", `${today}T23:59:59${offsetOf(branch.timezone)}`);
   const error = services.error ?? board.error ?? waiting.error ?? practitioners.error ?? counters.error ?? absences.error;
   if (error) throw new Error(error.message);
 
@@ -111,5 +121,13 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       status: c.status,
       practitionerId: c.default_practitioner_id,
     })),
+    upcomingAppointments: upcoming ?? 0,
   };
+}
+
+/** Décalage horaire courant d'un fuseau, « +01:00 » (Douala : pas d'heure d'été). */
+function offsetOf(timeZone: string): string {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" }).formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value;
+  const m = name?.match(/GMT([+-]\d{2}:\d{2})/);
+  return m ? m[1]! : "+00:00";
 }

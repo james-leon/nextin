@@ -11,6 +11,7 @@ export function AdminPage({
   trailing,
   children,
   className,
+  wide,
 }: {
   title: string;
   eyebrow?: string;
@@ -19,13 +20,15 @@ export function AdminPage({
   trailing?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Page en colonnes sur grand écran (listes et détails côte à côte) au lieu d'une colonne centrée. */
+  wide?: boolean;
 }) {
   return (
     <>
-      <NavigationBar title={title} eyebrow={eyebrow} back={back} trailing={trailing} contentClassName="max-w-3xl">
+      <NavigationBar title={title} eyebrow={eyebrow} back={back} trailing={trailing} contentClassName={wide ? "max-w-6xl" : "max-w-3xl"}>
         {subtitle ? <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p> : null}
       </NavigationBar>
-      <div className={cn("mx-auto flex max-w-3xl flex-col gap-7 px-4 pt-3", className)}>{children}</div>
+      <div className={cn("mx-auto flex flex-col gap-7 px-4 pt-3", wide ? "max-w-6xl" : "max-w-3xl", className)}>{children}</div>
     </>
   );
 }

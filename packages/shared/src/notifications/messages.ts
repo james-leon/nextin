@@ -12,7 +12,20 @@ export const NOTIF_EVENTS = [
   "ticket_moved_back",
   "practitioner_rerouted",
   "practitioner_late",
+  // M5b — rendez-vous (contact rattaché au rendez-vous, sans ticket).
+  "appointment_confirmed",
+  "appointment_reminder_day_before",
+  "appointment_reminder_2h",
+  "appointment_rescheduled",
+  "appointment_cancelled",
 ] as const;
+export const APPOINTMENT_EVENTS: readonly NotifEvent[] = [
+  "appointment_confirmed",
+  "appointment_reminder_day_before",
+  "appointment_reminder_2h",
+  "appointment_rescheduled",
+  "appointment_cancelled",
+];
 export type NotifEvent = (typeof NOTIF_EVENTS)[number];
 export type NotifChannel = "whatsapp" | "push" | "sms";
 
@@ -32,6 +45,8 @@ export type NotificationData = {
   link: string;
   /** Heure de retour du praticien en retard, « 10:30 ». */
   lateUntil: string | null;
+  /** Rendez-vous (M5b) : date et heure locales déjà formatées, praticien (« Dr Mbarga »). */
+  appointment?: { date: string; time: string; practitioner: string } | null;
 };
 
 type Template = {
@@ -47,6 +62,7 @@ const STOP: Record<NotifLocale, string> = {
   en: "Reply STOP to stop these messages.",
 };
 const num = (n: number | null) => String(n ?? 0);
+const appt = (d: NotificationData) => d.appointment ?? { date: "", time: "", practitioner: "" };
 
 export const WHATSAPP_TEMPLATES: Record<NotifEvent, Template> = {
   ticket_confirmed: {
@@ -97,6 +113,46 @@ export const WHATSAPP_TEMPLATES: Record<NotifEvent, Template> = {
     },
     params: (d) => [d.code, d.place, d.lateUntil ?? "", num(d.waitMinutes)],
   },
+  appointment_confirmed: {
+    name: "rdv_confirme",
+    body: {
+      fr: `Votre rendez-vous chez {{1}} est confirmé : {{2}} à {{3}}, avec {{4}}.\nÀ votre arrivée, présentez-vous à l'accueil ou scannez le QR code de la salle d'attente. ${STOP.fr}`,
+      en: `Your appointment at {{1}} is confirmed: {{2}} at {{3}}, with {{4}}.\nWhen you arrive, check in at reception or scan the QR code in the waiting room. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).date, appt(d).time, appt(d).practitioner],
+  },
+  appointment_reminder_day_before: {
+    name: "rdv_rappel_veille",
+    body: {
+      fr: `Rappel : votre rendez-vous chez {{1}} est demain, {{2}} à {{3}}, avec {{4}}.\nMerci d'arriver quelques minutes en avance. ${STOP.fr}`,
+      en: `Reminder: your appointment at {{1}} is tomorrow, {{2}} at {{3}}, with {{4}}.\nPlease arrive a few minutes early. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).date, appt(d).time, appt(d).practitioner],
+  },
+  appointment_reminder_2h: {
+    name: "rdv_rappel_2h",
+    body: {
+      fr: `Rappel : votre rendez-vous chez {{1}} est aujourd'hui à {{2}}, avec {{3}}.\nÀ votre arrivée, présentez-vous à l'accueil. ${STOP.fr}`,
+      en: `Reminder: your appointment at {{1}} is today at {{2}}, with {{3}}.\nWhen you arrive, check in at reception. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).time, appt(d).practitioner],
+  },
+  appointment_rescheduled: {
+    name: "rdv_reprogramme",
+    body: {
+      fr: `Votre rendez-vous chez {{1}} a été déplacé : {{2}} à {{3}}, avec {{4}}.\nVotre précédent créneau est libéré. ${STOP.fr}`,
+      en: `Your appointment at {{1}} has been moved: {{2}} at {{3}}, with {{4}}.\nYour previous slot has been released. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).date, appt(d).time, appt(d).practitioner],
+  },
+  appointment_cancelled: {
+    name: "rdv_annule",
+    body: {
+      fr: `Votre rendez-vous chez {{1}} du {{2}} à {{3}} est annulé.\nContactez l'établissement pour en fixer un autre. ${STOP.fr}`,
+      en: `Your appointment at {{1}} on {{2}} at {{3}} has been cancelled.\nPlease contact the facility to book another one. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).date, appt(d).time],
+  },
 };
 
 /** Remplace {{1}}, {{2}}… par les valeurs (même rendu que Meta). */
@@ -132,6 +188,11 @@ const SMS: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => strin
     ticket_moved_back: (d) => `NextIn : ticket ${d.code} deplace dans la file. ${num(d.ahead)} devant vous, ~${num(d.waitMinutes)} min.`,
     practitioner_rerouted: (d) => `NextIn : ticket ${d.code}, votre praticien est absent. Un collegue vous recevra, place conservee. ~${num(d.waitMinutes)} min.`,
     practitioner_late: (d) => `NextIn : ticket ${d.code}, votre praticien a du retard (retour vers ${d.lateUntil ?? ""}). Place conservee.`,
+    appointment_confirmed: (d) => `NextIn : RDV confirme chez ${d.place}, ${appt(d).date} a ${appt(d).time}, ${appt(d).practitioner}.`,
+    appointment_reminder_day_before: (d) => `NextIn : rappel, RDV demain ${appt(d).date} a ${appt(d).time} chez ${d.place}, ${appt(d).practitioner}.`,
+    appointment_reminder_2h: (d) => `NextIn : rappel, RDV aujourd'hui a ${appt(d).time} chez ${d.place}, ${appt(d).practitioner}.`,
+    appointment_rescheduled: (d) => `NextIn : RDV deplace au ${appt(d).date} a ${appt(d).time} chez ${d.place}, ${appt(d).practitioner}.`,
+    appointment_cancelled: (d) => `NextIn : RDV du ${appt(d).date} a ${appt(d).time} chez ${d.place} annule.`,
   },
   en: {
     ticket_confirmed: (d) => `NextIn: ticket ${d.code} confirmed at ${d.place}. ${num(d.ahead)} ahead of you, ~${num(d.waitMinutes)} min. ${d.link}`,
@@ -140,6 +201,11 @@ const SMS: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => strin
     ticket_moved_back: (d) => `NextIn: ticket ${d.code} moved in the queue. ${num(d.ahead)} ahead of you, ~${num(d.waitMinutes)} min.`,
     practitioner_rerouted: (d) => `NextIn: ticket ${d.code}, your practitioner is absent. A colleague will see you, place kept. ~${num(d.waitMinutes)} min.`,
     practitioner_late: (d) => `NextIn: ticket ${d.code}, your practitioner is running late (back around ${d.lateUntil ?? ""}). Place kept.`,
+    appointment_confirmed: (d) => `NextIn: appointment confirmed at ${d.place}, ${appt(d).date} at ${appt(d).time}, ${appt(d).practitioner}.`,
+    appointment_reminder_day_before: (d) => `NextIn: reminder, appointment tomorrow ${appt(d).date} at ${appt(d).time}, ${d.place}, ${appt(d).practitioner}.`,
+    appointment_reminder_2h: (d) => `NextIn: reminder, appointment today at ${appt(d).time}, ${d.place}, ${appt(d).practitioner}.`,
+    appointment_rescheduled: (d) => `NextIn: appointment moved to ${appt(d).date} at ${appt(d).time}, ${d.place}, ${appt(d).practitioner}.`,
+    appointment_cancelled: (d) => `NextIn: appointment on ${appt(d).date} at ${appt(d).time}, ${d.place}, cancelled.`,
   },
 };
 
@@ -155,6 +221,11 @@ const PUSH: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => { ti
     ticket_moved_back: (d) => ({ title: "Ticket déplacé", body: `${d.code} · ${num(d.ahead)} devant vous · environ ${num(d.waitMinutes)} min` }),
     practitioner_rerouted: (d) => ({ title: "Changement de praticien", body: `Ticket ${d.code} : un collègue vous recevra, votre place est conservée.` }),
     practitioner_late: (d) => ({ title: "Votre praticien a du retard", body: `Retour prévu vers ${d.lateUntil ?? ""} · ticket ${d.code}` }),
+    appointment_confirmed: (d) => ({ title: "Rendez-vous confirmé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_reminder_day_before: (d) => ({ title: "Rendez-vous demain", body: `${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_reminder_2h: (d) => ({ title: "Rendez-vous aujourd'hui", body: `${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_rescheduled: (d) => ({ title: "Rendez-vous déplacé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_cancelled: (d) => ({ title: "Rendez-vous annulé", body: `${appt(d).date} à ${appt(d).time}` }),
   },
   en: {
     ticket_confirmed: (d) => ({ title: `Ticket ${d.code} confirmed`, body: `${num(d.ahead)} ahead of you · about ${num(d.waitMinutes)} min` }),
@@ -163,6 +234,11 @@ const PUSH: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => { ti
     ticket_moved_back: (d) => ({ title: "Ticket moved", body: `${d.code} · ${num(d.ahead)} ahead of you · about ${num(d.waitMinutes)} min` }),
     practitioner_rerouted: (d) => ({ title: "Change of practitioner", body: `Ticket ${d.code}: a colleague will see you, you keep your place.` }),
     practitioner_late: (d) => ({ title: "Your practitioner is running late", body: `Expected back around ${d.lateUntil ?? ""} · ticket ${d.code}` }),
+    appointment_confirmed: (d) => ({ title: "Appointment confirmed", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_reminder_day_before: (d) => ({ title: "Appointment tomorrow", body: `${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_reminder_2h: (d) => ({ title: "Appointment today", body: `${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_rescheduled: (d) => ({ title: "Appointment moved", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
+    appointment_cancelled: (d) => ({ title: "Appointment cancelled", body: `${appt(d).date} at ${appt(d).time}` }),
   },
 };
 

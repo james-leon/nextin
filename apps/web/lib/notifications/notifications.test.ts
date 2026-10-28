@@ -153,3 +153,35 @@ describe("WhatsApp Cloud API", () => {
     expect(await dead.sendText("+237690000001", "x")).toMatchObject({ ok: false, retryable: false });
   });
 });
+
+describe("messages de rendez-vous (M5b)", () => {
+  const appointment = {
+    id: "a1",
+    status: "confirmed" as const,
+    starts_at: "2026-11-05T09:30:00Z",
+    timezone: "Africa/Douala",
+    practitioner: "Dr Mbarga",
+    service: "Consultation",
+    branch: "Akwa",
+    organization: "DOUALA CLINIC",
+  };
+  it("rappel la veille : modèle avec jour, heure locale et praticien, sans ticket", async () => {
+    const p = providers();
+    const out = await sendJob(job({ event: "appointment_reminder_day_before", ticket: null, token: null, appointment }), p);
+    expect(out).toMatchObject({ status: "sent", template: "rdv_rappel_veille" });
+    expect(p.whatsapp.sendTemplate).toHaveBeenCalledWith("+237690000001", "rdv_rappel_veille", "fr", [
+      "DOUALA CLINIC – Akwa",
+      "jeudi 5 novembre",
+      "10:30",
+      "Dr Mbarga",
+    ]);
+  });
+  it("rendez-vous annulé ou déjà arrivé : rappel ignoré ; message d'annulation envoyé", async () => {
+    expect(await sendJob(job({ event: "appointment_reminder_2h", ticket: null, appointment: { ...appointment, status: "checked_in" } }), providers())).toMatchObject({
+      status: "skipped",
+      error: "not_relevant",
+    });
+    const out = await sendJob(job({ event: "appointment_cancelled", channel: "sms", ticket: null, appointment: { ...appointment, status: "cancelled" } }), providers());
+    expect(out).toMatchObject({ status: "sent", text: "NextIn : RDV du jeudi 5 novembre a 10:30 chez DOUALA CLINIC - Akwa annule." });
+  });
+});

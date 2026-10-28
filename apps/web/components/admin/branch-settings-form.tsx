@@ -9,9 +9,55 @@ import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button, IconButton } from "@/components/ui/button";
 import { ListSection } from "@/components/ui/list";
 import { ListSwitchRow } from "@/components/ui/list-switch-row";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useFormErrors } from "./use-form-errors";
 
-type Settings = { remote: boolean; priorities: boolean; rating: boolean; almostTurn: number };
+type Settings = {
+  remote: boolean;
+  priorities: boolean;
+  rating: boolean;
+  almostTurn: number;
+  appointmentMode: "ratio" | "strict";
+  walkinRatio: number;
+  early: number;
+  grace: number;
+  noShow: number;
+};
+
+/** Ligne « valeur − + » d'une liste groupée (pas de saisie au clavier sur téléphone). */
+function StepperRow({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  min: boolean;
+  max: boolean;
+  step?: number;
+  onChange: (delta: number) => void;
+  disabled?: boolean;
+}) {
+  const ta = useTranslations("admin");
+  return (
+    <li className="list-separator flex min-h-11 items-center justify-between gap-3 py-1.5 pr-4 pl-4">
+      <span className="flex min-w-0 flex-col">
+        <span className="text-body">{label}</span>
+        <span className="text-subheadline text-label-secondary tabular" aria-live="polite">
+          {value}
+        </span>
+      </span>
+      <span className="flex shrink-0 items-center gap-2">
+        <IconButton label={`${ta("decrease")} · ${label}`} icon={<Minus />} onClick={() => onChange(-step)} disabled={disabled || min} />
+        <IconButton label={`${ta("increase")} · ${label}`} icon={<Plus />} onClick={() => onChange(step)} disabled={disabled || max} />
+      </span>
+    </li>
+  );
+}
 
 export function BranchSettingsForm({
   action,
@@ -47,6 +93,64 @@ export function BranchSettingsForm({
           </span>
         </li>
       </ListSection>
+      <ListSection
+        header={t("appointmentsHeader")}
+        footer={v.appointmentMode === "ratio" ? t("modeRatioFooter", { count: v.walkinRatio }) : t("modeStrictFooter")}
+      >
+        <li className="px-4 py-3">
+          <SegmentedControl
+            label={t("modeLabel")}
+            value={v.appointmentMode}
+            onValueChange={(appointmentMode) => !disabled && setV({ ...v, appointmentMode })}
+            options={[
+              { value: "ratio", label: t("modeRatio") },
+              { value: "strict", label: t("modeStrict") },
+            ]}
+          />
+        </li>
+        {v.appointmentMode === "ratio" ? (
+          <StepperRow
+            label={t("walkinRatio")}
+            value={t("walkinRatioValue", { count: v.walkinRatio })}
+            min={v.walkinRatio <= 0}
+            max={v.walkinRatio >= 10}
+            onChange={(d) => setV({ ...v, walkinRatio: v.walkinRatio + d })}
+            disabled={disabled}
+          />
+        ) : null}
+        <StepperRow
+          label={t("early")}
+          value={t("beforeValue", { minutes: v.early })}
+          step={5}
+          min={v.early <= 0}
+          max={v.early >= 120}
+          onChange={(d) => setV({ ...v, early: v.early + d })}
+          disabled={disabled}
+        />
+        <StepperRow
+          label={t("grace")}
+          value={t("afterValue", { minutes: v.grace })}
+          step={5}
+          min={v.grace <= 0}
+          max={v.grace >= 120}
+          onChange={(d) => setV({ ...v, grace: v.grace + d })}
+          disabled={disabled}
+        />
+        <StepperRow
+          label={t("noShow")}
+          value={t("afterValue", { minutes: v.noShow })}
+          step={15}
+          min={v.noShow <= 15}
+          max={v.noShow >= 480}
+          onChange={(d) => setV({ ...v, noShow: v.noShow + d })}
+          disabled={disabled}
+        />
+      </ListSection>
+      <input type="hidden" name="appointmentMode" value={v.appointmentMode} />
+      <input type="hidden" name="appointmentWalkinRatio" value={v.walkinRatio} />
+      <input type="hidden" name="appointmentEarlyMinutes" value={v.early} />
+      <input type="hidden" name="appointmentLateGraceMinutes" value={v.grace} />
+      <input type="hidden" name="appointmentNoShowMinutes" value={v.noShow} />
       <input type="hidden" name="remoteTicketsEnabled" value={String(v.remote)} />
       <input type="hidden" name="prioritiesEnabled" value={String(v.priorities)} />
       <input type="hidden" name="ratingEnabled" value={String(v.rating)} />

@@ -38,7 +38,21 @@ export type ClaimedJob = {
     opted_out: boolean;
   } | null;
   token: string | null;
-  ticket: TicketView;
+  /** Ticket concerné (null pour un message de rendez-vous avant l'arrivée). */
+  ticket: TicketView | null;
+  /** Rendez-vous (M5b) : praticien, établissement, heure ; jamais le libellé du patient. */
+  appointment?: AppointmentNotice | null;
+};
+
+export type AppointmentNotice = {
+  id: string;
+  status: "confirmed" | "checked_in" | "completed" | "rescheduled" | "cancelled" | "no_show";
+  starts_at: string;
+  timezone: string;
+  practitioner: string;
+  service: string;
+  branch: string;
+  organization: string;
 };
 
 export type Outcome = { status: "sent" | "failed" | "skipped"; retryIn?: number | null; messageId?: string; error?: string; template?: string; text?: string };
@@ -49,6 +63,25 @@ const TIME_ZONE = "Africa/Douala";
 export function notificationData(job: ClaimedJob): NotificationData {
   const t = job.ticket;
   const locale = job.contact?.locale ?? "fr";
+  const a = job.appointment;
+  if (!t && a) {
+    const at = new Date(a.starts_at);
+    return {
+      code: "",
+      place: `${a.organization} – ${a.branch}`,
+      ahead: null,
+      waitMinutes: null,
+      counter: null,
+      link: absoluteUrl("/"),
+      lateUntil: null,
+      appointment: {
+        date: new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: a.timezone }).format(at),
+        time: new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: a.timezone }).format(at),
+        practitioner: a.practitioner,
+      },
+    };
+  }
+  if (!t) throw new Error("job without ticket nor appointment");
   const kinds = messages[locale].counterKinds;
   return {
     code: t.display_code,
@@ -76,7 +109,8 @@ export async function sendJob(
 ): Promise<Outcome> {
   const contact = job.contact;
   if (!contact) return { status: "skipped", error: "no_contact" };
-  if (!isStillRelevant(job.event, job.ticket.status as Parameters<typeof isStillRelevant>[1])) {
+  const subjectStatus = job.ticket?.status ?? job.appointment?.status;
+  if (!subjectStatus || !isStillRelevant(job.event, subjectStatus as Parameters<typeof isStillRelevant>[1])) {
     return { status: "skipped", error: "not_relevant" };
   }
   if (job.guard && guardSatisfied(job.fallback_status)) return { status: "skipped", error: "original_delivered" };

@@ -251,6 +251,11 @@ export async function saveBranchSettings(orgId: string, branchId: string, _prev:
       priorities_enabled: v.prioritiesEnabled,
       rating_enabled: v.ratingEnabled,
       almost_turn_threshold: v.almostTurnThreshold,
+      appointment_mode: v.appointmentMode,
+      appointment_walkin_ratio: v.appointmentWalkinRatio,
+      appointment_early_minutes: v.appointmentEarlyMinutes,
+      appointment_late_grace_minutes: v.appointmentLateGraceMinutes,
+      appointment_no_show_minutes: v.appointmentNoShowMinutes,
     })
     .eq("branch_id", branchId)
     .select("branch_id");

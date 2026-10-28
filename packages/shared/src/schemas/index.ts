@@ -204,6 +204,12 @@ export const branchSettingsFormSchema = z.object({
   prioritiesEnabled: formBoolean,
   ratingEnabled: formBoolean,
   almostTurnThreshold: z.coerce.number().int().min(1).max(10),
+  // M5b — règle d'équité des rendez-vous.
+  appointmentMode: z.enum(["ratio", "strict"]),
+  appointmentWalkinRatio: z.coerce.number().int().min(0).max(10),
+  appointmentEarlyMinutes: z.coerce.number().int().min(0).max(120),
+  appointmentLateGraceMinutes: z.coerce.number().int().min(0).max(120),
+  appointmentNoShowMinutes: z.coerce.number().int().min(15).max(480),
 });
 
 /** Invitation depuis l'écran Personnel : un rôle d'agence exige une agence, sauf réception/agent « toutes agences ». */
@@ -312,3 +318,25 @@ export const whatsappWebhookSchema = z.object({
     }),
   ),
 });
+
+/** M5b — plage de consultation hebdomadaire d'un praticien (créneaux de rendez-vous). */
+export const practitionerScheduleFormSchema = z
+  .object({
+    weekday: z.coerce.number().int().min(1).max(7),
+    startsAt: hhmm,
+    endsAt: hhmm,
+    slotMinutes: z.coerce.number().int().min(5).max(240),
+    serviceId: z.uuid(),
+  })
+  .refine((v) => v.endsAt > v.startsAt, { message: "time_invalid", path: ["endsAt"] });
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "generic");
+
+/** M5b — congé d'un praticien (dates incluses). */
+export const practitionerLeaveFormSchema = z
+  .object({
+    startsOn: isoDate,
+    endsOn: isoDate,
+    reason: z.string().trim().max(120).optional().transform((v) => v || undefined),
+  })
+  .refine((v) => v.endsOn >= v.startsOn, { message: "generic", path: ["endsOn"] });

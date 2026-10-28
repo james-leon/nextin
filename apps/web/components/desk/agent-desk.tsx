@@ -13,6 +13,7 @@ import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NowServingCard } from "@/components/ui/now-serving-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
+import { PractitionerAppointments } from "@/components/appointments/practitioner-appointments";
 import { AbsenceSheet, type ActiveAbsence } from "./absence-sheet";
 import { TransferSheet, type BranchService } from "./transfer-sheet";
 import { useDesk, type DeskCounter } from "./use-desk";
@@ -199,6 +200,7 @@ export function AgentDesk({
         </div>
 
         <ListSection>
+          {practitioner ? <PractitionerAppointments branchId={counter.branchId} practitionerId={practitioner.id} timeZone={counter.timeZone} /> : null}
           {practitioner ? (
             <ListRow
               onClick={() => (online ? setAbsenceOpen(true) : offlineOnly())}
