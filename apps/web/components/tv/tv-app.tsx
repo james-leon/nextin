@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { BranchBoard } from "@nextin/shared/queue/live";
-import { boardTopic, REALTIME_EVENTS } from "@nextin/shared/queue/realtime";
-import { onRealtimeStatus, subscribeBroadcast } from "@/lib/client/realtime";
-import { callRpc, SUPABASE_URL } from "@/lib/client/supabase-public";
+import { subscribeBoard } from "@/lib/client/board-feed";
+import { onRealtimeStatus } from "@/lib/client/realtime";
+import { SUPABASE_URL } from "@/lib/client/supabase-public";
 import { Announcer } from "@/lib/tv/announcer";
 import { TvBoard } from "./tv-board";
 import { TvPairing } from "./tv-pairing";
@@ -102,14 +102,7 @@ export function TvApp() {
   const branchId = session?.branch.id;
   useEffect(() => {
     if (!branchId) return;
-    const off = subscribeBroadcast(
-      boardTopic(branchId),
-      REALTIME_EVENTS.board,
-      (p) => setBoard(p as BranchBoard),
-      () => {
-        callRpc<BranchBoard | null>("get_branch_board", { p_branch: branchId }).then(({ data }) => data && setBoard(data));
-      },
-    );
+    const off = subscribeBoard(branchId, setBoard);
     const offStatus = onRealtimeStatus((s) => setOffline(s === "offline"));
     return () => {
       off();

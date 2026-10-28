@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDown, Ban, Plus, Printer, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
-import { PRIORITY_REASONS, type PriorityReason } from "@nextin/shared/queue/live";
+import { isActiveCall, PRIORITY_REASONS, type PriorityReason } from "@nextin/shared/queue/live";
 import { staffTopic } from "@nextin/shared/queue/realtime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +73,8 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
     return c?.practitionerId ? data.practitioners.find((p) => p.id === c.practitionerId) : undefined;
   };
   const kindLabel = (k: string) => tk(k as "cabinet");
+  // Appels en cours uniquement : le tableau contient aussi les derniers appels terminés (écran TV).
+  const activeCalls = data.board?.calls.filter(isActiveCall) ?? [];
 
   async function command(fn: "set_ticket_priority" | "move_back_ticket" | "cancel_ticket" | "transfer_ticket", args: Record<string, unknown>) {
     const { error } = await supabase.rpc(fn as "cancel_ticket", args as { p_ticket: string });
@@ -116,9 +118,9 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
             })}
           </ListSection>
 
-          {data.board?.calls.length ? (
+          {activeCalls.length ? (
             <ListSection header={t("callsHeader")}>
-              {data.board.calls.slice(0, 6).map((c) => {
+              {activeCalls.slice(0, 6).map((c) => {
                 const counter = c.counter_label ?? `${kindLabel(c.counter_kind)} ${c.counter_number}`;
                 return (
                   <ListRow

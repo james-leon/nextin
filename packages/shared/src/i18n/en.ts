@@ -734,6 +734,8 @@ export const en: Messages = {
     waiting: "{count, plural, =0 {Nobody waiting} one {# waiting} other {# waiting}}",
     wait: "≈ {minutes} min",
     noCall: "Calls will appear here.",
+    previousCalls: "Previous calls",
+    noPreviousCall: "No previous call",
     scanTitle: "Scan to get your ticket",
     scanBody: "And wait wherever you like.",
     code: "Code: {code}",

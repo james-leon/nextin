@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Check, Clock } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { PRIORITY_REASONS, type BranchBoard, type BoardService, type PriorityReason } from "@nextin/shared/queue/live";
-import { boardTopic, REALTIME_EVENTS } from "@nextin/shared/queue/realtime";
 import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
@@ -16,8 +15,7 @@ import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { saveTicket } from "@/lib/client/my-tickets";
-import { subscribeBroadcast } from "@/lib/client/realtime";
-import { callRpc } from "@/lib/client/supabase-public";
+import { subscribeBoard } from "@/lib/client/board-feed";
 import { takeTicket } from "@/lib/client/take-ticket";
 import type { EntryInfo } from "@/lib/client/types";
 
@@ -40,18 +38,7 @@ export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; ca
   const [error, setError] = useState<string | null>(null);
 
   // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
-  useEffect(
-    () =>
-      subscribeBroadcast(
-        boardTopic(entry.branch.id),
-        REALTIME_EVENTS.board,
-        (payload) => setBoard(payload as BranchBoard),
-        () => {
-          callRpc<BranchBoard | null>("get_branch_board", { p_branch: entry.branch.id }).then(({ data }) => data && setBoard(data));
-        },
-      ),
-    [entry.branch.id],
-  );
+  useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
 
   const name = (s: BoardService) => (locale === "en" && s.name_en ? s.name_en : s.name);
   const summary = (s: BoardService) => {

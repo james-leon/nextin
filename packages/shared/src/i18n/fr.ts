@@ -732,6 +732,8 @@ export const fr = {
     waiting: "{count, plural, =0 {Personne en attente} one {# en attente} other {# en attente}}",
     wait: "≈ {minutes} min",
     noCall: "Les appels s'afficheront ici.",
+    previousCalls: "Appels précédents",
+    noPreviousCall: "Aucun appel précédent",
     scanTitle: "Scannez, prenez votre ticket",
     scanBody: "Et attendez où vous voulez.",
     code: "Code : {code}",

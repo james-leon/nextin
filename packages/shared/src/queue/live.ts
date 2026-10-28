@@ -27,10 +27,13 @@ export type BoardService = {
   /** Attente estimée pour un nouveau ticket. */
   wait_seconds: number;
 };
+/** Statuts d'un appel du tableau : en cours (`called`, `serving`) ou terminé depuis moins de 30 minutes. */
+export const BOARD_CALL_STATUSES = ["called", "serving", "served", "no_show", "transferred"] as const;
+export type BoardCallStatus = (typeof BOARD_CALL_STATUSES)[number];
 export type BoardCall = {
   code: string;
   service_id: string;
-  status: "called" | "serving";
+  status: BoardCallStatus;
   counter_kind: "cabinet" | "guichet" | "caisse" | "laboratoire" | "accueil";
   counter_number: number;
   counter_label: string | null;
@@ -71,7 +74,12 @@ export function ticketProgressFromBoard(
   };
 }
 
-/** Appel en cours pour un code (écran TV, client appelé). */
+/** Appel en cours (patient alerté ou admis), par opposition aux derniers appels terminés. */
+export function isActiveCall(call: BoardCall): boolean {
+  return call.status === "called" || call.status === "serving";
+}
+
+/** Dernier appel d'un code (écran TV, client appelé). */
 export function callForCode(board: BranchBoard, code: string) {
   return board.calls.find((c) => c.code === code) ?? null;
 }

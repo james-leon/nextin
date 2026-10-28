@@ -1,7 +1,7 @@
 # NextIn by Wintek — conventions du projet
 
 Plateforme SaaS de files d'attente virtuelles (Cameroun) : PWA web d'abord, app Expo au M11.
-Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
+Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`. Améliorations reportées à la fin : `docs/BACKLOG.md`.
 
 ## Règles absolues
 - **Aucun secret dans le code ni dans Git.** Variables listées dans `.env.example` (sans valeurs). Les fichiers `.env*` (sauf `.env.example`) et `supabase/.env` sont ignorés.
@@ -102,6 +102,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 ## Écran TV (M6, `docs/modules/M6.md`)
 - `/tv` sans compte : code à 6 chiffres → `pair_display` (back-office « Écrans ») → jeton d'appareil (seule l'empreinte en base, jamais lisible) ; `GET /api/tv/session` chaque minute, 401 = retour à l'appairage.
 - Affichage par le canal public `boardTopic` filtré sur les services de l'écran ; aucun nom.
+- `branch_board.calls` = appels du jour, en cours **et** terminés depuis moins de 30 min (12 au plus) : filtrer avec `isActiveCall` pour « appels en cours ». S'abonner au tableau avec `subscribeBoard` (`lib/client/board-feed.ts`), jamais une relecture brute qui écraserait une diffusion plus récente.
 - Annonces : `@nextin/shared/announcements` (segments `fr/word-ticket`, `fr/letter-c`, `fr/47`… + texte de repli) ; voix MP3 dans le bucket public `voices` (`pnpm voices:generate`, ElevenLabs) avec `manifest.json`, sinon synthèse vocale du navigateur ; carillon synthétisé ; « Activer le son » obligatoire.
 - `data-theme="light"` possible sur un sous-arbre (écran TV, ticket imprimé). Choix multiples : `ListSection checkboxGroupLabel`.
 

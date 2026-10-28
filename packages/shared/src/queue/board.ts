@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TICKET_STATUSES, type BranchBoard } from "./live";
+import { BOARD_CALL_STATUSES, TICKET_STATUSES, type BranchBoard } from "./live";
 
 const counterLoadSchema = z.object({
   counter_id: z.uuid().nullable(),
@@ -25,7 +25,7 @@ const boardServiceSchema = z.object({
 const boardCallSchema = z.object({
   code: z.string(),
   service_id: z.uuid(),
-  status: z.enum(["called", "serving"]),
+  status: z.enum(BOARD_CALL_STATUSES),
   counter_kind: z.enum(["cabinet", "guichet", "caisse", "laboratoire", "accueil"]),
   counter_number: z.number().int(),
   counter_label: z.string().nullable(),

@@ -9,15 +9,9 @@ import { Logo } from "@/components/ui/logo";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { qrMatrix } from "@/lib/qr/matrix";
+import { tvCalls } from "@/lib/tv/calls";
 import { cn } from "@/lib/cn";
 import type { TvSession } from "./types";
-
-/** Appels affichés : le dernier alerté en héros, puis les trois précédents (services de l'écran uniquement). */
-export function tvCalls(board: BranchBoard, serviceIds: readonly string[]): { hero: BoardCall | null; others: BoardCall[] } {
-  const calls = board.calls.filter((c) => serviceIds.length === 0 || serviceIds.includes(c.service_id));
-  const hero = calls.find((c) => c.status === "called") ?? calls[0] ?? null;
-  return { hero, others: calls.filter((c) => c !== hero).slice(0, 3) };
-}
 
 /** Écran de salle d'attente (maquette 05) : ticket appelé en héros, appels précédents, files, QR code d'entrée. */
 export function TvBoard({
@@ -106,23 +100,29 @@ export function TvBoard({
               <p className="w-full text-center text-[4vh] text-label-secondary">{t("noCall")}</p>
             )}
           </section>
-          <ul role="list" className="grid grid-cols-3 gap-[1.6vw]">
-            {[0, 1, 2].map((i) => {
-              const c = others[i];
-              return (
-                <li key={c ? `${c.code}-${c.called_at}` : i} className="squircle flex h-[11vh] items-center justify-between gap-3 rounded-[1.4vw] bg-tv-surface px-[1.8vw]">
-                  {c ? (
-                    <>
-                      <span className="shrink-0 text-[4.4vh] leading-none font-extrabold whitespace-nowrap">{c.code}</span>
-                      <span className="min-w-0 truncate text-[2.4vh] text-white/80">
-                        {counterKind(c)} {c.counter_label ? "" : c.counter_number}
-                      </span>
-                    </>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+          {/* Derniers appels : aucune tuile vide, un tiret discret tant qu'il n'y a pas d'appel précédent. */}
+          <section aria-label={t("previousCalls")} className="flex h-[11vh] shrink-0 flex-col">
+            {others.length ? (
+              <ul role="list" className="grid h-full grid-cols-3 gap-[1.6vw]">
+                {others.map((c) => (
+                  <li key={`${c.code}-${c.called_at}`} className="squircle flex items-center justify-between gap-3 rounded-[1.4vw] bg-tv-surface px-[1.8vw]">
+                    <span className="shrink-0 text-[4.4vh] leading-none font-extrabold whitespace-nowrap">
+                      <span aria-hidden>{c.code}</span>
+                      <span className="sr-only">{spellTicketCode(c.code)}</span>
+                    </span>
+                    <span className="min-w-0 truncate text-[2.4vh] text-white/80">
+                      {counterKind(c)} {c.counter_label ? "" : c.counter_number}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="flex h-full items-center px-[1.8vw] text-[2.4vh] text-white/80">
+                <span aria-hidden>–</span>
+                <span className="sr-only">{t("noPreviousCall")}</span>
+              </p>
+            )}
+          </section>
         </div>
 
         <div className="flex min-h-0 flex-col gap-[2.2vh]">

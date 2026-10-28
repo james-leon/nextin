@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Bell, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
-import { callForCode, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
-import { boardTopic, REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
+import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
+import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button, IconButton } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { TicketHero } from "@/components/ui/ticket-hero";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
+import { subscribeBoard } from "@/lib/client/board-feed";
 import { savedTicket, saveTicket } from "@/lib/client/my-tickets";
 import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib/client/realtime";
 import { callRpc } from "@/lib/client/supabase-public";
@@ -61,10 +62,8 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
   useEffect(() => {
     const refreshTicket = () =>
       callRpc<TicketView | null>("get_ticket", { p_token: token }).then(({ data }) => data && setView(data));
-    const refreshBoard = () =>
-      callRpc<BranchBoard | null>("get_branch_board", { p_branch: initial.branch.id }).then(({ data }) => data && setBoard(data));
     const offTicket = subscribeBroadcast(ticketTopic(token), REALTIME_EVENTS.ticket, (p) => setView(p as TicketView), refreshTicket);
-    const offBoard = subscribeBroadcast(boardTopic(initial.branch.id), REALTIME_EVENTS.board, (p) => setBoard(p as BranchBoard), refreshBoard);
+    const offBoard = subscribeBoard(initial.branch.id, setBoard);
     const offStatus = onRealtimeStatus(setStatus);
     const tick = setInterval(() => setNow(new Date()), 30_000);
     const unprime = primeAttention();
@@ -112,7 +111,7 @@ export function TicketLive({ token, initial }: { token: string; initial: TicketV
   const serviceName = locale === "en" && view.service.name_en ? view.service.name_en : view.service.name;
   const place = view.organization.name;
   const back = entry ? { href: `/q/${entry}`, label: t("back") } : { href: "/", label: t("home") };
-  const nowServing = board?.calls.find((c) => c.service_id === view.service.id && c.code !== view.display_code);
+  const nowServing = board?.calls.find((c) => isActiveCall(c) && c.service_id === view.service.id && c.code !== view.display_code);
 
   async function share() {
     const url = window.location.href;
