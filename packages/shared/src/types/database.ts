@@ -26,6 +26,448 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"ad_campaign_branches": {
+                  Row: {
+                    "branch_id": string,"campaign_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"campaign_id": string
+                  }
+                  Update: {
+                    "branch_id"?: string,"campaign_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_campaign_branches_branch_id_fkey"
+      columns: ["branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_campaign_branches_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_campaigns": {
+                  Row: {
+                    "advertiser_id": string | null,"created_at": string,"created_by": string | null,"ends_on": string,"health_visa_document_path": string | null,"health_visa_number": string | null,"id": string,"moderation_note": string | null,"name": string,"organization_id": string | null,"package_code": string,"paid_at": string | null,"price_xaf": number,"reviewed_at": string | null,"reviewed_by": string | null,"sector": string,"starts_on": string,"status": Database["public"]['Enums']["campaign_status"],"submitted_at": string | null,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"target_cities": (string)[],"target_org_types": (Database["public"]['Enums']["org_type"])[],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "advertiser_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"ends_on": string,"health_visa_document_path"?: string | null,"health_visa_number"?: string | null,"id"?: string,"moderation_note"?: string | null,"name": string,"organization_id"?: string | null,"package_code": string,"paid_at"?: string | null,"price_xaf"?: number,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sector": string,"starts_on": string,"status"?: Database["public"]['Enums']["campaign_status"],"submitted_at"?: string | null,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"target_cities"?: (string)[],"target_org_types"?: (Database["public"]['Enums']["org_type"])[],"updated_at"?: string
+                  }
+                  Update: {
+                    "advertiser_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"ends_on"?: string,"health_visa_document_path"?: string | null,"health_visa_number"?: string | null,"id"?: string,"moderation_note"?: string | null,"name"?: string,"organization_id"?: string | null,"package_code"?: string,"paid_at"?: string | null,"price_xaf"?: number,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sector"?: string,"starts_on"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"submitted_at"?: string | null,"surfaces"?: (Database["public"]['Enums']["ad_surface"])[],"target_cities"?: (string)[],"target_org_types"?: (Database["public"]['Enums']["org_type"])[],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_campaigns_advertiser_id_fkey"
+      columns: ["advertiser_id"]
+isOneToOne: false
+      referencedRelation: "advertisers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_campaigns_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_campaigns_package_code_fkey"
+      columns: ["package_code"]
+isOneToOne: false
+      referencedRelation: "ad_packages"
+      referencedColumns: ["code"]
+    },{
+      foreignKeyName: "ad_campaigns_sector_fkey"
+      columns: ["sector"]
+isOneToOne: false
+      referencedRelation: "ad_sectors"
+      referencedColumns: ["code"]
+    }
+                  ]
+                },"ad_coupons": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"code": string,"expires_at": string,"game_play_id": string | null,"id": string,"issued_at": string,"qr_token": string,"quiz_play_id": string | null,"redeemed_at": string | null,"redeemed_by": string | null,"reward_text": string,"reward_text_en": string | null,"ticket_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"code": string,"expires_at": string,"game_play_id"?: string | null,"id"?: string,"issued_at"?: string,"qr_token": string,"quiz_play_id"?: string | null,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"reward_text": string,"reward_text_en"?: string | null,"ticket_id"?: string | null
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"code"?: string,"expires_at"?: string,"game_play_id"?: string | null,"id"?: string,"issued_at"?: string,"qr_token"?: string,"quiz_play_id"?: string | null,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"reward_text"?: string,"reward_text_en"?: string | null,"ticket_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_coupons_branch_id_fkey"
+      columns: ["branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_coupons_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_coupons_game_play_id_fkey"
+      columns: ["game_play_id"]
+isOneToOne: false
+      referencedRelation: "ad_game_plays"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_coupons_quiz_play_id_fkey"
+      columns: ["quiz_play_id"]
+isOneToOne: false
+      referencedRelation: "ad_quiz_plays"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_coupons_ticket_id_fkey"
+      columns: ["ticket_id"]
+isOneToOne: false
+      referencedRelation: "tickets"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_creatives": {
+                  Row: {
+                    "campaign_id": string,"created_at": string,"cta_url": string | null,"duration_seconds": number,"headline": string,"id": string,"kind": Database["public"]['Enums']["ad_creative_kind"],"offer_text": string | null,"sort_order": number,"storage_path": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campaign_id": string,"created_at"?: string,"cta_url"?: string | null,"duration_seconds"?: number,"headline": string,"id"?: string,"kind"?: Database["public"]['Enums']["ad_creative_kind"],"offer_text"?: string | null,"sort_order"?: number,"storage_path": string
+                  }
+                  Update: {
+                    "campaign_id"?: string,"created_at"?: string,"cta_url"?: string | null,"duration_seconds"?: number,"headline"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["ad_creative_kind"],"offer_text"?: string | null,"sort_order"?: number,"storage_path"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_creatives_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_daily_stats": {
+                  Row: {
+                    "branch_id": string,"campaign_id": string,"clicks": number,"coupons_issued": number,"coupons_redeemed": number,"day": string,"game_plays": number,"impressions": number,"interstitial_impressions": number,"interstitial_skips": number,"quiz_plays": number,"skips": number,"visits": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"campaign_id": string,"clicks"?: number,"coupons_issued"?: number,"coupons_redeemed"?: number,"day": string,"game_plays"?: number,"impressions"?: number,"interstitial_impressions"?: number,"interstitial_skips"?: number,"quiz_plays"?: number,"skips"?: number,"visits"?: number
+                  }
+                  Update: {
+                    "branch_id"?: string,"campaign_id"?: string,"clicks"?: number,"coupons_issued"?: number,"coupons_redeemed"?: number,"day"?: string,"game_plays"?: number,"impressions"?: number,"interstitial_impressions"?: number,"interstitial_skips"?: number,"quiz_plays"?: number,"skips"?: number,"visits"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_daily_stats_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_events": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"client_event_id": string,"creative_id": string | null,"display_id": string | null,"id": number,"occurred_at": string,"received_at": string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"client_event_id": string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at": string,"received_at"?: string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"client_event_id"?: string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at"?: string,"received_at"?: string,"surface"?: Database["public"]['Enums']["ad_surface"],"type"?: Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ad_events_202610": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"client_event_id": string,"creative_id": string | null,"display_id": string | null,"id": number,"occurred_at": string,"received_at": string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"client_event_id": string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at": string,"received_at"?: string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"client_event_id"?: string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at"?: string,"received_at"?: string,"surface"?: Database["public"]['Enums']["ad_surface"],"type"?: Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ad_events_202611": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"client_event_id": string,"creative_id": string | null,"display_id": string | null,"id": number,"occurred_at": string,"received_at": string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"client_event_id": string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at": string,"received_at"?: string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"client_event_id"?: string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at"?: string,"received_at"?: string,"surface"?: Database["public"]['Enums']["ad_surface"],"type"?: Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ad_events_202612": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"client_event_id": string,"creative_id": string | null,"display_id": string | null,"id": number,"occurred_at": string,"received_at": string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"client_event_id": string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at": string,"received_at"?: string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"client_event_id"?: string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at"?: string,"received_at"?: string,"surface"?: Database["public"]['Enums']["ad_surface"],"type"?: Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ad_events_default": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"client_event_id": string,"creative_id": string | null,"display_id": string | null,"id": number,"occurred_at": string,"received_at": string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"client_event_id": string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at": string,"received_at"?: string,"surface": Database["public"]['Enums']["ad_surface"],"type": Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"client_event_id"?: string,"creative_id"?: string | null,"display_id"?: string | null,"id"?: never,"occurred_at"?: string,"received_at"?: string,"surface"?: Database["public"]['Enums']["ad_surface"],"type"?: Database["public"]['Enums']["ad_event_type"]
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ad_game_plays": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string | null,"finished_at": string | null,"game": string,"id": string,"interstitials_shown": number,"levels_completed": number,"score": number,"skin_id": string | null,"started_at": string,"ticket_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id"?: string | null,"finished_at"?: string | null,"game"?: string,"id"?: string,"interstitials_shown"?: number,"levels_completed"?: number,"score"?: number,"skin_id"?: string | null,"started_at"?: string,"ticket_id"?: string | null
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string | null,"finished_at"?: string | null,"game"?: string,"id"?: string,"interstitials_shown"?: number,"levels_completed"?: number,"score"?: number,"skin_id"?: string | null,"started_at"?: string,"ticket_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_game_plays_branch_id_fkey"
+      columns: ["branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_game_plays_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_game_plays_skin_id_fkey"
+      columns: ["skin_id"]
+isOneToOne: false
+      referencedRelation: "ad_game_skins"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_game_plays_ticket_id_fkey"
+      columns: ["ticket_id"]
+isOneToOne: false
+      referencedRelation: "tickets"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_game_skins": {
+                  Row: {
+                    "campaign_id": string,"coin_logo_path": string | null,"coupon_validity_days": number,"end_title": string,"end_title_en": string | null,"id": string,"max_coupons": number | null,"min_levels": number,"plane_primary": string,"plane_secondary": string,"reward_text": string,"reward_text_en": string | null,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campaign_id": string,"coin_logo_path"?: string | null,"coupon_validity_days"?: number,"end_title": string,"end_title_en"?: string | null,"id"?: string,"max_coupons"?: number | null,"min_levels"?: number,"plane_primary": string,"plane_secondary": string,"reward_text": string,"reward_text_en"?: string | null,"status"?: string
+                  }
+                  Update: {
+                    "campaign_id"?: string,"coin_logo_path"?: string | null,"coupon_validity_days"?: number,"end_title"?: string,"end_title_en"?: string | null,"id"?: string,"max_coupons"?: number | null,"min_levels"?: number,"plane_primary"?: string,"plane_secondary"?: string,"reward_text"?: string,"reward_text_en"?: string | null,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_game_skins_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: true
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_packages": {
+                  Row: {
+                    "active": boolean,"code": string,"description": string | null,"description_en": string | null,"duration_days": number,"game_skin_allowed": boolean,"house": boolean,"max_branches": number | null,"name": string,"name_en": string,"price_xaf": number,"quiz_allowed": boolean,"share_of_voice": number,"sort_order": number,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"code": string,"description"?: string | null,"description_en"?: string | null,"duration_days": number,"game_skin_allowed"?: boolean,"house"?: boolean,"max_branches"?: number | null,"name": string,"name_en": string,"price_xaf": number,"quiz_allowed"?: boolean,"share_of_voice": number,"sort_order"?: number,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"code"?: string,"description"?: string | null,"description_en"?: string | null,"duration_days"?: number,"game_skin_allowed"?: boolean,"house"?: boolean,"max_branches"?: number | null,"name"?: string,"name_en"?: string,"price_xaf"?: number,"quiz_allowed"?: boolean,"share_of_voice"?: number,"sort_order"?: number,"surfaces"?: (Database["public"]['Enums']["ad_surface"])[],"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"ad_quiz_plays": {
+                  Row: {
+                    "branch_id": string | null,"campaign_id": string,"finished_at": string | null,"id": string,"quiz_id": string,"score": number | null,"started_at": string,"ticket_id": string | null,"total": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id"?: string | null,"campaign_id": string,"finished_at"?: string | null,"id"?: string,"quiz_id": string,"score"?: number | null,"started_at"?: string,"ticket_id"?: string | null,"total": number
+                  }
+                  Update: {
+                    "branch_id"?: string | null,"campaign_id"?: string,"finished_at"?: string | null,"id"?: string,"quiz_id"?: string,"score"?: number | null,"started_at"?: string,"ticket_id"?: string | null,"total"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_quiz_plays_branch_id_fkey"
+      columns: ["branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_quiz_plays_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_quiz_plays_quiz_id_fkey"
+      columns: ["quiz_id"]
+isOneToOne: false
+      referencedRelation: "ad_quizzes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ad_quiz_plays_ticket_id_fkey"
+      columns: ["ticket_id"]
+isOneToOne: false
+      referencedRelation: "tickets"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_quiz_questions": {
+                  Row: {
+                    "answers": NonNullable<Json>,"id": string,"position": number,"question": string,"question_en": string | null,"quiz_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "answers": NonNullable<Json>,"id"?: string,"position": number,"question": string,"question_en"?: string | null,"quiz_id": string
+                  }
+                  Update: {
+                    "answers"?: NonNullable<Json>,"id"?: string,"position"?: number,"question"?: string,"question_en"?: string | null,"quiz_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_quiz_questions_quiz_id_fkey"
+      columns: ["quiz_id"]
+isOneToOne: false
+      referencedRelation: "ad_quizzes"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_quizzes": {
+                  Row: {
+                    "campaign_id": string,"coupon_validity_days": number,"id": string,"max_coupons": number | null,"reward_text": string,"reward_text_en": string | null,"status": string,"title": string,"title_en": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campaign_id": string,"coupon_validity_days"?: number,"id"?: string,"max_coupons"?: number | null,"reward_text": string,"reward_text_en"?: string | null,"status"?: string,"title": string,"title_en"?: string | null
+                  }
+                  Update: {
+                    "campaign_id"?: string,"coupon_validity_days"?: number,"id"?: string,"max_coupons"?: number | null,"reward_text"?: string,"reward_text_en"?: string | null,"status"?: string,"title"?: string,"title_en"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_quizzes_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: true
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_schedules": {
+                  Row: {
+                    "campaign_id": string,"end_time": string,"id": string,"start_time": string,"weekday": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campaign_id": string,"end_time": string,"id"?: string,"start_time": string,"weekday": number
+                  }
+                  Update: {
+                    "campaign_id"?: string,"end_time"?: string,"id"?: string,"start_time"?: string,"weekday"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ad_schedules_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ad_sectors": {
+                  Row: {
+                    "active": boolean,"code": string,"name": string,"name_en": string,"requires_health_visa": boolean,"sort_order": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"code": string,"name": string,"name_en": string,"requires_health_visa"?: boolean,"sort_order"?: number
+                  }
+                  Update: {
+                    "active"?: boolean,"code"?: string,"name"?: string,"name_en"?: string,"requires_health_visa"?: boolean,"sort_order"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"advertiser_members": {
+                  Row: {
+                    "advertiser_id": string,"created_at": string,"role": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "advertiser_id": string,"created_at"?: string,"role"?: string,"user_id": string
+                  }
+                  Update: {
+                    "advertiser_id"?: string,"created_at"?: string,"role"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "advertiser_members_advertiser_id_fkey"
+      columns: ["advertiser_id"]
+isOneToOne: false
+      referencedRelation: "advertisers"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"advertisers": {
+                  Row: {
+                    "address": string | null,"city": string | null,"created_at": string,"created_by": string | null,"id": string,"name": string,"phone_e164": string | null,"sector": string,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "address"?: string | null,"city"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"phone_e164"?: string | null,"sector": string,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "address"?: string | null,"city"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"phone_e164"?: string | null,"sector"?: string,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "advertisers_sector_fkey"
+      columns: ["sector"]
+isOneToOne: false
+      referencedRelation: "ad_sectors"
+      referencedColumns: ["code"]
+    }
+                  ]
                 },"announcement_settings": {
                   Row: {
                     "branch_id": string,"chime_enabled": boolean,"languages": (string)[],"organization_id": string,"quiet_hours": NonNullable<Json>,"repeat_count": number,"updated_at": string,"volume": number
@@ -538,17 +980,29 @@ isOneToOne: false
                   ]
                 },"invoices": {
                   Row: {
-                    "billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"discount_xaf": number,"due_at": string,"id": string,"issued_at": string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id": string | null,"paid_at": string | null,"paid_channel": Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id": string | null,"seller_snapshot": NonNullable<Json>,"status": Database["public"]['Enums']["invoice_status"],"subscription_id": string | null,"subtotal_xaf": number,"tax_xaf": number,"total_xaf": number,"vat_rate": number
+                    "advertiser_id": string | null,"billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"campaign_id": string | null,"discount_xaf": number,"due_at": string,"id": string,"issued_at": string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id": string | null,"paid_at": string | null,"paid_channel": Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id": string | null,"seller_snapshot": NonNullable<Json>,"status": Database["public"]['Enums']["invoice_status"],"subscription_id": string | null,"subtotal_xaf": number,"tax_xaf": number,"total_xaf": number,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"discount_xaf"?: number,"due_at": string,"id"?: string,"issued_at"?: string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id"?: string | null,"seller_snapshot": NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf": number,"tax_xaf"?: number,"total_xaf": number,"vat_rate"?: number
+                    "advertiser_id"?: string | null,"billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"campaign_id"?: string | null,"discount_xaf"?: number,"due_at": string,"id"?: string,"issued_at"?: string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id"?: string | null,"seller_snapshot": NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf": number,"tax_xaf"?: number,"total_xaf": number,"vat_rate"?: number
                   }
                   Update: {
-                    "billing_period"?: Database["public"]['Enums']["billing_period"],"buyer_snapshot"?: NonNullable<Json>,"discount_xaf"?: number,"due_at"?: string,"id"?: string,"issued_at"?: string,"kind"?: string,"lines"?: NonNullable<Json>,"number"?: string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end"?: string,"period_start"?: string,"plan_id"?: string | null,"seller_snapshot"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf"?: number,"tax_xaf"?: number,"total_xaf"?: number,"vat_rate"?: number
+                    "advertiser_id"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"buyer_snapshot"?: NonNullable<Json>,"campaign_id"?: string | null,"discount_xaf"?: number,"due_at"?: string,"id"?: string,"issued_at"?: string,"kind"?: string,"lines"?: NonNullable<Json>,"number"?: string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end"?: string,"period_start"?: string,"plan_id"?: string | null,"seller_snapshot"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf"?: number,"tax_xaf"?: number,"total_xaf"?: number,"vat_rate"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "invoices_advertiser_id_fkey"
+      columns: ["advertiser_id"]
+isOneToOne: false
+      referencedRelation: "advertisers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invoices_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "ad_campaigns"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "invoices_organization_id_fkey"
       columns: ["organization_id"]
 isOneToOne: false
@@ -722,6 +1176,26 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     }
                   ]
+                },"organization_ad_preferences": {
+                  Row: {
+                    "blocked_sectors": (string)[],"house_ads_enabled": boolean,"organization_id": string,"quiz_enabled": boolean,"sky_catch_enabled": boolean,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "blocked_sectors"?: (string)[],"house_ads_enabled"?: boolean,"organization_id": string,"quiz_enabled"?: boolean,"sky_catch_enabled"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "blocked_sectors"?: (string)[],"house_ads_enabled"?: boolean,"organization_id"?: string,"quiz_enabled"?: boolean,"sky_catch_enabled"?: boolean,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "organization_ad_preferences_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: true
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"organizations": {
                   Row: {
                     "country": string,"created_at": string,"created_by": string | null,"currency": string,"data_retention_days": number,"default_locale": string,"id": string,"logo_path": string | null,"name": string,"onboarding_step": number,"phone_e164": string | null,"slug": string,"status": Database["public"]['Enums']["org_status"],"suspended_reason": string | null,"type": Database["public"]['Enums']["org_type"],"updated_at": string,"validated_at": string | null,"validated_by": string | null
@@ -820,14 +1294,14 @@ isOneToOne: false
                   ]
                 },"platform_settings": {
                   Row: {
-                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"retention_after_suspension_days": number,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
+                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"retention_after_suspension_days": number,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Update: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Relationships: [
                     
@@ -1316,6 +1790,17 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"ad_candidates":
+{ Args: { "p_at"?: string,"p_branch": string,"p_surface": Database["public"]['Enums']["ad_surface"] }; Returns: {
+              "advertiser": string,"campaign_id": string,"creative_id": string,"cta_url": string,"duration_seconds": number,"headline": string,"kind": Database["public"]['Enums']["ad_creative_kind"],"offer_text": string,"package_code": string,"storage_path": string,"weight": number
+            }[]
+                           },
+"ad_candidates_json":
+{ Args: { "p_branch": string,"p_surface": Database["public"]['Enums']["ad_surface"] }; Returns: Json
+                           },
+"ad_weighted_draw":
+{ Args: { "p_candidates": Json,"p_count": number }; Returns: (string)[]
+                           },
 "admin_apply_discount":
 { Args: { "p_invoices": number,"p_kind": string,"p_org": string,"p_reason": string,"p_value": number }; Returns: string
                            },
@@ -1328,6 +1813,9 @@ isOneToOne: true
 "admin_revenue":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"admin_set_campaign_paused":
+{ Args: { "p_campaign": string,"p_paused": boolean,"p_reason": string }; Returns: undefined
+                           },
 "admin_set_suspension":
 { Args: { "p_org": string,"p_reason": string,"p_suspended": boolean }; Returns: undefined
                            },
@@ -1337,14 +1825,23 @@ isOneToOne: true
 "admin_subscriptions":
 { Args: { "p_query"?: string,"p_status"?: string }; Returns: Json
                            },
+"admin_update_ad_package":
+{ Args: { "p_code": string,"p_fields": Json }; Returns: undefined
+                           },
 "admin_update_plan":
 { Args: { "p_fields": Json,"p_plan": string }; Returns: undefined
                            },
 "admin_update_settings":
 { Args: { "p_fields": Json }; Returns: undefined
                            },
+"admin_upsert_ad_sector":
+{ Args: { "p_active": boolean,"p_code": string,"p_name": string,"p_name_en": string,"p_requires_visa": boolean }; Returns: undefined
+                           },
 "admit_ticket":
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
+                           },
+"app_ad":
+{ Args: { "p_ticket_token": string }; Returns: Json
                            },
 "apply_pending_transitions":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -1488,6 +1985,12 @@ isOneToOne: true
 "call_ticket_internal":
 { Args: { "p_counter": string,"p_ticket": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: Json
                            },
+"campaign_checkout":
+{ Args: { "p_campaign": string }; Returns: Json
+                           },
+"campaign_stats":
+{ Args: { "p_campaign": string }; Returns: Json
+                           },
 "can_access_branch":
 { Args: { "p_branch": string,"p_org": string,"p_roles"?: (Database["public"]['Enums']["member_role"])[] }; Returns: boolean
                            },
@@ -1499,6 +2002,15 @@ isOneToOne: true
                            },
 "can_manage_member":
 { Args: { "p_branch": string,"p_org": string,"p_role": Database["public"]['Enums']["member_role"] }; Returns: boolean
+                           },
+"can_read_ad_document":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
+"can_view_campaign":
+{ Args: { "p_campaign": string }; Returns: boolean
+                           },
+"can_write_ad_file":
+{ Args: { "p_name": string }; Returns: boolean
                            },
 "cancel_appointment":
 { Args: { "p_appointment": string,"p_reason"?: string }; Returns: Json
@@ -1635,6 +2147,12 @@ isOneToOne: true
 "count_messaging_usage":
 { Args: { "p_channel": Database["public"]['Enums']["notif_channel"],"p_org": string }; Returns: undefined
                            },
+"coupon_view":
+{ Args: { "p_qr_token": string }; Returns: Json
+                           },
+"create_advertiser":
+{ Args: { "p_city": string,"p_name": string,"p_phone": string,"p_sector": string }; Returns: string
+                           },
 "create_appointment_request":
 { Args: { "p_branch": string,"p_customer": string,"p_day": string,"p_label": string,"p_locale": string,"p_period": string,"p_phone_e164": string,"p_practitioner": string,"p_service": string,"p_starts_at": string }; Returns: Json
                            },
@@ -1659,8 +2177,20 @@ isOneToOne: true
 "decline_appointment_request":
 { Args: { "p_reason"?: string,"p_request": string }; Returns: Json
                            },
+"delete_creative":
+{ Args: { "p_creative": string }; Returns: undefined
+                           },
+"delete_game_skin":
+{ Args: { "p_campaign": string }; Returns: undefined
+                           },
+"delete_quiz":
+{ Args: { "p_campaign": string }; Returns: undefined
+                           },
 "disable_push_contact":
 { Args: { "p_contact": string }; Returns: undefined
+                           },
+"douala_today":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "effective_duration_seconds":
 { Args: { "p_default": number,"p_ewma": number,"p_samples": number }; Returns: number
@@ -1683,6 +2213,9 @@ isOneToOne: true
 "enqueue_ticket_notification":
 { Args: { "p_dedupe": string,"p_event": Database["public"]['Enums']["notif_event"],"p_payload"?: Json,"p_status"?: Database["public"]['Enums']["job_status"],"p_ticket": string }; Returns: number
                            },
+"ensure_ad_event_partitions":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "estimate_wait_seconds":
 { Args: { "p_ahead": number,"p_busy": (number)[],"p_durations": (number)[] }; Returns: number
                            },
@@ -1691,6 +2224,12 @@ isOneToOne: true
                            },
 "fair_pick":
 { Args: { "p_candidates": Json,"p_early": number,"p_mode": string,"p_now": string,"p_ratio": number,"p_since": number }; Returns: string
+                           },
+"finish_quiz":
+{ Args: { "p_answers": (number)[],"p_play": string,"p_ticket_token": string }; Returns: Json
+                           },
+"finish_sky_catch":
+{ Args: { "p_interstitials": number,"p_levels": number,"p_play": string,"p_score": number,"p_ticket_token": string }; Returns: Json
                            },
 "finish_ticket":
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
@@ -1738,6 +2277,9 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"game_session":
+{ Args: { "p_ticket_token": string }; Returns: Json
+                           },
 "get_appointment_request":
 { Args: { "p_token": string }; Returns: Json
                            },
@@ -1801,6 +2343,9 @@ isOneToOne: true
 "invoice_document":
 { Args: { "p_invoice": string }; Returns: Json
                            },
+"is_advertiser_member":
+{ Args: { "p_advertiser": string,"p_roles"?: (string)[] }; Returns: boolean
+                           },
 "is_anonymous":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -1810,10 +2355,48 @@ isOneToOne: true
 "is_privileged_context":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"issue_campaign_invoice":
+{ Args: { "p_campaign": string }; Returns: {
+              "advertiser_id": string | null,
+"billing_period": Database["public"]['Enums']["billing_period"],
+"buyer_snapshot": NonNullable<Json>,
+"campaign_id": string | null,
+"discount_xaf": number,
+"due_at": string,
+"id": string,
+"issued_at": string,
+"kind": string,
+"lines": NonNullable<Json>,
+"number": string,
+"organization_id": string | null,
+"paid_at": string | null,
+"paid_channel": Database["public"]['Enums']["payment_channel"] | null,
+"period_end": string,
+"period_start": string,
+"plan_id": string | null,
+"seller_snapshot": NonNullable<Json>,
+"status": Database["public"]['Enums']["invoice_status"],
+"subscription_id": string | null,
+"subtotal_xaf": number,
+"tax_xaf": number,
+"total_xaf": number,
+"vat_rate": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "invoices"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"issue_coupon":
+{ Args: { "p_branch": string,"p_campaign": string,"p_game_play": string,"p_max": number,"p_quiz_play": string,"p_reward": string,"p_reward_en": string,"p_ticket": string,"p_validity": number }; Returns: Json
+                           },
 "issue_invoice":
 { Args: { "p_period"?: Database["public"]['Enums']["billing_period"],"p_plan"?: string,"p_subscription": string }; Returns: {
-              "billing_period": Database["public"]['Enums']["billing_period"],
+              "advertiser_id": string | null,
+"billing_period": Database["public"]['Enums']["billing_period"],
 "buyer_snapshot": NonNullable<Json>,
+"campaign_id": string | null,
 "discount_xaf": number,
 "due_at": string,
 "id": string,
@@ -1904,6 +2487,38 @@ isOneToOne: true
                           SetofOptions: {
         from: "*"
         to: "appointments"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"lock_campaign_for_edit":
+{ Args: { "p_campaign": string }; Returns: {
+              "advertiser_id": string | null,
+"created_at": string,
+"created_by": string | null,
+"ends_on": string,
+"health_visa_document_path": string | null,
+"health_visa_number": string | null,
+"id": string,
+"moderation_note": string | null,
+"name": string,
+"organization_id": string | null,
+"package_code": string,
+"paid_at": string | null,
+"price_xaf": number,
+"reviewed_at": string | null,
+"reviewed_by": string | null,
+"sector": string,
+"starts_on": string,
+"status": Database["public"]['Enums']["campaign_status"],
+"submitted_at": string | null,
+"surfaces": (Database["public"]['Enums']["ad_surface"])[],
+"target_cities": (string)[],
+"target_org_types": (Database["public"]['Enums']["org_type"])[],
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ad_campaigns"
         isOneToOne: true
         isSetofReturn: false
       } },
@@ -2262,11 +2877,17 @@ isOneToOne: true
 "reception_create_ticket":
 { Args: { "p_client_op_id"?: string,"p_consent"?: boolean,"p_locale"?: string,"p_phone_e164"?: string,"p_practitioner"?: string,"p_priority_reason"?: Database["public"]['Enums']["priority_reason"],"p_service": string }; Returns: Json
                            },
+"record_ad_events":
+{ Args: { "p_branch": string,"p_display": string,"p_events": Json }; Returns: number
+                           },
 "record_service_duration":
 { Args: { "p_counter": string,"p_org": string,"p_seconds": number,"p_service": string }; Returns: undefined
                            },
 "record_webhook_event":
 { Args: { "p_event_id": string,"p_payload": Json,"p_provider": string }; Returns: boolean
+                           },
+"redeem_coupon":
+{ Args: { "p_code": string,"p_confirm"?: boolean }; Returns: Json
                            },
 "regenerate_qr_code":
 { Args: { "p_branch": string,"p_service"?: string }; Returns: {
@@ -2323,14 +2944,32 @@ isOneToOne: true
 "resolve_entry":
 { Args: { "p_code": string }; Returns: Json
                            },
+"review_campaign":
+{ Args: { "p_approve": boolean,"p_campaign": string,"p_note": string }; Returns: Database["public"]['Enums']["campaign_status"]
+                           },
 "revoke_display":
 { Args: { "p_display": string }; Returns: undefined
+                           },
+"rollup_ad_stats":
+{ Args: { "p_days"?: number }; Returns: number
                            },
 "rollup_daily_stats":
 { Args: { "p_day"?: string }; Returns: number
                            },
 "rollup_daily_stats_range":
 { Args: { "p_from": string,"p_to": string }; Returns: number
+                           },
+"save_campaign":
+{ Args: { "p_advertiser": string,"p_campaign": string,"p_fields": Json,"p_organization": string }; Returns: string
+                           },
+"save_creative":
+{ Args: { "p_campaign": string,"p_creative": string,"p_fields": Json }; Returns: string
+                           },
+"save_game_skin":
+{ Args: { "p_campaign": string,"p_fields": Json }; Returns: string
+                           },
+"save_quiz":
+{ Args: { "p_campaign": string,"p_fields": Json }; Returns: string
                            },
 "schedule_appointment_notifications":
 { Args: { "p_appointment": string,"p_first": Database["public"]['Enums']["notif_event"] }; Returns: undefined
@@ -2345,6 +2984,9 @@ isOneToOne: true
 { Args: { "p_service": string }; Returns: {
               "busy_remaining_seconds": number,"counter_id": string,"duration_seconds": number
             }[]
+                           },
+"set_ad_preferences":
+{ Args: { "p_blocked": (string)[],"p_house": boolean,"p_org": string,"p_quiz": boolean,"p_sky_catch": boolean }; Returns: undefined
                            },
 "set_branch_location":
 { Args: { "p_branch": string,"p_lat": number,"p_lng": number }; Returns: undefined
@@ -2428,6 +3070,12 @@ isOneToOne: true
 "start_payment":
 { Args: { "p_channel": Database["public"]['Enums']["payment_channel"],"p_msisdn": string,"p_provider": Database["public"]['Enums']["payment_provider"],"p_token": string }; Returns: Json
                            },
+"start_quiz":
+{ Args: { "p_quiz": string,"p_ticket_token": string }; Returns: Json
+                           },
+"start_sky_catch":
+{ Args: { "p_skin": string,"p_ticket_token": string }; Returns: string
+                           },
 "stats_branch_rows":
 { Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: {
               "appointment": number,
@@ -2487,6 +3135,9 @@ isOneToOne: true
 "stats_totals":
 { Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
                            },
+"submit_campaign":
+{ Args: { "p_campaign": string }; Returns: Database["public"]['Enums']["campaign_status"]
+                           },
 "subscription_price":
 { Args: { "p_base": number,"p_branches": number,"p_discount_kind"?: string,"p_discount_value"?: number,"p_extra": number,"p_free_months": number,"p_included": number,"p_period": Database["public"]['Enums']["billing_period"] }; Returns: Json
                            },
@@ -2508,12 +3159,58 @@ isOneToOne: true
 "take_ticket":
 { Args: { "p_customer": string,"p_entry_code": string,"p_priority_reason": Database["public"]['Enums']["priority_reason"],"p_service": string,"p_source": Database["public"]['Enums']["ticket_source"] }; Returns: Json
                            },
+"target_campaign_branches":
+{ Args: { "p_campaign": string }; Returns: number
+                           },
 "throttle_appointment_request":
 { Args: { "p_customer": string,"p_ip_hash": string }; Returns: boolean
                            },
 "throttle_ticket_request":
 { Args: { "p_customer": string,"p_ip_hash": string }; Returns: boolean
                            },
+"ticket_by_token":
+{ Args: { "p_token": string }; Returns: {
+              "appointment_id": string | null,
+"branch_id": string,
+"called_at": string | null,
+"counter_id": string | null,
+"created_at": string,
+"created_by": string | null,
+"customer_user_id": string | null,
+"delay_count": number,
+"display_code": string,
+"finished_at": string | null,
+"id": string,
+"is_remote": boolean,
+"number": number,
+"on_my_way_at": string | null,
+"organization_id": string,
+"preferred_counter_id": string | null,
+"presence_confirmed_at": string | null,
+"priority_level": number,
+"priority_reason": Database["public"]['Enums']["priority_reason"] | null,
+"public_token": string | null,
+"rated_at": string | null,
+"rating": number | null,
+"rating_comment": string | null,
+"recall_count": number,
+"recalled_at": string | null,
+"remote_travel_seconds": number | null,
+"service_day": string,
+"service_id": string,
+"serving_started_at": string | null,
+"sort_key": number,
+"source": Database["public"]['Enums']["ticket_source"],
+"status": Database["public"]['Enums']["ticket_status"],
+"transferred_from_id": string | null,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "tickets"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "ticket_display_code":
 { Args: { "p_number": number,"p_prefix": string }; Returns: string
                            },
@@ -2531,6 +3228,9 @@ isOneToOne: true
                            },
 "transfer_ticket":
 { Args: { "p_client_op_id"?: string,"p_target_service": string,"p_ticket": string }; Returns: Json
+                           },
+"tv_ad_rotation":
+{ Args: { "p_device_token": string }; Returns: Json
                            },
 "tv_create_pairing":
 { Args: { "p_ip_hash": string }; Returns: Json
@@ -2570,7 +3270,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","ad_creative_kind": "image"|"video","ad_event_type": "impression"|"click"|"skip"|"visit","ad_surface": "tv"|"app"|"game","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","campaign_status": "draft"|"pending_review"|"rejected"|"awaiting_payment"|"active"|"paused"|"ended","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -2686,7 +3386,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"ad_creative_kind": ["image", "video"],"ad_event_type": ["impression", "click", "skip", "visit"],"ad_surface": ["tv", "app", "game"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"campaign_status": ["draft", "pending_review", "rejected", "awaiting_payment", "active", "paused", "ended"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const

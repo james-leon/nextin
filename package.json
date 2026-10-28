@@ -12,7 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @nextin/web test:e2e",
-    "db:start": "node scripts/local-env.mjs npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta,storage-api",
+    "db:start": "node scripts/local-env.mjs npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta",
     "db:reset": "node scripts/db-reset.mjs",
     "db:test": "node scripts/db-test.mjs && node scripts/db-integration.mjs",
     "db:push": "node scripts/supabase-remote.mjs push",
