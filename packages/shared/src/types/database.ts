@@ -1656,7 +1656,7 @@ isOneToOne: false
 { Args: { "p_places": number,"p_ticket": string }; Returns: Json
                            },
 "nearby_branches":
-{ Args: { "p_lat"?: number,"p_lng"?: number,"p_query"?: string,"p_radius_km"?: number }; Returns: Json
+{ Args: { "p_lat"?: number,"p_limit"?: number,"p_lng"?: number,"p_query"?: string,"p_radius_km"?: number }; Returns: Json
                            },
 "next_ticket_number":
 { Args: { "p_day": string,"p_service": string }; Returns: number

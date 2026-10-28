@@ -74,13 +74,14 @@ $$;
 
 /**
  * Agences visibles du public, les plus proches d'abord (rayon en km), ou par ville et nom sans position.
- * Recherche facultative sur l'établissement, l'agence et la ville. 30 résultats au plus.
+ * Recherche facultative sur l'établissement, l'agence et la ville. `p_limit` résultats (30 par défaut, 50 au plus).
  */
 create or replace function public.nearby_branches(
   p_lat double precision default null,
   p_lng double precision default null,
   p_radius_km double precision default 25,
-  p_query text default null
+  p_query text default null,
+  p_limit integer default 30
 )
 returns jsonb
 language plpgsql
@@ -93,14 +94,15 @@ declare
   v_q text := nullif(trim(coalesce(p_query, '')), '');
 begin
   if (p_lat is null) <> (p_lng is null) or p_lat not between -90 and 90 or p_lng not between -180 and 180
-     or p_radius_km not between 0.5 and 200 or char_length(v_q) > 60 then
+     or p_radius_km not between 0.5 and 200 or char_length(v_q) > 60 or p_limit not between 1 and 50 then
     raise exception 'invalid_state' using errcode = 'P0409';
   end if;
   if p_lat is not null then
     v_point := extensions.st_setsrid(extensions.st_makepoint(p_lng, p_lat), 4326)::extensions.geography;
   end if;
   return coalesce((
-    select jsonb_agg(public.branch_summary(x.id, x.distance_m) order by x.distance_m nulls last, x.city, x.org, x.name)
+    -- Sans le détail des services : la liste reste légère (page client < 200 Ko).
+    select jsonb_agg(public.branch_summary(x.id, x.distance_m) - 'services' order by x.distance_m nulls last, x.city, x.org, x.name)
     from (
       select b.id, b.name, b.city, o.name as org,
              case when v_point is not null and b.location is not null then extensions.st_distance(b.location, v_point) end as distance_m
@@ -111,7 +113,7 @@ begin
         and (v_point is null or (b.location is not null and extensions.st_dwithin(b.location, v_point, p_radius_km * 1000)))
         and (v_q is null or o.name ilike '%' || v_q || '%' or b.name ilike '%' || v_q || '%' or b.city ilike '%' || v_q || '%')
       order by distance_m nulls last, b.city, o.name, b.name
-      limit 30
+      limit p_limit
     ) x
   ), '[]'::jsonb);
 end;
@@ -281,6 +283,27 @@ as $$
   join public.branch_settings bs on bs.branch_id = t.branch_id
   left join public.counters c on c.id = t.counter_id
   where t.id = p_ticket;
+$$;
+
+/** Diffusion du ticket à son détenteur (M3), aussi quand l'état du ticket à distance change (présence, trajet, reculs). */
+create or replace function public.ticket_broadcast_row()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.public_token is not null and (
+    tg_op = 'INSERT'
+    or (new.status, new.sort_key, new.priority_level, new.counter_id, new.recall_count,
+        new.presence_confirmed_at, new.on_my_way_at, new.remote_travel_seconds, new.delay_count)
+       is distinct from (old.status, old.sort_key, old.priority_level, old.counter_id, old.recall_count,
+        old.presence_confirmed_at, old.on_my_way_at, old.remote_travel_seconds, old.delay_count)
+  ) then
+    perform public.broadcast('ticket:' || new.public_token, 'ticket', public.ticket_view(new.id), false);
+  end if;
+  return null;
+end;
 $$;
 
 /** Ticket à distance d'un client, verrouillé, par le jeton de son lien. */
@@ -1396,7 +1419,7 @@ $$;
 -- ─── Droits ──────────────────────────────────────────────────────────────────
 
 revoke execute on function
-  public.branch_summary(uuid, double precision), public.nearby_branches(double precision, double precision, double precision, text),
+  public.branch_summary(uuid, double precision), public.nearby_branches(double precision, double precision, double precision, text, integer),
   public.branch_public(uuid), public.remote_travel_seconds(double precision, integer),
   public.take_remote_ticket(uuid, double precision, double precision, public.priority_reason, uuid),
   public.lock_remote_ticket(text), public.confirm_presence(text, text), public.signal_on_my_way(text),
@@ -1414,7 +1437,7 @@ from public, anon, authenticated;
 
 -- Surface publique (pages client, sans compte) : lecture et commandes protégées par le jeton secret du lien.
 grant execute on function
-  public.nearby_branches(double precision, double precision, double precision, text), public.branch_public(uuid),
+  public.nearby_branches(double precision, double precision, double precision, text, integer), public.branch_public(uuid),
   public.confirm_presence(text, text), public.signal_on_my_way(text), public.set_remote_travel(text, integer),
   public.request_options(uuid), public.verify_appointment_request(text, text), public.get_appointment_request(text),
   public.cancel_my_appointment_request(text)

@@ -115,7 +115,8 @@ insert into vals select 'near', public.nearby_branches(4.0510, 9.7010, 25, 'Zeta
 select is((select jsonb_agg(b ->> 'name') from jsonb_array_elements(tests.v('near')) b), '["Akwa"]'::jsonb,
   'à proximité : agence visible dans le rayon ; agence masquée et agence lointaine exclues');
 select ok((tests.v('near') -> 0 ->> 'distance_m')::numeric between 100 and 300, 'distance calculée (environ 160 m)');
-select is((tests.v('near') -> 0 -> 'services' -> 0 ->> 'name'), 'Consultation', 'files et attente en direct par service');
+select is(public.branch_public(tests.id('akwa')) -> 'services' -> 0 ->> 'name', 'Consultation',
+  'page de l''agence : files et attente en direct par service (la liste reste légère, sans détail)');
 select is((select jsonb_agg(b ->> 'name' order by b ->> 'name') from jsonb_array_elements(public.nearby_branches(null, null, 25, 'Zeta')) b),
   '["Akwa", "Bastos"]'::jsonb, 'sans position : toutes les agences visibles, triées par ville');
 select throws_ok($$ select public.nearby_branches(4.05, null) $$, 'P0409', 'invalid_state', 'position incomplète refusée');
