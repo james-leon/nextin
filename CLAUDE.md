@@ -14,6 +14,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 ## Monorepo
 - `apps/web` — Next.js 16 (App Router, Turbopack), Tailwind v4, composants maison façon shadcn (Radix + cva), next-intl.
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
+- `packages/payments` — contrat `PaymentProvider` des agrégateurs Mobile Money et faux fournisseur (M10a), côté serveur uniquement.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
 - `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
@@ -134,6 +135,15 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Ticket à distance non confirmé : jamais appelé ; recul ou annulation dans `pick_next_ticket` (un autre patient doit attendre). Présence : `confirm_presence` (QR ou code court de l'agence, automatique en ouvrant `/q/<code>` avec un ticket à distance enregistré sur l'appareil) ou `staff_confirm_presence`.
 - Demandes de rendez-vous : `create_appointment_request` (serveur uniquement) → code 6 chiffres (empreinte en base, code effacé de la file après vérification) → `pending` visible de l'accueil → `accept_appointment_request` (créneau demandé = « accepted », autre = « modified ») ou `decline_appointment_request`. Réponse WhatsApp par les événements `request_*` ; modèle `code_verification` en catégorie Authentification (bouton « Copier le code »).
 - Options d'agence désactivées par défaut : `remote_tickets_enabled`, `appointment_requests_enabled` ; `public_listing_enabled` activée.
+
+## Abonnements (M10a, `docs/modules/M10a.md`)
+- Inscription : `/app/new` en trois étapes (téléphone → code WhatsApp → établissement) puis `self_service_signup` (essai Pro, **un seul par numéro**). `create_organization` n'est plus appelable par les comptes ; les tests passent par `signUpOrganization` / `verifyPhoneViaUi`. Sans abonnement = établissement « pilote » (tout compris).
+- Droits : `org_entitlements(org)` (base, service role) / `staff_entitlements(org)` (personnel). Limites par déclencheurs (`plan_limit`), fonctions par `assert_feature` (`feature_unavailable`), émission bloquée en lecture seule (`subscription_read_only`). Ne jamais tester une limite côté client seulement.
+- Prix : `computeSubscriptionPrice` (`@nextin/shared/billing`) ≡ `public.subscription_price` (`pricing.fixtures.json`, recopié dans `m10a_billing.test.sql`) ; `targetStatus` ≡ `subscription_target_status`.
+- Dégradations seulement par `apply_pending_transitions` (après la fermeture de toutes les agences) ; réactivation immédiate par `confirm_payment` (idempotent). Factures `invoices` immuables (déclencheur), numérotées sans trou, PDF rendu à la demande (`lib/pdf/invoice.tsx`) depuis l'instantané.
+- Paiement : `/pay/<jeton>` (page légère < 200 Ko, `useLiteT`) → `POST /api/payments` → `PaymentProvider.createCheckout` ; état par `POST /api/payments/status` ; webhook `/api/payments/webhook/<fournisseur>` signé, enregistré (`record_webhook_event`) puis **revérifié par `fetchStatus`** avant activation. Faux fournisseur : `PAYMENT_PROVIDER=fake`, `PAYMENT_WEBHOOK_SECRET` requis, numéro en `99999` = échec.
+- Messages du compte : file `account_messages` (base) → expéditeur M7 (`lib/notifications/account.ts`) ; modèles `ACCOUNT_TEMPLATES` (`@nextin/shared/billing`), mêmes règles que les modèles Meta du M7. Quota WhatsApp : `quota_exceeded` dans `claim_notification_jobs` (« c'est votre tour » toujours envoyé).
+- Back-office : bandeau `BillingBanner` et `SuspendedGate` dans le gabarit de l'établissement ; page `/app/o/<org>/billing` (administrateurs). Console super admin `/admin` (abonnements, formules, réglages) ; toute action avec motif, journalisée par la base.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

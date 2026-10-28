@@ -429,6 +429,38 @@ async function ensureDemoHistory(orgId: string, branch: { branchId: string; serv
   await must(db.rpc("rollup_daily_stats_range", { p_from: from, p_to: yesterday }));
 }
 
+/**
+ * M10a — abonnement de démo (idempotent) : `paid` = formule Pro payée par le faux fournisseur (facture réglée par
+ * MTN MoMo, abonnement actif) ; `trial` = essai Pro qui se termine dans 5 jours (bandeau visible).
+ */
+async function ensureDemoSubscription(orgId: string, mode: "paid" | "trial", phone: string, email: string) {
+  const existing = await must(db.from("subscriptions").select("id").eq("organization_id", orgId).maybeSingle());
+  if (existing) return;
+  const pro = await must(db.from("plans").select("id").eq("code", "pro").single());
+  const sub = await must(
+    db
+      .from("subscriptions")
+      .insert({
+        organization_id: orgId,
+        plan_id: pro.id,
+        status: "trialing",
+        trial_ends_at: new Date(Date.now() + (mode === "trial" ? 5 : 1) * 86_400_000).toISOString(),
+        billing_phone_e164: phone,
+        billing_email: email,
+      })
+      .select("id")
+      .single(),
+  );
+  await must(db.from("subscription_events").insert({ subscription_id: sub.id, organization_id: orgId, type: "trial_started", payload: { trial_days: 14 } }));
+  if (mode === "trial") return;
+  const invoice = await must(db.rpc("issue_invoice", { p_subscription: sub.id }));
+  const token = await must(db.rpc("create_pay_link", { p_invoice: (invoice as { id: string }).id }));
+  const started = (await must(
+    db.rpc("start_payment", { p_token: token as string, p_provider: "fake", p_channel: "mtn_momo", p_msisdn: phone }),
+  )) as { external_id: string };
+  await must(db.rpc("confirm_payment", { p_external_id: started.external_id, p_status: "succeeded", p_provider_ref: "fake_demo" }));
+}
+
 const COLORS = { blue: "#1A6BB5", green: "#2E8B57", purple: "#8E5BB5", ochre: "#B5651A", teal: "#13798A" };
 
 async function main() {
@@ -508,6 +540,9 @@ async function main() {
     ],
   });
 
+  await ensureDemoSubscription(clinic, "paid", "+237677000101", USERS.clinicAdmin.email);
+  await ensureDemoSubscription(eneo, "trial", "+237699000202", USERS.eneoAdmin.email);
+
   await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 });
   await ensureDemoAppointments(USERS.clinicReception.email, clinic, akwa);
   await ensureDemoHistory(clinic, akwa, { C: 38, P: 22, L: 30, K: 45 }, 2026);
@@ -515,7 +550,8 @@ async function main() {
   await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
   await ensureDemoRemote(akwa, bonanjo, ids.clinicAdmin);
 
-  console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa) et Eneo — Douala (agence Bonanjo)");
+  console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa, Pro payé) et Eneo — Douala (agence Bonanjo, essai Pro)");
+  console.log("  Console Wintek : /admin avec superadmin@nextin.demo");
   for (const u of Object.values(USERS)) console.log(`  ${u.email}`);
   console.log("  (mot de passe : valeur de SEED_DEMO_PASSWORD)");
 }

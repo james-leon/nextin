@@ -1488,7 +1488,7 @@ export const fr = {
     nextPlan: "Passage à {plan} le {date}",
     usageTitle: "Utilisation",
     usageBranches: "Agences",
-    usageCounters: "Guichets par agence (le plus équipé)",
+    usageCounters: "Guichets par agence",
     usageDisplays: "Écrans par agence",
     usageWhatsapp: "Messages WhatsApp ce mois-ci",
     unlimited: "Illimité",

@@ -1490,7 +1490,7 @@ export const en: Messages = {
     nextPlan: "Switching to {plan} on {date}",
     usageTitle: "Usage",
     usageBranches: "Branches",
-    usageCounters: "Desks per branch (busiest branch)",
+    usageCounters: "Desks per branch",
     usageDisplays: "Screens per branch",
     usageWhatsapp: "WhatsApp messages this month",
     unlimited: "Unlimited",

@@ -48,6 +48,7 @@ export default async function BillingPage({
   const e = o.entitlements;
   const now = new Date();
   const xaf = (n: number) => formatXaf(n, locale);
+  const num = (n: number) => new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US").format(n);
   const nextPlan = s?.next_plan_id ? o.plans.find((p) => p.id === s.next_plan_id) : null;
   const paidPeriodRunning = !!s?.current_period_end && new Date(s.current_period_end) > now;
 
@@ -137,7 +138,7 @@ export default async function BillingPage({
             <div className="flex flex-col gap-2 px-4">
               <div className="flex items-baseline justify-between gap-3 text-subheadline">
                 <span>{t("usageWhatsapp")}</span>
-                <span className="tabular text-label-secondary">{t("ofLimit", { used: o.usage.whatsapp_sent, limit: e.whatsapp_quota })}</span>
+                <span className="tabular text-label-secondary">{t("ofLimit", { used: num(o.usage.whatsapp_sent), limit: num(e.whatsapp_quota) })}</span>
               </div>
               <ProgressBar
                 value={Math.min(1, o.usage.whatsapp_sent / e.whatsapp_quota)}

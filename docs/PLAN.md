@@ -500,7 +500,8 @@ Valeurs initiales (migration de données, **modifiables par le super admin**, ja
 
 ### 11.11 Effets sur les modules précédents
 - **M1** : `organizations.status` passe à `active` par défaut et `create_organization` n'attend plus de validation ; le super admin garde la suspension. Le changement est appliqué par une nouvelle migration lors de la fin du M1 (écran de création d'établissement), sans modifier les migrations déjà poussées.
-- **Avant M10a**, les établissements créés (démo, pilotes) n'ont pas d'abonnement : `org_entitlements` les traite comme « pilote » avec les limites Pro, et le passage en production exige le M10a.
+- **Avant M10a**, les établissements créés (démo, pilotes) n'ont pas d'abonnement : `org_entitlements` les traite comme « pilote » ~~avec les limites Pro~~ **tout compris (limites Entreprise, pour garder l'export du M8)**, et le passage en production exige le M10a.
+- **Réalisé (M10a)** : écarts détaillés dans `docs/modules/M10a.md` (téléphone vérifié à la création de l'établissement, PDF rendu à la demande, modèles de rappel par cas, routes Next.js + pg_cron au lieu d'Edge Functions).
 - La vérification du téléphone par WhatsApp dépend du M7 : le M10a vient donc après le M7, comme prévu.
 
 ---
