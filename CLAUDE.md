@@ -122,6 +122,11 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Bascule : WhatsApp en échec définitif → SMS immédiat ; « c'est votre tour » non remis en 2 min → SMS (délai de garde). Web push en complément (`/api/notifications/push`, VAPID). Les e2e forcent les faux fournisseurs (`playwright.config.ts`).
 - Valeurs `NEXT_PUBLIC_*` lues à l'exécution côté serveur avec un accès calculé (`process.env[name]`), sinon figées au build.
 
+## Tableau de bord (M8, `docs/modules/M8.md`)
+- Vue d'ensemble `/app/o/[orgId]` = tableau de bord (administrateurs : tout l'établissement ; responsables : leurs agences) ; étapes de démarrage dans `/setup`. Droits vérifiés en base (`assert_stats_access`).
+- Statistiques anonymes uniquement : cumuls `daily_branch_stats` / `daily_counter_stats` (pg_cron nocturne, idempotent) + jour en cours et veille non cumulée calculés en direct (`stats_branch_rows`). Ne jamais lire `tickets` directement pour un indicateur : passer par `compute_*_stats`.
+- Périodes, comparaisons, écarts et CSV : `@nextin/shared/stats` (pur, testé). Graphiques : `components/dashboard/bar-chart.tsx` (une série, pic en orange, infobulle, tableau pour lecteurs d'écran) — pas de bibliothèque de graphiques.
+
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).
 - Langue sans préfixe d'URL : cookie `NEXTIN_LOCALE`, sinon `Accept-Language`, sinon `fr`. Fuseau `Africa/Douala`. Monnaie XAF entière (`formatXaf`). Téléphones E.164 +237 (`normalizeCameroonPhone`).
