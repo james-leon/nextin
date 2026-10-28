@@ -350,14 +350,14 @@ isOneToOne: false
                   ]
                 },"notification_contacts": {
                   Row: {
-                    "branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"ticket_id": string
+                    "branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"push_subscription": Json | null,"ticket_id": string,"wa_id": string | null,"window_expires_at": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"ticket_id": string
+                    "branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id": string,"wa_id"?: string | null,"window_expires_at"?: string | null
                   }
                   Update: {
-                    "branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"ticket_id"?: string
+                    "branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string,"wa_id"?: string | null,"window_expires_at"?: string | null
                   }
                   Relationships: [
                     {
@@ -368,6 +368,44 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     },{
       foreignKeyName: "notification_contacts_organization_id_ticket_id_fkey"
+      columns: ["organization_id","ticket_id"]
+isOneToOne: false
+      referencedRelation: "tickets"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"notification_jobs": {
+                  Row: {
+                    "attempt": number,"branch_id": string,"channel": Database["public"]['Enums']["notif_channel"],"contact_id": string | null,"created_at": string,"dedupe_key": string,"delivered_at": string | null,"error": string | null,"event": Database["public"]['Enums']["notif_event"],"fallback_of": string | null,"guard": boolean,"id": string,"next_attempt_at": string,"organization_id": string,"payload": NonNullable<Json>,"provider_message_id": string | null,"sent_at": string | null,"status": Database["public"]['Enums']["job_status"],"template_name": string | null,"ticket_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempt"?: number,"branch_id": string,"channel": Database["public"]['Enums']["notif_channel"],"contact_id"?: string | null,"created_at"?: string,"dedupe_key": string,"delivered_at"?: string | null,"error"?: string | null,"event": Database["public"]['Enums']["notif_event"],"fallback_of"?: string | null,"guard"?: boolean,"id"?: string,"next_attempt_at"?: string,"organization_id": string,"payload"?: NonNullable<Json>,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: Database["public"]['Enums']["job_status"],"template_name"?: string | null,"ticket_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "attempt"?: number,"branch_id"?: string,"channel"?: Database["public"]['Enums']["notif_channel"],"contact_id"?: string | null,"created_at"?: string,"dedupe_key"?: string,"delivered_at"?: string | null,"error"?: string | null,"event"?: Database["public"]['Enums']["notif_event"],"fallback_of"?: string | null,"guard"?: boolean,"id"?: string,"next_attempt_at"?: string,"organization_id"?: string,"payload"?: NonNullable<Json>,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: Database["public"]['Enums']["job_status"],"template_name"?: string | null,"ticket_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_jobs_contact_id_fkey"
+      columns: ["contact_id"]
+isOneToOne: false
+      referencedRelation: "notification_contacts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notification_jobs_fallback_of_fkey"
+      columns: ["fallback_of"]
+isOneToOne: false
+      referencedRelation: "notification_jobs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notification_jobs_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "notification_jobs_organization_id_ticket_id_fkey"
       columns: ["organization_id","ticket_id"]
 isOneToOne: false
       referencedRelation: "tickets"
@@ -484,6 +522,20 @@ isOneToOne: false
                   }
                   Update: {
                     "avatar_path"?: string | null,"created_at"?: string,"full_name"?: string | null,"id"?: string,"locale"?: string,"phone_e164"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"provider_webhook_events": {
+                  Row: {
+                    "event_id": string,"id": string,"payload": NonNullable<Json>,"processed_at": string | null,"provider": string,"received_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "event_id": string,"id"?: string,"payload": NonNullable<Json>,"processed_at"?: string | null,"provider": string,"received_at"?: string
+                  }
+                  Update: {
+                    "event_id"?: string,"id"?: string,"payload"?: NonNullable<Json>,"processed_at"?: string | null,"provider"?: string,"received_at"?: string
                   }
                   Relationships: [
                     
@@ -696,6 +748,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"whatsapp_opt_outs": {
+                  Row: {
+                    "opted_out_at": string,"phone_hash": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "opted_out_at"?: string,"phone_hash": string
+                  }
+                  Update: {
+                    "opted_out_at"?: string,"phone_hash"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
@@ -788,6 +854,9 @@ isOneToOne: false
 "check_rate_limit":
 { Args: { "p_key": string,"p_max": number,"p_window": string }; Returns: boolean
                            },
+"claim_notification_jobs":
+{ Args: { "p_limit"?: number }; Returns: Json
+                           },
 "client_op_replay":
 { Args: { "p_op": string }; Returns: Json
                            },
@@ -796,6 +865,12 @@ isOneToOne: false
                            },
 "close_counter":
 { Args: { "p_counter": string }; Returns: Json
+                           },
+"complete_notification_job":
+{ Args: { "p_error"?: string,"p_job": string,"p_payload"?: Json,"p_provider_message_id"?: string,"p_retry_in_seconds"?: number,"p_status": Database["public"]['Enums']["job_status"],"p_template_name"?: string }; Returns: undefined
+                           },
+"configure_notification_dispatch":
+{ Args: { "p_secret": string,"p_url": string }; Returns: undefined
                            },
 "create_branch":
 { Args: { "p_address"?: string,"p_city"?: string,"p_lat"?: number,"p_lng"?: number,"p_name": string,"p_org": string,"p_phone_e164"?: string }; Returns: string
@@ -809,11 +884,20 @@ isOneToOne: false
 "declare_practitioner_absence":
 { Args: { "p_kind": Database["public"]['Enums']["absence_kind"],"p_practitioner": string,"p_reason"?: string,"p_until"?: string }; Returns: Json
                            },
+"disable_push_contact":
+{ Args: { "p_contact": string }; Returns: undefined
+                           },
 "effective_duration_seconds":
 { Args: { "p_default": number,"p_ewma": number,"p_samples": number }; Returns: number
                            },
 "end_practitioner_absence":
 { Args: { "p_absence": string }; Returns: Json
+                           },
+"enqueue_almost_your_turn":
+{ Args: { "p_service": string }; Returns: undefined
+                           },
+"enqueue_ticket_notification":
+{ Args: { "p_dedupe": string,"p_event": Database["public"]['Enums']["notif_event"],"p_payload"?: Json,"p_status"?: Database["public"]['Enums']["job_status"],"p_ticket": string }; Returns: number
                            },
 "estimate_wait_seconds":
 { Args: { "p_ahead": number,"p_busy": (number)[],"p_durations": (number)[] }; Returns: number
@@ -949,6 +1033,9 @@ isOneToOne: false
 "jsonb_row_diff":
 { Args: { "p_new": Json,"p_old": Json }; Returns: Json
                            },
+"kick_notification_dispatch":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "list_org_members":
 { Args: { "p_org": string }; Returns: {
               "active": boolean,"branch_id": string,"created_at": string,"email": string,"full_name": string,"membership_id": string,"role": Database["public"]['Enums']["member_role"],"user_id": string
@@ -1028,6 +1115,9 @@ isOneToOne: false
                            },
 "next_ticket_number":
 { Args: { "p_day": string,"p_service": string }; Returns: number
+                           },
+"notification_dispatch_tick":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "open_counter":
 { Args: { "p_counter": string }; Returns: Json
@@ -1128,6 +1218,9 @@ isOneToOne: false
 "record_service_duration":
 { Args: { "p_counter": string,"p_org": string,"p_seconds": number,"p_service": string }; Returns: undefined
                            },
+"record_webhook_event":
+{ Args: { "p_event_id": string,"p_payload": Json,"p_provider": string }; Returns: boolean
+                           },
 "regenerate_qr_code":
 { Args: { "p_branch": string,"p_service"?: string }; Returns: {
               "active": boolean,
@@ -1147,6 +1240,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"register_push_contact":
+{ Args: { "p_locale"?: string,"p_subscription": Json,"p_token": string }; Returns: Json
+                           },
 "reroute_counter":
 { Args: { "p_practitioner": string }; Returns: string
                            },
@@ -1155,6 +1251,9 @@ isOneToOne: false
                            },
 "revoke_display":
 { Args: { "p_display": string }; Returns: undefined
+                           },
+"schedule_sms_fallback":
+{ Args: { "p_delay_seconds"?: number,"p_guard"?: boolean,"p_job": string }; Returns: string
                            },
 "service_counter_loads":
 { Args: { "p_service": string }; Returns: {
@@ -1217,10 +1316,22 @@ isOneToOne: false
                            },
 "update_display":
 { Args: { "p_display": string,"p_name": string,"p_service_ids": (string)[],"p_show_ads": boolean }; Returns: undefined
+                           },
+"whatsapp_message_status":
+{ Args: { "p_error"?: string,"p_message_id": string,"p_status": string }; Returns: string
+                           },
+"whatsapp_opt_in":
+{ Args: { "p_code": string,"p_locale"?: string,"p_suffix": string,"p_wa_id": string }; Returns: Json
+                           },
+"whatsapp_set_opt_out":
+{ Args: { "p_opted_out": boolean,"p_wa_id": string }; Returns: undefined
+                           },
+"whatsapp_touch":
+{ Args: { "p_wa_id": string }; Returns: undefined
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1336,7 +1447,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const
