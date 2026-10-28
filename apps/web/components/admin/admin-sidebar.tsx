@@ -3,29 +3,41 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, ChevronLeft, LayoutGrid, Settings, Stethoscope, UsersRound } from "lucide-react";
+import { Building2, ChevronLeft, CreditCard, LayoutGrid, Settings, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Logo } from "@/components/ui/logo";
 
-export type AdminNavKey = "overview" | "branches" | "practitioners" | "staff";
+export type AdminNavKey = "overview" | "branches" | "practitioners" | "staff" | "billing";
 
 const ITEMS: { key: AdminNavKey; path: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }> }[] = [
   { key: "overview", path: "", icon: LayoutGrid },
   { key: "branches", path: "/branches", icon: Building2 },
   { key: "practitioners", path: "/practitioners", icon: Stethoscope },
   { key: "staff", path: "/staff", icon: UsersRound },
+  { key: "billing", path: "/billing", icon: CreditCard },
 ];
 
-export function adminNavItems(orgId: string) {
-  return ITEMS.map((i) => ({ ...i, href: `/app/o/${orgId}${i.path}` }));
+/** Entrées de navigation ; « Abonnement » réservé aux administrateurs de l'établissement. */
+export function adminNavItems(orgId: string, canManageOrg = true) {
+  return ITEMS.filter((i) => i.key !== "billing" || canManageOrg).map((i) => ({ ...i, href: `/app/o/${orgId}${i.path}` }));
 }
 
 /** Barre latérale du back-office (maquette 06), visible à partir de la largeur tablette paysage. */
-export function AdminSidebar({ orgId, orgName }: { orgId: string; orgName: string }) {
+export function AdminSidebar({
+  orgId,
+  orgName,
+  canManageOrg,
+  isPlatformAdmin,
+}: {
+  orgId: string;
+  orgName: string;
+  canManageOrg: boolean;
+  isPlatformAdmin: boolean;
+}) {
   const t = useTranslations("admin");
   const ts = useTranslations("settings");
   const pathname = usePathname();
-  const items = adminNavItems(orgId);
+  const items = adminNavItems(orgId, canManageOrg);
   const activeKey =
     [...items].reverse().find((i) => (i.path ? pathname.startsWith(i.href) : pathname === i.href))?.key ?? "overview";
 
@@ -67,9 +79,18 @@ export function AdminSidebar({ orgId, orgName }: { orgId: string; orgName: strin
           })}
         </ul>
       </nav>
+      {isPlatformAdmin ? (
+        <Link
+          href="/admin"
+          className="pressable mt-auto flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-body text-label hover:bg-fill-tertiary"
+        >
+          <ShieldCheck aria-hidden className="size-5 stroke-[1.75]" />
+          {t("nav.platform")}
+        </Link>
+      ) : null}
       <Link
         href={`/app/settings?from=${encodeURIComponent(pathname)}`}
-        className="pressable mt-auto flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-body text-label hover:bg-fill-tertiary"
+        className={cn("pressable flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-body text-label hover:bg-fill-tertiary", !isPlatformAdmin && "mt-auto")}
       >
         <Settings aria-hidden className="size-5 stroke-[1.75]" />
         {ts("open")}

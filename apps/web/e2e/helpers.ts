@@ -1,4 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
+import { createClient } from "@supabase/supabase-js";
 import { expect, type Page } from "@playwright/test";
 
 export const PASSWORD = "Douala2026test";
@@ -46,16 +47,54 @@ export async function signInViaUi(page: Page, email: string, password = PASSWORD
   await page.getByRole("button", { name: "Se connecter" }).click();
 }
 
-/** Crée un compte directeur puis un établissement ; renvoie l'URL racine du back-office. */
+/** Numéro camerounais aléatoire (jamais en 99999, réservé aux échecs simulés). */
+export function randomPhone(): string {
+  return `6${String(Math.floor(Math.random() * 1e8)).padStart(8, "0").replace(/99999$/, "12345")}`;
+}
+
+/** Dernier code de vérification envoyé à un numéro (lu dans la file d'envoi, comme le recevrait le directeur). */
+export async function latestPhoneCode(phoneLocal: string): Promise<string> {
+  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data } = await admin
+    .from("account_messages")
+    .select("payload")
+    .eq("kind", "phone_code")
+    .eq("channel", "whatsapp")
+    .eq("to_phone", `+237${phoneLocal}`)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+  return (data!.payload as { code: string }).code;
+}
+
+/** Étapes 1 et 2 de l'inscription d'un établissement (M10a) : téléphone puis code reçu. */
+export async function verifyPhoneViaUi(page: Page, phone = randomPhone()) {
+  await page.getByLabel("Numéro de téléphone").fill(phone);
+  await page.getByRole("button", { name: "Recevoir le code" }).click();
+  await expect(page.getByRole("heading", { name: "Code de vérification" })).toBeVisible();
+  await page.getByLabel("Code").fill(await latestPhoneCode(phone));
+  await page.getByRole("button", { name: "Vérifier" }).click();
+  await expect(page.getByRole("heading", { name: "Votre établissement" })).toBeVisible();
+  return phone;
+}
+
+/** Identifiant de l'établissement dans l'URL du back-office. */
+export function orgIdFromUrl(url: string): string {
+  return /\/app\/o\/([0-9a-f-]{36})/.exec(url)![1]!;
+}
+
+/** Crée un compte directeur puis un établissement (essai) ; renvoie l'URL racine du back-office. */
 export async function createOrgViaUi(page: Page, { orgName, email, type = "Clinique" }: { orgName: string; email: string; type?: string }) {
   await signUpViaUi(page, { name: "Directrice Test", email });
   await page.goto("/app/new");
+  await verifyPhoneViaUi(page);
   await page.getByLabel("Nom de l'établissement").fill(orgName);
   await page.getByRole("radio", { name: type, exact: true }).click();
   await page.getByRole("button", { name: "Créer l'établissement" }).click();
-  await page.waitForURL(/\/app\?created=/);
-  const orgId = new URL(page.url()).searchParams.get("created")!;
-  return `/app/o/${orgId}`;
+  await page.waitForURL(/\/app\/o\/[0-9a-f-]{36}\/setup\?welcome=1/);
+  return `/app/o/${orgIdFromUrl(page.url())}`;
 }
 
 /** Crée une agence et renvoie son URL. */

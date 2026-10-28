@@ -6,7 +6,7 @@ import type { Database } from "@nextin/shared/database";
 import { requireStaffSession, type StaffSession } from "@/lib/auth/session";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-type Org = Pick<Database["public"]["Tables"]["organizations"]["Row"], "id" | "name" | "slug" | "type" | "status" | "default_locale">;
+type Org = Pick<Database["public"]["Tables"]["organizations"]["Row"], "id" | "name" | "slug" | "type" | "status" | "default_locale" | "onboarding_step">;
 
 export type OrgContext = {
   session: StaffSession;
@@ -32,7 +32,7 @@ export const getOrgContext = cache(async (orgId: string): Promise<OrgContext> =>
   const supabase = await getSupabaseServerClient();
   const { data: org } = await supabase
     .from("organizations")
-    .select("id, name, slug, type, status, default_locale")
+    .select("id, name, slug, type, status, default_locale, onboarding_step")
     .eq("id", orgId)
     .maybeSingle();
   if (!org) notFound();

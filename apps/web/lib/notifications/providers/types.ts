@@ -16,6 +16,11 @@ export interface SmsProvider {
   send(to: string, text: string): Promise<SendResult>;
 }
 
+export interface EmailProvider {
+  readonly name: "console";
+  send(to: string, subject: string, text: string): Promise<SendResult>;
+}
+
 export type PushSubscriptionJson = { endpoint: string; keys: { p256dh: string; auth: string } };
 
 export interface PushProvider {

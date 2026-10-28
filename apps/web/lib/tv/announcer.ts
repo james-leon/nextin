@@ -13,6 +13,8 @@ export type AnnouncerSettings = {
   chimeEnabled: boolean;
   quietHours: { from: string; to: string }[];
   timeZone: string;
+  /** Annonces vocales comprises dans la formule (M10a) ; sinon carillon seul, l'appel reste affiché. */
+  voice?: boolean;
 };
 
 const SEGMENT_TIMEOUT_MS = 4_000;
@@ -90,6 +92,10 @@ export class Announcer {
 
   private async play(input: AnnouncementInput) {
     if (!this.unlocked) return;
+    if (this.settings.voice === false) {
+      await this.chime();
+      return;
+    }
     const segments = announcementSegments(input);
     const recorded = segments && this.voicesBase && segments.every((k) => k === "chime" || this.available.has(k));
     if (recorded) {

@@ -88,7 +88,20 @@ before(async () => {
   assert.ifError(login.error);
   await staff.realtime.setAuth(login.data.session!.access_token);
 
-  orgId = await rpc<string>(staff, "create_organization", { p_name: "IT Clinic", p_slug: `it-${randomUUID().slice(0, 8)}`, p_type: "clinic" });
+  // Inscription avec téléphone vérifié (M10a), puis établissement « pilote » (sans abonnement, tout compris).
+  const phone = `+2376${String(Math.floor(Math.random() * 1e8)).padStart(8, "0").replace(/99999$/, "12345")}`;
+  const verification = await rpc<string>(admin, "request_phone_code", { p_user: created.data.user!.id, p_phone: phone, p_locale: "fr" });
+  const code = await admin.from("account_messages").select("payload").eq("dedupe_key", `phone_code:${verification}:whatsapp`).single();
+  await rpc(staff, "verify_phone_code", { p_verification: verification, p_code: (code.data!.payload as { code: string }).code });
+  const signup = await rpc<{ organization_id: string }>(staff, "self_service_signup", {
+    p_name: "IT Clinic",
+    p_slug: `it-${randomUUID().slice(0, 8)}`,
+    p_type: "clinic",
+    p_default_locale: "fr",
+    p_verification: verification,
+  });
+  orgId = signup.organization_id;
+  await admin.from("subscriptions").delete().eq("organization_id", orgId);
   branchId = await rpc<string>(staff, "create_branch", { p_org: orgId, p_name: "Akwa" });
   // Ouverte toute la journée : le test ne dépend pas de l'heure d'exécution.
   const hours = await staff.from("opening_hours").upsert(

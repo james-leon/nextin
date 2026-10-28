@@ -6,6 +6,8 @@ import { subscribeBoard } from "@/lib/client/board-feed";
 import { onRealtimeStatus } from "@/lib/client/realtime";
 import { SUPABASE_URL } from "@/lib/client/supabase-public";
 import { Announcer } from "@/lib/tv/announcer";
+import { Logo } from "@/components/ui/logo";
+import { useLiteT } from "@/lib/i18n/lite";
 import { TvBoard } from "./tv-board";
 import { TvPairing } from "./tv-pairing";
 import type { TvSession } from "./types";
@@ -122,6 +124,7 @@ export function TvApp() {
       chimeEnabled: a.chime_enabled,
       quietHours: a.quiet_hours,
       timeZone: session.branch.timezone,
+      voice: session.voice_enabled !== false,
     });
     void announcer.current.loadManifest();
     // Certains navigateurs d'écran autorisent le son sans geste.
@@ -171,6 +174,19 @@ export function TvApp() {
 
   if (token === undefined) return <main className="min-h-dvh bg-tv" />;
   if (token === null) return <TvPairing onPaired={(t) => tokenStore.set(t)} />;
+  if (session?.unavailable) return <TvUnavailable />;
   if (!session || !board) return <main className="min-h-dvh bg-tv" aria-busy />;
   return <TvBoard session={session} board={board} offline={offline} soundOn={soundOn} onEnableSound={enableSound} />;
+}
+
+/** Établissement suspendu : message neutre (jamais le motif), l'écran reste appairé pour la reprise. */
+function TvUnavailable() {
+  const t = useLiteT("tv");
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-tv p-16 text-center text-white">
+      <Logo />
+      <h1 className="text-[4vw] leading-tight font-bold">{t("unavailableTitle")}</h1>
+      <p className="text-[2vw] text-white/75">{t("unavailableBody")}</p>
+    </main>
+  );
 }

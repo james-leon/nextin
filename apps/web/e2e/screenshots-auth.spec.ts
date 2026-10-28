@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { signUpViaUi, uniqueEmail } from "./helpers";
+import { signUpViaUi, uniqueEmail, verifyPhoneViaUi } from "./helpers";
 
 // Captures des écrans d'authentification et d'établissement (M1) → docs/captures/m1/.
 const OUT = "../../docs/captures/m1";
@@ -19,11 +19,13 @@ for (const theme of ["light", "dark"] as const) {
     await signUpViaUi(page, { name: "Dr Ngo Biyong", email: uniqueEmail(`capture-${theme}`) });
     await shot("app-empty");
     await page.goto("/app/new");
+    await verifyPhoneViaUi(page);
     await page.getByLabel("Nom de l'établissement").fill("DOUALA CLINIC");
     await page.getByRole("radio", { name: "Clinique" }).click();
     await shot("org-new");
     await page.getByRole("button", { name: "Créer l'établissement" }).click();
-    await page.waitForURL(/created=/);
+    await page.waitForURL(/welcome=1/);
+    await page.goto("/app");
     await shot("app-list");
     await context.close();
   });

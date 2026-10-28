@@ -1,26 +1,6 @@
-import path from "node:path";
-import { Document, Font, Page, Path, Rect, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import { Document, Page, Path, Rect, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 import { qrMatrix } from "@/lib/qr/matrix";
-
-const FONT_DIR = path.join(process.cwd(), "lib/pdf/fonts");
-let fontsRegistered = false;
-
-function registerFonts() {
-  if (fontsRegistered) return;
-  Font.register({
-    family: "Inter",
-    fonts: [
-      { src: path.join(FONT_DIR, "inter-latin-400-normal.woff"), fontWeight: 400 },
-      { src: path.join(FONT_DIR, "inter-latin-400-italic.woff"), fontWeight: 400, fontStyle: "italic" },
-      { src: path.join(FONT_DIR, "inter-latin-600-normal.woff"), fontWeight: 600 },
-      { src: path.join(FONT_DIR, "inter-latin-700-normal.woff"), fontWeight: 700 },
-      { src: path.join(FONT_DIR, "inter-latin-800-normal.woff"), fontWeight: 800 },
-    ],
-  });
-  // Pas de césure automatique : les mots restent entiers.
-  Font.registerHyphenationCallback((word) => [word]);
-  fontsRegistered = true;
-}
+import { registerFonts } from "./register-fonts";
 
 // Couleurs de marque (support imprimé : valeurs fixes, identiques à la maquette 07/08).
 const NAVY = "#0D2C54";

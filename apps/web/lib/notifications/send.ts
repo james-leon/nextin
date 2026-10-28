@@ -29,6 +29,8 @@ export type ClaimedJob = {
   /** Données de l'événement : heure de retour du praticien (M5), code de vérification d'une demande (M9). */
   payload: { until?: string | null; code?: string | null };
   guard: boolean;
+  /** Quota WhatsApp mensuel de la formule atteint (M10a) : les autres canaux prennent le relais. */
+  quota_exceeded?: boolean;
   fallback_status: string | null;
   contact: {
     id: string;
@@ -154,6 +156,7 @@ export async function sendJob(
   switch (job.channel) {
     case "whatsapp": {
       if (contact.opted_out || !contact.phone_e164) return { status: "skipped", error: "opted_out" };
+      if (job.quota_exceeded) return { status: "skipped", error: "quota_exceeded" };
       if (whatsappMode(contact.window_expires_at) === "session") {
         const text = whatsappText(job.event, locale, data);
         return fromResult(await providers.whatsapp.sendText(contact.phone_e164, text), job.attempt, { text: saved(text) });

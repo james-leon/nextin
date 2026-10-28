@@ -1,22 +1,24 @@
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, Circle, DoorOpen, QrCode, Stethoscope, UsersRound } from "lucide-react";
+import { Building2, CheckCircle2, Circle, CreditCard, DoorOpen, QrCode, Stethoscope, Tv, UsersRound } from "lucide-react";
 import { SERVICE_COLORS } from "@nextin/shared";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { StatCard } from "@/components/ui/stat-card";
+import { getOrgContext } from "@/lib/admin/context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 /** Étapes de démarrage d'un établissement (agence, services, guichets, QR code, personnel). */
 export async function setupSteps(orgId: string) {
   const supabase = await getSupabaseServerClient();
-  const count = (table: "branches" | "services" | "counters" | "memberships") =>
+  const count = (table: "branches" | "services" | "counters" | "memberships" | "displays") =>
     supabase.from(table).select("id", { count: "exact", head: true }).eq("organization_id", orgId);
-  const [branches, services, counters, members, firstBranch, invites] = await Promise.all([
+  const [branches, services, counters, members, firstBranch, invites, displays] = await Promise.all([
     count("branches"),
     count("services"),
     count("counters"),
     count("memberships"),
     supabase.from("branches").select("id").eq("organization_id", orgId).order("sort_order").limit(1).maybeSingle(),
     supabase.from("invitations").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+    count("displays"),
   ]);
   const n = {
     branches: branches.count ?? 0,
@@ -31,11 +33,14 @@ export async function setupSteps(orgId: string) {
     { key: "stepServices", done: n.services > 0, href: b ? `${root}/branches/${b}/services` : `${root}/branches`, icon: <Stethoscope />, color: "var(--accent-fill)" },
     { key: "stepCounters", done: n.counters > 0, href: b ? `${root}/branches/${b}/counters` : `${root}/branches`, icon: <DoorOpen />, color: SERVICE_COLORS.green },
     { key: "stepQr", done: false, href: b ? `${root}/branches/${b}/qr` : `${root}/branches`, icon: <QrCode />, color: SERVICE_COLORS.purple },
+    // M10a (§11.3) : appairage de l'écran TV, facultatif (une agence peut fonctionner sans écran).
+    { key: "stepDisplay", done: (displays.count ?? 0) > 0, href: b ? `${root}/branches/${b}/displays` : `${root}/branches`, icon: <Tv />, color: SERVICE_COLORS.navy },
     { key: "stepStaff", done: n.members > 1 || (invites.count ?? 0) > 0, href: `${root}/staff`, icon: <UsersRound />, color: SERVICE_COLORS.ochre },
   ] as const;
-  // Le QR code n'est pas mesurable : la configuration est jugée complète quand le reste est fait.
-  const done = steps.filter((s) => s.done).length;
-  return { n, steps, done, total: steps.length - 1, complete: steps.every((s) => s.done || s.key === "stepQr") };
+  // Le QR code n'est pas mesurable et l'écran TV est facultatif : la configuration est complète quand le reste est fait.
+  const optional = (key: string) => key === "stepQr" || key === "stepDisplay";
+  const done = steps.filter((s) => s.done && !optional(s.key)).length;
+  return { n, steps, done, total: steps.filter((s) => !optional(s.key)).length, complete: steps.every((s) => s.done || optional(s.key)) };
 }
 
 /** Compteurs et liste des étapes de démarrage (page « Démarrage », et vue d'ensemble sans tableau de bord). */
@@ -81,6 +86,7 @@ export async function SetupOverview({ orgId }: { orgId: string }) {
 /** Navigation de l'établissement sur téléphone et tablette (la barre latérale apparaît à partir de `lg`). */
 export async function MobileOrgNav({ orgId }: { orgId: string }) {
   const ta = await getTranslations("admin");
+  const ctx = await getOrgContext(orgId);
   const root = `/app/o/${orgId}`;
   return (
     <nav aria-label={ta("navLabel")} className="lg:hidden">
@@ -88,6 +94,9 @@ export async function MobileOrgNav({ orgId }: { orgId: string }) {
         <ListRow href={`${root}/branches`} icon={<ListIcon color="var(--brand-tile)"><Building2 /></ListIcon>} title={ta("nav.branches")} accessory="chevron" />
         <ListRow href={`${root}/practitioners`} icon={<ListIcon color="var(--accent-fill)"><Stethoscope /></ListIcon>} title={ta("nav.practitioners")} accessory="chevron" />
         <ListRow href={`${root}/staff`} icon={<ListIcon color={SERVICE_COLORS.ochre}><UsersRound /></ListIcon>} title={ta("nav.staff")} accessory="chevron" />
+        {ctx.canManageOrg ? (
+          <ListRow href={`${root}/billing`} icon={<ListIcon color={SERVICE_COLORS.green}><CreditCard /></ListIcon>} title={ta("nav.billing")} accessory="chevron" />
+        ) : null}
       </ListSection>
     </nav>
   );

@@ -51,7 +51,7 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
   const query: DashboardQuery = { branchId: ctx.canManageOrg ? null : branches[0]!.id, period: "day", anchor: today };
   const range = periodRange(query.period, today);
   const compare = comparisonRange(query.period, range, today);
-  const [{ data }, setup] = await Promise.all([
+  const [{ data }, setup, { data: entitlements }] = await Promise.all([
     supabase.rpc("dashboard_stats", {
       p_org: orgId,
       p_branch: (query.branchId ?? null) as string,
@@ -61,7 +61,10 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
       p_compare_to: compare.to,
     }),
     ctx.canManageOrg ? setupSteps(orgId) : Promise.resolve(null),
+    supabase.rpc("staff_entitlements", { p_org: orgId }),
   ]);
+  const features = (entitlements as { features?: { export?: boolean; advanced_stats?: boolean } } | null)?.features;
+  const canExport = !!features?.export;
   if (!data) {
     return (
       <AdminPage title={t("title")} eyebrow={ctx.org.name}>
@@ -77,12 +80,14 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
         org={{ id: orgId, name: ctx.org.name }}
         branches={branches.map((b) => ({ id: b.id, name: b.name }))}
         canViewAll={ctx.canManageOrg}
+        canExport={canExport}
+        canAdvanced={!!features?.advanced_stats}
         today={today}
         initialQuery={query}
         initialData={data as unknown as DashboardData}
       />
       <div className="flex flex-col gap-5 px-4 lg:px-8">
-        {setup && !setup.complete ? (
+        {setup && !setup.complete && ctx.org.onboarding_step < 5 ? (
           <Link href={`/app/o/${orgId}/setup`} className="pressable block rounded-[var(--radius-lg)]">
             <CalloutCard icon={<ListChecks />} tone="accent">
               <span className="flex items-center gap-2">

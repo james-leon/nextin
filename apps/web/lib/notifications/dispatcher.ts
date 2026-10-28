@@ -2,6 +2,8 @@ import "server-only";
 import { YOUR_TURN_SMS_GUARD_SECONDS, retryDelaySeconds } from "@nextin/shared/notifications";
 import type { Json } from "@nextin/shared/database";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { recheckPendingPayments } from "@/lib/payments/service";
+import { sendAccountMessage, type ClaimedAccountMessage } from "./account";
 import { getProviders, type Providers } from "./providers";
 import { sendJob, type ClaimedJob, type Outcome } from "./send";
 
@@ -32,6 +34,21 @@ async function processJob(admin: Admin, providers: Providers, job: ClaimedJob) {
   }
 }
 
+async function processAccountMessage(admin: Admin, providers: Providers, m: ClaimedAccountMessage) {
+  let result;
+  try {
+    result = await sendAccountMessage(m, providers);
+  } catch (e) {
+    result = { status: "failed" as const, error: (e as Error).message, retryIn: m.attempt < 3 ? retryDelaySeconds(m.attempt) : null };
+  }
+  await admin.rpc("complete_account_message", {
+    p_message: m.id,
+    p_status: result.status,
+    p_error: result.error ?? (null as unknown as string),
+    p_retry_in_seconds: result.retryIn ?? (null as unknown as number),
+  });
+}
+
 let running: Promise<number> | null = null;
 
 /**
@@ -53,6 +70,17 @@ export function dispatchNotifications(options: { budgetMs?: number; providers?: 
         await Promise.all(jobs.map((job) => processJob(admin, providers, job)));
         processed += jobs.length;
       }
+      // Messages du compte (M10a) : code de vérification, rappels d'abonnement, reçus, alertes de quota.
+      while (Date.now() - started < (options.budgetMs ?? 8_000)) {
+        const { data, error } = await admin.rpc("claim_account_messages", { p_limit: 20 });
+        if (error) throw new Error(`claim_account_messages: ${error.message}`);
+        const batch = (data ?? []) as unknown as ClaimedAccountMessage[];
+        if (!batch.length) break;
+        await Promise.all(batch.map((m) => processAccountMessage(admin, providers, m)));
+        processed += batch.length;
+      }
+      // Rattrapage des paiements dont le webhook n'est pas arrivé (§11.5).
+      await recheckPendingPayments(admin).catch((e: unknown) => console.error("[payments] recheck", e instanceof Error ? e.message : e));
       return processed;
     } finally {
       running = null;

@@ -20,7 +20,10 @@
     "./appointments": "./src/appointments/index.ts",
     "./stats": "./src/stats/index.ts",
     "./remote": "./src/remote/index.ts",
-    "./billing": "./src/billing/index.ts"
+    "./billing": "./src/billing/index.ts",
+    "./billing/pricing": "./src/billing/pricing.ts",
+    "./phone": "./src/phone.ts",
+    "./money": "./src/money.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",

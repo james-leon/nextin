@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, { params: route }: { params: Pro
     p_to: to,
     p_kind: kind,
   });
-  if (error) return new Response("Forbidden", { status: error.code === "42501" ? 403 : 400 });
+  if (error) return new Response("Forbidden", { status: error.code === "42501" || error.message === "feature_unavailable" ? 403 : 400 });
   const t = await getTranslations("dashboard.csv");
   const tk = await getTranslations("counterKinds");
   const csv =

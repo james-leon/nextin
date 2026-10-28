@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { sendJob, type ClaimedJob } from "./send";
 import { signMetaPayload, verifyMetaSignature } from "./signature";
 import { cloudWhatsApp, fakeWhatsApp } from "./providers/whatsapp";
+import { consoleEmail } from "./providers/email";
 import { consoleSms } from "./providers/sms";
 import { fakePush } from "./providers/push";
 import type { TicketView } from "@/lib/client/types";
@@ -57,6 +58,7 @@ function providers() {
     whatsapp: { ...whatsapp, sendText: vi.fn(whatsapp.sendText), sendTemplate: vi.fn(whatsapp.sendTemplate) },
     sms: consoleSms(),
     push: fakePush(),
+    email: consoleEmail(),
   };
 }
 

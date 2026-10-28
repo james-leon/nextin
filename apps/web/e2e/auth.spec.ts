@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { PASSWORD, expectAccessible, expectTouchTargets, signInViaUi, signUpViaUi, uniqueEmail } from "./helpers";
+import { PASSWORD, expectAccessible, expectTouchTargets, orgIdFromUrl, signInViaUi, signUpViaUi, uniqueEmail, verifyPhoneViaUi } from "./helpers";
 
 test.describe("M1 — authentification et établissements", () => {
   test("un espace du personnel exige une connexion et revient à la page demandée", async ({ page }) => {
@@ -18,6 +18,9 @@ test.describe("M1 — authentification et établissements", () => {
 
     await page.getByRole("link", { name: "Créer un établissement" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Nouvel établissement" })).toBeVisible();
+    // M10a : téléphone du directeur vérifié par un code (WhatsApp, faux fournisseur en test).
+    await expectAccessible(page);
+    await verifyPhoneViaUi(page);
 
     // Validation : secteur obligatoire.
     await page.getByLabel("Nom de l'établissement").fill("Clinique Test Akwa");
@@ -31,8 +34,11 @@ test.describe("M1 — authentification et établissements", () => {
     await expectTouchTargets(page);
     await page.getByRole("button", { name: "Créer l'établissement" }).click();
 
-    await expect(page).toHaveURL(/\/app\?created=/);
-    await expect(page.getByRole("status").filter({ hasText: "Établissement créé." })).toBeVisible();
+    // Essai gratuit : assistant de démarrage avec message de bienvenue.
+    await expect(page).toHaveURL(/\/setup\?welcome=1$/);
+    await expect(page.getByRole("status").filter({ hasText: "Bienvenue dans NextIn" })).toBeVisible();
+    await expectAccessible(page);
+    await page.goto("/app");
     await expect(page.getByText("Clinique Test Akwa")).toBeVisible();
     await expect(page.getByText("Clinique · Administrateur")).toBeVisible();
     await expectAccessible(page);
@@ -58,11 +64,13 @@ test.describe("M1 — authentification et établissements", () => {
     await signUpViaUi(page, { name: "Serge Tchoupo", email: uniqueEmail("eneo") });
     for (let i = 0; i < 2; i++) {
       await page.goto("/app/new");
+      await verifyPhoneViaUi(page);
       await page.getByLabel("Nom de l'établissement").fill("Eneo Bonanjo Doublon");
       await page.getByRole("radio", { name: "Service public (eau, électricité)" }).click();
       await page.getByRole("button", { name: "Créer l'établissement" }).click();
-      await expect(page).toHaveURL(/\/app\?created=/);
+      await expect(page).toHaveURL(/\/setup\?welcome=1$/);
     }
+    await page.goto("/app");
     await expect(page.getByText("Eneo Bonanjo Doublon")).toHaveCount(2);
   });
 
@@ -106,11 +114,12 @@ test.describe("M1 — authentification et établissements", () => {
     const adminEmail = uniqueEmail("admin");
     await signUpViaUi(page, { name: "Directrice Invite", email: adminEmail });
     await page.goto("/app/new");
+    await verifyPhoneViaUi(page);
     await page.getByLabel("Nom de l'établissement").fill("Clinique Invitation");
     await page.getByRole("radio", { name: "Clinique" }).click();
     await page.getByRole("button", { name: "Créer l'établissement" }).click();
-    await page.waitForURL(/\/app\?created=/);
-    const orgId = new URL(page.url()).searchParams.get("created")!;
+    await page.waitForURL(/\/setup\?welcome=1$/);
+    const orgId = orgIdFromUrl(page.url());
 
     // L'administratrice crée l'invitation (l'écran « Personnel » arrive au M2).
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {

@@ -54,6 +54,8 @@ export function DashboardView({
   org,
   branches,
   canViewAll,
+  canExport,
+  canAdvanced,
   today,
   initialQuery,
   initialData,
@@ -61,6 +63,10 @@ export function DashboardView({
   org: { id: string; name: string };
   branches: { id: string; name: string }[];
   canViewAll: boolean;
+  /** Export CSV compris dans la formule (M10a). */
+  canExport: boolean;
+  /** Statistiques avancées (postes, praticiens) comprises dans la formule (M10a). */
+  canAdvanced: boolean;
   today: string;
   initialQuery: DashboardQuery;
   initialData: DashboardData;
@@ -199,10 +205,12 @@ export function DashboardView({
         title={title}
         eyebrow={`${org.name}${query.branchId ? ` · ${branches.find((b) => b.id === query.branchId)?.name ?? ""}` : ""}`}
         trailing={
-          <Button variant="gray" leadingIcon={<Download />} onClick={() => setExportOpen(true)}>
-            <span className="hidden sm:inline">{t("export")}</span>
-            <span className="sr-only sm:hidden">{t("export")}</span>
-          </Button>
+          canExport ? (
+            <Button variant="gray" leadingIcon={<Download />} onClick={() => setExportOpen(true)}>
+              <span className="hidden sm:inline">{t("export")}</span>
+              <span className="sr-only sm:hidden">{t("export")}</span>
+            </Button>
+          ) : undefined
         }
         contentClassName="max-w-none lg:px-8"
       />
@@ -320,69 +328,71 @@ export function DashboardView({
           </Panel>
         ) : null}
 
-        <Panel title={t("counters")}>
-          {data.counters.length ? (
-            <>
-              <table className="hidden w-full text-body md:table">
-                <thead>
-                  <tr className="hairline-b">
-                    <th scope="col" className={th}>{t("counter")}</th>
-                    <th scope="col" className={th}>{t("practitioner")}</th>
-                    {live ? <th scope="col" className={th}>{t("status")}</th> : null}
-                    <th scope="col" className={cn(th, "text-right")}>{t("served")}</th>
-                    <th scope="col" className={cn(th, "text-right")}>{t("serviceAvgShort")}</th>
-                    <th scope="col" className={cn(th, "text-right")}>{t("noShow")}</th>
-                    <th scope="col" className={cn(th, "hidden text-right xl:table-cell")}>{t("ratingShort")}</th>
-                    <th scope="col" className={cn(th, "hidden text-right xl:table-cell")}>{t("openTime")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.counters.map((c) => (
-                    <tr key={c.id} className="hairline-t first:shadow-none">
-                      <th scope="row" className={cn(td, "text-left font-semibold")}>
-                        {showBranch ? <span className="font-normal text-label-secondary">{c.branch} · </span> : null}
-                        {counterLabel(c)}
-                      </th>
-                      <td className={td}>{c.practitioner ?? t("none")}</td>
-                      {live ? (
-                        <td className={td}>
-                          <Badge tone={statusTone[c.status]} shape="tag">
-                            {statusLabel[c.status]}
-                          </Badge>
-                        </td>
-                      ) : null}
-                      <td className={cn(td, num)}>{c.served}</td>
-                      <td className={cn(td, num)}>{minutes(c.service_avg_seconds)}</td>
-                      <td className={cn(td, num)}>{c.no_show}</td>
-                      <td className={cn(td, num, "hidden xl:table-cell")}>{c.rating_avg == null ? t("none") : fmtNumber(c.rating_avg, 1)}</td>
-                      <td className={cn(td, num, "hidden xl:table-cell")}>{c.open_seconds ? duration(c.open_seconds) : t("none")}</td>
+        {canAdvanced ? (
+          <Panel title={t("counters")}>
+            {data.counters.length ? (
+              <>
+                <table className="hidden w-full text-body md:table">
+                  <thead>
+                    <tr className="hairline-b">
+                      <th scope="col" className={th}>{t("counter")}</th>
+                      <th scope="col" className={th}>{t("practitioner")}</th>
+                      {live ? <th scope="col" className={th}>{t("status")}</th> : null}
+                      <th scope="col" className={cn(th, "text-right")}>{t("served")}</th>
+                      <th scope="col" className={cn(th, "text-right")}>{t("serviceAvgShort")}</th>
+                      <th scope="col" className={cn(th, "text-right")}>{t("noShow")}</th>
+                      <th scope="col" className={cn(th, "hidden text-right xl:table-cell")}>{t("ratingShort")}</th>
+                      <th scope="col" className={cn(th, "hidden text-right xl:table-cell")}>{t("openTime")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <ul role="list" className="-mx-5 md:hidden">
-                {data.counters.map((c) => (
-                  <li key={c.id} className="group/row pl-5">
-                    <div className="list-separator flex items-center gap-3 py-2.5 pr-5">
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-body font-semibold">{counterLabel(c)}</span>
-                        <span className="truncate text-subheadline text-label-secondary">{c.practitioner ?? t("none")}</span>
-                      </span>
-                      <span className="flex shrink-0 flex-col items-end">
-                        <span className="text-body tabular">
-                          {c.served} · {minutes(c.service_avg_seconds)}
+                  </thead>
+                  <tbody>
+                    {data.counters.map((c) => (
+                      <tr key={c.id} className="hairline-t first:shadow-none">
+                        <th scope="row" className={cn(td, "text-left font-semibold")}>
+                          {showBranch ? <span className="font-normal text-label-secondary">{c.branch} · </span> : null}
+                          {counterLabel(c)}
+                        </th>
+                        <td className={td}>{c.practitioner ?? t("none")}</td>
+                        {live ? (
+                          <td className={td}>
+                            <Badge tone={statusTone[c.status]} shape="tag">
+                              {statusLabel[c.status]}
+                            </Badge>
+                          </td>
+                        ) : null}
+                        <td className={cn(td, num)}>{c.served}</td>
+                        <td className={cn(td, num)}>{minutes(c.service_avg_seconds)}</td>
+                        <td className={cn(td, num)}>{c.no_show}</td>
+                        <td className={cn(td, num, "hidden xl:table-cell")}>{c.rating_avg == null ? t("none") : fmtNumber(c.rating_avg, 1)}</td>
+                        <td className={cn(td, num, "hidden xl:table-cell")}>{c.open_seconds ? duration(c.open_seconds) : t("none")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <ul role="list" className="-mx-5 md:hidden">
+                  {data.counters.map((c) => (
+                    <li key={c.id} className="group/row pl-5">
+                      <div className="list-separator flex items-center gap-3 py-2.5 pr-5">
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-body font-semibold">{counterLabel(c)}</span>
+                          <span className="truncate text-subheadline text-label-secondary">{c.practitioner ?? t("none")}</span>
                         </span>
-                        {live ? <StatusDot tone={statusTone[c.status]} label={statusLabel[c.status]} /> : null}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p className="py-6 text-center text-body text-label-secondary">{t("empty")}</p>
-          )}
-        </Panel>
+                        <span className="flex shrink-0 flex-col items-end">
+                          <span className="text-body tabular">
+                            {c.served} · {minutes(c.service_avg_seconds)}
+                          </span>
+                          {live ? <StatusDot tone={statusTone[c.status]} label={statusLabel[c.status]} /> : null}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="py-6 text-center text-body text-label-secondary">{t("empty")}</p>
+            )}
+          </Panel>
+        ) : null}
 
         <div className="grid gap-5 xl:grid-cols-2">
           <Panel title={t("services")}>
@@ -427,32 +437,34 @@ export function DashboardView({
                 ))}
               </dl>
             </Panel>
-            <Panel title={t("practitioners")} aside={data.totals.rating_count ? t("ratingCount", { count: data.totals.rating_count }) : undefined}>
-              {data.practitioners.length ? (
-                <ListSection className="-mx-5 [&>ul]:rounded-none [&>ul]:bg-transparent">
-                  {data.practitioners.map((p) => (
-                    <ListRow
-                      key={p.id}
-                      icon={
-                        <ListIcon color="var(--navy)">
-                          <Stethoscope />
-                        </ListIcon>
-                      }
-                      title={`${showBranch ? `${p.branch} · ` : ""}${p.name}`}
-                      subtitle={
-                        <span className="tabular">
-                          {t("served")} {p.served} · {minutes(p.service_avg_seconds)} · {t("appointmentsShort")} {p.appointments}
-                          {p.absences + p.late ? ` · ${t("absences")} ${p.absences + p.late}` : ""}
-                        </span>
-                      }
-                      detail={p.rating_avg == null ? undefined : <span className="tabular">{fmtNumber(p.rating_avg, 1)} / 5</span>}
-                    />
-                  ))}
-                </ListSection>
-              ) : (
-                <p className="py-6 text-center text-body text-label-secondary">{t("empty")}</p>
-              )}
-            </Panel>
+            {canAdvanced ? (
+              <Panel title={t("practitioners")} aside={data.totals.rating_count ? t("ratingCount", { count: data.totals.rating_count }) : undefined}>
+                {data.practitioners.length ? (
+                  <ListSection className="-mx-5 [&>ul]:rounded-none [&>ul]:bg-transparent">
+                    {data.practitioners.map((p) => (
+                      <ListRow
+                        key={p.id}
+                        icon={
+                          <ListIcon color="var(--navy)">
+                            <Stethoscope />
+                          </ListIcon>
+                        }
+                        title={`${showBranch ? `${p.branch} · ` : ""}${p.name}`}
+                        subtitle={
+                          <span className="tabular">
+                            {t("served")} {p.served} · {minutes(p.service_avg_seconds)} · {t("appointmentsShort")} {p.appointments}
+                            {p.absences + p.late ? ` · ${t("absences")} ${p.absences + p.late}` : ""}
+                          </span>
+                        }
+                        detail={p.rating_avg == null ? undefined : <span className="tabular">{fmtNumber(p.rating_avg, 1)} / 5</span>}
+                      />
+                    ))}
+                  </ListSection>
+                ) : (
+                  <p className="py-6 text-center text-body text-label-secondary">{t("empty")}</p>
+                )}
+              </Panel>
+            ) : null}
           </div>
         </div>
       </div>

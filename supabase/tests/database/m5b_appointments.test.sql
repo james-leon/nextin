@@ -3,6 +3,8 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+-- M10a : `create_organization` réservé à l'inscription ; appel direct permis dans ce test (annulé au rollback).
+grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
 select plan(54);
 

@@ -360,8 +360,8 @@ as $$
 $$;
 
 /**
- * Droits d'un établissement : formule, statut, limites et fonctions. Pendant l'essai, et pour les établissements créés
- * avant le M10a (« pilote », sans abonnement), limites de la formule Pro.
+ * Droits d'un établissement : formule, statut, limites et fonctions. Pendant l'essai : formule Pro. Établissements créés
+ * avant le M10a (« pilotes », sans abonnement) : tout compris (formule Entreprise), comme avant.
  */
 create or replace function public.org_entitlements(p_org uuid)
 returns jsonb
@@ -375,7 +375,7 @@ as $$
     select pl.* from public.plans pl
     where pl.id = coalesce(
       (select case when s.status = 'trialing' then (select id from public.plans where code = 'pro') else s.plan_id end from s),
-      (select id from public.plans where code = 'pro'))
+      (select id from public.plans where code = 'entreprise'))
   )
   select jsonb_build_object(
     'pilot', not exists (select 1 from s),
@@ -972,7 +972,8 @@ begin
     return jsonb_build_object('status', v_p.status, 'already', true);
   end if;
   if p_status = 'pending' then
-    update public.payments set last_checked_at = now() where id = v_p.id;
+    -- Encore en attente : on garde seulement la référence du fournisseur (renvoyée au début du paiement).
+    update public.payments set last_checked_at = now(), provider_ref = coalesce(p_provider_ref, provider_ref) where id = v_p.id;
     return jsonb_build_object('status', 'pending');
   end if;
   update public.payments set status = p_status, provider_ref = coalesce(p_provider_ref, provider_ref), raw = coalesce(p_raw, raw),
@@ -1301,6 +1302,62 @@ as $$
          >= nullif((public.org_entitlements(p_org) ->> 'whatsapp_quota')::integer, 0);
 $$;
 
+/** Réservation des messages de la file (M9), plus l'état du quota WhatsApp de l'établissement. */
+create or replace function public.claim_notification_jobs(p_limit integer default 20)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_result jsonb;
+begin
+  with picked as (
+    select j.id from public.notification_jobs j
+    where (j.status = 'pending' and j.next_attempt_at <= now())
+       or (j.status = 'sending' and j.updated_at < now() - interval '2 minutes')
+    order by j.next_attempt_at
+    limit least(greatest(p_limit, 1), 100)
+    for update skip locked
+  ),
+  claimed as (
+    update public.notification_jobs j set status = 'sending', attempt = j.attempt + 1
+    from picked where j.id = picked.id
+    returning j.*
+  )
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', j.id,
+    'event', j.event,
+    'channel', j.channel,
+    'attempt', j.attempt,
+    'payload', j.payload,
+    'guard', j.guard,
+    -- M10a : quota mensuel WhatsApp de la formule atteint (« c'est votre tour » toujours envoyé).
+    'quota_exceeded', j.channel = 'whatsapp' and j.event <> 'your_turn' and coalesce(public.whatsapp_quota_exceeded(j.organization_id), false),
+    'fallback_status', (select f.status from public.notification_jobs f where f.id = j.fallback_of),
+    'contact', case when c.id is not null then jsonb_build_object(
+      'id', c.id,
+      'phone_e164', c.phone_e164,
+      'locale', c.locale,
+      'push_subscription', c.push_subscription,
+      'window_expires_at', c.window_expires_at,
+      'opted_out', c.opted_out_at is not null
+        or (c.phone_e164 is not null and exists (
+          select 1 from public.whatsapp_opt_outs o where o.phone_hash = public.sha256_hex(c.phone_e164)))
+    ) end,
+    'token', t.public_token,
+    'ticket', case when t.id is not null then public.ticket_view(t.id) end,
+    'appointment', case when j.appointment_id is not null and j.ticket_id is null then public.appointment_notification_view(j.appointment_id) end,
+    'request', case when j.appointment_request_id is not null and j.appointment_id is null and j.ticket_id is null
+                    then public.request_notification_view(j.appointment_request_id) end
+  )), '[]'::jsonb) into v_result
+  from claimed j
+  left join public.tickets t on t.id = j.ticket_id
+  left join public.notification_contacts c on c.id = j.contact_id;
+  return v_result;
+end;
+$$;
+
 /** Résultat d'un envoi (M7), plus le comptage des messages WhatsApp et SMS du mois. */
 create or replace function public.complete_notification_job(
   p_job uuid,
@@ -1398,7 +1455,7 @@ begin
       ) order by p.sort_order) from public.plans p where p.active),
     'invoices', coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'number', i.number, 'status', i.status, 'total_xaf', i.total_xaf,
         'issued_at', i.issued_at, 'paid_at', i.paid_at, 'period_start', i.period_start, 'period_end', i.period_end,
-        'billing_period', i.billing_period, 'kind', i.kind, 'paid_channel', i.paid_channel) order by i.issued_at desc)
+        'billing_period', i.billing_period, 'kind', i.kind, 'paid_channel', i.paid_channel, 'plan_id', i.plan_id) order by i.issued_at desc)
       from public.invoices i where i.organization_id = p_org), '[]'::jsonb),
     'settings', (select jsonb_build_object('trial_days', trial_days, 'grace_days', grace_days, 'vat_rate', vat_rate) from public.platform_settings)
   );
@@ -1778,7 +1835,8 @@ begin
   where device_token_hash = public.sha256_hex(p_device_token) and status = 'active'
   returning * into v_row;
   if not found then return null; end if;
-  return (
+  return coalesce(
+  (
     select jsonb_build_object(
       'display_id', v_row.id,
       'name', v_row.name,
@@ -1800,7 +1858,64 @@ begin
     )
     from public.branches b join public.organizations o on o.id = b.organization_id
     where b.id = v_row.branch_id and b.active and o.status = 'active'
-  );
+  ), (
+    -- Établissement suspendu : l'écran reste appairé et affiche un message neutre (aucun nom, aucun motif).
+    select jsonb_build_object('display_id', v_row.id, 'unavailable', true)
+    from public.branches b join public.organizations o on o.id = b.organization_id
+    where b.id = v_row.branch_id and o.status = 'suspended'
+  ));
+end;
+$$;
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- Export du tableau de bord selon la formule
+-- ═════════════════════════════════════════════════════════════════════════════
+
+/** Export CSV du tableau de bord (M8), réservé aux formules qui le comprennent. */
+create or replace function public.stats_export(p_org uuid, p_branch uuid, p_from date, p_to date, p_kind text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform public.assert_stats_access(p_org, p_branch);
+  -- M10a : export compris dans la formule (Entreprise ; établissements pilotes).
+  perform public.assert_feature(p_org, 'export');
+  if p_to < p_from or p_to - p_from > 400 or p_kind not in ('services', 'counters') then
+    raise exception 'invalid_state' using errcode = 'P0409';
+  end if;
+  if p_kind = 'services' then
+    return coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'day', r.day, 'branch', b.name, 'service', s.name, 'prefix', s.prefix,
+        'issued', r.issued, 'served', r.served, 'no_show', r.no_show, 'cancelled', r.cancelled, 'transferred', r.transferred,
+        'remote', r.remote, 'appointment', r.appointment,
+        'wait_avg_seconds', case when r.wait_count > 0 then round(r.wait_seconds_sum::numeric / r.wait_count) end,
+        'max_wait_seconds', r.max_wait_seconds,
+        'service_avg_seconds', case when r.service_count > 0 then round(r.service_seconds_sum::numeric / r.service_count) end,
+        'rating_avg', case when r.rating_count > 0 then round(r.rating_sum::numeric / r.rating_count, 2) end,
+        'rating_count', r.rating_count
+      ) order by r.day, b.name, s.sort_order)
+      from public.stats_branch_rows(p_org, p_branch, p_from, p_to) r
+      join public.branches b on b.id = r.branch_id
+      join public.services s on s.id = r.service_id
+    ), '[]'::jsonb);
+  end if;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'day', r.day, 'branch', b.name, 'kind', c.kind, 'number', c.number, 'label', c.label,
+      'practitioner', case when r.practitioner_id is not null then public.practitioner_label(r.practitioner_id) end,
+      'called', r.called, 'served', r.served, 'no_show', r.no_show,
+      'service_avg_seconds', case when r.service_count > 0 then round(r.service_seconds_sum::numeric / r.service_count) end,
+      'rating_avg', case when r.rating_count > 0 then round(r.rating_sum::numeric / r.rating_count, 2) end,
+      'open_seconds', r.open_seconds, 'pause_seconds', r.pause_seconds
+    ) order by r.day, b.name, c.kind, c.number)
+    from public.stats_counter_rows(p_org, p_branch, p_from, p_to) r
+    join public.branches b on b.id = r.branch_id
+    join public.counters c on c.id = r.counter_id
+  ), '[]'::jsonb);
 end;
 $$;
 
@@ -1808,13 +1923,18 @@ $$;
 -- Purge : vérifications du téléphone
 -- ═════════════════════════════════════════════════════════════════════════════
 
-/** Tâche nocturne : vérifications de plus de 7 jours supprimées ; messages du compte de plus de 90 jours vidés. */
+/**
+ * Tâche nocturne : codes de vérification jamais utilisés effacés de la file (expirés depuis longtemps), vérifications de
+ * plus de 7 jours supprimées, messages du compte de plus de 90 jours vidés.
+ */
 create or replace function public.purge_billing_personal_data()
 returns void
 language sql
 security definer
 set search_path = ''
 as $$
+  update public.account_messages set payload = payload - 'code'
+  where kind = 'phone_code' and payload ? 'code' and created_at < now() - interval '1 day';
   delete from public.phone_verifications where created_at < now() - interval '7 days';
   update public.account_messages set payload = '{}'::jsonb, to_phone = case when channel = 'email' then null else '+237600000000' end,
     to_email = case when channel = 'email' then 'purged@invalid' end
@@ -1848,6 +1968,10 @@ revoke execute on function
   public.admin_set_suspension(uuid, boolean, text), public.admin_update_plan(uuid, jsonb), public.admin_update_settings(jsonb),
   public.admin_subscription_detail(uuid), public.purge_billing_personal_data()
 from public, anon, authenticated;
+
+-- Création d'un établissement : uniquement par l'inscription avec téléphone vérifié (`self_service_signup`), sinon un
+-- établissement sans abonnement serait « pilote » (tout compris, sans fin).
+revoke execute on function public.create_organization(text, text, public.org_type, text, integer) from public, anon, authenticated;
 
 -- Calcul de prix (affichage), lien de paiement public.
 grant execute on function public.subscription_price(integer, integer, integer, integer, integer, public.billing_period, text, integer),

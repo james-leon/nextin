@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
-import { signUpViaUi, uniqueEmail } from "./helpers";
+import { PASSWORD, signUpViaUi, uniqueEmail } from "./helpers";
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -26,9 +26,12 @@ test.describe("Session invalide", () => {
     const email = uniqueEmail("ghost");
     await signUpViaUi(page, { name: "Session Fantôme", email });
     await expect(page).toHaveURL(/\/app/);
-    const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    const user = data.users.find((u) => u.email === email)!;
-    await admin.auth.admin.deleteUser(user.id);
+    // Identifiant par connexion directe (une liste paginée d'utilisateurs ne le trouverait plus dans une base locale chargée).
+    const login = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data } = await login.auth.signInWithPassword({ email, password: PASSWORD });
+    await admin.auth.admin.deleteUser(data.user!.id);
 
     await expectLoginWithoutLoop(page);
     const cookies = await page.context().cookies();

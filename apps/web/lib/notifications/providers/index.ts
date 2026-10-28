@@ -1,10 +1,11 @@
 import "server-only";
+import { consoleEmail } from "./email";
 import { consoleSms } from "./sms";
 import { fakePush, webPush } from "./push";
 import { cloudWhatsApp, fakeWhatsApp } from "./whatsapp";
-import type { PushProvider, SmsProvider, WhatsAppProvider } from "./types";
+import type { EmailProvider, PushProvider, SmsProvider, WhatsAppProvider } from "./types";
 
-export type Providers = { whatsapp: WhatsAppProvider; sms: SmsProvider; push: PushProvider };
+export type Providers = { whatsapp: WhatsAppProvider; sms: SmsProvider; push: PushProvider; email: EmailProvider };
 
 const log = (line: string) => {
   if (process.env.NODE_ENV !== "production" || process.env.NOTIFY_LOG === "1") console.info(line);
@@ -12,7 +13,7 @@ const log = (line: string) => {
 
 /**
  * Fournisseurs selon l'environnement : WhatsApp Cloud API dès que WHATSAPP_TOKEN et WHATSAPP_PHONE_NUMBER_ID
- * sont présents (faux fournisseur sinon) ; web push dès que les clés VAPID sont présentes ; SMS `console`.
+ * sont présents (faux fournisseur sinon) ; web push dès que les clés VAPID sont présentes ; SMS et e-mail `console`.
  */
 export function getProviders(env: Record<string, string | undefined> = process.env): Providers {
   const whatsapp =
@@ -26,5 +27,8 @@ export function getProviders(env: Record<string, string | undefined> = process.e
   if (env.SMS_PROVIDER && env.SMS_PROVIDER !== "console") {
     console.warn(`SMS_PROVIDER=${env.SMS_PROVIDER} n'est pas encore pris en charge : SMS affichés dans la console.`);
   }
-  return { whatsapp, sms: consoleSms(log), push };
+  if (env.EMAIL_PROVIDER && env.EMAIL_PROVIDER !== "console") {
+    console.warn(`EMAIL_PROVIDER=${env.EMAIL_PROVIDER} n'est pas encore pris en charge : e-mails affichés dans la console.`);
+  }
+  return { whatsapp, sms: consoleSms(log), push, email: consoleEmail(log) };
 }

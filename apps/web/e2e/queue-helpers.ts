@@ -11,6 +11,37 @@ export function anonClient() {
   return createClient(url, anonKey, supabaseOptions);
 }
 
+/** Numéro camerounais aléatoire (jamais en 99999, réservé aux échecs simulés). */
+export function randomCameroonPhone(): string {
+  return `+2376${String(Math.floor(Math.random() * 1e8)).padStart(8, "0").replace(/99999$/, "12345")}`;
+}
+
+/**
+ * Inscription d'un établissement comme dans l'application (M10a) : code envoyé au téléphone (lu dans la file d'envoi),
+ * vérifié par le directeur, puis `self_service_signup`. Par défaut, l'abonnement d'essai est retiré : établissement
+ * « pilote », tout compris, comme ceux créés avant le M10a (les parcours des autres modules n'en dépendent pas).
+ */
+export async function signUpOrganization(staff: SupabaseClient, name: string, options: { pilot?: boolean; phone?: string } = {}) {
+  const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, supabaseOptions);
+  const { data: user } = await staff.auth.getUser();
+  const verification = await rpc<string>(admin, "request_phone_code", {
+    p_user: user.user!.id,
+    p_phone: options.phone ?? randomCameroonPhone(),
+    p_locale: "fr",
+  });
+  const message = await admin.from("account_messages").select("payload").eq("dedupe_key", `phone_code:${verification}:whatsapp`).single();
+  await rpc(staff, "verify_phone_code", { p_verification: verification, p_code: (message.data!.payload as { code: string }).code });
+  const signup = await rpc<{ organization_id: string }>(staff, "self_service_signup", {
+    p_name: name,
+    p_slug: `e2e-${randomUUID().slice(0, 8)}`,
+    p_type: "clinic",
+    p_default_locale: "fr",
+    p_verification: verification,
+  });
+  if (options.pilot !== false) await admin.from("subscriptions").delete().eq("organization_id", signup.organization_id);
+  return signup.organization_id;
+}
+
 export async function rpc<T>(client: SupabaseClient, fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await client.rpc(fn, args);
   if (error) throw new Error(`${fn}: ${error.message}`);
@@ -26,7 +57,7 @@ export async function setUpBranch(name = "Clinique E2E") {
   const email = uniqueEmail("queue");
   const { error } = await staff.auth.signUp({ email, password: PASSWORD });
   expect(error).toBeNull();
-  const orgId = await rpc<string>(staff, "create_organization", { p_name: name, p_slug: `e2e-${randomUUID().slice(0, 8)}`, p_type: "clinic" });
+  const orgId = await signUpOrganization(staff, name);
   const branchId = await rpc<string>(staff, "create_branch", { p_org: orgId, p_name: "Akwa" });
   await staff.from("opening_hours").upsert(
     [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ organization_id: orgId, branch_id: branchId, weekday, opens_at: "00:00", closes_at: "23:59:59" })),

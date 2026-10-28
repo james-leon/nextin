@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(110);
+select plan(112);
 
 create schema tests;
 create function tests.create_user(p_id uuid, p_email text, p_anon boolean default false) returns uuid language sql as $$
@@ -64,9 +64,15 @@ select tests.create_user('aa000000-0000-0000-0000-0000000000a9', 'agent@m10a.tes
 select tests.create_user('aa000000-0000-0000-0000-0000000000ff', 'wintek@m10a.test');
 insert into public.platform_admins (user_id) values ('aa000000-0000-0000-0000-0000000000ff');
 
--- Établissement « pilote » créé avant le M10a : aucun abonnement.
+-- Établissement « pilote » créé avant le M10a (appel direct, permis à l'époque) : aucun abonnement.
+grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 select tests.login_as('aa000000-0000-0000-0000-00000000000a');
 insert into ids select 'pilot', public.create_organization('M10a Pilote', 'pgtap-m10a-pilot', 'clinic');
+select tests.logout();
+revoke execute on function public.create_organization(text, text, public.org_type, text, integer) from authenticated;
+select tests.login_as('aa000000-0000-0000-0000-00000000000a');
+select throws_ok($$ select public.create_organization('Sans abonnement', 'pgtap-m10a-free', 'clinic') $$, '42501', null,
+  'création directe d''un établissement refusée : inscription avec téléphone vérifié obligatoire');
 select tests.logout();
 
 -- ─── Formules et prix ───────────────────────────────────────────────────────
@@ -96,6 +102,7 @@ select is(public.subscription_price(30000, 1, null, 1, 3, 'annual', 'fixed_xaf',
 
 select is((public.org_entitlements(tests.id('pilot')) ->> 'pilot')::boolean, true, 'établissement pilote : sans abonnement');
 select is((public.org_entitlements(tests.id('pilot')) ->> 'can_issue')::boolean, true, 'établissement pilote : émission permise');
+select is(public.org_entitlements(tests.id('pilot')) ->> 'plan_code', 'entreprise', 'établissement pilote : limites Entreprise');
 
 -- ─── Inscription : téléphone vérifié, essai Pro une seule fois par numéro ──────
 select tests.login_as('aa000000-0000-0000-0000-0000000000d1');
@@ -266,7 +273,7 @@ select tests.as_service();
 select throws_ok(format($$ select public.take_remote_ticket(%L, null, null, null, 'aa000000-0000-0000-0000-0000000000c2') $$,
   tests.id('d1_service')), 'P0403', 'feature_unavailable', 'ticket à distance refusé par la base (formule)');
 select tests.logout();
-select lives_ok(format($$ select public.assert_feature(%L, 'remote_tickets') $$, tests.id('pilot')), 'pilote : toutes les fonctions Pro');
+select lives_ok(format($$ select public.assert_feature(%L, 'remote_tickets') $$, tests.id('pilot')), 'pilote : tout compris (formule Entreprise)');
 select is((public.tv_session('inconnu') is null), true, 'écran inconnu : pas de session');
 -- Descente de formule : refusée si les limites ne sont pas respectées.
 select tests.login_as('aa000000-0000-0000-0000-0000000000d1');
