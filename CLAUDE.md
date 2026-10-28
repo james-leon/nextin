@@ -29,6 +29,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 | `pnpm db:link` · `pnpm db:push` | lier et migrer le projet distant (`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`) |
 | `pnpm seed:demo` | DOUALA CLINIC + Eneo Douala (`SEED_DEMO_PASSWORD` requis) |
 | `pnpm voices:generate` | voix des annonces TV (ElevenLabs → bucket `voices`, idempotent ; `--dry-run`, `--lang fr`) |
+| `pnpm notify:configure` · `pnpm notify:outbox` · `pnpm whatsapp:simulate "NEXTIN C-001 AbC1"` | notifications : réveil de l'expéditeur par la base (après déploiement), derniers messages de la file, message WhatsApp simulé (signé, en local) |
 | `pnpm e2e:local` | build + Playwright contre le Supabase local |
 | `pnpm dev:lan` · `pnpm dev:lan --remote` | test sur téléphone (même Wi-Fi) : `APP_URL` sur l'IP du PC, Supabase local (Docker) ou distant (`--remote` : URL et clés de `apps/web/.env.local` ; « Allow anonymous sign-ins » activé dans Supabase Auth) |
 
@@ -105,6 +106,14 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - `branch_board.calls` = appels du jour, en cours **et** terminés depuis moins de 30 min (12 au plus) : filtrer avec `isActiveCall` pour « appels en cours ». S'abonner au tableau avec `subscribeBoard` (`lib/client/board-feed.ts`), jamais une relecture brute qui écraserait une diffusion plus récente.
 - Annonces : `@nextin/shared/announcements` (segments `fr/word-ticket`, `fr/letter-c`, `fr/47`… + texte de repli) ; voix MP3 dans le bucket public `voices` (`pnpm voices:generate`, ElevenLabs) avec `manifest.json`, sinon synthèse vocale du navigateur ; carillon synthétisé ; « Activer le son » obligatoire.
 - `data-theme="light"` possible sur un sous-arbre (écran TV, ticket imprimé). Choix multiples : `ListSection checkboxGroupLabel`.
+
+## Notifications (M7, `docs/modules/M7.md`)
+- Mise en file **uniquement par la base** : déclencheurs sur `ticket_events` (appel, rappel, recul, réorientation + « bientôt votre tour » selon `almost_turn_threshold`), `practitioner_absences` (retard) et `notification_contacts` (confirmation). Un job par contact actif, `dedupe_key` unique.
+- Expéditeur `dispatchNotifications` (`lib/notifications/dispatcher.ts`) : `claim_notification_jobs` (SKIP LOCKED) → `sendJob` (`send.ts`, pur, testé) → `complete_notification_job`. Réveillé par pg_net (`kick_notification_dispatch`, adresse + secret dans Vault via `pnpm notify:configure`) et pg_cron chaque minute ; en dev / e2e, l'application interroge la file (`instrumentation.ts`, `NOTIFY_POLL=1`).
+- Textes FR/EN et modèles Meta : `@nextin/shared/notifications` (`WHATSAPP_TEMPLATES` = texte exact soumis à Meta ; même texte en message libre dans la fenêtre de 24 h). Ne jamais modifier un texte de modèle sans le refaire approuver.
+- WhatsApp : opt-in initié par le client (« NEXTIN C-047 7K3Q », `optInLink`), webhook `/api/whatsapp/webhook` signé (`X-Hub-Signature-256`, `WHATSAPP_APP_SECRET`), idempotent (`record_webhook_event`) ; STOP global haché (`whatsapp_opt_outs`). Fournisseur réel si `WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`, faux sinon (numéro en `99999` = échec simulé).
+- Bascule : WhatsApp en échec définitif → SMS immédiat ; « c'est votre tour » non remis en 2 min → SMS (délai de garde). Web push en complément (`/api/notifications/push`, VAPID). Les e2e forcent les faux fournisseurs (`playwright.config.ts`).
+- Valeurs `NEXT_PUBLIC_*` lues à l'exécution côté serveur avec un accès calculé (`process.env[name]`), sinon figées au build.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).
