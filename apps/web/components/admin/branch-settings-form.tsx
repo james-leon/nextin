@@ -32,6 +32,7 @@ type Settings = {
   leaveMargin: number;
   requests: boolean;
   requestDays: number;
+  requestMaxPending: number;
 };
 
 /** Distances maximales proposées (km) ; null = sans limite. */
@@ -235,6 +236,16 @@ export function BranchSettingsForm({
             disabled={disabled}
           />
         ) : null}
+        {v.requests ? (
+          <StepperRow
+            label={t("requestMaxPending")}
+            value={t("requestMaxPendingValue", { count: v.requestMaxPending })}
+            min={v.requestMaxPending <= 1}
+            max={v.requestMaxPending >= 10}
+            onChange={(d) => setV({ ...v, requestMaxPending: v.requestMaxPending + d })}
+            disabled={disabled}
+          />
+        ) : null}
       </ListSection>
       <input type="hidden" name="publicListingEnabled" value={String(v.publicListing)} />
       <input type="hidden" name="remoteMaxDistanceKm" value={v.maxDistanceKm ?? ""} />
@@ -245,6 +256,7 @@ export function BranchSettingsForm({
       <input type="hidden" name="remoteLeaveMarginMinutes" value={v.leaveMargin} />
       <input type="hidden" name="appointmentRequestsEnabled" value={String(v.requests)} />
       <input type="hidden" name="appointmentRequestDays" value={v.requestDays} />
+      <input type="hidden" name="appointmentRequestMaxPending" value={v.requestMaxPending} />
       <input type="hidden" name="appointmentMode" value={v.appointmentMode} />
       <input type="hidden" name="appointmentWalkinRatio" value={v.walkinRatio} />
       <input type="hidden" name="appointmentEarlyMinutes" value={v.early} />

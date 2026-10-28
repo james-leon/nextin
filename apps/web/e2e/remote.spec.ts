@@ -36,6 +36,25 @@ async function firstLoadBytes(page: Page, path: string) {
   return total;
 }
 
+/**
+ * La barre d'actions fixée en bas ne recouvre jamais le contenu : une fois la page défilée jusqu'en bas,
+ * le dernier bloc du contenu se termine au-dessus du premier bouton de la barre (8 px de marge au moins).
+ */
+async function expectBottomBarClear(page: Page) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(300);
+  const gap = await page.evaluate(() => {
+    const bar = document.querySelector<HTMLElement>("main .safe-bottom.fixed");
+    const content = bar?.parentElement?.querySelector<HTMLElement>(":scope > div.mx-auto.flex-col") ?? null;
+    const last = content?.lastElementChild as HTMLElement | null;
+    const firstAction = bar?.querySelector<HTMLElement>("button, a");
+    if (!bar || !last || !firstAction) return null;
+    return firstAction.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
+  });
+  expect(gap, "barre du bas au-dessus du contenu").not.toBeNull();
+  expect(gap!).toBeGreaterThanOrEqual(8);
+}
+
 async function takeRemote(page: Page, b: Branch) {
   await page.goto(`/b/${b.branchId}`);
   await page.getByRole("radio", { name: /Consultation/ }).click();
@@ -82,9 +101,14 @@ test.describe("M9 — ticket à distance", () => {
     await page.getByRole("radio", { name: "30 min" }).click();
     await expect(page.getByText(/Trajet : ≈ 30 min/)).toBeVisible();
 
+    await expectBottomBarClear(page);
     await page.getByRole("button", { name: "Je suis en route" }).click();
     await expect(page.getByText("En route", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Je suis arrivé · scanner le QR code" })).toBeVisible();
+    await expectBottomBarClear(page);
+    // Petit téléphone (360 × 640) : même contrôle.
+    await page.setViewportSize({ width: 360, height: 640 });
+    await expectBottomBarClear(page);
 
     // Arrivée : le QR code de l'accueil (ouvert par l'appareil photo) confirme la présence et ramène au ticket.
     await page.goto(`/q/${b.entryCode}`);
@@ -140,6 +164,7 @@ test.describe("M9 — ticket à distance", () => {
 test.describe("M9 — demande de rendez-vous", () => {
   test("patient : demande + code WhatsApp ; accueil : confirmation en un clic ; réponse envoyée", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "accueil sur ordinateur (le patient utilise la même page responsive)");
+    test.setTimeout(60_000);
     const b = await remoteBranch(`Demandes ${Date.now()}`);
     const { abena } = await addDoctors(b);
     const { error } = await b.staff.from("practitioner_schedules").insert(
@@ -157,13 +182,16 @@ test.describe("M9 — demande de rendez-vous", () => {
     expect(error).toBeNull();
 
     // Patient : demain, premier créneau, Dr Abena.
-    await page.goto(`/b/${b.branchId}`);
-    await page.getByRole("link", { name: "Demander un rendez-vous" }).click();
-    await page.getByRole("radio", { name: "Dr Abena" }).click();
-    const tomorrow = page.getByRole("radiogroup", { name: "Jour" }).getByRole("radio").nth(1);
-    await tomorrow.click();
-    await page.getByRole("radiogroup", { name: "Créneau" }).getByRole("radio", { name: "08:30" }).click();
-    await page.getByLabel("Numéro WhatsApp", { exact: true }).fill(`699${String(Date.now()).slice(-6)}`);
+    const phone = `699${String(Date.now()).slice(-6)}`;
+    const fillRequest = async () => {
+      await page.goto(`/b/${b.branchId}`);
+      await page.getByRole("link", { name: "Demander un rendez-vous" }).click();
+      await page.getByRole("radio", { name: "Dr Abena" }).click();
+      await page.getByRole("radiogroup", { name: "Jour" }).getByRole("radio").nth(1).click();
+      await page.getByRole("radiogroup", { name: "Créneau" }).getByRole("radio", { name: "08:30" }).click();
+      await page.getByLabel("Numéro WhatsApp", { exact: true }).fill(phone);
+    };
+    await fillRequest();
     await page.getByLabel("Initiales (facultatif)").fill("A.B.");
     await expectAccessible(page);
     await page.getByRole("button", { name: "Envoyer la demande" }).click();
@@ -194,6 +222,17 @@ test.describe("M9 — demande de rendez-vous", () => {
     const { data: jobs } = await admin.from("notification_jobs").select("payload").eq("appointment_request_id", request!.id);
     expect(jobs!.every((j) => !("code" in (j.payload as object)))).toBe(true);
 
+    // Même numéro, même créneau : refusé, message clair, aucune nouvelle demande.
+    await fillRequest();
+    await page.getByRole("button", { name: "Envoyer la demande" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Vous avez déjà une demande en attente pour ce créneau." }).first()).toBeVisible();
+    const { count } = await admin
+      .from("appointment_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("branch_id", b.branchId)
+      .in("status", ["unverified", "pending"]);
+    expect(count).toBe(1);
+
     // Accueil : la demande arrive, confirmation en un clic.
     const staffPage = await page.context().newPage();
     const path = `/desk/reception/${b.branchId}/appointments`;
@@ -206,7 +245,7 @@ test.describe("M9 — demande de rendez-vous", () => {
     await expect(staffPage.getByText("Aucune demande en attente.")).toBeVisible();
     await staffPage.close();
 
-    await page.reload();
+    await page.goto(`/r/${token}`);
     await expect(page.getByRole("heading", { name: "Rendez-vous confirmé" })).toBeVisible({ timeout: 25_000 });
     await expect(page.getByText(/avec Dr Abena/)).toBeVisible();
     const { data: accepted } = await admin.from("appointment_requests").select("status, appointment_id").eq("id", request!.id).single();

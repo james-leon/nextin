@@ -27,7 +27,8 @@ export const QUEUE_ERROR_CODES = [
   "location_required",
   "too_far",
   "requests_disabled",
-  "request_exists",
+  "request_duplicate",
+  "request_limit",
   "code_invalid",
   "code_expired",
 ] as const;
@@ -60,7 +61,8 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "already_rated":
     case "rating_disabled":
     case "active_ticket_exists":
-    case "request_exists":
+    case "request_duplicate":
+    case "request_limit":
     case "code_expired":
       return 409;
     default:

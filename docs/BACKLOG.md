@@ -35,8 +35,8 @@ Pour chaque écran : mise en page, débordements, navigation (barre latérale ou
 ### Menu latéral sur toute la hauteur
 Sur ordinateur, la barre latérale du back-office (`/app/o/[orgId]/…`) s'arrête à la hauteur de la fenêtre quand la page est longue : en faisant défiler, le fond de la barre ne descend pas jusqu'en bas. Elle doit couvrir toute la hauteur, en restant fixe (`sticky top-0 h-dvh`, défilement propre si le menu est plus long que l'écran) et sans décaler la largeur de contenu (`--shell-sidebar`). Vérifier en clair et en sombre, sur une page courte et sur le tableau de bord en vue mois.
 
-### Bouton « Exporter » du tableau de bord
-Sur ordinateur, le bouton « Exporter » de la barre de navigation du tableau de bord est collé au bord haut de l'écran, voire coupé. Il doit être aligné verticalement avec le titre et garder la marge de la barre de navigation, aussi quand le grand titre se réduit au défilement. Ajouter une capture Playwright à 1440 px qui le vérifie (boîte entièrement visible, marge haute ≥ 8 px).
+### Actions de la barre de navigation collées en haut (« Exporter », « Nouveau rendez-vous »…)
+Sur ordinateur, les boutons placés dans la barre de navigation (`NavigationBar trailing`) sont collés au bord haut de l'écran, voire coupés : « Exporter » du tableau de bord, « Nouveau rendez-vous » de l'écran Rendez-vous de l'accueil (relevé au M9). Corriger une fois pour toutes dans `NavigationBar`, pour tous les écrans. Il doit être aligné verticalement avec le titre et garder la marge de la barre de navigation, aussi quand le grand titre se réduit au défilement. Ajouter une capture Playwright à 1440 px qui le vérifie (boîte entièrement visible, marge haute ≥ 8 px).
 
 ## Pages client (relevé au M9, 28/10/2026)
 
@@ -45,3 +45,6 @@ Sur ordinateur, le bouton « Exporter » de la barre de navigation du tableau de
 
 ### Confirmation de présence plus sûre (ticket à distance)
 Aujourd'hui, scanner le QR code imprimé de l'accueil (ou saisir son code court) confirme la présence : un code photographié reste valable. Option : QR code tournant affiché sur l'écran TV (jeton renouvelé chaque minute, accepté par `confirm_presence`), le QR imprimé restant valable pour prendre un ticket sur place.
+
+### « À proximité » : icône du secteur de l'établissement
+Chaque ligne de la liste (et la fiche de l'agence) affiche aujourd'hui un bâtiment générique. Utiliser une icône par secteur (`organizations.type` : clinique et hôpital, banque, télécom, électricité et eau, administration, autre), au trait fin façon SF Symbols (lucide), sur la tuile Navy ; même icône dans les repères de la carte si la place le permet. Libellé du secteur pour les lecteurs d'écran.

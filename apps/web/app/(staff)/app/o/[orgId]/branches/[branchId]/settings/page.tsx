@@ -45,6 +45,7 @@ export default async function BranchSettingsPage({ params }: { params: Promise<{
           leaveMargin: s.remote_leave_margin_minutes,
           requests: s.appointment_requests_enabled,
           requestDays: s.appointment_request_days,
+          requestMaxPending: s.appointment_request_max_pending,
         }}
       />
     </AdminPage>

@@ -100,7 +100,8 @@ export const fr = {
     location_required: "Autorisez la localisation pour prendre un ticket à distance dans cette agence.",
     too_far: "Vous êtes trop loin de l'agence pour prendre un ticket à distance.",
     requests_disabled: "Cette agence ne reçoit pas de demandes de rendez-vous en ligne.",
-    request_exists: "Vous avez déjà une demande en attente dans cette agence avec ce numéro.",
+    request_duplicate: "Vous avez déjà une demande en attente pour ce créneau.",
+    request_limit: "Vous avez déjà le nombre maximal de demandes en attente dans cette agence. Attendez la réponse de l'accueil ou retirez une demande.",
     code_expired: "Ce code a expiré. Demandez-en un nouveau.",
     slot_required: "Choisissez un créneau, ou un jour et un moment de la journée.",
     pairing_code_invalid: "Code inconnu ou expiré. Vérifiez le code affiché sur l'écran.",
@@ -502,6 +503,8 @@ export const fr = {
     requestsHint: "Désactivé par défaut. Le patient choisit un créneau libre ; l'accueil confirme ou propose un autre créneau, la réponse part sur WhatsApp.",
     requestDays: "Créneaux proposés sur",
     requestDaysValue: "{count, plural, one {# jour} other {# jours}}",
+    requestMaxPending: "Demandes en attente par numéro",
+    requestMaxPendingValue: "{count, plural, one {# au plus} other {# au plus}}",
   },
   qr: {
     title: "QR code et supports",

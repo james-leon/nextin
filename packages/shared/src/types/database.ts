@@ -150,14 +150,14 @@ isOneToOne: false
                   ]
                 },"branch_settings": {
                   Row: {
-                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
+                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_request_max_pending": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1043,6 +1043,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"assert_request_allowed":
+{ Args: { "p_branch": string,"p_exclude": string,"p_phone": string,"p_slot": string }; Returns: undefined
+                           },
 "assert_requests_open":
 { Args: { "p_branch": string }; Returns: {
               "almost_turn_threshold": number,
@@ -1051,6 +1054,7 @@ isOneToOne: false
 "appointment_mode": string,
 "appointment_no_show_minutes": number,
 "appointment_request_days": number,
+"appointment_request_max_pending": number,
 "appointment_requests_enabled": boolean,
 "appointment_walkin_ratio": number,
 "branch_id": string,
@@ -1810,6 +1814,9 @@ isOneToOne: false
                            },
 "request_options":
 { Args: { "p_branch": string }; Returns: Json
+                           },
+"request_slot_key":
+{ Args: { "p_day": string,"p_period": string,"p_starts_at": string }; Returns: string
                            },
 "request_staff_json":
 { Args: { "p_request": string }; Returns: Json

@@ -225,6 +225,7 @@ export const branchSettingsFormSchema = z.object({
   remoteLeaveMarginMinutes: z.coerce.number().int().min(0).max(60),
   appointmentRequestsEnabled: formBoolean,
   appointmentRequestDays: z.coerce.number().int().min(1).max(60),
+  appointmentRequestMaxPending: z.coerce.number().int().min(1).max(10),
 });
 
 /** Invitation depuis l'écran Personnel : un rôle d'agence exige une agence, sauf réception/agent « toutes agences ». */

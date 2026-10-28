@@ -266,9 +266,9 @@ select is(public.verify_appointment_request(tests.request_token('Q1'), tests.req
 select tests.logout();
 select is(tests.request_code(tests.request('Q1')), null, 'code effacé de la file d''envoi après vérification');
 select tests.as_service();
-select throws_ok(format($$ select public.create_appointment_request(%L, %L, null, null, %L, 'morning', '+237677000901', null, 'fr', 'c9000000-0000-0000-0000-00000000000c') $$,
-  tests.id('akwa'), tests.id('consult'), (tests.v('today') #>> '{}')::date + 2), 'P0409', 'request_exists',
-  'une seule demande en attente par numéro et par agence');
+select throws_ok(format($$ select public.create_appointment_request(%L, %L, %L, %L, null, null, '+237677000901', null, 'fr', 'c9000000-0000-0000-0000-00000000000c') $$,
+  tests.id('akwa'), tests.id('consult'), tests.id('mbarga'), tests.slot(1, '10:00')), 'P0409', 'request_duplicate',
+  'même numéro, même créneau : une seule demande en attente');
 insert into vals select 'Q1bis', public.create_appointment_request(tests.id('akwa'), tests.id('consult'), null,
   null, ((tests.v('today') #>> '{}')::date + 2), 'morning', '+237677000904', null, 'fr', 'c9000000-0000-0000-0000-00000000000c');
 select tests.logout();

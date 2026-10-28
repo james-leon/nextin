@@ -102,7 +102,8 @@ export const en: Messages = {
     location_required: "Allow location access to take a remote ticket at this branch.",
     too_far: "You are too far from the branch to take a remote ticket.",
     requests_disabled: "This branch does not accept online appointment requests.",
-    request_exists: "You already have a pending request at this branch with this number.",
+    request_duplicate: "You already have a pending request for this slot.",
+    request_limit: "You already have the maximum number of pending requests at this branch. Wait for reception's reply or withdraw a request.",
     code_expired: "This code has expired. Ask for a new one.",
     slot_required: "Choose a slot, or a day and a time of day.",
     pairing_code_invalid: "Unknown or expired code. Check the code shown on the screen.",
@@ -504,6 +505,8 @@ export const en: Messages = {
     requestsHint: "Off by default. Patients pick a free slot; reception confirms or offers another one, and the reply is sent on WhatsApp.",
     requestDays: "Slots offered over",
     requestDaysValue: "{count, plural, one {# day} other {# days}}",
+    requestMaxPending: "Pending requests per number",
+    requestMaxPendingValue: "{count, plural, one {# at most} other {# at most}}",
   },
   qr: {
     title: "QR code and printables",
