@@ -100,6 +100,13 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Numéro WhatsApp saisi à l'accueil : uniquement avec consentement (`consent_required`), table `notification_contacts`, purgée avec les données personnelles.
 - Absence d'un praticien : réorientation vers un collègue de même spécialité (`reroute_counter`) ; retard : patients gardés, attente ≥ retour prévu (`practitioner_late_until`).
 
+## Rendez-vous (M5b, `docs/modules/M5b.md`)
+- Créneaux calculés à la volée (`practitioner_free_slots` : horaires − congés − fermetures − rendez-vous actifs − absence − passé), jamais stockés. Chevauchements exclus par la base (`appointments_no_overlap`).
+- Écritures uniquement par RPC (`book_appointment`, `reschedule_appointment`, `cancel_appointment`, `check_in_appointment`, `mark_appointment_no_show`). Repère du patient (`customer_label`, initiales) : jamais annoncé, affiché sur TV ni envoyé.
+- Règle d'équité : `pickNextTicket` (`@nextin/shared/appointments`) et `public.fair_pick` doivent rester identiques (`fairness.fixtures.json`, recopié dans `m5b_appointments.test.sql` et vérifié par Vitest).
+- Messages de rendez-vous : contacts et jobs rattachés au rendez-vous (`ticket_id` nul) ; à l'arrivée, le numéro est recopié sur le ticket.
+- **Responsive obligatoire** pour tout nouvel écran : téléphone (360 px+), tablette portrait et paysage, ordinateur (1440 px+) avec une vraie mise en page (listes et détail côte à côte, `AdminPage wide`, `useMediaQuery`). Captures Playwright dans les quatre tailles, cibles tactiles testées sur mobile.
+
 ## Écran TV (M6, `docs/modules/M6.md`)
 - `/tv` sans compte : code à 6 chiffres → `pair_display` (back-office « Écrans ») → jeton d'appareil (seule l'empreinte en base, jamais lisible) ; `GET /api/tv/session` chaque minute, 401 = retour à l'appairage.
 - Affichage par le canal public `boardTopic` filtré sur les services de l'écran ; aucun nom.
