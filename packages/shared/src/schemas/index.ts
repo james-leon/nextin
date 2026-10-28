@@ -403,3 +403,121 @@ export const practitionerLeaveFormSchema = z
     reason: z.string().trim().max(120).optional().transform((v) => v || undefined),
   })
   .refine((v) => v.endsOn >= v.startsOn, { message: "generic", path: ["endsOn"] });
+
+/* ─── M10a : inscription, abonnement, paiement, super admin ─────────────── */
+
+/** Étape 1 de l'inscription : téléphone du directeur (code envoyé sur WhatsApp). */
+export const phoneCodeRequestSchema = z.object({
+  phone: z.string().trim().transform((v, ctx) => {
+    const e164 = normalizeCameroonPhone(v);
+    if (!e164) {
+      ctx.addIssue({ code: "custom", message: "phone_invalid" });
+      return z.NEVER;
+    }
+    return e164;
+  }),
+  locale: z.enum(["fr", "en"]).default("fr"),
+  captchaToken: z.string().max(2048).optional(),
+});
+
+/** Étape 2 : code reçu. */
+export const phoneCodeVerifySchema = z.object({
+  verificationId: z.uuid(),
+  code: requestCodeSchema,
+});
+
+/** Étape 3 : établissement (téléphone déjà vérifié). */
+export const selfServiceSignupSchema = z.object({
+  verificationId: z.uuid(),
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  type: orgTypeSchema,
+  defaultLocale: z.enum(["fr", "en"]).default("fr"),
+});
+
+export const billingCheckoutSchema = z.object({
+  planId: z.uuid(),
+  period: z.enum(["monthly", "annual"]),
+});
+
+/** Page publique `/pay/<jeton>` : opérateur et numéro débité. */
+export const startPaymentSchema = z.object({
+  token: z.string().regex(/^[A-Za-z0-9]{32}$/, "not_found"),
+  channel: z.enum(["mtn_momo", "orange_money"]),
+  msisdn: z.string().trim().transform((v, ctx) => {
+    const e164 = normalizeCameroonPhone(v);
+    if (!e164) {
+      ctx.addIssue({ code: "custom", message: "phone_invalid" });
+      return z.NEVER;
+    }
+    return e164;
+  }),
+  captchaToken: z.string().max(2048).optional(),
+});
+
+const adminReason = z.string().trim().min(3, "reason_required").max(200);
+
+export const adminGrantDaysSchema = z.object({
+  subscriptionId: z.uuid(),
+  days: z.coerce.number().int().min(1).max(365),
+  reason: adminReason,
+});
+
+export const adminDiscountSchema = z
+  .object({
+    organizationId: z.uuid(),
+    kind: z.enum(["percent", "fixed_xaf"]),
+    value: z.coerce.number().int().min(1),
+    invoices: z.coerce.number().int().min(1).max(24),
+    reason: adminReason,
+  })
+  .refine((v) => v.kind !== "percent" || v.value <= 100, { message: "generic", path: ["value"] });
+
+export const adminChangePlanSchema = z.object({ subscriptionId: z.uuid(), planId: z.uuid(), reason: adminReason });
+
+export const adminSuspensionSchema = z.object({ organizationId: z.uuid(), suspended: formBoolean, reason: adminReason });
+
+const optionalInt = (min: number, max: number) =>
+  z
+    .union([z.literal(""), z.coerce.number().int().min(min).max(max)])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? null : v));
+
+/** Formule (prix hors taxe en FCFA, limites vides = illimité). */
+export const adminPlanFormSchema = z.object({
+  planId: z.uuid(),
+  name: z.string().trim().min(2, "name_too_short").max(60),
+  nameEn: z.string().trim().max(60).optional().transform((v) => v || null),
+  description: z.string().trim().max(240).optional().transform((v) => v || null),
+  basePriceXaf: z.coerce.number().int().min(0).max(100_000_000),
+  includedBranches: z.coerce.number().int().min(1).max(999),
+  extraBranchPriceXaf: optionalInt(0, 100_000_000),
+  maxCountersPerBranch: optionalInt(1, 999),
+  maxDisplaysPerBranch: optionalInt(0, 999),
+  whatsappQuotaPerBranch: z.coerce.number().int().min(0).max(1_000_000),
+  annualFreeMonths: z.coerce.number().int().min(0).max(11),
+  voiceAnnouncements: formBoolean,
+  appointments: formBoolean,
+  remoteTickets: formBoolean,
+  advancedStats: formBoolean,
+  export: formBoolean,
+  dedicatedSupport: formBoolean,
+  active: formBoolean,
+});
+
+export const platformSettingsFormSchema = z.object({
+  companyLegalName: z.string().trim().max(160),
+  companyRc: z.string().trim().max(60),
+  companyNiu: z.string().trim().max(60),
+  companyAddress: z.string().trim().max(240),
+  companyPhone: z.string().trim().max(40),
+  companyEmail: z.string().trim().max(120),
+  invoiceFooter: z.string().trim().max(500),
+  trialDays: z.coerce.number().int().min(0).max(90),
+  graceDays: z.coerce.number().int().min(0).max(60),
+  readOnlyDays: z.coerce.number().int().min(1).max(60),
+  retentionAfterSuspensionDays: z.coerce.number().int().min(7).max(365),
+  defaultClosingTime: hhmm,
+  vatRate: z.coerce.number().min(0).max(50),
+  invoiceLeadDays: z.coerce.number().int().min(1).max(30),
+  quotaAlertPercent: z.coerce.number().int().min(50).max(100),
+});

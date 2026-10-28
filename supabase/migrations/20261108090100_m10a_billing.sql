@@ -1012,7 +1012,8 @@ begin
       values (v_s.id, v_s.organization_id, 'reactivated', jsonb_build_object('from', v_was));
     end if;
     perform public.enqueue_account_message(v_s.organization_id, 'payment_confirmed', 'paid:' || v_i.id,
-      jsonb_build_object('invoice', v_i.number, 'amount_xaf', v_i.total_xaf, 'period_end', v_s.current_period_end, 'invoice_id', v_i.id),
+      jsonb_build_object('invoice', v_i.number, 'amount_xaf', v_i.total_xaf, 'invoice_id', v_i.id, 'organization', v_i.buyer_snapshot ->> 'name',
+        'period_end', (v_s.current_period_end at time zone 'Africa/Douala')::date),
       v_s.billing_phone_e164, v_s.billing_email, v_s.locale);
   end if;
   perform public.audit(v_i.organization_id, 'payment.succeeded', 'invoice', v_i.id,
@@ -1231,6 +1232,9 @@ begin
         case when v_channel = 'whatsapp' then v_s.billing_phone_e164 end, case when v_channel = 'email' then v_s.billing_email end,
         v_s.locale,
         jsonb_build_object('reminder', v_kind, 'days', abs(v_offset), 'date', v_target, 'organization', v_s.org_name,
+          -- Fin de la grâce (passage en lecture seule) ou date de suppression, en date de Douala.
+          'until', case v_kind when 'grace' then (v_s.grace_ends_at at time zone 'Africa/Douala')::date
+                               when 'deletion' then v_target end,
           'amount_xaf', v_inv.total_xaf, 'invoice', v_inv.number, 'pay_token', v_token),
         format('reminder:%s:%s:%s:%s:%s', v_s.id, v_kind, v_offset, v_target, v_channel))
       on conflict (dedupe_key) do nothing;
@@ -1277,7 +1281,8 @@ begin
     select * into v_s from public.subscriptions where organization_id = p_org;
     if found then
       perform public.enqueue_account_message(p_org, 'quota_alert', 'quota:' || p_org || ':' || v_month,
-        jsonb_build_object('used', v_u.whatsapp_sent, 'quota', v_quota), v_s.billing_phone_e164, v_s.billing_email, v_s.locale);
+        jsonb_build_object('used', v_u.whatsapp_sent, 'quota', v_quota,
+          'organization', (select name from public.organizations where id = p_org)), v_s.billing_phone_e164, v_s.billing_email, v_s.locale);
     end if;
   end if;
 end;

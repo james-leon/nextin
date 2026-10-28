@@ -31,6 +31,14 @@ export const QUEUE_ERROR_CODES = [
   "request_limit",
   "code_invalid",
   "code_expired",
+  // M10a — abonnements et paiements.
+  "plan_limit",
+  "feature_unavailable",
+  "subscription_read_only",
+  "phone_not_verified",
+  "too_many_organizations",
+  "invoice_paid",
+  "link_expired",
 ] as const;
 export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
 
@@ -48,12 +56,17 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "not_found":
       return 404;
     case "not_allowed":
+    case "plan_limit":
+    case "feature_unavailable":
       return 403;
+    case "subscription_read_only":
+      return 402;
     case "rate_limited":
       return 429;
     case "branch_closed":
     case "service_closed":
     case "quota_reached":
+    case "link_expired":
       return 410;
     case "counter_busy":
     case "counter_not_open":
@@ -64,7 +77,10 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "request_duplicate":
     case "request_limit":
     case "code_expired":
+    case "invoice_paid":
       return 409;
+    case "too_many_organizations":
+      return 429;
     default:
       return 422;
   }

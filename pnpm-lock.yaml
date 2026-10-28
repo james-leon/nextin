@@ -29,6 +29,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@nextin/payments':
+        specifier: workspace:*
+        version: link:../../packages/payments
       '@nextin/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -135,6 +138,18 @@ importers:
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@22.20.5)(vite@8.3.5(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/payments:
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
       typescript:
         specifier: 5.9.3
         version: 5.9.3

@@ -19,7 +19,8 @@
     "./notifications/opt-in": "./src/notifications/opt-in.ts",
     "./appointments": "./src/appointments/index.ts",
     "./stats": "./src/stats/index.ts",
-    "./remote": "./src/remote/index.ts"
+    "./remote": "./src/remote/index.ts",
+    "./billing": "./src/billing/index.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",

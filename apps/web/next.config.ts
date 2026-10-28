@@ -13,7 +13,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@nextin/shared"],
+  transpilePackages: ["@nextin/shared", "@nextin/payments"],
   // Test sur téléphone en Wi-Fi (scripts/dev-lan.mjs) : le serveur de dev accepte l'adresse IP du PC.
   allowedDevOrigins: process.env.DEV_LAN_HOST ? [process.env.DEV_LAN_HOST] : [],
   agentRules: false,
