@@ -20,6 +20,7 @@ import { takeTicket } from "@/lib/client/take-ticket";
 import type { BranchPublic } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { branchHoursStatus } from "@/lib/client/branch-hours";
+import { cn } from "@/lib/cn";
 
 /**
  * Page publique d'une agence (M9) : état d'ouverture, itinéraire, files en direct ; ticket à distance si l'agence
@@ -137,7 +138,7 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
               {hoursText}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={cn("grid gap-3", hasLocation && branch.phone_e164 && "grid-cols-2")}>
             {hasLocation ? (
               <Button asChild variant="tinted">
                 <a href={directionsUrl(branch.latitude!, branch.longitude!)} target="_blank" rel="noopener">
@@ -175,8 +176,7 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
                     key={s.id}
                     icon={<ServiceTile letter={s.prefix} color={s.color} />}
                     title={name(s)}
-                    subtitle={<span className="tabular">{summary(s)}</span>}
-                    detail={<span className="text-footnote">{t("serviceNotRemote")}</span>}
+                    subtitle={<span className="tabular">{`${summary(s)} · ${t("serviceNotRemote")}`}</span>}
                   />
                 ),
               )}

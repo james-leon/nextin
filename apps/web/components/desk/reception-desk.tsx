@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, Ban, CalendarDays, Plus, Printer, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { ArrowDown, Ban, CalendarDays, Inbox, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { isActiveCall, PRIORITY_REASONS, type PriorityReason } from "@nextin/shared/queue/live";
 import { staffTopic } from "@nextin/shared/queue/realtime";
@@ -77,7 +77,10 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   // Appels en cours uniquement : le tableau contient aussi les derniers appels terminés (écran TV).
   const activeCalls = data.board?.calls.filter(isActiveCall) ?? [];
 
-  async function command(fn: "set_ticket_priority" | "move_back_ticket" | "cancel_ticket" | "transfer_ticket", args: Record<string, unknown>) {
+  async function command(
+    fn: "set_ticket_priority" | "move_back_ticket" | "cancel_ticket" | "transfer_ticket" | "staff_confirm_presence",
+    args: Record<string, unknown>,
+  ) {
     const { error } = await supabase.rpc(fn as "cancel_ticket", args as { p_ticket: string });
     if (error) toast(te.has(error.message as never) ? te(error.message as never) : te("generic"));
     else toast(t("done"));
@@ -112,6 +115,25 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
               title={tap("open")}
               subtitle={tap("upcoming", { count: data.upcomingAppointments })}
               accessory="chevron"
+            />
+            <ListRow
+              href={`/desk/reception/${branchId}/appointments?view=requests`}
+              icon={
+                <ListIcon color={data.pendingRequests ? "var(--orange-fill)" : "var(--accent-fill)"}>
+                  <Inbox />
+                </ListIcon>
+              }
+              title={t("requestsTitle")}
+              subtitle={t("requestsCount", { count: data.pendingRequests })}
+              accessory={
+                data.pendingRequests ? (
+                  <Badge tone="orange" className="mr-1 tabular">
+                    {data.pendingRequests}
+                  </Badge>
+                ) : (
+                  "chevron"
+                )
+              }
             />
           </ListSection>
           <ListSection header={t("servicesHeader")}>
@@ -190,7 +212,16 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                     </span>
                   </span>
                 }
-                subtitle={doctor ? t("forPractitioner", { name: doctor.name }) : undefined}
+                subtitle={
+                  tk2.remote ? (
+                    <span className={tk2.remote.confirmed ? "text-green-text" : "text-orange-text"}>
+                      {tk2.remote.confirmed ? t("remoteHere") : tk2.remote.onMyWay ? t("remoteOnWay") : t("remotePending")}
+                      {tk2.remote.delays ? ` · ${t("remoteDelayed", { count: tk2.remote.delays })}` : ""}
+                    </span>
+                  ) : doctor ? (
+                    t("forPractitioner", { name: doctor.name })
+                  ) : undefined
+                }
                 accessory={
                   tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
                 }
@@ -216,6 +247,15 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
           closeLabel={tc("close")}
         >
           <div className="flex flex-col gap-4 pt-2">
+            {selected.remote && !selected.remote.confirmed ? (
+              <ListSection>
+                <ListRow
+                  onClick={() => command("staff_confirm_presence", { p_ticket: selected.id })}
+                  icon={<ListIcon color="var(--green-fill)"><ScanLine /></ListIcon>}
+                  title={t("confirmPresence")}
+                />
+              </ListSection>
+            ) : null}
             <ListSection>
               {selected.priorityReason ? (
                 <ListRow

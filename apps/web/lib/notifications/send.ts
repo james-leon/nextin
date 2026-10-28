@@ -159,13 +159,12 @@ export async function sendJob(
         return fromResult(await providers.whatsapp.sendText(contact.phone_e164, text), job.attempt, { text: saved(text) });
       }
       const spec = WHATSAPP_TEMPLATES[job.event];
-      const r = await providers.whatsapp.sendTemplate(
-        contact.phone_e164,
-        spec.name,
-        locale,
-        templateParams(job.event, data),
-        spec.category === "authentication" ? (data.otp ?? undefined) : undefined,
-      );
+      const params = templateParams(job.event, data);
+      // Modèle d'authentification : le code est aussi transmis au bouton « Copier le code ».
+      const r =
+        spec.category === "authentication" && data.otp
+          ? await providers.whatsapp.sendTemplate(contact.phone_e164, spec.name, locale, params, data.otp)
+          : await providers.whatsapp.sendTemplate(contact.phone_e164, spec.name, locale, params);
       return fromResult(r, job.attempt, { template: spec.name, text: saved(whatsappText(job.event, locale, data)) });
     }
     case "sms": {

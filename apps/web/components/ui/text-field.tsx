@@ -85,7 +85,7 @@ export function SearchField({
         placeholder={label}
         value={value}
         onChange={(e) => set(e.target.value)}
-        className="h-full w-full bg-transparent pr-11 pl-9 text-body text-label outline-none placeholder:text-label-secondary [&::-webkit-search-cancel-button]:hidden"
+        className="h-11 w-full bg-transparent pr-11 pl-9 text-body text-label outline-none placeholder:text-label-secondary [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button

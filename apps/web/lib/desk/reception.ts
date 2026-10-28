@@ -15,6 +15,8 @@ export type ReceptionTicket = {
   createdAt: string;
   preferredCounterId: string | null;
   source: "qr" | "short_code" | "remote" | "reception";
+  /** Ticket à distance (M9) : présence confirmée, « en route », nombre de reculs. */
+  remote: { confirmed: boolean; onMyWay: boolean; delays: number } | null;
 };
 export type ReceptionPractitioner = {
   id: string;
@@ -33,6 +35,8 @@ export type ReceptionData = {
   counters: ReceptionCounter[];
   /** Rendez-vous du jour encore attendus (confirmés, heure à venir ou en cours de tolérance). */
   upcomingAppointments: number;
+  /** Demandes de rendez-vous en attente de réponse (M9). */
+  pendingRequests: number;
 };
 
 /** Données du poste d'accueil d'une agence (sous RLS) ; null si l'agence n'est pas accessible. */
@@ -49,7 +53,9 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
     supabase.rpc("get_branch_board", { p_branch: branchId }),
     supabase
       .from("tickets")
-      .select("id, display_code, service_id, priority_reason, priority_level, sort_key, number, created_at, preferred_counter_id, source")
+      .select(
+        "id, display_code, service_id, priority_reason, priority_level, sort_key, number, created_at, preferred_counter_id, source, is_remote, presence_confirmed_at, on_my_way_at, delay_count",
+      )
       .eq("branch_id", branchId)
       .eq("status", "waiting")
       .eq("service_day", serviceDay(branch.timezone))
@@ -74,6 +80,11 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
     .eq("status", "confirmed")
     .gte("starts_at", new Date(Date.now() - 60 * 60_000).toISOString())
     .lt("starts_at", `${today}T23:59:59${offsetOf(branch.timezone)}`);
+  const { count: requests } = await supabase
+    .from("appointment_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("branch_id", branchId)
+    .eq("status", "pending");
   const error = services.error ?? board.error ?? waiting.error ?? practitioners.error ?? counters.error ?? absences.error;
   if (error) throw new Error(error.message);
 
@@ -101,6 +112,7 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       createdAt: t.created_at,
       preferredCounterId: t.preferred_counter_id,
       source: t.source,
+      remote: t.is_remote ? { confirmed: !!t.presence_confirmed_at, onMyWay: !!t.on_my_way_at, delays: t.delay_count } : null,
     })),
     practitioners: (practitioners.data ?? []).map((p) => {
       const own = (counters.data ?? []).filter((c) => c.default_practitioner_id === p.id);
@@ -122,6 +134,7 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       practitionerId: c.default_practitioner_id,
     })),
     upcomingAppointments: upcoming ?? 0,
+    pendingRequests: requests ?? 0,
   };
 }
 

@@ -256,6 +256,15 @@ export async function saveBranchSettings(orgId: string, branchId: string, _prev:
       appointment_early_minutes: v.appointmentEarlyMinutes,
       appointment_late_grace_minutes: v.appointmentLateGraceMinutes,
       appointment_no_show_minutes: v.appointmentNoShowMinutes,
+      public_listing_enabled: v.publicListingEnabled,
+      remote_max_distance_km: v.remoteMaxDistanceKm,
+      remote_confirm_threshold: v.remoteConfirmThreshold,
+      remote_penalty_places: v.remotePenaltyPlaces,
+      remote_max_delays: v.remoteMaxDelays,
+      remote_travel_kmh: v.remoteTravelKmh,
+      remote_leave_margin_minutes: v.remoteLeaveMarginMinutes,
+      appointment_requests_enabled: v.appointmentRequestsEnabled,
+      appointment_request_days: v.appointmentRequestDays,
     })
     .eq("branch_id", branchId)
     .select("branch_id");

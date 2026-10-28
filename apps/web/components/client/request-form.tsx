@@ -251,9 +251,9 @@ export function RequestForm({ options, branchId, captchaSiteKey }: { options: Re
                       active ? "bg-accent text-on-accent" : "bg-grouped-secondary text-label",
                     )}
                   >
-                    <span className="text-subheadline font-semibold capitalize">{dayLabel(d)}</span>
+                    <span className="text-subheadline font-semibold first-letter:uppercase">{dayLabel(d)}</span>
                     <span className={cn("text-caption tabular", active ? "text-on-accent" : "text-label-secondary")}>
-                      {t("daySlots", { count })}
+                      {count ? t("daySlots", { count }) : t("dayFull")}
                     </span>
                   </button>
                 );

@@ -185,3 +185,39 @@ describe("messages de rendez-vous (M5b)", () => {
     expect(out).toMatchObject({ status: "sent", text: "NextIn : RDV du jeudi 5 novembre a 10:30 chez DOUALA CLINIC - Akwa annule." });
   });
 });
+
+describe("demandes de rendez-vous (M9)", () => {
+  const request = {
+    id: "r1",
+    status: "unverified" as const,
+    token: "Rq3QpL9vR2mT8wYz4b7K3Q",
+    service: "Consultation",
+    branch: "Akwa",
+    organization: "DOUALA CLINIC",
+    timezone: "Africa/Douala",
+    preferred_starts_at: null,
+    preferred_day: "2026-10-30",
+    decline_reason: null,
+  };
+
+  it("code de vérification : modèle d'authentification avec le bouton, texte enregistré sans le code", async () => {
+    const p = providers();
+    const out = await sendJob(job({ event: "request_code", payload: { code: "481516" }, token: null, ticket: null, request }), p);
+    expect(p.whatsapp.sendTemplate).toHaveBeenCalledWith("+237690000001", "code_verification", "fr", ["481516"], "481516");
+    expect(out.status).toBe("sent");
+    expect(out.text).not.toContain("481516");
+  });
+  it("code effacé (vérifié ou expiré) : rien n'est envoyé", async () => {
+    const out = await sendJob(job({ event: "request_code", payload: {}, token: null, ticket: null, request }), providers());
+    expect(out).toMatchObject({ status: "skipped", error: "code_expired" });
+  });
+  it("refus : motif et lien de la demande", async () => {
+    const p = providers();
+    await sendJob(
+      job({ event: "request_declined", payload: {}, token: null, ticket: null, request: { ...request, status: "declined", decline_reason: "Praticien en congé" } }),
+      p,
+    );
+    const params = (p.whatsapp.sendTemplate as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]![3];
+    expect(params).toEqual(["DOUALA CLINIC – Akwa", "Praticien en congé", "http://localhost:3000/r/Rq3QpL9vR2mT8wYz4b7K3Q"]);
+  });
+});

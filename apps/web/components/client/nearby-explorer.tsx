@@ -89,11 +89,12 @@ export function NearbyExplorer({
           setUpdatedAt(new Date());
         }
       });
-    const first = setTimeout(load, query ? 300 : 0);
+    // Premier affichage sans position ni recherche : la liste du serveur suffit (pas de second chargement).
+    const first = query || position ? setTimeout(load, query ? 300 : 0) : null;
     const every = setInterval(load, 60_000);
     return () => {
       controller.abort();
-      clearTimeout(first);
+      if (first) clearTimeout(first);
       clearInterval(every);
     };
   }, [query, position]);
@@ -103,7 +104,6 @@ export function NearbyExplorer({
     rows.current.get(id)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 
-  const name = (s: NearbyBranch["services"][number]) => (locale === "en" && s.name_en ? s.name_en : s.name);
   const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }).format(updatedAt);
   const showMap = wide || view === "map";
   const chosen = branches.find((b) => b.id === selected) ?? null;
@@ -130,6 +130,8 @@ export function NearbyExplorer({
               >
                 <Link
                   href={`/b/${b.id}`}
+                  // Pas de préchargement des pages d'agence : premier chargement léger (3G, < 200 Ko).
+                  prefetch={false}
                   onFocus={() => setSelected(b.id)}
                   onMouseEnter={() => wide && setSelected(b.id)}
                   className={cn(
@@ -204,8 +206,9 @@ export function NearbyExplorer({
                   aria-pressed={view === v}
                   onClick={() => setView(v)}
                   className={cn(
-                    "rounded-[8px] text-subheadline font-semibold transition-colors",
-                    view === v ? "bg-grouped-secondary text-label shadow-card" : "text-label-secondary",
+                    // Cible tactile de 44 px : la zone cliquable déborde de 3 px (comme le SegmentedControl).
+                    "relative rounded-[8px] text-subheadline font-semibold text-label transition-colors before:absolute before:inset-x-0 before:-inset-y-[3px] before:content-['']",
+                    view === v ? "bg-grouped-secondary shadow-card" : "",
                   )}
                 >
                   {v === "list" ? t("list") : t("map")}
@@ -231,18 +234,18 @@ export function NearbyExplorer({
                 onSelect={select}
                 tilesUrl={tilesUrl}
                 attribution={attribution}
-                className="h-[60dvh] min-h-80 lg:h-[calc(100dvh-8rem)]"
+                className="h-[55dvh] min-h-80 lg:h-[calc(100dvh-17rem)]"
               />
               {!wide && chosen ? (
                 <Link
                   href={`/b/${chosen.id}`}
+                  prefetch={false}
                   className="pressable squircle flex min-h-14 items-center gap-3 rounded-[var(--radius-lg)] bg-grouped-secondary px-4 py-3 shadow-card"
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-headline">{chosen.organization.name}</span>
                     <span className="truncate text-subheadline text-label-secondary tabular">
                       {chosen.name} · {t("waiting", { count: chosen.waiting })}
-                      {chosen.services[0] ? ` · ${name(chosen.services[0])}` : ""}
                     </span>
                   </span>
                   <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />

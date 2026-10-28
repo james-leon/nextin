@@ -36,6 +36,15 @@ export default async function BranchSettingsPage({ params }: { params: Promise<{
           early: s.appointment_early_minutes,
           grace: s.appointment_late_grace_minutes,
           noShow: s.appointment_no_show_minutes,
+          publicListing: s.public_listing_enabled,
+          maxDistanceKm: s.remote_max_distance_km == null ? null : Number(s.remote_max_distance_km),
+          confirmThreshold: s.remote_confirm_threshold,
+          penaltyPlaces: s.remote_penalty_places,
+          maxDelays: s.remote_max_delays,
+          travelKmh: s.remote_travel_kmh,
+          leaveMargin: s.remote_leave_margin_minutes,
+          requests: s.appointment_requests_enabled,
+          requestDays: s.appointment_request_days,
         }}
       />
     </AdminPage>

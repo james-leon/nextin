@@ -69,3 +69,26 @@ export async function listAppointments(supabase: Db, branchId: string, from: str
 
 /** Créneau libre renvoyé par `available_slots`. */
 export type Slot = { starts_at: string; ends_at: string; service_id: string };
+
+/** Demande de rendez-vous d'un patient (M9), telle que renvoyée par `list_appointment_requests` (personnel). */
+export type AppointmentRequest = {
+  id: string;
+  status: "pending" | "accepted" | "modified" | "declined" | "expired" | "cancelled";
+  service: { id: string; name: string; name_en: string | null; prefix: string; color: string };
+  practitioner: string | null;
+  practitioner_id: string | null;
+  preferred_starts_at: string | null;
+  preferred_day: string | null;
+  preferred_period: "morning" | "afternoon" | "any" | null;
+  customer_label: string | null;
+  phone_e164: string | null;
+  created_at: string;
+  verified_at: string | null;
+};
+
+/** Demandes en attente de réponse d'une agence. */
+export async function listRequests(supabase: Db, branchId: string) {
+  const { data, error } = await supabase.rpc("list_appointment_requests", { p_branch: branchId, p_pending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as AppointmentRequest[];
+}

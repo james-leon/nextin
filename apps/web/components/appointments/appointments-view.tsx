@@ -19,9 +19,10 @@ import { AppointmentDetail } from "./appointment-detail";
 import { BookingForm } from "./booking-form";
 import { longDay, shortDay, timeOf } from "./format";
 import { AppointmentStatusBadge } from "./status-badge";
+import { RequestsInbox } from "./requests-inbox";
 import { useMediaQuery } from "./use-media-query";
 
-type View = "day" | "week";
+type View = "day" | "week" | "requests";
 type Pane = { kind: "detail"; id: string } | { kind: "book" } | { kind: "reschedule"; id: string } | null;
 
 /** Heure de début et de fin, en colonne (repère visuel d'une ligne de rendez-vous). */
@@ -38,7 +39,7 @@ function TimeColumn({ a, tz, locale }: { a: Appointment; tz: string; locale: str
  * Rendez-vous de l'agence (accueil) : vue du jour ou de la semaine, filtre par praticien, détail et actions,
  * prise de rendez-vous. Ordinateur : liste et détail côte à côte, semaine en 7 colonnes ; téléphone : liste et feuilles.
  */
-export function AppointmentsView({ ctx }: { ctx: AppointmentsContext }) {
+export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0 }: { ctx: AppointmentsContext; initialView?: View; pendingRequests?: number }) {
   const t = useTranslations("appointments");
   const tr = useTranslations("reception");
   const tc = useTranslations("common");
@@ -46,14 +47,14 @@ export function AppointmentsView({ ctx }: { ctx: AppointmentsContext }) {
   const supabase = getSupabaseBrowserClient();
   const desktop = useMediaQuery("(min-width: 1024px)");
   const tz = ctx.branch.timeZone;
-  const [view, setView] = useState<View>("day");
+  const [view, setView] = useState<View>(initialView);
   const [date, setDate] = useState(ctx.today);
   const [practitioner, setPractitioner] = useState<string>("all");
   // Résultat rattaché à sa requête : changer de jour ou de filtre affiche le chargement sans effacement explicite.
   const [data, setData] = useState<{ key: string; items: Appointment[] } | null>(null);
   const [pane, setPane] = useState<Pane>(null);
 
-  const days = useMemo(() => (view === "day" ? [date] : weekDays(date)), [view, date]);
+  const days = useMemo(() => (view === "week" ? weekDays(date) : [date]), [view, date]);
   const from = days[0]!;
   const to = days[days.length - 1]!;
 
@@ -169,10 +170,11 @@ export function AppointmentsView({ ctx }: { ctx: AppointmentsContext }) {
             options={[
               { value: "day", label: t("day") },
               { value: "week", label: t("week") },
+              { value: "requests", label: pendingRequests ? `${t("requestsView")} (${pendingRequests})` : t("requestsView") },
             ]}
-            className="md:w-64"
+            className="w-full md:w-96"
           />
-          <div className="flex items-center gap-1">
+          <div className={cn("flex items-center gap-1", view === "requests" && "invisible")}>
             <IconButton label={view === "day" ? t("previousDay") : t("previousWeek")} icon={<ChevronLeft />} variant="plain" onClick={() => setDate(addDays(date, -step))} />
             <Button size="md" variant="gray" onClick={() => setDate(ctx.today)} disabled={days.includes(ctx.today)}>
               {t("today")}
@@ -181,10 +183,19 @@ export function AppointmentsView({ ctx }: { ctx: AppointmentsContext }) {
           </div>
         </div>
         <h2 className="text-title2 font-bold first-letter:uppercase" aria-live="polite">
-          {title}
+          {view === "requests" ? t("requests.title") : title}
         </h2>
 
-        {ctx.practitioners.length > 1 ? (
+        {view === "requests" ? (
+          <RequestsInbox
+            ctx={ctx}
+            onBooked={(d) => {
+              setDate(d);
+            }}
+          />
+        ) : null}
+
+        {view !== "requests" && ctx.practitioners.length > 1 ? (
           <div role="radiogroup" aria-label={t("practitionerFilter")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
             {[{ id: "all", name: t("allPractitioners") }, ...ctx.practitioners].map((p) => (
               <button
@@ -204,7 +215,7 @@ export function AppointmentsView({ ctx }: { ctx: AppointmentsContext }) {
           </div>
         ) : null}
 
-        {view === "day" ? (
+        {view === "requests" ? null : view === "day" ? (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
             <section aria-label={title}>
               {items === null ? (

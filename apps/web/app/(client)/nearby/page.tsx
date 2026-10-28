@@ -17,7 +17,8 @@ function runtimeEnv(name: string): string | null {
 
 /** « Établissements à proximité » (M9) : liste par ville au premier affichage, puis autour du client s'il le permet. */
 export default async function NearbyPage() {
-  const { data } = await callRpc<NearbyBranch[]>("nearby_branches", { p_lat: null, p_lng: null, p_radius_km: 25, p_query: null });
+  // Premier affichage léger (page client < 200 Ko) : 12 agences, la recherche ou la position affinent ensuite.
+  const { data } = await callRpc<NearbyBranch[]>("nearby_branches", { p_lat: null, p_lng: null, p_radius_km: 25, p_query: null, p_limit: 12 });
   return (
     <>
       <NearbyExplorer

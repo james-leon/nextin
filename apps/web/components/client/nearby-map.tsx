@@ -26,7 +26,7 @@ function fitZoom(points: GeoPosition[], width: number, height: number): number {
     const p = points.map((q) => project(q.lat, q.lng, z));
     const w = Math.max(...p.map((q) => q.x)) - Math.min(...p.map((q) => q.x));
     const h = Math.max(...p.map((q) => q.y)) - Math.min(...p.map((q) => q.y));
-    if (w <= width - 96 && h <= height - 112) return z;
+    if (w <= width - 160 && h <= height - 140) return z;
   }
   return MIN_ZOOM;
 }
@@ -187,7 +187,7 @@ export function NearbyMap({
                 style={{ left: me.left - c.r, top: me.top - c.r, width: c.r * 2, height: c.r * 2 }}
               />
               <span
-                className="absolute -translate-x-1/2 rounded-full bg-grouped-secondary px-1.5 text-caption text-label-secondary tabular"
+                className="absolute -translate-x-1/2 rounded-full bg-grouped-secondary px-1.5 text-caption whitespace-nowrap text-label-secondary tabular"
                 style={{ left: me.left, top: me.top - c.r - 9 }}
               >
                 {formatDistance(c.m, locale)}
@@ -253,7 +253,7 @@ export function NearbyMap({
         </button>
       </div>
 
-      <p className="absolute bottom-2 left-3 max-w-[70%] truncate rounded-full bg-bar px-2 text-caption text-label-secondary material-blur">
+      <p className="absolute bottom-2 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-bar px-2 text-caption text-label-secondary material-blur">
         {tilesUrl ? attribution : t("plan")}
       </p>
     </div>

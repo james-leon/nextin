@@ -69,7 +69,7 @@ export type NearbyService = {
   wait_seconds: number;
 };
 
-/** Résumé public d'une agence (`nearby_branches`) : aucune donnée personnelle. */
+/** Résumé public d'une agence (`nearby_branches`, sans le détail des services : page légère) : aucune donnée personnelle. */
 export type NearbyBranch = {
   id: string;
   name: string;
@@ -84,7 +84,8 @@ export type NearbyBranch = {
   requests_enabled: boolean;
   waiting: number;
   min_wait_seconds: number | null;
-  services: NearbyService[];
+  /** Détail par service : seulement dans `branch_public`. */
+  services?: NearbyService[];
 };
 
 /** Page publique d'une agence (`branch_public`). */

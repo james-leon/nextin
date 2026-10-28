@@ -4,9 +4,10 @@ import type { ReactNode } from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { cn } from "@/lib/cn";
 
-/** Alerte iOS centrée (270 px), deux actions séparées par des filets fins. */
+/** Alerte iOS centrée (270 px), deux actions séparées par des filets fins ; champ facultatif (`children`). */
 export function AlertDialog({
   trigger,
+  children,
   title,
   description,
   cancelLabel,
@@ -25,6 +26,8 @@ export function AlertDialog({
   onAction: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Contenu sous le texte (ex. champ « motif »), comme une alerte iOS avec champ de saisie. */
+  children?: ReactNode;
 }) {
   return (
     <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -42,6 +45,7 @@ export function AlertDialog({
             {description ? (
               <AlertDialogPrimitive.Description className="mt-1 text-footnote">{description}</AlertDialogPrimitive.Description>
             ) : null}
+            {children ? <div className="mt-3 text-left">{children}</div> : null}
           </div>
           <div className="grid grid-cols-2 hairline-t">
             <AlertDialogPrimitive.Cancel className="h-11 text-body text-accent-text transition-colors active:bg-fill-tertiary">

@@ -354,8 +354,8 @@
 /* Plan schématique des établissements à proximité (sans fournisseur de tuiles) : quadrillage discret. */
 @utility map-plan {
   background-image:
-    linear-gradient(var(--separator) 1px, transparent 1px),
-    linear-gradient(90deg, var(--separator) 1px, transparent 1px);
+    linear-gradient(var(--fill-tertiary) 1px, transparent 1px),
+    linear-gradient(90deg, var(--fill-tertiary) 1px, transparent 1px);
   background-size: 48px 48px;
   background-position: center;
 }

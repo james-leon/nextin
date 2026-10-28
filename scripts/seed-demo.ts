@@ -279,6 +279,60 @@ async function ensureDemoAppointments(staffEmail: string, orgId: string, branch:
   await staff.auth.signOut();
 }
 
+/**
+ * M9 : ticket à distance et demandes de rendez-vous activés sur les agences de démo (la caisse reste sur place),
+ * et deux demandes de patients en attente à l'accueil d'Akwa (numéros fictifs, déjà vérifiés).
+ */
+async function ensureDemoRemote(
+  akwa: { branchId: string; serviceIds: Map<string, string> },
+  bonanjo: { branchId: string; serviceIds: Map<string, string> },
+  requester: string,
+) {
+  await must(
+    db
+      .from("branch_settings")
+      .update({ remote_tickets_enabled: true, remote_max_distance_km: 15, appointment_requests_enabled: true })
+      .eq("branch_id", akwa.branchId)
+      .select("branch_id"),
+  );
+  await must(db.from("services").update({ allow_remote: false }).eq("id", akwa.serviceIds.get("K")!).select("id"));
+  await must(db.from("branch_settings").update({ remote_tickets_enabled: true }).eq("branch_id", bonanjo.branchId).select("branch_id"));
+
+  const existing = await must(db.from("appointment_requests").select("id").eq("branch_id", akwa.branchId).limit(1));
+  if (existing.length) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const mbarga = (await must(db.from("practitioners").select("id").eq("branch_id", akwa.branchId).eq("display_name", "Paul Mbarga")))[0]!;
+  const slots = (await must(db.rpc("practitioner_free_slots", { p_practitioner: mbarga.id, p_from: today, p_days: 7 }))) as unknown as {
+    starts_at: string;
+  }[];
+  const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  const requests = [
+    { practitioner: mbarga.id, startsAt: slots[3]?.starts_at ?? null, day: null, period: null, phone: "+237699001201", label: "E.M." },
+    { practitioner: null, startsAt: null, day: day(2), period: "morning", phone: "+237699001202", label: null },
+  ];
+  for (const r of requests) {
+    const created = (await must(
+      db.rpc("create_appointment_request", {
+        p_branch: akwa.branchId,
+        p_service: akwa.serviceIds.get("C")!,
+        p_practitioner: r.practitioner as string,
+        p_starts_at: r.startsAt as string,
+        p_day: r.day as string,
+        p_period: r.period as string,
+        p_phone_e164: r.phone,
+        p_label: r.label as string,
+        p_locale: "fr",
+        p_customer: requester,
+      }),
+    )) as unknown as { id: string };
+    // Démo : numéro considéré comme vérifié, aucun code envoyé.
+    await must(db.from("notification_jobs").update({ status: "cancelled", payload: {} }).eq("appointment_request_id", created.id).select("id"));
+    await must(
+      db.from("appointment_requests").update({ status: "pending", verified_at: new Date().toISOString(), code_hash: null }).eq("id", created.id).select("id"),
+    );
+  }
+}
+
 /** Générateur pseudo-aléatoire déterministe (mulberry32) : historique de démo identique à chaque exécution. */
 function prng(seed: number) {
   let a = seed >>> 0;
@@ -459,6 +513,7 @@ async function main() {
   await ensureDemoHistory(clinic, akwa, { C: 38, P: 22, L: 30, K: 45 }, 2026);
   await ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237);
   await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
+  await ensureDemoRemote(akwa, bonanjo, ids.clinicAdmin);
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa) et Eneo — Douala (agence Bonanjo)");
   for (const u of Object.values(USERS)) console.log(`  ${u.email}`);

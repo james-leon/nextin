@@ -22,7 +22,20 @@ type Settings = {
   early: number;
   grace: number;
   noShow: number;
+  // M9 — visibilité publique, ticket à distance, demandes de rendez-vous.
+  publicListing: boolean;
+  maxDistanceKm: number | null;
+  confirmThreshold: number;
+  penaltyPlaces: number;
+  maxDelays: number;
+  travelKmh: number;
+  leaveMargin: number;
+  requests: boolean;
+  requestDays: number;
 };
+
+/** Distances maximales proposées (km) ; null = sans limite. */
+const DISTANCES: (number | null)[] = [null, 1, 2, 5, 10, 20, 50, 100];
 
 /** Ligne « valeur − + » d'une liste groupée (pas de saisie au clavier sur téléphone). */
 function StepperRow({
@@ -78,7 +91,13 @@ export function BranchSettingsForm({
     <form action={formAction} noValidate className="flex flex-col gap-6">
       <FormError message={top} />
       <ListSection>
-        <ListSwitchRow title={t("remote")} subtitle={t("remoteHint")} checked={v.remote} onCheckedChange={(remote) => setV({ ...v, remote })} disabled={disabled} />
+        <ListSwitchRow
+          title={t("publicListing")}
+          subtitle={t("publicListingHint")}
+          checked={v.publicListing}
+          onCheckedChange={(publicListing) => setV({ ...v, publicListing })}
+          disabled={disabled}
+        />
         <ListSwitchRow title={t("priorities")} subtitle={t("prioritiesHint")} checked={v.priorities} onCheckedChange={(priorities) => setV({ ...v, priorities })} disabled={disabled} />
         <ListSwitchRow title={t("rating")} checked={v.rating} onCheckedChange={(rating) => setV({ ...v, rating })} disabled={disabled} />
       </ListSection>
@@ -92,6 +111,63 @@ export function BranchSettingsForm({
             <IconButton label={ta("increase")} icon={<Plus />} onClick={() => setV({ ...v, almostTurn: Math.min(10, v.almostTurn + 1) })} disabled={disabled || v.almostTurn >= 10} />
           </span>
         </li>
+      </ListSection>
+      <ListSection header={t("remoteHeader")} footer={v.remote ? t("remoteFooter") : undefined}>
+        <ListSwitchRow title={t("remote")} subtitle={t("remoteHint")} checked={v.remote} onCheckedChange={(remote) => setV({ ...v, remote })} disabled={disabled} />
+        {v.remote ? (
+          <>
+            <StepperRow
+              label={t("maxDistance")}
+              value={v.maxDistanceKm == null ? t("maxDistanceNone") : t("maxDistanceValue", { km: v.maxDistanceKm })}
+              min={DISTANCES.indexOf(v.maxDistanceKm) <= 0}
+              max={DISTANCES.indexOf(v.maxDistanceKm) >= DISTANCES.length - 1}
+              onChange={(d) => setV({ ...v, maxDistanceKm: DISTANCES[Math.max(0, Math.min(DISTANCES.length - 1, DISTANCES.indexOf(v.maxDistanceKm) + d))] ?? null })}
+              disabled={disabled}
+            />
+            <StepperRow
+              label={t("confirmThreshold")}
+              value={t("confirmThresholdValue", { count: v.confirmThreshold })}
+              min={v.confirmThreshold <= 1}
+              max={v.confirmThreshold >= 10}
+              onChange={(d) => setV({ ...v, confirmThreshold: v.confirmThreshold + d })}
+              disabled={disabled}
+            />
+            <StepperRow
+              label={t("penaltyPlaces")}
+              value={t("penaltyPlacesValue", { count: v.penaltyPlaces })}
+              min={v.penaltyPlaces <= 1}
+              max={v.penaltyPlaces >= 20}
+              onChange={(d) => setV({ ...v, penaltyPlaces: v.penaltyPlaces + d })}
+              disabled={disabled}
+            />
+            <StepperRow
+              label={t("maxDelays")}
+              value={t("maxDelaysValue", { count: v.maxDelays })}
+              min={v.maxDelays <= 1}
+              max={v.maxDelays >= 5}
+              onChange={(d) => setV({ ...v, maxDelays: v.maxDelays + d })}
+              disabled={disabled}
+            />
+            <StepperRow
+              label={t("travelKmh")}
+              value={t("travelKmhValue", { count: v.travelKmh })}
+              step={5}
+              min={v.travelKmh <= 5}
+              max={v.travelKmh >= 80}
+              onChange={(d) => setV({ ...v, travelKmh: v.travelKmh + d })}
+              disabled={disabled}
+            />
+            <StepperRow
+              label={t("leaveMargin")}
+              value={t("leaveMarginValue", { minutes: v.leaveMargin })}
+              step={5}
+              min={v.leaveMargin <= 0}
+              max={v.leaveMargin >= 60}
+              onChange={(d) => setV({ ...v, leaveMargin: v.leaveMargin + d })}
+              disabled={disabled}
+            />
+          </>
+        ) : null}
       </ListSection>
       <ListSection
         header={t("appointmentsHeader")}
@@ -146,6 +222,29 @@ export function BranchSettingsForm({
           disabled={disabled}
         />
       </ListSection>
+      <ListSection header={t("requestsHeader")}>
+        <ListSwitchRow title={t("requests")} subtitle={t("requestsHint")} checked={v.requests} onCheckedChange={(requests) => setV({ ...v, requests })} disabled={disabled} />
+        {v.requests ? (
+          <StepperRow
+            label={t("requestDays")}
+            value={t("requestDaysValue", { count: v.requestDays })}
+            step={7}
+            min={v.requestDays <= 7}
+            max={v.requestDays >= 56}
+            onChange={(d) => setV({ ...v, requestDays: Math.max(1, Math.min(60, v.requestDays + d)) })}
+            disabled={disabled}
+          />
+        ) : null}
+      </ListSection>
+      <input type="hidden" name="publicListingEnabled" value={String(v.publicListing)} />
+      <input type="hidden" name="remoteMaxDistanceKm" value={v.maxDistanceKm ?? ""} />
+      <input type="hidden" name="remoteConfirmThreshold" value={v.confirmThreshold} />
+      <input type="hidden" name="remotePenaltyPlaces" value={v.penaltyPlaces} />
+      <input type="hidden" name="remoteMaxDelays" value={v.maxDelays} />
+      <input type="hidden" name="remoteTravelKmh" value={v.travelKmh} />
+      <input type="hidden" name="remoteLeaveMarginMinutes" value={v.leaveMargin} />
+      <input type="hidden" name="appointmentRequestsEnabled" value={String(v.requests)} />
+      <input type="hidden" name="appointmentRequestDays" value={v.requestDays} />
       <input type="hidden" name="appointmentMode" value={v.appointmentMode} />
       <input type="hidden" name="appointmentWalkinRatio" value={v.walkinRatio} />
       <input type="hidden" name="appointmentEarlyMinutes" value={v.early} />
