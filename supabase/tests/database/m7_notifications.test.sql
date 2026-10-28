@@ -149,6 +149,8 @@ select ok((select bool_and(relrowsecurity) from pg_class where oid in
   ('public.notification_jobs'::regclass, 'public.whatsapp_opt_outs'::regclass, 'public.provider_webhook_events'::regclass)), 'RLS activée');
 
 -- ─── Expéditeur ──────────────────────────────────────────────────────────────
+-- Messages d'autres établissements (données de démo) hors du test : la transaction est annulée à la fin.
+update public.notification_jobs set status = 'skipped' where status = 'pending' and organization_id <> (select id from ids where name = 'clinic');
 select tests.as_service();
 insert into vals select 'claim', public.claim_notification_jobs(100);
 select ok((select jsonb_array_length(v) >= 8 from vals where name = 'claim'), 'réservation des jobs dus');
