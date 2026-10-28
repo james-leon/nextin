@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { test, type Browser, type Page } from "@playwright/test";
-import { signInViaUi, signUpViaUi, uniqueEmail, verifyPhoneViaUi } from "./helpers";
+import { fullPageShot, signInViaUi, signUpViaUi, uniqueEmail, verifyPhoneViaUi } from "./helpers";
 
 
 // Captures M10a (abonnements) avec les données de démo (`pnpm seed:demo:local`) en téléphone, tablette (portrait et
@@ -17,7 +17,7 @@ type Size = keyof typeof SIZES;
 async function shot(page: Page, name: string) {
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(700);
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
+  await fullPageShot(page, `${OUT}/${name}.png`);
 }
 
 async function open(browser: Browser, size: Size, theme: "light" | "dark") {

@@ -106,3 +106,13 @@ export async function createBranchViaUi(page: Page, root: string, name: string) 
   await page.waitForURL(/\/branches\/[0-9a-f-]{36}\?saved=1$/);
   return new URL(page.url()).pathname;
 }
+
+/**
+ * Capture pleine page fidèle : la barre d'action du bas (fixe) est posée en bas du document, comme on la voit une fois
+ * la page défilée jusqu'au bout. Sans cela, la capture la dessine au milieu de la page, sur le contenu.
+ */
+export async function fullPageShot(page: Page, path: string) {
+  const style = await page.addStyleTag({ content: "html{position:relative}.safe-bottom.fixed{position:absolute!important}" });
+  await page.screenshot({ path, fullPage: true });
+  await style.evaluate((el) => el.remove());
+}

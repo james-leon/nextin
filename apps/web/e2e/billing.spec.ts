@@ -18,6 +18,24 @@ async function firstLoadBytes(page: Page, path: string) {
   return total;
 }
 
+/** Espace entre le bas des cartes des formules (et de la note) et le bouton de la barre du bas, page tout en bas. */
+async function plansClearOfBottomBar(page: Page) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(300);
+  return page.evaluate(() => {
+    const section = document.querySelector<HTMLElement>("section[aria-labelledby=plans-title]");
+    const button = section?.querySelector<HTMLElement>(".safe-bottom button");
+    if (!section || !button) return null;
+    // Formules, note, et toute la colonne de droite (utilisation, factures) : la barre couvre toute la largeur.
+    const content = [
+      ...section.querySelectorAll<HTMLElement>("[role=radiogroup] > button, :scope > p"),
+      ...document.querySelectorAll<HTMLElement>("main section, main ul"),
+    ].filter((el) => !el.closest(".safe-bottom") && el.offsetParent !== null);
+    const bottom = Math.max(...content.map((el) => el.getBoundingClientRect().bottom));
+    return button.getBoundingClientRect().top - bottom;
+  });
+}
+
 /** Établissement en essai (inscription par l'interface) et page Abonnement ouverte. */
 async function trialOrg(page: Page, name: string) {
   const root = await createOrgViaUi(page, { orgName: name, email: uniqueEmail("billing") });
@@ -60,6 +78,22 @@ test.describe("M10a — abonnements et paiements", () => {
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
     expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
+  });
+
+  test("ordinateur : la barre « Payer » ne recouvre jamais le bas des formules", async ({ page }, info) => {
+    test.skip(info.project.name !== "desktop", "mise en page ordinateur");
+    await trialOrg(page, "Clinique Marge");
+    for (const viewport of [
+      { width: 1440, height: 900 },
+      { width: 1280, height: 800 },
+      { width: 1024, height: 768 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const gap = await plansClearOfBottomBar(page);
+      console.log(`${viewport.width}×${viewport.height} : ${Math.round(gap ?? -1)} px`);
+      expect(gap, `${viewport.width}×${viewport.height}`).not.toBeNull();
+      expect(gap!, `${viewport.width}×${viewport.height}`).toBeGreaterThanOrEqual(8);
+    }
   });
 
   test("paiement refusé (numéro en 99999) : message clair, nouvel essai possible", async ({ page }) => {
