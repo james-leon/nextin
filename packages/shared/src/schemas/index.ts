@@ -210,6 +210,21 @@ export const branchSettingsFormSchema = z.object({
   appointmentEarlyMinutes: z.coerce.number().int().min(0).max(120),
   appointmentLateGraceMinutes: z.coerce.number().int().min(0).max(120),
   appointmentNoShowMinutes: z.coerce.number().int().min(15).max(480),
+  // M9 — visibilité publique, ticket à distance et demandes de rendez-vous.
+  publicListingEnabled: formBoolean,
+  remoteMaxDistanceKm: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? Number(v.replace(",", ".")) : null))
+    .pipe(z.number().min(0.5).max(200).nullable()),
+  remoteConfirmThreshold: z.coerce.number().int().min(1).max(10),
+  remotePenaltyPlaces: z.coerce.number().int().min(1).max(20),
+  remoteMaxDelays: z.coerce.number().int().min(1).max(5),
+  remoteTravelKmh: z.coerce.number().int().min(5).max(80),
+  remoteLeaveMarginMinutes: z.coerce.number().int().min(0).max(60),
+  appointmentRequestsEnabled: formBoolean,
+  appointmentRequestDays: z.coerce.number().int().min(1).max(60),
 });
 
 /** Invitation depuis l'écran Personnel : un rôle d'agence exige une agence, sauf réception/agent « toutes agences ». */
@@ -234,11 +249,58 @@ export const takeTicketSchema = z
     entryCode: z.string().trim().min(6).max(64).regex(/^[A-Za-z0-9]+$/, "invalid_entry").optional(),
     priorityReason: z.enum(PRIORITY_REASONS).optional(),
     captchaToken: z.string().max(2048).optional(),
+    // M9 — ticket à distance : position du client (calcul du trajet, jamais enregistrée).
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
   })
   .superRefine((v, ctx) => {
     if (v.source !== "remote" && !v.entryCode) ctx.addIssue({ code: "custom", message: "invalid_entry", path: ["entryCode"] });
+    if ((v.latitude == null) !== (v.longitude == null)) ctx.addIssue({ code: "custom", message: "location_required", path: ["latitude"] });
   });
 export type TakeTicketInput = z.infer<typeof takeTicketSchema>;
+
+/* ─── M9 : demande de rendez-vous du patient ───────────────────────────── */
+
+export const REQUEST_PERIODS = ["morning", "afternoon", "any"] as const;
+export type RequestPeriod = (typeof REQUEST_PERIODS)[number];
+
+/**
+ * Demande de rendez-vous (route POST /api/appointment-requests) : créneau précis libre, ou jour + moment de la
+ * journée ; praticien facultatif (« peu importe ») ; numéro WhatsApp camerounais, vérifié ensuite par code.
+ */
+export const appointmentRequestSchema = z
+  .object({
+    branchId: z.uuid(),
+    serviceId: z.uuid(),
+    practitionerId: z.uuid().nullable().optional(),
+    startsAt: z.iso.datetime({ offset: true }).nullable().optional(),
+    day: z.iso.date().nullable().optional(),
+    period: z.enum(REQUEST_PERIODS).nullable().optional(),
+    phone: z
+      .string()
+      .trim()
+      .transform((v, ctx) => {
+        const e164 = normalizeCameroonPhone(v);
+        if (!e164) {
+          ctx.addIssue({ code: "custom", message: "phone_invalid" });
+          return z.NEVER;
+        }
+        return e164;
+      }),
+    label: z.string().trim().max(40).optional().transform((v) => v || null),
+    locale: z.enum(["fr", "en"]).default("fr"),
+    captchaToken: z.string().max(2048).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.startsAt && !(v.day && v.period)) ctx.addIssue({ code: "custom", message: "slot_required", path: ["startsAt"] });
+  });
+export type AppointmentRequestInput = z.infer<typeof appointmentRequestSchema>;
+
+/** Code de vérification reçu sur WhatsApp (6 chiffres, espaces tolérés). */
+export const requestCodeSchema = z
+  .string()
+  .transform((v) => v.replace(/\s/g, ""))
+  .pipe(z.string().regex(/^[0-9]{6}$/, "code_invalid"));
 
 /* ─── M6 : écrans TV ────────────────────────────────────────────────────── */
 

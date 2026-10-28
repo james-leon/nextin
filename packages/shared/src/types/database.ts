@@ -1996,6 +1996,9 @@ isOneToOne: false
 "take_ticket":
 { Args: { "p_customer": string,"p_entry_code": string,"p_priority_reason": Database["public"]['Enums']["priority_reason"],"p_service": string,"p_source": Database["public"]['Enums']["ticket_source"] }; Returns: Json
                            },
+"throttle_appointment_request":
+{ Args: { "p_customer": string,"p_ip_hash": string }; Returns: boolean
+                           },
 "throttle_ticket_request":
 { Args: { "p_customer": string,"p_ip_hash": string }; Returns: boolean
                            },

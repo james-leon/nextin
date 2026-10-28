@@ -60,7 +60,8 @@ describe("modèles WhatsApp (à faire approuver par Meta)", () => {
         expect(body.trim().startsWith("{{")).toBe(false);
         expect(body.trim().endsWith("}}")).toBe(false);
         expect(body.length).toBeLessThanOrEqual(1024);
-        expect(body).toMatch(/STOP/);
+        // Modèle d'authentification (code) : texte imposé par Meta, sans mention STOP.
+        if (t.category !== "authentication") expect(body).toMatch(/STOP/);
       }
     }
   });
@@ -85,6 +86,16 @@ describe("SMS et web push", () => {
       expect(text.length).toBeLessThanOrEqual(160);
     }
   });
+  it("M9 : code de vérification et ticket à distance en un seul SMS", () => {
+    const d = { ...data, otp: "481516", penaltyPlaces: 3 };
+    for (const l of ["fr", "en"] as const) {
+      for (const e of ["request_code", "presence_reminder", "time_to_leave"] as const) {
+        expect(smsText(e, l, d).length).toBeLessThanOrEqual(160);
+      }
+      expect(smsText("request_code", l, d)).toContain("481516");
+    }
+    expect(whatsappText("presence_reminder", "fr", d)).toContain("reculera de 3 places");
+  });
   it("push : titre, texte et lien du ticket", () => {
     expect(pushMessage("your_turn", "fr", data)).toEqual({ title: "C'est votre tour !", body: "Ticket C-047 · Cabinet 3", url: data.link, tag: "nextin-C-047" });
   });
@@ -105,6 +116,14 @@ describe("règles d'envoi", () => {
     expect(isStillRelevant("your_turn", "serving")).toBe(false);
     expect(isStillRelevant("almost_your_turn", "waiting")).toBe(true);
     expect(isStillRelevant("almost_your_turn", "called")).toBe(false);
+    // M9 : ticket à distance et demandes de rendez-vous.
+    expect(isStillRelevant("time_to_leave", "waiting")).toBe(true);
+    expect(isStillRelevant("presence_reminder", "called")).toBe(false);
+    expect(isStillRelevant("remote_cancelled", "cancelled")).toBe(true);
+    expect(isStillRelevant("request_code", "unverified")).toBe(true);
+    expect(isStillRelevant("request_code", "pending")).toBe(false);
+    expect(isStillRelevant("request_accepted", "confirmed")).toBe(true);
+    expect(isStillRelevant("request_declined", "declined")).toBe(true);
     expect(guardSatisfied("delivered")).toBe(true);
     expect(guardSatisfied("sent")).toBe(false);
   });

@@ -8,6 +8,8 @@ import type { NotifEvent } from "./messages";
 type TicketStatus = "waiting" | "called" | "serving" | "served" | "no_show" | "cancelled" | "transferred";
 /** Statuts d'un rendez-vous (enum SQL `appointment_status`). */
 type AppointmentStatus = "confirmed" | "checked_in" | "completed" | "rescheduled" | "cancelled" | "no_show";
+/** Statuts d'une demande de rendez-vous (enum SQL `appointment_request_status`, M9). */
+type RequestStatus = "unverified" | "pending" | "accepted" | "modified" | "declined" | "expired";
 
 /** Délai de garde : sans accusé de remise WhatsApp de « c'est votre tour » après 2 minutes, un SMS part. */
 export const YOUR_TURN_SMS_GUARD_SECONDS = 120;
@@ -27,12 +29,15 @@ export function retryDelaySeconds(attempt: number): number | null {
 }
 
 /**
- * Un message n'a de sens que si le ticket (ou le rendez-vous) est toujours dans l'état attendu (sinon il est ignoré).
- * Rendez-vous : confirmé pour la confirmation et les rappels, annulé pour l'annulation.
+ * Un message n'a de sens que si le ticket (ou le rendez-vous, ou la demande) est toujours dans l'état attendu
+ * (sinon il est ignoré). Rendez-vous : confirmé pour la confirmation, la réponse à une demande et les rappels,
+ * annulé pour l'annulation. Ticket à distance annulé faute de présence : statut annulé.
  */
-export function isStillRelevant(event: NotifEvent, status: TicketStatus | AppointmentStatus): boolean {
-  if (event === "appointment_cancelled") return status === "cancelled";
-  if (event.startsWith("appointment_")) return status === "confirmed";
+export function isStillRelevant(event: NotifEvent, status: TicketStatus | AppointmentStatus | RequestStatus): boolean {
+  if (event === "appointment_cancelled" || event === "remote_cancelled") return status === "cancelled";
+  if (event.startsWith("appointment_") || event === "request_accepted" || event === "request_modified") return status === "confirmed";
+  if (event === "request_code") return status === "unverified";
+  if (event === "request_declined") return status === "declined";
   return event === "your_turn" ? status === "called" : status === "waiting";
 }
 

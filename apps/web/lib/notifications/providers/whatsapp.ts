@@ -34,14 +34,18 @@ export function cloudWhatsApp(config: { token: string; phoneNumberId: string }, 
   return {
     name: "cloud",
     sendText: (to, text) => post({ to: to.replace(/^\+/, ""), type: "text", text: { body: text, preview_url: true } }),
-    sendTemplate: (to, template, language, params) =>
+    sendTemplate: (to, template, language, params, otp) =>
       post({
         to: to.replace(/^\+/, ""),
         type: "template",
         template: {
           name: template,
           language: { code: language },
-          components: [{ type: "body", parameters: params.map((text) => ({ type: "text", text })) }],
+          components: [
+            { type: "body", parameters: params.map((text) => ({ type: "text", text })) },
+            // Modèle d'authentification : le bouton « Copier le code » reprend le code.
+            ...(otp ? [{ type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: otp }] }] : []),
+          ],
         },
       }),
   };

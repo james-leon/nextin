@@ -46,13 +46,22 @@ export async function POST(request: NextRequest) {
       return !error && data === true;
     },
     take: async (userId, input) =>
-      admin.rpc("take_ticket", {
-        p_service: input.serviceId,
-        p_source: input.source,
-        p_entry_code: (input.entryCode ?? null) as string,
-        p_priority_reason: (input.priorityReason ?? null) as PriorityReason,
-        p_customer: userId,
-      }),
+      input.source === "remote"
+        ? // Ticket à distance (M9) : la position sert au calcul du trajet, elle n'est jamais enregistrée.
+          admin.rpc("take_remote_ticket", {
+            p_service: input.serviceId,
+            p_lat: (input.latitude ?? null) as number,
+            p_lng: (input.longitude ?? null) as number,
+            p_priority_reason: null as unknown as PriorityReason,
+            p_customer: userId,
+          })
+        : admin.rpc("take_ticket", {
+            p_service: input.serviceId,
+            p_source: input.source,
+            p_entry_code: (input.entryCode ?? null) as string,
+            p_priority_reason: (input.priorityReason ?? null) as PriorityReason,
+            p_customer: userId,
+          }),
   });
   return NextResponse.json(result.body, { status: result.status, headers: { "Cache-Control": "no-store" } });
 }

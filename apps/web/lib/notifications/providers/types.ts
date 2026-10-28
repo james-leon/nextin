@@ -7,8 +7,8 @@ export interface WhatsAppProvider {
   readonly name: "cloud" | "fake";
   /** Message libre (fenêtre de 24 h ouverte par le client). `to` : numéro E.164. */
   sendText(to: string, text: string): Promise<SendResult>;
-  /** Modèle approuvé (hors fenêtre). */
-  sendTemplate(to: string, template: string, language: "fr" | "en", params: readonly string[]): Promise<SendResult>;
+  /** Modèle approuvé (hors fenêtre). `otp` : modèle d'authentification, code repris par le bouton « Copier le code ». */
+  sendTemplate(to: string, template: string, language: "fr" | "en", params: readonly string[], otp?: string): Promise<SendResult>;
 }
 
 export interface SmsProvider {

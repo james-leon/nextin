@@ -18,6 +18,15 @@ export const NOTIF_EVENTS = [
   "appointment_reminder_2h",
   "appointment_rescheduled",
   "appointment_cancelled",
+  // M9 — ticket à distance.
+  "time_to_leave",
+  "presence_reminder",
+  "remote_cancelled",
+  // M9 — demande de rendez-vous du patient (code de vérification, puis réponse de l'accueil).
+  "request_code",
+  "request_accepted",
+  "request_modified",
+  "request_declined",
 ] as const;
 export const APPOINTMENT_EVENTS: readonly NotifEvent[] = [
   "appointment_confirmed",
@@ -25,7 +34,11 @@ export const APPOINTMENT_EVENTS: readonly NotifEvent[] = [
   "appointment_reminder_2h",
   "appointment_rescheduled",
   "appointment_cancelled",
+  "request_accepted",
+  "request_modified",
 ];
+/** Messages d'une demande de rendez-vous (contact rattaché à la demande, ni ticket ni rendez-vous). */
+export const REQUEST_EVENTS: readonly NotifEvent[] = ["request_code", "request_declined"];
 export type NotifEvent = (typeof NOTIF_EVENTS)[number];
 export type NotifChannel = "whatsapp" | "push" | "sms";
 
@@ -47,11 +60,18 @@ export type NotificationData = {
   lateUntil: string | null;
   /** Rendez-vous (M5b) : date et heure locales déjà formatées, praticien (« Dr Mbarga »). */
   appointment?: { date: string; time: string; practitioner: string } | null;
+  /** Ticket à distance (M9) : places de recul si la présence n'est pas confirmée. */
+  penaltyPlaces?: number | null;
+  /** Demande de rendez-vous (M9) : code de vérification et motif d'un refus. */
+  otp?: string | null;
+  reason?: string | null;
 };
 
 type Template = {
   /** Nom du modèle chez Meta (identique en FR et EN). */
   name: string;
+  /** Catégorie Meta : Utilité par défaut ; Authentification pour le code (bouton « Copier le code »). */
+  category?: "utility" | "authentication";
   /** Corps exact soumis à Meta ; {{n}} = variables, dans l'ordre de `params`. */
   body: Record<NotifLocale, string>;
   params: (d: NotificationData) => string[];
@@ -153,6 +173,64 @@ export const WHATSAPP_TEMPLATES: Record<NotifEvent, Template> = {
     },
     params: (d) => [d.place, appt(d).date, appt(d).time],
   },
+  time_to_leave: {
+    name: "heure_de_partir",
+    body: {
+      fr: `Il est temps de partir : ticket {{1}} chez {{2}}.\nAttente estimée : environ {{3}} min.\nÀ votre arrivée, scannez le QR code de l'accueil pour confirmer votre présence.\nSuivez votre ticket : {{4}}\n${STOP.fr}`,
+      en: `Time to leave: ticket {{1}} at {{2}}.\nEstimated wait: about {{3}} min.\nWhen you arrive, scan the QR code at reception to confirm you are here.\nTrack your ticket: {{4}}\n${STOP.en}`,
+    },
+    params: (d) => [d.code, d.place, num(d.waitMinutes), d.link],
+  },
+  presence_reminder: {
+    name: "confirmez_presence",
+    body: {
+      fr: `Votre tour approche : ticket {{1}} chez {{2}}.\nPersonnes devant vous : {{3}}.\nDès votre arrivée, scannez le QR code de l'accueil pour confirmer votre présence. Sans confirmation, votre ticket reculera de {{4}} places.\n${STOP.fr}`,
+      en: `Your turn is coming up: ticket {{1}} at {{2}}.\nPeople ahead of you: {{3}}.\nAs soon as you arrive, scan the QR code at reception to confirm you are here. Without confirmation, your ticket will move back {{4}} places.\n${STOP.en}`,
+    },
+    params: (d) => [d.code, d.place, num(d.ahead), num(d.penaltyPlaces ?? 0)],
+  },
+  remote_cancelled: {
+    name: "ticket_annule_absence",
+    body: {
+      fr: `Votre ticket {{1}} chez {{2}} a été annulé : votre présence n'a pas été confirmée à temps.\nVous pouvez prendre un nouveau ticket : {{3}}\n${STOP.fr}`,
+      en: `Your ticket {{1}} at {{2}} has been cancelled because your presence was not confirmed in time.\nYou can take a new ticket: {{3}}\n${STOP.en}`,
+    },
+    params: (d) => [d.code, d.place, d.link],
+  },
+  request_code: {
+    name: "code_verification",
+    category: "authentication",
+    // Modèle d'authentification Meta : texte imposé, avertissement de sécurité et durée de validité (10 min).
+    body: {
+      fr: "*{{1}}* est votre code de vérification. Pour votre sécurité, ne communiquez pas ce code.\nCe code expire dans 10 minutes.",
+      en: "*{{1}}* is your verification code. For your security, do not share this code.\nThis code expires in 10 minutes.",
+    },
+    params: (d) => [d.otp ?? ""],
+  },
+  request_accepted: {
+    name: "rdv_demande_confirmee",
+    body: {
+      fr: `Votre demande de rendez-vous chez {{1}} est confirmée : {{2}} à {{3}}, avec {{4}}.\nÀ votre arrivée, présentez-vous à l'accueil ou scannez le QR code de la salle d'attente. ${STOP.fr}`,
+      en: `Your appointment request at {{1}} is confirmed: {{2}} at {{3}}, with {{4}}.\nWhen you arrive, check in at reception or scan the QR code in the waiting room. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).date, appt(d).time, appt(d).practitioner],
+  },
+  request_modified: {
+    name: "rdv_demande_modifiee",
+    body: {
+      fr: `Votre demande de rendez-vous chez {{1}} n'a pas pu être retenue telle quelle. L'accueil vous propose : {{2}} à {{3}}, avec {{4}}.\nSi ce créneau ne vous convient pas, contactez l'établissement. ${STOP.fr}`,
+      en: `Your appointment request at {{1}} could not be kept as is. Reception offers you: {{2}} at {{3}}, with {{4}}.\nIf this slot does not suit you, please contact the facility. ${STOP.en}`,
+    },
+    params: (d) => [d.place, appt(d).date, appt(d).time, appt(d).practitioner],
+  },
+  request_declined: {
+    name: "rdv_demande_refusee",
+    body: {
+      fr: `Votre demande de rendez-vous chez {{1}} n'a pas pu être acceptée.\nMotif : {{2}}\nVous pouvez faire une nouvelle demande : {{3}}\n${STOP.fr}`,
+      en: `Your appointment request at {{1}} could not be accepted.\nReason: {{2}}\nYou can send a new request: {{3}}\n${STOP.en}`,
+    },
+    params: (d) => [d.place, d.reason ?? "", d.link],
+  },
 };
 
 /** Remplace {{1}}, {{2}}… par les valeurs (même rendu que Meta). */
@@ -193,6 +271,13 @@ const SMS: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => strin
     appointment_reminder_2h: (d) => `NextIn : rappel, RDV aujourd'hui a ${appt(d).time} chez ${d.place}, ${appt(d).practitioner}.`,
     appointment_rescheduled: (d) => `NextIn : RDV deplace au ${appt(d).date} a ${appt(d).time} chez ${d.place}, ${appt(d).practitioner}.`,
     appointment_cancelled: (d) => `NextIn : RDV du ${appt(d).date} a ${appt(d).time} chez ${d.place} annule.`,
+    time_to_leave: (d) => `NextIn : partez maintenant, ticket ${d.code}, ~${num(d.waitMinutes)} min d'attente. Scannez le QR de l'accueil a l'arrivee. ${d.link}`,
+    presence_reminder: (d) => `NextIn : ticket ${d.code}, ${num(d.ahead)} devant vous. A l'arrivee, scannez le QR de l'accueil, sinon recul de ${num(d.penaltyPlaces ?? 0)} places.`,
+    remote_cancelled: (d) => `NextIn : ticket ${d.code} annule, presence non confirmee a temps. ${d.link}`,
+    request_code: (d) => `NextIn : votre code de verification est ${d.otp ?? ""}. Il expire dans 10 minutes. Ne le communiquez a personne.`,
+    request_accepted: (d) => `NextIn : demande de RDV confirmee chez ${d.place}, ${appt(d).date} a ${appt(d).time}, ${appt(d).practitioner}.`,
+    request_modified: (d) => `NextIn : RDV propose chez ${d.place} : ${appt(d).date} a ${appt(d).time}, ${appt(d).practitioner}.`,
+    request_declined: (d) => `NextIn : demande de RDV chez ${d.place} refusee${d.reason ? ` (${d.reason})` : ""}. ${d.link}`,
   },
   en: {
     ticket_confirmed: (d) => `NextIn: ticket ${d.code} confirmed at ${d.place}. ${num(d.ahead)} ahead of you, ~${num(d.waitMinutes)} min. ${d.link}`,
@@ -206,6 +291,13 @@ const SMS: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => strin
     appointment_reminder_2h: (d) => `NextIn: reminder, appointment today at ${appt(d).time}, ${d.place}, ${appt(d).practitioner}.`,
     appointment_rescheduled: (d) => `NextIn: appointment moved to ${appt(d).date} at ${appt(d).time}, ${d.place}, ${appt(d).practitioner}.`,
     appointment_cancelled: (d) => `NextIn: appointment on ${appt(d).date} at ${appt(d).time}, ${d.place}, cancelled.`,
+    time_to_leave: (d) => `NextIn: leave now, ticket ${d.code}, ~${num(d.waitMinutes)} min wait. Scan the QR at reception on arrival. ${d.link}`,
+    presence_reminder: (d) => `NextIn: ticket ${d.code}, ${num(d.ahead)} ahead of you. On arrival, scan the QR at reception or move back ${num(d.penaltyPlaces ?? 0)} places.`,
+    remote_cancelled: (d) => `NextIn: ticket ${d.code} cancelled, presence not confirmed in time. ${d.link}`,
+    request_code: (d) => `NextIn: your verification code is ${d.otp ?? ""}. It expires in 10 minutes. Do not share it.`,
+    request_accepted: (d) => `NextIn: appointment request confirmed at ${d.place}, ${appt(d).date} at ${appt(d).time}, ${appt(d).practitioner}.`,
+    request_modified: (d) => `NextIn: appointment offered at ${d.place}: ${appt(d).date} at ${appt(d).time}, ${appt(d).practitioner}.`,
+    request_declined: (d) => `NextIn: appointment request at ${d.place} declined${d.reason ? ` (${d.reason})` : ""}. ${d.link}`,
   },
 };
 
@@ -226,6 +318,13 @@ const PUSH: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => { ti
     appointment_reminder_2h: (d) => ({ title: "Rendez-vous aujourd'hui", body: `${appt(d).time} · ${appt(d).practitioner}` }),
     appointment_rescheduled: (d) => ({ title: "Rendez-vous déplacé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
     appointment_cancelled: (d) => ({ title: "Rendez-vous annulé", body: `${appt(d).date} à ${appt(d).time}` }),
+    time_to_leave: (d) => ({ title: "Il est temps de partir", body: `Ticket ${d.code} · environ ${num(d.waitMinutes)} min d'attente` }),
+    presence_reminder: (d) => ({ title: "Confirmez votre présence", body: `Ticket ${d.code} · scannez le QR code de l'accueil dès votre arrivée` }),
+    remote_cancelled: (d) => ({ title: "Ticket annulé", body: `${d.code} : présence non confirmée à temps` }),
+    request_code: (d) => ({ title: "Code de vérification", body: `${d.otp ?? ""}` }),
+    request_accepted: (d) => ({ title: "Rendez-vous confirmé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
+    request_modified: (d) => ({ title: "Rendez-vous proposé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
+    request_declined: (d) => ({ title: "Demande de rendez-vous refusée", body: d.reason ?? d.place }),
   },
   en: {
     ticket_confirmed: (d) => ({ title: `Ticket ${d.code} confirmed`, body: `${num(d.ahead)} ahead of you · about ${num(d.waitMinutes)} min` }),
@@ -239,6 +338,13 @@ const PUSH: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => { ti
     appointment_reminder_2h: (d) => ({ title: "Appointment today", body: `${appt(d).time} · ${appt(d).practitioner}` }),
     appointment_rescheduled: (d) => ({ title: "Appointment moved", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
     appointment_cancelled: (d) => ({ title: "Appointment cancelled", body: `${appt(d).date} at ${appt(d).time}` }),
+    time_to_leave: (d) => ({ title: "Time to leave", body: `Ticket ${d.code} · about ${num(d.waitMinutes)} min wait` }),
+    presence_reminder: (d) => ({ title: "Confirm you are here", body: `Ticket ${d.code} · scan the QR code at reception as soon as you arrive` }),
+    remote_cancelled: (d) => ({ title: "Ticket cancelled", body: `${d.code}: presence not confirmed in time` }),
+    request_code: (d) => ({ title: "Verification code", body: `${d.otp ?? ""}` }),
+    request_accepted: (d) => ({ title: "Appointment confirmed", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
+    request_modified: (d) => ({ title: "Appointment offered", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
+    request_declined: (d) => ({ title: "Appointment request declined", body: d.reason ?? d.place }),
   },
 };
 

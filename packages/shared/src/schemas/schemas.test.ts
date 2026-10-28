@@ -6,6 +6,8 @@ import {
   newOrganizationFormSchema,
   signupSchema,
   takeTicketSchema,
+  appointmentRequestSchema,
+  requestCodeSchema,
 } from "./index";
 
 describe("schemas", () => {
@@ -102,5 +104,27 @@ describe("M3 schemas", () => {
   it("refuse la source accueil et les motifs inconnus", () => {
     expect(takeTicketSchema.safeParse({ serviceId, source: "reception", entryCode: "ABCDEF" }).success).toBe(false);
     expect(takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "ABCDEF", priorityReason: "vip" }).success).toBe(false);
+  });
+});
+
+describe("M9 — ticket à distance et demandes de rendez-vous", () => {
+  const ids = { branchId: "6f1c1b7e-8a3b-4f7e-9c51-2b3a4d5e6f70", serviceId: "7f1c1b7e-8a3b-4f7e-9c51-2b3a4d5e6f71" };
+  it("ticket à distance : position complète ou absente", () => {
+    expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 4.05, longitude: 9.7 }).success).toBe(true);
+    expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 4.05 }).success).toBe(false);
+    expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 95, longitude: 9.7 }).success).toBe(false);
+  });
+  it("demande : créneau précis, ou jour + moment ; numéro normalisé", () => {
+    const precise = appointmentRequestSchema.safeParse({ ...ids, startsAt: "2026-10-29T09:00:00+01:00", phone: "6 77 00 09 01" });
+    expect(precise.success && precise.data.phone).toBe("+237677000901");
+    expect(appointmentRequestSchema.safeParse({ ...ids, day: "2026-10-30", period: "morning", phone: "677000901" }).success).toBe(true);
+    const none = appointmentRequestSchema.safeParse({ ...ids, phone: "677000901" });
+    expect(none.success ? null : none.error.issues[0]?.message).toBe("slot_required");
+    const bad = appointmentRequestSchema.safeParse({ ...ids, day: "2026-10-30", period: "morning", phone: "12" });
+    expect(bad.success ? null : bad.error.issues[0]?.message).toBe("phone_invalid");
+  });
+  it("code : six chiffres, espaces tolérés", () => {
+    expect(requestCodeSchema.parse("481 516")).toBe("481516");
+    expect(requestCodeSchema.safeParse("48151").success).toBe(false);
   });
 });

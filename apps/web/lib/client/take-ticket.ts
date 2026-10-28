@@ -11,7 +11,9 @@ export type TakeTicketOutcome =
  * nouveau jeton captcha pour la demande, puis POST /api/tickets avec le jeton d'accès.
  */
 export async function takeTicket(
-  input: { serviceId: string; source: "qr" | "short_code"; entryCode: string; priorityReason: PriorityReason | null },
+  input:
+    | { serviceId: string; source: "qr" | "short_code"; entryCode: string; priorityReason: PriorityReason | null }
+    | { serviceId: string; source: "remote"; position: { lat: number; lng: number } | null },
   captcha: { siteKey: string | null; container: HTMLElement | null },
 ): Promise<TakeTicketOutcome> {
   const token = async (action: string) =>
@@ -33,13 +35,23 @@ export async function takeTicket(
       res = await fetch("/api/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${access}` },
-        body: JSON.stringify({
-          serviceId: input.serviceId,
-          source: input.source,
-          entryCode: input.entryCode,
-          priorityReason: input.priorityReason ?? undefined,
-          captchaToken,
-        }),
+        body: JSON.stringify(
+          input.source === "remote"
+            ? {
+                serviceId: input.serviceId,
+                source: "remote",
+                latitude: input.position?.lat,
+                longitude: input.position?.lng,
+                captchaToken,
+              }
+            : {
+                serviceId: input.serviceId,
+                source: input.source,
+                entryCode: input.entryCode,
+                priorityReason: input.priorityReason ?? undefined,
+                captchaToken,
+              },
+        ),
       });
     } catch {
       return { ok: false, error: "network" };

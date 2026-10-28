@@ -23,6 +23,13 @@ export const QUEUE_ERROR_CODES = [
   "rating_disabled",
   "consent_required",
   "phone_invalid",
+  // M9 — ticket à distance et demandes de rendez-vous.
+  "location_required",
+  "too_far",
+  "requests_disabled",
+  "request_exists",
+  "code_invalid",
+  "code_expired",
 ] as const;
 export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
 
@@ -53,6 +60,8 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "already_rated":
     case "rating_disabled":
     case "active_ticket_exists":
+    case "request_exists":
+    case "code_expired":
       return 409;
     default:
       return 422;

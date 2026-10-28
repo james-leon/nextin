@@ -21,6 +21,7 @@ import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib
 import { callRpc } from "@/lib/client/supabase-public";
 import { waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
+import { RemoteTicketCard } from "./remote-ticket-card";
 
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
 const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
@@ -90,8 +91,12 @@ export function TicketLive({
 
   // Lien gardé sur l'appareil (onglet « Mon ticket »), y compris pour un lien reçu (ticket d'accueil, partage).
   useEffect(() => {
-    if (!savedTicket(token)) saveTicket({ token, code: initial.display_code, entry: null });
-  }, [token, initial.display_code]);
+    const saved = savedTicket(token);
+    // Ticket à distance (M9) : l'agence est gardée pour confirmer la présence au scan de son QR code.
+    if (!saved || (initial.remote && !saved.remote)) {
+      saveTicket({ token, code: initial.display_code, entry: null, ...(initial.remote ? { branchId: initial.branch.id, remote: true } : {}) });
+    }
+  }, [token, initial.display_code, initial.remote, initial.branch.id]);
 
   const call = board ? callForCode(board, view.display_code) : null;
   const progress = view.status === "waiting" ? waitingProgress(view, board, storedMaxAhead, now) : null;
@@ -122,7 +127,11 @@ export function TicketLive({
 
   const serviceName = locale === "en" && view.service.name_en ? view.service.name_en : view.service.name;
   const place = view.organization.name;
-  const back = entry ? { href: `/q/${entry}`, label: t("back") } : { href: "/", label: t("home") };
+  const back = entry
+    ? { href: `/q/${entry}`, label: t("back") }
+    : view.remote
+      ? { href: `/b/${view.branch.id}`, label: t("back") }
+      : { href: "/", label: t("home") };
   const nowServing = board?.calls.find((c) => isActiveCall(c) && c.service_id === view.service.id && c.code !== view.display_code);
 
   async function share() {
@@ -136,6 +145,11 @@ export function TicketLive({
       // Page non sécurisée (test en Wi-Fi local) : partage par WhatsApp.
       window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, "_blank", "noopener");
     }
+  }
+
+  async function signalOnMyWay() {
+    const { data } = await callRpc<TicketView>("signal_on_my_way", { p_token: token });
+    if (data) setView(data);
   }
 
   async function cancel() {
@@ -154,7 +168,7 @@ export function TicketLive({
   };
 
   return (
-    <main className={active ? "min-h-dvh pb-36" : "min-h-dvh pb-40"}>
+    <main className={active && view.remote && !view.remote.presence_confirmed_at ? "min-h-dvh pb-48" : active ? "min-h-dvh pb-36" : "min-h-dvh pb-40"}>
       <NavigationBar
         variant="inline"
         title={t("title")}
@@ -210,7 +224,9 @@ export function TicketLive({
             <p className="text-callout text-label-secondary">
               {view.display_code} · {serviceName} · {place}
             </p>
-            {view.status === "cancelled" ? <p className="text-body text-label-secondary">{t("cancelledBody")}</p> : null}
+            {view.status === "cancelled" ? (
+              <p className="text-body text-label-secondary">{view.remote?.cancelled_for_absence ? t("cancelledAbsence") : t("cancelledBody")}</p>
+            ) : null}
             {view.status === "no_show" ? <p className="text-body text-label-secondary">{t("noShowBody")}</p> : null}
           </section>
         )}
@@ -240,6 +256,15 @@ export function TicketLive({
         ) : null}
 
         {active && vapidKey ? <PushAlerts token={token} vapidKey={vapidKey} subscribed={!!view.alerts?.push} /> : null}
+
+        {view.status === "waiting" && view.remote ? (
+          <RemoteTicketCard
+            token={token}
+            view={view}
+            waitSeconds={progress ? (progress.imminent ? 0 : progress.minutes * 60) : view.wait_seconds}
+            onChange={setView}
+          />
+        ) : null}
 
         {view.status === "waiting" && view.practitioner_late_until && new Date(view.practitioner_late_until).getTime() > now.getTime() ? (
           <CalloutCard icon={<Clock />} role="status">
@@ -276,7 +301,10 @@ export function TicketLive({
         <>
           <TicketBottomActions
             source={view.source}
-            onMyWayLabel={t("onMyWay")}
+            onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
+            onMyWay={signalOnMyWay}
+            onMyWayHref={view.remote?.on_my_way_at ? "/" : undefined}
+            hideRemote={!view.remote || !!view.remote.presence_confirmed_at}
             cancelLabel={t("cancel")}
             onCancel={() => setConfirmCancel(true)}
           />

@@ -351,6 +351,14 @@
 @utility safe-top {
   padding-top: env(safe-area-inset-top);
 }
+/* Plan schématique des établissements à proximité (sans fournisseur de tuiles) : quadrillage discret. */
+@utility map-plan {
+  background-image:
+    linear-gradient(var(--separator) 1px, transparent 1px),
+    linear-gradient(90deg, var(--separator) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

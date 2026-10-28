@@ -14,10 +14,11 @@ import { ListRow, ListSection } from "@/components/ui/list";
 import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ServiceTile } from "@/components/ui/service-tile";
-import { saveTicket } from "@/lib/client/my-tickets";
+import { remoteTicketsFor, saveTicket } from "@/lib/client/my-tickets";
+import { callRpc } from "@/lib/client/supabase-public";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { takeTicket } from "@/lib/client/take-ticket";
-import type { EntryInfo } from "@/lib/client/types";
+import type { EntryInfo, TicketView } from "@/lib/client/types";
 
 /** Écran 02 « Choisir un service » : files en direct, accès prioritaire, une action principale. */
 export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; captchaSiteKey: string | null }) {
@@ -39,6 +40,24 @@ export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; ca
 
   // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
   useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
+
+  // Ticket à distance de cet appareil dans cette agence (M9) : scanner le QR code de l'accueil confirme la présence.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      for (const saved of remoteTicketsFor(entry.branch.id)) {
+        const { data } = await callRpc<TicketView>("confirm_presence", { p_token: saved.token, p_entry_code: entry.entry_code });
+        if (cancelled) return;
+        if (data && (data.status === "waiting" || data.status === "called")) {
+          router.replace(`/t/${saved.token}`);
+          return;
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [entry.branch.id, entry.entry_code, router]);
 
   const name = (s: BoardService) => (locale === "en" && s.name_en ? s.name_en : s.name);
   const summary = (s: BoardService) => {

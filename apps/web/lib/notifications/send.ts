@@ -26,7 +26,8 @@ export type ClaimedJob = {
   event: NotifEvent;
   channel: NotifChannel;
   attempt: number;
-  payload: { until?: string | null };
+  /** Données de l'événement : heure de retour du praticien (M5), code de vérification d'une demande (M9). */
+  payload: { until?: string | null; code?: string | null };
   guard: boolean;
   fallback_status: string | null;
   contact: {
@@ -42,6 +43,21 @@ export type ClaimedJob = {
   ticket: TicketView | null;
   /** Rendez-vous (M5b) : praticien, établissement, heure ; jamais le libellé du patient. */
   appointment?: AppointmentNotice | null;
+  /** Demande de rendez-vous (M9) : code de vérification ou refus. */
+  request?: RequestNotice | null;
+};
+
+export type RequestNotice = {
+  id: string;
+  status: "unverified" | "pending" | "accepted" | "modified" | "declined" | "expired" | "cancelled";
+  token: string;
+  service: string;
+  branch: string;
+  organization: string;
+  timezone: string;
+  preferred_starts_at: string | null;
+  preferred_day: string | null;
+  decline_reason: string | null;
 };
 
 export type AppointmentNotice = {
@@ -64,6 +80,20 @@ export function notificationData(job: ClaimedJob): NotificationData {
   const t = job.ticket;
   const locale = job.contact?.locale ?? "fr";
   const a = job.appointment;
+  const r = job.request;
+  if (!t && !a && r) {
+    return {
+      code: "",
+      place: `${r.organization} – ${r.branch}`,
+      ahead: null,
+      waitMinutes: null,
+      counter: null,
+      link: absoluteUrl(`/r/${r.token}`),
+      lateUntil: null,
+      otp: job.payload.code ?? null,
+      reason: r.decline_reason,
+    };
+  }
   if (!t && a) {
     const at = new Date(a.starts_at);
     return {
@@ -93,6 +123,7 @@ export function notificationData(job: ClaimedJob): NotificationData {
     lateUntil: job.payload.until
       ? new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: TIME_ZONE }).format(new Date(job.payload.until))
       : null,
+    penaltyPlaces: t.remote?.penalty_places ?? null,
   };
 }
 
@@ -109,36 +140,45 @@ export async function sendJob(
 ): Promise<Outcome> {
   const contact = job.contact;
   if (!contact) return { status: "skipped", error: "no_contact" };
-  const subjectStatus = job.ticket?.status ?? job.appointment?.status;
+  const subjectStatus = job.ticket?.status ?? job.appointment?.status ?? job.request?.status;
   if (!subjectStatus || !isStillRelevant(job.event, subjectStatus as Parameters<typeof isStillRelevant>[1])) {
     return { status: "skipped", error: "not_relevant" };
   }
   if (job.guard && guardSatisfied(job.fallback_status)) return { status: "skipped", error: "original_delivered" };
   const data = notificationData(job);
   const locale = contact.locale;
+  if (job.event === "request_code" && !data.otp) return { status: "skipped", error: "code_expired" };
+  // Le texte enregistré ne contient jamais le code de vérification.
+  const saved = (text: string) => (data.otp ? text.split(data.otp).join("••••••") : text);
 
   switch (job.channel) {
     case "whatsapp": {
       if (contact.opted_out || !contact.phone_e164) return { status: "skipped", error: "opted_out" };
       if (whatsappMode(contact.window_expires_at) === "session") {
         const text = whatsappText(job.event, locale, data);
-        return fromResult(await providers.whatsapp.sendText(contact.phone_e164, text), job.attempt, { text });
+        return fromResult(await providers.whatsapp.sendText(contact.phone_e164, text), job.attempt, { text: saved(text) });
       }
-      const template = WHATSAPP_TEMPLATES[job.event].name;
-      const r = await providers.whatsapp.sendTemplate(contact.phone_e164, template, locale, templateParams(job.event, data));
-      return fromResult(r, job.attempt, { template, text: whatsappText(job.event, locale, data) });
+      const spec = WHATSAPP_TEMPLATES[job.event];
+      const r = await providers.whatsapp.sendTemplate(
+        contact.phone_e164,
+        spec.name,
+        locale,
+        templateParams(job.event, data),
+        spec.category === "authentication" ? (data.otp ?? undefined) : undefined,
+      );
+      return fromResult(r, job.attempt, { template: spec.name, text: saved(whatsappText(job.event, locale, data)) });
     }
     case "sms": {
       if (contact.opted_out || !contact.phone_e164) return { status: "skipped", error: "opted_out" };
       const text = smsText(job.event, locale, data);
-      return fromResult(await providers.sms.send(contact.phone_e164, text), job.attempt, { text });
+      return fromResult(await providers.sms.send(contact.phone_e164, text), job.attempt, { text: saved(text) });
     }
     case "push": {
       if (contact.opted_out || !contact.push_subscription) return { status: "skipped", error: "opted_out" };
       const message = pushMessage(job.event, locale, data);
       const r = await providers.push.send(contact.push_subscription, message);
       if (!r.ok && r.gone) await onPushGone?.(contact.id);
-      return fromResult(r, job.attempt, { text: `${message.title} — ${message.body}` });
+      return fromResult(r, job.attempt, { text: saved(`${message.title} — ${message.body}`) });
     }
   }
 }

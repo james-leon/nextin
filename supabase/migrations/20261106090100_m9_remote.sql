@@ -936,6 +936,17 @@ begin
 end;
 $$;
 
+/** Limitation des demandes de rendez-vous (serveur, avant le captcha) : par session et par IP hachée. */
+create or replace function public.throttle_appointment_request(p_customer uuid, p_ip_hash text)
+returns boolean
+language sql
+security definer
+set search_path = ''
+as $$
+  select public.check_rate_limit('appointment_request:uid:' || coalesce(p_customer::text, 'none'), 10, interval '1 hour')
+     and (p_ip_hash is null or public.check_rate_limit('appointment_request:ip:' || p_ip_hash, 30, interval '10 minutes'));
+$$;
+
 /** Demande d'un patient par le jeton de son lien, verrouillée. */
 create or replace function public.lock_request_by_token(p_token text)
 returns public.appointment_requests
@@ -1394,7 +1405,7 @@ revoke execute on function
   public.assert_requests_open(uuid), public.request_options(uuid), public.mask_phone(text), public.request_view(uuid),
   public.issue_request_code(uuid), public.clear_request_codes(uuid),
   public.create_appointment_request(uuid, uuid, uuid, timestamptz, date, text, text, text, text, uuid),
-  public.lock_request_by_token(text), public.resend_request_code(text), public.verify_appointment_request(text, text),
+  public.lock_request_by_token(text), public.resend_request_code(text), public.throttle_appointment_request(uuid, text), public.verify_appointment_request(text, text),
   public.get_appointment_request(text), public.cancel_my_appointment_request(text), public.request_staff_json(uuid),
   public.list_appointment_requests(uuid, boolean), public.lock_pending_request(uuid),
   public.accept_appointment_request(uuid, uuid, timestamptz), public.decline_appointment_request(uuid, text),
@@ -1417,7 +1428,7 @@ to authenticated;
 grant execute on function
   public.take_remote_ticket(uuid, double precision, double precision, public.priority_reason, uuid),
   public.create_appointment_request(uuid, uuid, uuid, timestamptz, date, text, text, text, text, uuid),
-  public.resend_request_code(text)
+  public.resend_request_code(text), public.throttle_appointment_request(uuid, text)
 to service_role;
 
 -- ─── RLS ─────────────────────────────────────────────────────────────────────

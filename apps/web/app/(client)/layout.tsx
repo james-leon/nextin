@@ -8,7 +8,7 @@ import { LiteIntlProvider } from "@/lib/i18n/lite";
 export default async function ClientLayout({ children }: { children: React.ReactNode }) {
   const [locale, m] = await Promise.all([getLocale(), getMessages()]);
   return (
-    <LiteIntlProvider locale={locale} messages={{ common: m.common, errors: m.errors, client: m.client, counterKinds: m.counterKinds }}>
+    <LiteIntlProvider locale={locale} messages={{ common: m.common, errors: m.errors, client: m.client, counterKinds: m.counterKinds, weekdays: m.weekdays }}>
       {children}
     </LiteIntlProvider>
   );
