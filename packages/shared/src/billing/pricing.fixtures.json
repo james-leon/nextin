@@ -1,0 +1,23 @@
+{
+  "_comment": "Parité computeSubscriptionPrice (TS) et public.subscription_price (SQL) : recopié dans supabase/tests/database/m10a_billing.test.sql.",
+  "cases": [
+    { "name": "Essentiel, 1 agence, mensuel", "base": 25000, "included": 1, "extra": 25000, "freeMonths": 2, "branches": 1, "period": "monthly", "discount": null,
+      "expected": { "monthly": 25000, "months": 1, "extraBranches": 0, "subtotal": 25000, "discount": 0, "total": 25000 } },
+    { "name": "Essentiel, 3 agences, mensuel", "base": 25000, "included": 1, "extra": 25000, "freeMonths": 2, "branches": 3, "period": "monthly", "discount": null,
+      "expected": { "monthly": 75000, "months": 1, "extraBranches": 2, "subtotal": 75000, "discount": 0, "total": 75000 } },
+    { "name": "Pro, 1 agence, annuel (2 mois offerts)", "base": 45000, "included": 1, "extra": 45000, "freeMonths": 2, "branches": 1, "period": "annual", "discount": null,
+      "expected": { "monthly": 45000, "months": 10, "extraBranches": 0, "subtotal": 450000, "discount": 0, "total": 450000 } },
+    { "name": "Entreprise, 5 agences, annuel", "base": 120000, "included": 3, "extra": 35000, "freeMonths": 2, "branches": 5, "period": "annual", "discount": null,
+      "expected": { "monthly": 190000, "months": 10, "extraBranches": 2, "subtotal": 1900000, "discount": 0, "total": 1900000 } },
+    { "name": "Entreprise, 2 agences (sous les incluses)", "base": 120000, "included": 3, "extra": 35000, "freeMonths": 2, "branches": 2, "period": "monthly", "discount": null,
+      "expected": { "monthly": 120000, "months": 1, "extraBranches": 0, "subtotal": 120000, "discount": 0, "total": 120000 } },
+    { "name": "Pro, 2 agences, remise 15 %", "base": 45000, "included": 1, "extra": 45000, "freeMonths": 2, "branches": 2, "period": "monthly", "discount": { "kind": "percent", "value": 15 },
+      "expected": { "monthly": 90000, "months": 1, "extraBranches": 1, "subtotal": 90000, "discount": 13500, "total": 76500 } },
+    { "name": "Remise en pourcentage arrondie à l'entier", "base": 12345, "included": 1, "extra": null, "freeMonths": 0, "branches": 1, "period": "monthly", "discount": { "kind": "percent", "value": 10 },
+      "expected": { "monthly": 12345, "months": 1, "extraBranches": 0, "subtotal": 12345, "discount": 1235, "total": 11110 } },
+    { "name": "Remise fixe plafonnée au prix", "base": 25000, "included": 1, "extra": 25000, "freeMonths": 2, "branches": 1, "period": "monthly", "discount": { "kind": "fixed_xaf", "value": 50000 },
+      "expected": { "monthly": 25000, "months": 1, "extraBranches": 0, "subtotal": 25000, "discount": 25000, "total": 0 } },
+    { "name": "Formule sans agence supplémentaire facturable", "base": 30000, "included": 1, "extra": null, "freeMonths": 1, "branches": 3, "period": "annual", "discount": { "kind": "fixed_xaf", "value": 10000 },
+      "expected": { "monthly": 30000, "months": 11, "extraBranches": 2, "subtotal": 330000, "discount": 10000, "total": 320000 } }
+  ]
+}

@@ -6,7 +6,27 @@ export type Database = {
   
   "public": {
           Tables: {
-            "announcement_settings": {
+            "account_messages": {
+                  Row: {
+                    "attempt": number,"channel": string,"created_at": string,"dedupe_key": string,"error": string | null,"id": string,"kind": string,"locale": string,"next_attempt_at": string,"organization_id": string | null,"payload": NonNullable<Json>,"sent_at": string | null,"status": string,"to_email": string | null,"to_phone": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempt"?: number,"channel": string,"created_at"?: string,"dedupe_key": string,"error"?: string | null,"id"?: string,"kind": string,"locale"?: string,"next_attempt_at"?: string,"organization_id"?: string | null,"payload"?: NonNullable<Json>,"sent_at"?: string | null,"status"?: string,"to_email"?: string | null,"to_phone"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "attempt"?: number,"channel"?: string,"created_at"?: string,"dedupe_key"?: string,"error"?: string | null,"id"?: string,"kind"?: string,"locale"?: string,"next_attempt_at"?: string,"organization_id"?: string | null,"payload"?: NonNullable<Json>,"sent_at"?: string | null,"status"?: string,"to_email"?: string | null,"to_phone"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "account_messages_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"announcement_settings": {
                   Row: {
                     "branch_id": string,"chime_enabled": boolean,"languages": (string)[],"organization_id": string,"quiet_hours": NonNullable<Json>,"repeat_count": number,"updated_at": string,"volume": number
                   }
@@ -125,6 +145,26 @@ isOneToOne: false
       columns: ["organization_id"]
 isOneToOne: false
       referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"billing_reminders": {
+                  Row: {
+                    "channel": string,"id": number,"kind": string,"offset_days": number,"sent_at": string,"subscription_id": string,"target_date": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "channel": string,"id"?: never,"kind": string,"offset_days": number,"sent_at"?: string,"subscription_id": string,"target_date": string
+                  }
+                  Update: {
+                    "channel"?: string,"id"?: never,"kind"?: string,"offset_days"?: number,"sent_at"?: string,"subscription_id"?: string,"target_date"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "billing_reminders_subscription_id_fkey"
+      columns: ["subscription_id"]
+isOneToOne: false
+      referencedRelation: "subscriptions"
       referencedColumns: ["id"]
     }
                   ]
@@ -390,6 +430,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"discounts": {
+                  Row: {
+                    "code": string | null,"created_at": string,"created_by": string | null,"expires_at": string | null,"id": string,"kind": string,"organization_id": string | null,"reason": string | null,"remaining_invoices": number,"value": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code"?: string | null,"created_at"?: string,"created_by"?: string | null,"expires_at"?: string | null,"id"?: string,"kind": string,"organization_id"?: string | null,"reason"?: string | null,"remaining_invoices"?: number,"value": number
+                  }
+                  Update: {
+                    "code"?: string | null,"created_at"?: string,"created_by"?: string | null,"expires_at"?: string | null,"id"?: string,"kind"?: string,"organization_id"?: string | null,"reason"?: string | null,"remaining_invoices"?: number,"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "discounts_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"display_services": {
                   Row: {
                     "display_id": string,"organization_id": string,"service_id": string
@@ -462,6 +522,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"invoice_sequences": {
+                  Row: {
+                    "last_number": number,"year": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "last_number"?: number,"year": number
+                  }
+                  Update: {
+                    "last_number"?: number,"year"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"invoices": {
+                  Row: {
+                    "billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"discount_xaf": number,"due_at": string,"id": string,"issued_at": string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id": string | null,"paid_at": string | null,"paid_channel": Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id": string | null,"seller_snapshot": NonNullable<Json>,"status": Database["public"]['Enums']["invoice_status"],"subscription_id": string | null,"subtotal_xaf": number,"tax_xaf": number,"total_xaf": number,"vat_rate": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"discount_xaf"?: number,"due_at": string,"id"?: string,"issued_at"?: string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id"?: string | null,"seller_snapshot": NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf": number,"tax_xaf"?: number,"total_xaf": number,"vat_rate"?: number
+                  }
+                  Update: {
+                    "billing_period"?: Database["public"]['Enums']["billing_period"],"buyer_snapshot"?: NonNullable<Json>,"discount_xaf"?: number,"due_at"?: string,"id"?: string,"issued_at"?: string,"kind"?: string,"lines"?: NonNullable<Json>,"number"?: string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end"?: string,"period_start"?: string,"plan_id"?: string | null,"seller_snapshot"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf"?: number,"tax_xaf"?: number,"total_xaf"?: number,"vat_rate"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invoices_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invoices_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invoices_subscription_id_fkey"
+      columns: ["subscription_id"]
+isOneToOne: false
+      referencedRelation: "subscriptions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"memberships": {
                   Row: {
                     "active": boolean,"branch_id": string | null,"created_at": string,"id": string,"invited_by": string | null,"organization_id": string,"role": Database["public"]['Enums']["member_role"],"updated_at": string,"user_id": string
@@ -482,6 +588,26 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     },{
       foreignKeyName: "memberships_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"messaging_usage": {
+                  Row: {
+                    "alerted_at": string | null,"month": string,"organization_id": string,"sms_sent": number,"whatsapp_sent": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alerted_at"?: string | null,"month": string,"organization_id": string,"sms_sent"?: number,"whatsapp_sent"?: number
+                  }
+                  Update: {
+                    "alerted_at"?: string | null,"month"?: string,"organization_id"?: string,"sms_sent"?: number,"whatsapp_sent"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "messaging_usage_organization_id_fkey"
       columns: ["organization_id"]
 isOneToOne: false
       referencedRelation: "organizations"
@@ -598,14 +724,82 @@ isOneToOne: false
                   ]
                 },"organizations": {
                   Row: {
-                    "country": string,"created_at": string,"created_by": string | null,"currency": string,"data_retention_days": number,"default_locale": string,"id": string,"logo_path": string | null,"name": string,"slug": string,"status": Database["public"]['Enums']["org_status"],"suspended_reason": string | null,"type": Database["public"]['Enums']["org_type"],"updated_at": string,"validated_at": string | null,"validated_by": string | null
+                    "country": string,"created_at": string,"created_by": string | null,"currency": string,"data_retention_days": number,"default_locale": string,"id": string,"logo_path": string | null,"name": string,"onboarding_step": number,"phone_e164": string | null,"slug": string,"status": Database["public"]['Enums']["org_status"],"suspended_reason": string | null,"type": Database["public"]['Enums']["org_type"],"updated_at": string,"validated_at": string | null,"validated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"name": string,"slug": string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type": Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
+                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"name": string,"onboarding_step"?: number,"phone_e164"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type": Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
                   }
                   Update: {
-                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"name"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type"?: Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
+                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"name"?: string,"onboarding_step"?: number,"phone_e164"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type"?: Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"pay_links": {
+                  Row: {
+                    "created_at": string,"expires_at": string,"invoice_id": string,"token_hash": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"expires_at": string,"invoice_id": string,"token_hash": string
+                  }
+                  Update: {
+                    "created_at"?: string,"expires_at"?: string,"invoice_id"?: string,"token_hash"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pay_links_invoice_id_fkey"
+      columns: ["invoice_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"payments": {
+                  Row: {
+                    "amount_xaf": number,"channel": Database["public"]['Enums']["payment_channel"],"confirmed_at": string | null,"created_at": string,"external_id": string,"failure_reason": string | null,"id": string,"invoice_id": string,"last_checked_at": string | null,"msisdn_masked": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_ref": string | null,"raw": Json | null,"status": Database["public"]['Enums']["payment_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount_xaf": number,"channel": Database["public"]['Enums']["payment_channel"],"confirmed_at"?: string | null,"created_at"?: string,"external_id": string,"failure_reason"?: string | null,"id"?: string,"invoice_id": string,"last_checked_at"?: string | null,"msisdn_masked": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_ref"?: string | null,"raw"?: Json | null,"status"?: Database["public"]['Enums']["payment_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "amount_xaf"?: number,"channel"?: Database["public"]['Enums']["payment_channel"],"confirmed_at"?: string | null,"created_at"?: string,"external_id"?: string,"failure_reason"?: string | null,"id"?: string,"invoice_id"?: string,"last_checked_at"?: string | null,"msisdn_masked"?: string,"provider"?: Database["public"]['Enums']["payment_provider"],"provider_ref"?: string | null,"raw"?: Json | null,"status"?: Database["public"]['Enums']["payment_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payments_invoice_id_fkey"
+      columns: ["invoice_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"phone_verifications": {
+                  Row: {
+                    "attempts": number,"code_hash": string | null,"created_at": string,"expires_at": string,"id": string,"phone_e164": string | null,"phone_hash": string,"used_at": string | null,"user_id": string,"verified_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"code_hash"?: string | null,"created_at"?: string,"expires_at": string,"id"?: string,"phone_e164"?: string | null,"phone_hash": string,"used_at"?: string | null,"user_id": string,"verified_at"?: string | null
+                  }
+                  Update: {
+                    "attempts"?: number,"code_hash"?: string | null,"created_at"?: string,"expires_at"?: string,"id"?: string,"phone_e164"?: string | null,"phone_hash"?: string,"used_at"?: string | null,"user_id"?: string,"verified_at"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"plans": {
+                  Row: {
+                    "active": boolean,"annual_free_months": number,"base_price_xaf": number,"code": string,"description": string | null,"description_en": string | null,"extra_branch_price_xaf": number | null,"features": NonNullable<Json>,"id": string,"included_branches": number,"max_counters_per_branch": number | null,"max_displays_per_branch": number | null,"name": string,"name_en": string | null,"sort_order": number,"trial_eligible": boolean,"updated_at": string,"whatsapp_quota_per_branch": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"annual_free_months"?: number,"base_price_xaf": number,"code": string,"description"?: string | null,"description_en"?: string | null,"extra_branch_price_xaf"?: number | null,"features"?: NonNullable<Json>,"id"?: string,"included_branches": number,"max_counters_per_branch"?: number | null,"max_displays_per_branch"?: number | null,"name": string,"name_en"?: string | null,"sort_order"?: number,"trial_eligible"?: boolean,"updated_at"?: string,"whatsapp_quota_per_branch"?: number
+                  }
+                  Update: {
+                    "active"?: boolean,"annual_free_months"?: number,"base_price_xaf"?: number,"code"?: string,"description"?: string | null,"description_en"?: string | null,"extra_branch_price_xaf"?: number | null,"features"?: NonNullable<Json>,"id"?: string,"included_branches"?: number,"max_counters_per_branch"?: number | null,"max_displays_per_branch"?: number | null,"name"?: string,"name_en"?: string | null,"sort_order"?: number,"trial_eligible"?: boolean,"updated_at"?: string,"whatsapp_quota_per_branch"?: number
                   }
                   Relationships: [
                     
@@ -620,6 +814,20 @@ isOneToOne: false
                   }
                   Update: {
                     "granted_at"?: string,"granted_by"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"platform_settings": {
+                  Row: {
+                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"retention_after_suspension_days": number,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                  }
+                  Update: {
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Relationships: [
                     
@@ -874,6 +1082,70 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"subscription_events": {
+                  Row: {
+                    "actor_user_id": string | null,"created_at": string,"id": number,"organization_id": string | null,"payload": NonNullable<Json>,"subscription_id": string | null,"type": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_user_id"?: string | null,"created_at"?: string,"id"?: never,"organization_id"?: string | null,"payload"?: NonNullable<Json>,"subscription_id"?: string | null,"type": string
+                  }
+                  Update: {
+                    "actor_user_id"?: string | null,"created_at"?: string,"id"?: never,"organization_id"?: string | null,"payload"?: NonNullable<Json>,"subscription_id"?: string | null,"type"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "subscription_events_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "subscription_events_subscription_id_fkey"
+      columns: ["subscription_id"]
+isOneToOne: false
+      referencedRelation: "subscriptions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"subscriptions": {
+                  Row: {
+                    "billing_email": string | null,"billing_period": Database["public"]['Enums']["billing_period"],"billing_phone_e164": string | null,"created_at": string,"current_period_end": string | null,"current_period_start": string | null,"deletion_due_at": string | null,"discount_id": string | null,"grace_ends_at": string | null,"id": string,"locale": string,"next_plan_id": string | null,"organization_id": string,"pending_status": Database["public"]['Enums']["subscription_status"] | null,"pending_status_after": string | null,"plan_id": string,"read_only_since": string | null,"status": Database["public"]['Enums']["subscription_status"],"suspended_since": string | null,"trial_ends_at": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "billing_email"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"billing_phone_e164"?: string | null,"created_at"?: string,"current_period_end"?: string | null,"current_period_start"?: string | null,"deletion_due_at"?: string | null,"discount_id"?: string | null,"grace_ends_at"?: string | null,"id"?: string,"locale"?: string,"next_plan_id"?: string | null,"organization_id": string,"pending_status"?: Database["public"]['Enums']["subscription_status"] | null,"pending_status_after"?: string | null,"plan_id": string,"read_only_since"?: string | null,"status": Database["public"]['Enums']["subscription_status"],"suspended_since"?: string | null,"trial_ends_at"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "billing_email"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"billing_phone_e164"?: string | null,"created_at"?: string,"current_period_end"?: string | null,"current_period_start"?: string | null,"deletion_due_at"?: string | null,"discount_id"?: string | null,"grace_ends_at"?: string | null,"id"?: string,"locale"?: string,"next_plan_id"?: string | null,"organization_id"?: string,"pending_status"?: Database["public"]['Enums']["subscription_status"] | null,"pending_status_after"?: string | null,"plan_id"?: string,"read_only_since"?: string | null,"status"?: Database["public"]['Enums']["subscription_status"],"suspended_since"?: string | null,"trial_ends_at"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "subscriptions_discount_id_fkey"
+      columns: ["discount_id"]
+isOneToOne: false
+      referencedRelation: "discounts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "subscriptions_next_plan_id_fkey"
+      columns: ["next_plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "subscriptions_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: true
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "subscriptions_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"ticket_events": {
                   Row: {
                     "actor_user_id": string | null,"branch_id": string,"counter_id": string | null,"created_at": string,"id": number,"organization_id": string,"payload": NonNullable<Json>,"ticket_id": string,"type": string
@@ -979,6 +1251,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"trial_claims": {
+                  Row: {
+                    "claimed_at": string,"organization_id": string | null,"phone_hash": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "claimed_at"?: string,"organization_id"?: string | null,"phone_hash": string
+                  }
+                  Update: {
+                    "claimed_at"?: string,"organization_id"?: string | null,"phone_hash"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trial_claims_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: true
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"whatsapp_opt_outs": {
                   Row: {
                     "opted_out_at": string,"phone_hash": string
@@ -1005,8 +1297,60 @@ isOneToOne: false
 "accept_invitation":
 { Args: { "p_token": string }; Returns: string
                            },
+"active_discount":
+{ Args: { "p_org": string }; Returns: {
+              "code": string | null,
+"created_at": string,
+"created_by": string | null,
+"expires_at": string | null,
+"id": string,
+"kind": string,
+"organization_id": string | null,
+"reason": string | null,
+"remaining_invoices": number,
+"value": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "discounts"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"admin_apply_discount":
+{ Args: { "p_invoices": number,"p_kind": string,"p_org": string,"p_reason": string,"p_value": number }; Returns: string
+                           },
+"admin_change_plan":
+{ Args: { "p_plan": string,"p_reason": string,"p_subscription": string }; Returns: undefined
+                           },
+"admin_grant_days":
+{ Args: { "p_days": number,"p_reason": string,"p_subscription": string }; Returns: Json
+                           },
+"admin_revenue":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"admin_set_suspension":
+{ Args: { "p_org": string,"p_reason": string,"p_suspended": boolean }; Returns: undefined
+                           },
+"admin_subscription_detail":
+{ Args: { "p_subscription": string }; Returns: Json
+                           },
+"admin_subscriptions":
+{ Args: { "p_query"?: string,"p_status"?: string }; Returns: Json
+                           },
+"admin_update_plan":
+{ Args: { "p_fields": Json,"p_plan": string }; Returns: undefined
+                           },
+"admin_update_settings":
+{ Args: { "p_fields": Json }; Returns: undefined
+                           },
 "admit_ticket":
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
+                           },
+"apply_pending_transitions":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"apply_subscription_status":
+{ Args: { "p_status": Database["public"]['Enums']["subscription_status"],"p_sub": string }; Returns: undefined
                            },
 "appointment_json":
 { Args: { "p_appointment": string }; Returns: Json
@@ -1043,6 +1387,15 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"assert_feature":
+{ Args: { "p_feature": string,"p_org": string }; Returns: undefined
+                           },
+"assert_org_admin":
+{ Args: { "p_org": string }; Returns: undefined
+                           },
+"assert_platform_admin":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "assert_request_allowed":
 { Args: { "p_branch": string,"p_exclude": string,"p_phone": string,"p_slot": string }; Returns: undefined
                            },
@@ -1086,6 +1439,18 @@ isOneToOne: false
                            },
 "available_slots":
 { Args: { "p_days"?: number,"p_from": string,"p_practitioner": string }; Returns: Json
+                           },
+"billable_branches":
+{ Args: { "p_org": string }; Returns: number
+                           },
+"billing_checkout":
+{ Args: { "p_org": string,"p_period": Database["public"]['Enums']["billing_period"],"p_plan": string }; Returns: Json
+                           },
+"billing_daily":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"billing_overview":
+{ Args: { "p_org": string }; Returns: Json
                            },
 "book_appointment":
 { Args: { "p_consent"?: boolean,"p_customer_label"?: string,"p_locale"?: string,"p_phone_e164"?: string,"p_practitioner": string,"p_rescheduled_from"?: string,"p_starts_at": string }; Returns: Json
@@ -1156,8 +1521,36 @@ isOneToOne: false
 "check_rate_limit":
 { Args: { "p_key": string,"p_max": number,"p_window": string }; Returns: boolean
                            },
+"claim_account_messages":
+{ Args: { "p_limit"?: number }; Returns: {
+              "attempt": number,
+"channel": string,
+"created_at": string,
+"dedupe_key": string,
+"error": string | null,
+"id": string,
+"kind": string,
+"locale": string,
+"next_attempt_at": string,
+"organization_id": string | null,
+"payload": NonNullable<Json>,
+"sent_at": string | null,
+"status": string,
+"to_email": string | null,
+"to_phone": string | null,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "account_messages"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "claim_notification_jobs":
 { Args: { "p_limit"?: number }; Returns: Json
+                           },
+"clear_phone_code":
+{ Args: { "p_verification": string }; Returns: undefined
                            },
 "clear_request_codes":
 { Args: { "p_request": string }; Returns: undefined
@@ -1170,6 +1563,9 @@ isOneToOne: false
                            },
 "close_counter":
 { Args: { "p_counter": string }; Returns: Json
+                           },
+"complete_account_message":
+{ Args: { "p_error"?: string,"p_message": string,"p_retry_in_seconds"?: number,"p_status": string }; Returns: undefined
                            },
 "complete_notification_job":
 { Args: { "p_error"?: string,"p_job": string,"p_payload"?: Json,"p_provider_message_id"?: string,"p_retry_in_seconds"?: number,"p_status": Database["public"]['Enums']["job_status"],"p_template_name"?: string }; Returns: undefined
@@ -1230,8 +1626,14 @@ isOneToOne: false
 "configure_notification_dispatch":
 { Args: { "p_secret": string,"p_url": string }; Returns: undefined
                            },
+"confirm_payment":
+{ Args: { "p_external_id": string,"p_failure"?: string,"p_provider_ref"?: string,"p_raw"?: Json,"p_status": Database["public"]['Enums']["payment_status"] }; Returns: Json
+                           },
 "confirm_presence":
 { Args: { "p_entry_code": string,"p_token": string }; Returns: Json
+                           },
+"count_messaging_usage":
+{ Args: { "p_channel": Database["public"]['Enums']["notif_channel"],"p_org": string }; Returns: undefined
                            },
 "create_appointment_request":
 { Args: { "p_branch": string,"p_customer": string,"p_day": string,"p_label": string,"p_locale": string,"p_period": string,"p_phone_e164": string,"p_practitioner": string,"p_service": string,"p_starts_at": string }; Returns: Json
@@ -1244,6 +1646,9 @@ isOneToOne: false
                            },
 "create_organization":
 { Args: { "p_data_retention_days"?: number,"p_default_locale"?: string,"p_name": string,"p_slug": string,"p_type": Database["public"]['Enums']["org_type"] }; Returns: string
+                           },
+"create_pay_link":
+{ Args: { "p_invoice": string }; Returns: string
                            },
 "dashboard_stats":
 { Args: { "p_branch": string,"p_compare_from"?: string,"p_compare_to"?: string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
@@ -1262,6 +1667,9 @@ isOneToOne: false
                            },
 "end_practitioner_absence":
 { Args: { "p_absence": string }; Returns: Json
+                           },
+"enqueue_account_message":
+{ Args: { "p_dedupe": string,"p_email": string,"p_kind": string,"p_locale": string,"p_org": string,"p_payload": Json,"p_phone": string }; Returns: number
                            },
 "enqueue_almost_your_turn":
 { Args: { "p_service": string }; Returns: undefined
@@ -1390,6 +1798,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"invoice_document":
+{ Args: { "p_invoice": string }; Returns: Json
+                           },
 "is_anonymous":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -1399,6 +1810,37 @@ isOneToOne: false
 "is_privileged_context":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"issue_invoice":
+{ Args: { "p_period"?: Database["public"]['Enums']["billing_period"],"p_plan"?: string,"p_subscription": string }; Returns: {
+              "billing_period": Database["public"]['Enums']["billing_period"],
+"buyer_snapshot": NonNullable<Json>,
+"discount_xaf": number,
+"due_at": string,
+"id": string,
+"issued_at": string,
+"kind": string,
+"lines": NonNullable<Json>,
+"number": string,
+"organization_id": string | null,
+"paid_at": string | null,
+"paid_channel": Database["public"]['Enums']["payment_channel"] | null,
+"period_end": string,
+"period_start": string,
+"plan_id": string | null,
+"seller_snapshot": NonNullable<Json>,
+"status": Database["public"]['Enums']["invoice_status"],
+"subscription_id": string | null,
+"subtotal_xaf": number,
+"tax_xaf": number,
+"total_xaf": number,
+"vat_rate": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "invoices"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "issue_qr_code":
 { Args: { "p_branch": string,"p_service"?: string }; Returns: {
               "active": boolean,
@@ -1671,14 +2113,53 @@ isOneToOne: false
 "open_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },
+"org_closing_time":
+{ Args: { "p_org": string }; Returns: string
+                           },
+"org_entitlements":
+{ Args: { "p_org": string }; Returns: Json
+                           },
+"org_has_open_branch":
+{ Args: { "p_org": string }; Returns: boolean
+                           },
 "pair_display":
 { Args: { "p_branch": string,"p_code": string,"p_name": string,"p_service_ids"?: (string)[],"p_show_ads"?: boolean }; Returns: string
                            },
 "pause_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },
+"pay_invoice_view":
+{ Args: { "p_token": string }; Returns: Json
+                           },
+"payments_to_recheck":
+{ Args: { "p_limit"?: number }; Returns: {
+              "amount_xaf": number,
+"channel": Database["public"]['Enums']["payment_channel"],
+"confirmed_at": string | null,
+"created_at": string,
+"external_id": string,
+"failure_reason": string | null,
+"id": string,
+"invoice_id": string,
+"last_checked_at": string | null,
+"msisdn_masked": string,
+"provider": Database["public"]['Enums']["payment_provider"],
+"provider_ref": string | null,
+"raw": Json | null,
+"status": Database["public"]['Enums']["payment_status"],
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "payments"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "penalize_remote_ticket":
 { Args: { "p_row": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: undefined
+                           },
+"phone_fingerprint":
+{ Args: { "p_phone": string }; Returns: string
                            },
 "pick_next_ticket":
 { Args: { "p_counter": string }; Returns: {
@@ -1757,6 +2238,9 @@ isOneToOne: false
 "practitioner_late_until":
 { Args: { "p_practitioner": string }; Returns: string
                            },
+"purge_billing_personal_data":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "purge_inactive_anonymous_users":
 { Args: { "p_inactive_for"?: string }; Returns: number
                            },
@@ -1815,6 +2299,9 @@ isOneToOne: false
 "request_options":
 { Args: { "p_branch": string }; Returns: Json
                            },
+"request_phone_code":
+{ Args: { "p_locale"?: string,"p_phone": string,"p_user": string }; Returns: string
+                           },
 "request_slot_key":
 { Args: { "p_day": string,"p_period": string,"p_starts_at": string }; Returns: string
                            },
@@ -1851,6 +2338,9 @@ isOneToOne: false
 "schedule_sms_fallback":
 { Args: { "p_delay_seconds"?: number,"p_guard"?: boolean,"p_job": string }; Returns: string
                            },
+"self_service_signup":
+{ Args: { "p_default_locale": string,"p_name": string,"p_slug": string,"p_type": Database["public"]['Enums']["org_type"],"p_verification": string }; Returns: Json
+                           },
 "service_counter_loads":
 { Args: { "p_service": string }; Returns: {
               "busy_remaining_seconds": number,"counter_id": string,"duration_seconds": number
@@ -1861,6 +2351,9 @@ isOneToOne: false
                            },
 "set_counter_status":
 { Args: { "p_counter": string,"p_status": Database["public"]['Enums']["counter_status"] }; Returns: Json
+                           },
+"set_onboarding_step":
+{ Args: { "p_org": string,"p_step": number }; Returns: undefined
                            },
 "set_remote_travel":
 { Args: { "p_minutes": number,"p_token": string }; Returns: Json
@@ -1923,11 +2416,17 @@ isOneToOne: false
 "staff_confirm_presence":
 { Args: { "p_ticket": string }; Returns: Json
                            },
+"staff_entitlements":
+{ Args: { "p_org": string }; Returns: Json
+                           },
 "staff_ticket_command":
 { Args: { "p_client_op_id"?: string,"p_command": string,"p_ticket": string }; Returns: Json
                            },
 "staff_ticket_json":
 { Args: { "p_ticket": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: Json
+                           },
+"start_payment":
+{ Args: { "p_channel": Database["public"]['Enums']["payment_channel"],"p_msisdn": string,"p_provider": Database["public"]['Enums']["payment_provider"],"p_token": string }; Returns: Json
                            },
 "stats_branch_rows":
 { Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: {
@@ -1988,6 +2487,12 @@ isOneToOne: false
 "stats_totals":
 { Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
                            },
+"subscription_price":
+{ Args: { "p_base": number,"p_branches": number,"p_discount_kind"?: string,"p_discount_value"?: number,"p_extra": number,"p_free_months": number,"p_included": number,"p_period": Database["public"]['Enums']["billing_period"] }; Returns: Json
+                           },
+"subscription_target_status":
+{ Args: { "p_now": string,"p_s": Omit<Database["public"]['Tables']["subscriptions"]['Row'], Database["public"]['Tables']["subscriptions"]['ComputedFields']>,"p_settings": Omit<Database["public"]['Tables']["platform_settings"]['Row'], Database["public"]['Tables']["platform_settings"]['ComputedFields']> }; Returns: Database["public"]['Enums']["subscription_status"]
+                           },
 "sweep_appointment_requests":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -2042,6 +2547,9 @@ isOneToOne: false
 "verify_appointment_request":
 { Args: { "p_code": string,"p_token": string }; Returns: Json
                            },
+"verify_phone_code":
+{ Args: { "p_code": string,"p_verification": string }; Returns: Json
+                           },
 "walkins_since_appointment":
 { Args: { "p_counter": string,"p_day": string }; Returns: number
                            },
@@ -2051,6 +2559,9 @@ isOneToOne: false
 "whatsapp_opt_in":
 { Args: { "p_code": string,"p_locale"?: string,"p_suffix": string,"p_wa_id": string }; Returns: Json
                            },
+"whatsapp_quota_exceeded":
+{ Args: { "p_org": string }; Returns: boolean
+                           },
 "whatsapp_set_opt_out":
 { Args: { "p_opted_out": boolean,"p_wa_id": string }; Returns: undefined
                            },
@@ -2059,7 +2570,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -2175,7 +2686,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const
