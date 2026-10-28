@@ -521,3 +521,143 @@ export const platformSettingsFormSchema = z.object({
   invoiceLeadDays: z.coerce.number().int().min(1).max(30),
   quotaAlertPercent: z.coerce.number().int().min(50).max(100),
 });
+
+/* ─── M10b : publicité ──────────────────────────────────────────────────── */
+
+const AD_SURFACES = ["tv", "app", "game"] as const;
+const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "generic");
+const sectorCode = z.string().regex(/^[a-z][a-z0-9_]{1,30}$/, "generic");
+
+export const advertiserSignupSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  sector: sectorCode,
+  phone: optionalPhone,
+  city: z.string().trim().max(80).optional().transform((v) => v || null),
+});
+
+export const adScheduleSchema = z
+  .object({ weekday: z.coerce.number().int().min(1).max(7), start_time: hhmm, end_time: hhmm })
+  .refine((v) => v.end_time > v.start_time, { message: "hours_order", path: ["end_time"] });
+
+/** Campagne (annonceur) ou annonce Maison : réglages, ciblage, visa. Champs multiples envoyés en JSON. */
+export const campaignFormSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  packageCode: z.string().regex(/^[a-z][a-z0-9_]{1,30}$/, "generic"),
+  sector: sectorCode,
+  startsOn: isoDay,
+  surfaces: z.array(z.enum(AD_SURFACES)).min(1, "generic"),
+  targetCities: z.array(z.string().trim().min(1).max(80)).max(50).default([]),
+  targetOrgTypes: z.array(orgTypeSchema).default([]),
+  schedules: z.array(adScheduleSchema).max(21).default([]),
+  healthVisaNumber: z.string().trim().max(60).optional().transform((v) => v || null),
+  healthVisaDocumentPath: z.string().max(300).optional().transform((v) => v || null),
+});
+export type CampaignFormInput = z.infer<typeof campaignFormSchema>;
+
+export const creativeFormSchema = z.object({
+  storagePath: z.string().min(3).max(300),
+  kind: z.enum(["image", "video"]),
+  headline: z.string().trim().min(2, "name_too_short").max(80),
+  offerText: z.string().trim().max(140).optional().transform((v) => v || null),
+  ctaUrl: z
+    .string()
+    .trim()
+    .max(300)
+    .optional()
+    .transform((v) => v || null)
+    .refine((v) => v === null || /^https:\/\/[^\s]+$/.test(v), "url_invalid"),
+  durationSeconds: z.coerce.number().int().min(5).max(15).default(8),
+});
+
+export const quizFormSchema = z.object({
+  title: z.string().trim().min(2, "name_too_short").max(80),
+  rewardText: z.string().trim().min(2, "name_too_short").max(120),
+  couponValidityDays: z.coerce.number().int().min(1).max(365).default(30),
+  maxCoupons: z.coerce.number().int().min(1).max(1_000_000).nullable().default(null),
+  questions: z
+    .array(
+      z.object({
+        question: z.string().trim().min(3, "name_too_short").max(160),
+        answers: z
+          .array(z.object({ text: z.string().trim().min(1, "name_too_short").max(80), correct: z.boolean() }))
+          .min(2)
+          .max(4)
+          .refine((a) => a.filter((x) => x.correct).length === 1, "quiz_invalid"),
+      }),
+    )
+    .min(3, "quiz_invalid")
+    .max(5, "quiz_invalid"),
+});
+export type QuizFormInput = z.infer<typeof quizFormSchema>;
+
+const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/, "generic");
+export const gameSkinFormSchema = z.object({
+  planePrimary: hexColor,
+  planeSecondary: hexColor,
+  coinLogoPath: z.string().max(300).optional().transform((v) => v || null),
+  endTitle: z.string().trim().min(2, "name_too_short").max(80),
+  rewardText: z.string().trim().min(2, "name_too_short").max(120),
+  couponValidityDays: z.coerce.number().int().min(1).max(365).default(30),
+  maxCoupons: z.coerce.number().int().min(1).max(1_000_000).nullable().default(null),
+  minLevels: z.coerce.number().int().min(1).max(10).default(2),
+});
+
+export const adPreferencesSchema = z.object({
+  blockedSectors: z.array(sectorCode).max(50).default([]),
+  quizEnabled: formBoolean,
+  skyCatchEnabled: formBoolean,
+  houseAdsEnabled: formBoolean,
+});
+
+/** Code de bon saisi en caisse (8 caractères, tiret toléré) ou jeton du QR code. */
+export const couponCodeSchema = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/[\s-]/g, ""))
+  .pipe(z.string().regex(/^([A-Za-z0-9]{8}|[A-Za-z0-9]{22})$/, "not_found"));
+
+export const campaignReviewSchema = z.object({
+  campaignId: z.uuid(),
+  approve: formBoolean,
+  note: z.string().trim().max(500).optional().transform((v) => v || ""),
+});
+
+export const adPackageFormSchema = z.object({
+  code: z.string().regex(/^[a-z][a-z0-9_]{1,30}$/),
+  priceXaf: z.coerce.number().int().min(0).max(100_000_000),
+  durationDays: z.coerce.number().int().min(1).max(365),
+  maxBranches: z
+    .union([z.literal(""), z.coerce.number().int().min(1).max(100_000)])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? null : v)),
+  shareOfVoice: z.coerce.number().int().min(0).max(100),
+  surfaces: z.array(z.enum(AD_SURFACES)).min(1, "generic"),
+  quizAllowed: formBoolean,
+  gameSkinAllowed: formBoolean,
+  active: formBoolean,
+});
+
+export const adSectorFormSchema = z.object({
+  code: sectorCode,
+  name: z.string().trim().min(2, "name_too_short").max(60),
+  nameEn: z.string().trim().min(2, "name_too_short").max(60),
+  requiresHealthVisa: formBoolean,
+  active: formBoolean,
+});
+
+/** Lot d'événements publicitaires envoyé par une page client ou un écran (idempotent par `id`). */
+export const adEventsSchema = z.object({
+  ticketToken: z.string().regex(/^[A-Za-z0-9]{22}$/).optional(),
+  events: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        creative_id: z.uuid(),
+        surface: z.enum(AD_SURFACES),
+        type: z.enum(["impression", "click", "skip", "visit"]),
+        at: z.iso.datetime({ offset: true }),
+      }),
+    )
+    .min(1)
+    .max(200),
+});

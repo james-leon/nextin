@@ -539,6 +539,10 @@ begin
   if coalesce(p_fields ->> 'storage_path', '') not like v_prefix || '/' || v_c.id || '/%' then
     raise exception 'not_allowed' using errcode = '42501', detail = 'storage_path';
   end if;
+  -- Pages client légères (3G) : image de 250 Ko au plus (les vidéos ne vont que sur les écrans TV).
+  if coalesce(p_fields ->> 'kind', 'image') = 'image' and public.ad_file_size(p_fields ->> 'storage_path') > 256000 then
+    raise exception 'file_too_large' using errcode = 'P0422';
+  end if;
   if (select count(*) from public.ad_creatives where campaign_id = v_c.id) >= 5 and p_creative is null then
     raise exception 'invalid_state' using errcode = 'P0409', detail = 'creatives';
   end if;
@@ -655,6 +659,7 @@ begin
   if nullif(p_fields ->> 'coin_logo_path', '') is not null and p_fields ->> 'coin_logo_path' not like v_prefix || '/' || v_c.id || '/%' then
     raise exception 'not_allowed' using errcode = '42501', detail = 'storage_path';
   end if;
+  if public.ad_file_size(nullif(p_fields ->> 'coin_logo_path', '')) > 20480 then raise exception 'file_too_large' using errcode = 'P0422'; end if;
   insert into public.ad_game_skins (campaign_id, plane_primary, plane_secondary, coin_logo_path, end_title, end_title_en, reward_text,
     reward_text_en, coupon_validity_days, max_coupons, min_levels)
   values (v_c.id, p_fields ->> 'plane_primary', p_fields ->> 'plane_secondary', nullif(p_fields ->> 'coin_logo_path', ''),
@@ -1741,6 +1746,74 @@ begin
 end;
 $$;
 
+
+/** Taille (octets) d'un fichier du bucket `ad-creatives` ; 0 s'il est inconnu (stockage absent, fichier pas encore lu). */
+create or replace function public.ad_file_size(p_path text)
+returns bigint
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_size bigint;
+begin
+  if p_path is null or to_regclass('storage.objects') is null then return 0; end if;
+  execute 'select (metadata ->> ''size'')::bigint from storage.objects where bucket_id = ''ad-creatives'' and name = $1'
+    into v_size using p_path;
+  return coalesce(v_size, 0);
+end;
+$$;
+
+/** Jeux proposés sur « Mon ticket » (vérification légère au chargement ; le contenu vient à l'ouverture). */
+create or replace function public.games_available(p_ticket_token text)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with t as (select * from public.ticket_by_token(p_ticket_token) where id is not null),
+  p as (select p.* from t left join public.organization_ad_preferences p on p.organization_id = t.organization_id)
+  select case when not exists (select 1 from t) then null else jsonb_build_object(
+    'quiz', coalesce((select quiz_enabled from p), true) and exists (
+      select 1 from public.ad_quizzes q
+      join (select distinct campaign_id from t, public.ad_candidates(t.branch_id, 'game')) c on c.campaign_id = q.campaign_id
+      where q.status = 'approved'),
+    'sky_catch', coalesce((select sky_catch_enabled from p), true)
+  ) end;
+$$;
+
+/** Arrêt d'une annonce Maison par l'établissement. */
+create or replace function public.end_house_campaign(p_campaign uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_c public.ad_campaigns := public.lock_campaign_for_edit(p_campaign);
+begin
+  if v_c.organization_id is null then raise exception 'not_allowed' using errcode = '42501'; end if;
+  update public.ad_campaigns set status = 'ended', ends_on = least(ends_on, public.douala_today()) where id = v_c.id;
+  delete from public.ad_campaign_branches where campaign_id = v_c.id;
+end;
+$$;
+
+
+/** Villes des agences actives (choix du ciblage) : information publique, déjà visible dans « À proximité ». */
+create or replace function public.ad_target_cities()
+returns text[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(array_agg(distinct initcap(trim(b.city)) order by initcap(trim(b.city))), '{}')
+  from public.branches b join public.organizations o on o.id = b.organization_id
+  where b.active and o.status = 'active' and nullif(trim(b.city), '') is not null;
+$$;
+
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Droits et RLS
 -- ═════════════════════════════════════════════════════════════════════════════
@@ -1758,14 +1831,15 @@ revoke execute on function
   public.finish_quiz(text, uuid, smallint[]), public.start_sky_catch(text, uuid), public.finish_sky_catch(text, uuid, integer, integer, integer),
   public.coupon_view(text), public.redeem_coupon(text, boolean), public.record_ad_events(uuid, uuid, jsonb), public.rollup_ad_stats(integer),
   public.campaign_stats(uuid), public.issue_campaign_invoice(uuid), public.campaign_checkout(uuid), public.ensure_ad_event_partitions(),
-  public.can_write_ad_file(text), public.can_read_ad_document(text)
+  public.can_write_ad_file(text), public.can_read_ad_document(text), public.ad_file_size(text), public.games_available(text),
+  public.end_house_campaign(uuid), public.ad_target_cities()
 from public, anon, authenticated;
 
 -- Fonctions des politiques RLS et de stockage (évaluées pour le rôle de la requête ; lecture seule).
 grant execute on function public.can_write_ad_file(text), public.can_read_ad_document(text), public.is_advertiser_member(uuid, text[]),
   public.can_view_campaign(uuid) to authenticated;
 -- Pages client (jeton du ticket, sans compte) : jeux, pub de l'application, bon de réduction.
-grant execute on function public.app_ad(text), public.game_session(text), public.start_quiz(text, uuid), public.finish_quiz(text, uuid, smallint[]),
+grant execute on function public.app_ad(text), public.game_session(text), public.games_available(text), public.start_quiz(text, uuid), public.finish_quiz(text, uuid, smallint[]),
   public.start_sky_catch(text, uuid), public.finish_sky_catch(text, uuid, integer, integer, integer), public.coupon_view(text)
 to anon, authenticated;
 -- Annonceurs, établissements, super admin (droits vérifiés dans chaque fonction).
@@ -1774,7 +1848,8 @@ grant execute on function public.create_advertiser(text, text, text, text), publ
   public.save_game_skin(uuid, jsonb), public.delete_game_skin(uuid), public.submit_campaign(uuid), public.review_campaign(uuid, boolean, text),
   public.admin_set_campaign_paused(uuid, boolean, text), public.admin_update_ad_package(text, jsonb),
   public.admin_upsert_ad_sector(text, text, text, boolean, boolean), public.set_ad_preferences(uuid, text[], boolean, boolean, boolean),
-  public.redeem_coupon(text, boolean), public.campaign_stats(uuid), public.campaign_checkout(uuid)
+  public.redeem_coupon(text, boolean), public.campaign_stats(uuid), public.campaign_checkout(uuid), public.end_house_campaign(uuid),
+  public.ad_target_cities()
 to authenticated;
 -- Serveur de l'application (écrans TV, lots d'événements).
 grant execute on function public.tv_ad_rotation(text), public.record_ad_events(uuid, uuid, jsonb), public.ticket_by_token(text),

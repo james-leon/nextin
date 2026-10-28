@@ -23,7 +23,9 @@
     "./billing": "./src/billing/index.ts",
     "./billing/pricing": "./src/billing/pricing.ts",
     "./phone": "./src/phone.ts",
-    "./money": "./src/money.ts"
+    "./money": "./src/money.ts",
+    "./ads": "./src/ads/index.ts",
+    "./ads/sky-catch": "./src/ads/sky-catch.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",

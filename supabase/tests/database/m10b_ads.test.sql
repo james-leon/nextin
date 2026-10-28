@@ -6,7 +6,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(91);
+select plan(93);
 
 create schema tests;
 create function tests.create_user(p_id uuid, p_email text, p_anon boolean default false) returns uuid language sql as $$
@@ -254,6 +254,9 @@ select ok((select bool_and(s[i] is distinct from s[i + 1]) from (select public.a
   (select jsonb_agg(jsonb_build_object('creative_id', creative_id, 'weight', weight)) from public.ad_candidates(tests.id('akwa'), 'tv')), 50) s) x,
   generate_series(1, 49) i), 'jamais deux fois la même pub de suite quand il y a une alternative');
 select is((select count(*)::integer from public.ad_candidates(tests.id('akwa'), 'game')), 2, 'jeux : seulement les formules qui les comprennent (Argent, Or)');
+select tests.login_as('ab000000-0000-0000-0000-0000000000a2');
+select throws_ok(format($$ select public.end_house_campaign(%L) $$, tests.id('House')), '42501', 'not_allowed', 'annonce Maison : arrêtée par l''établissement seulement');
+select tests.logout();
 insert into public.ad_schedules (campaign_id, weekday, start_time, end_time) values (tests.id('Pain'), 1, '08:00', '09:00');
 select is((select count(*)::integer from public.ad_candidates(tests.id('akwa'), 'tv', '2026-11-03 12:00+01') where campaign_id = tests.id('Pain')), 0,
   'plage horaire : hors créneau, pas de diffusion');
@@ -267,6 +270,7 @@ insert into vals select 'session', public.game_session(tests.t('ticket'));
 select is(tests.v('session') -> 'quiz' ->> 'title', 'Santé', 'quiz proposé (campagne approuvée et payée)');
 select is(tests.v('session') -> 'sky_catch' -> 'skin' ->> 'end_title', 'Bravo !', 'habillage Or tiré au sort');
 select is(jsonb_array_length(tests.v('session') -> 'sequence'), 12, 'lot de 12 interstitielles tirées côté serveur');
+select is(public.games_available(tests.t('ticket')), '{"quiz": true, "sky_catch": true}'::jsonb, 'jeux proposés sur « Mon ticket » (vérification légère)');
 select is(public.game_session('AAAAAAAAAAAAAAAAAAAAAA'), null, 'jeton inconnu : rien');
 insert into vals select 'quiz', public.start_quiz(tests.t('ticket'), (tests.v('session') -> 'quiz' ->> 'id')::uuid);
 select is(jsonb_array_length(tests.v('quiz') -> 'questions'), 3, 'questions du quiz');

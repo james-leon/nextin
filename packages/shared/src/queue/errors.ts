@@ -39,6 +39,14 @@ export const QUEUE_ERROR_CODES = [
   "too_many_organizations",
   "invoice_paid",
   "link_expired",
+  // M10b — publicité.
+  "surface_not_in_package",
+  "creative_required",
+  "health_visa_required",
+  "quiz_invalid",
+  "coupon_redeemed",
+  "coupon_expired",
+  "file_too_large",
 ] as const;
 export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
 
@@ -67,6 +75,7 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "service_closed":
     case "quota_reached":
     case "link_expired":
+    case "coupon_expired":
       return 410;
     case "counter_busy":
     case "counter_not_open":
@@ -78,6 +87,7 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "request_limit":
     case "code_expired":
     case "invoice_paid":
+    case "coupon_redeemed":
       return 409;
     case "too_many_organizations":
       return 429;

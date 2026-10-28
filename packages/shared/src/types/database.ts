@@ -1798,6 +1798,12 @@ isOneToOne: true
 "ad_candidates_json":
 { Args: { "p_branch": string,"p_surface": Database["public"]['Enums']["ad_surface"] }; Returns: Json
                            },
+"ad_file_size":
+{ Args: { "p_path": string }; Returns: number
+                           },
+"ad_target_cities":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
+                           },
 "ad_weighted_draw":
 { Args: { "p_candidates": Json,"p_count": number }; Returns: (string)[]
                            },
@@ -2195,6 +2201,9 @@ isOneToOne: true
 "effective_duration_seconds":
 { Args: { "p_default": number,"p_ewma": number,"p_samples": number }; Returns: number
                            },
+"end_house_campaign":
+{ Args: { "p_campaign": string }; Returns: undefined
+                           },
 "end_practitioner_absence":
 { Args: { "p_absence": string }; Returns: Json
                            },
@@ -2278,6 +2287,9 @@ isOneToOne: true
         isSetofReturn: false
       } },
 "game_session":
+{ Args: { "p_ticket_token": string }; Returns: Json
+                           },
+"games_available":
 { Args: { "p_ticket_token": string }; Returns: Json
                            },
 "get_appointment_request":
