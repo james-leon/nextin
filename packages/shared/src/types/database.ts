@@ -26,6 +26,44 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     }
                   ]
+                },"appointment_requests": {
+                  Row: {
+                    "appointment_id": string | null,"branch_id": string,"code_attempts": number,"code_expires_at": string | null,"code_hash": string | null,"codes_sent": number,"created_at": string,"customer_label": string | null,"customer_user_id": string | null,"decline_reason": string | null,"handled_at": string | null,"handled_by": string | null,"id": string,"locale": string,"organization_id": string,"phone_e164": string | null,"practitioner_id": string | null,"preferred_day": string | null,"preferred_period": string | null,"preferred_starts_at": string | null,"public_token": string,"service_id": string,"status": Database["public"]['Enums']["appointment_request_status"],"updated_at": string,"verified_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "appointment_id"?: string | null,"branch_id": string,"code_attempts"?: number,"code_expires_at"?: string | null,"code_hash"?: string | null,"codes_sent"?: number,"created_at"?: string,"customer_label"?: string | null,"customer_user_id"?: string | null,"decline_reason"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"locale"?: string,"organization_id": string,"phone_e164"?: string | null,"practitioner_id"?: string | null,"preferred_day"?: string | null,"preferred_period"?: string | null,"preferred_starts_at"?: string | null,"public_token": string,"service_id": string,"status"?: Database["public"]['Enums']["appointment_request_status"],"updated_at"?: string,"verified_at"?: string | null
+                  }
+                  Update: {
+                    "appointment_id"?: string | null,"branch_id"?: string,"code_attempts"?: number,"code_expires_at"?: string | null,"code_hash"?: string | null,"codes_sent"?: number,"created_at"?: string,"customer_label"?: string | null,"customer_user_id"?: string | null,"decline_reason"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"locale"?: string,"organization_id"?: string,"phone_e164"?: string | null,"practitioner_id"?: string | null,"preferred_day"?: string | null,"preferred_period"?: string | null,"preferred_starts_at"?: string | null,"public_token"?: string,"service_id"?: string,"status"?: Database["public"]['Enums']["appointment_request_status"],"updated_at"?: string,"verified_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "appointment_requests_organization_id_appointment_id_fkey"
+      columns: ["organization_id","appointment_id"]
+isOneToOne: false
+      referencedRelation: "appointments"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "appointment_requests_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "appointment_requests_organization_id_practitioner_id_fkey"
+      columns: ["organization_id","practitioner_id"]
+isOneToOne: false
+      referencedRelation: "practitioners"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "appointment_requests_organization_id_service_id_fkey"
+      columns: ["organization_id","service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
                 },"appointments": {
                   Row: {
                     "booked_by": string | null,"branch_id": string,"cancel_reason": string | null,"checked_in_at": string | null,"created_at": string,"customer_label": string | null,"ends_at": string,"id": string,"locale": string,"organization_id": string,"phone_e164": string | null,"practitioner_id": string,"rescheduled_from_id": string | null,"service_id": string,"starts_at": string,"status": Database["public"]['Enums']["appointment_status"],"ticket_id": string | null,"updated_at": string
@@ -112,14 +150,14 @@ isOneToOne: false
                   ]
                 },"branch_settings": {
                   Row: {
-                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_walkin_ratio": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_tickets_enabled": boolean,"updated_at": string
+                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_walkin_ratio"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"updated_at"?: string
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_walkin_ratio"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"updated_at"?: string
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -452,14 +490,14 @@ isOneToOne: false
                   ]
                 },"notification_contacts": {
                   Row: {
-                    "appointment_id": string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"push_subscription": Json | null,"ticket_id": string | null,"wa_id": string | null,"window_expires_at": string | null
+                    "appointment_id": string | null,"appointment_request_id": string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"push_subscription": Json | null,"ticket_id": string | null,"wa_id": string | null,"window_expires_at": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
+                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
                   }
                   Update: {
-                    "appointment_id"?: string | null,"branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
+                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
                   }
                   Relationships: [
                     {
@@ -480,18 +518,24 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "tickets"
       referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "notification_contacts_request_fkey"
+      columns: ["organization_id","appointment_request_id"]
+isOneToOne: false
+      referencedRelation: "appointment_requests"
+      referencedColumns: ["organization_id","id"]
     }
                   ]
                 },"notification_jobs": {
                   Row: {
-                    "appointment_id": string | null,"attempt": number,"branch_id": string,"channel": Database["public"]['Enums']["notif_channel"],"contact_id": string | null,"created_at": string,"dedupe_key": string,"delivered_at": string | null,"error": string | null,"event": Database["public"]['Enums']["notif_event"],"fallback_of": string | null,"guard": boolean,"id": string,"next_attempt_at": string,"organization_id": string,"payload": NonNullable<Json>,"provider_message_id": string | null,"sent_at": string | null,"status": Database["public"]['Enums']["job_status"],"template_name": string | null,"ticket_id": string | null,"updated_at": string
+                    "appointment_id": string | null,"appointment_request_id": string | null,"attempt": number,"branch_id": string,"channel": Database["public"]['Enums']["notif_channel"],"contact_id": string | null,"created_at": string,"dedupe_key": string,"delivered_at": string | null,"error": string | null,"event": Database["public"]['Enums']["notif_event"],"fallback_of": string | null,"guard": boolean,"id": string,"next_attempt_at": string,"organization_id": string,"payload": NonNullable<Json>,"provider_message_id": string | null,"sent_at": string | null,"status": Database["public"]['Enums']["job_status"],"template_name": string | null,"ticket_id": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"attempt"?: number,"branch_id": string,"channel": Database["public"]['Enums']["notif_channel"],"contact_id"?: string | null,"created_at"?: string,"dedupe_key": string,"delivered_at"?: string | null,"error"?: string | null,"event": Database["public"]['Enums']["notif_event"],"fallback_of"?: string | null,"guard"?: boolean,"id"?: string,"next_attempt_at"?: string,"organization_id": string,"payload"?: NonNullable<Json>,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: Database["public"]['Enums']["job_status"],"template_name"?: string | null,"ticket_id"?: string | null,"updated_at"?: string
+                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"attempt"?: number,"branch_id": string,"channel": Database["public"]['Enums']["notif_channel"],"contact_id"?: string | null,"created_at"?: string,"dedupe_key": string,"delivered_at"?: string | null,"error"?: string | null,"event": Database["public"]['Enums']["notif_event"],"fallback_of"?: string | null,"guard"?: boolean,"id"?: string,"next_attempt_at"?: string,"organization_id": string,"payload"?: NonNullable<Json>,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: Database["public"]['Enums']["job_status"],"template_name"?: string | null,"ticket_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "appointment_id"?: string | null,"attempt"?: number,"branch_id"?: string,"channel"?: Database["public"]['Enums']["notif_channel"],"contact_id"?: string | null,"created_at"?: string,"dedupe_key"?: string,"delivered_at"?: string | null,"error"?: string | null,"event"?: Database["public"]['Enums']["notif_event"],"fallback_of"?: string | null,"guard"?: boolean,"id"?: string,"next_attempt_at"?: string,"organization_id"?: string,"payload"?: NonNullable<Json>,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: Database["public"]['Enums']["job_status"],"template_name"?: string | null,"ticket_id"?: string | null,"updated_at"?: string
+                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"attempt"?: number,"branch_id"?: string,"channel"?: Database["public"]['Enums']["notif_channel"],"contact_id"?: string | null,"created_at"?: string,"dedupe_key"?: string,"delivered_at"?: string | null,"error"?: string | null,"event"?: Database["public"]['Enums']["notif_event"],"fallback_of"?: string | null,"guard"?: boolean,"id"?: string,"next_attempt_at"?: string,"organization_id"?: string,"payload"?: NonNullable<Json>,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: Database["public"]['Enums']["job_status"],"template_name"?: string | null,"ticket_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -523,6 +567,12 @@ isOneToOne: false
       columns: ["organization_id","ticket_id"]
 isOneToOne: false
       referencedRelation: "tickets"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "notification_jobs_request_fkey"
+      columns: ["organization_id","appointment_request_id"]
+isOneToOne: false
+      referencedRelation: "appointment_requests"
       referencedColumns: ["organization_id","id"]
     }
                   ]
@@ -846,7 +896,7 @@ isOneToOne: false
                   ]
                 },"tickets": {
                   Row: {
-                    "appointment_id": string | null,"branch_id": string,"called_at": string | null,"counter_id": string | null,"created_at": string,"created_by": string | null,"customer_user_id": string | null,"delay_count": number,"display_code": string,"finished_at": string | null,"id": string,"is_remote": boolean,"number": number,"organization_id": string,"preferred_counter_id": string | null,"presence_confirmed_at": string | null,"priority_level": number,"priority_reason": Database["public"]['Enums']["priority_reason"] | null,"public_token": string | null,"rated_at": string | null,"rating": number | null,"rating_comment": string | null,"recall_count": number,"recalled_at": string | null,"service_day": string,"service_id": string,"serving_started_at": string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status": Database["public"]['Enums']["ticket_status"],"transferred_from_id": string | null,"updated_at": string,"finish_ticket_internal": {
+                    "appointment_id": string | null,"branch_id": string,"called_at": string | null,"counter_id": string | null,"created_at": string,"created_by": string | null,"customer_user_id": string | null,"delay_count": number,"display_code": string,"finished_at": string | null,"id": string,"is_remote": boolean,"number": number,"on_my_way_at": string | null,"organization_id": string,"preferred_counter_id": string | null,"presence_confirmed_at": string | null,"priority_level": number,"priority_reason": Database["public"]['Enums']["priority_reason"] | null,"public_token": string | null,"rated_at": string | null,"rating": number | null,"rating_comment": string | null,"recall_count": number,"recalled_at": string | null,"remote_travel_seconds": number | null,"service_day": string,"service_id": string,"serving_started_at": string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status": Database["public"]['Enums']["ticket_status"],"transferred_from_id": string | null,"updated_at": string,"finish_ticket_internal": {
               "appointment_id": string | null,
 "branch_id": string,
 "called_at": string | null,
@@ -860,6 +910,7 @@ isOneToOne: false
 "id": string,
 "is_remote": boolean,
 "number": number,
+"on_my_way_at": string | null,
 "organization_id": string,
 "preferred_counter_id": string | null,
 "presence_confirmed_at": string | null,
@@ -871,6 +922,7 @@ isOneToOne: false
 "rating_comment": string | null,
 "recall_count": number,
 "recalled_at": string | null,
+"remote_travel_seconds": number | null,
 "service_day": string,
 "service_id": string,
 "serving_started_at": string | null,
@@ -879,14 +931,14 @@ isOneToOne: false
 "status": Database["public"]['Enums']["ticket_status"],
 "transferred_from_id": string | null,
 "updated_at": string
-            } | null,"staff_ticket_json": Json | null
+            } | null,"penalize_remote_ticket": undefined | null,"staff_ticket_json": Json | null
                   }
-                  ComputedFields: "finish_ticket_internal" | "staff_ticket_json"
+                  ComputedFields: "finish_ticket_internal" | "penalize_remote_ticket" | "staff_ticket_json"
                   Insert: {
-                    "appointment_id"?: string | null,"branch_id": string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code": string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"number": number,"organization_id": string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"service_day": string,"service_id": string,"serving_started_at"?: string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
+                    "appointment_id"?: string | null,"branch_id": string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code": string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"number": number,"on_my_way_at"?: string | null,"organization_id": string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"remote_travel_seconds"?: number | null,"service_day": string,"service_id": string,"serving_started_at"?: string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "appointment_id"?: string | null,"branch_id"?: string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code"?: string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"number"?: number,"organization_id"?: string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"service_day"?: string,"service_id"?: string,"serving_started_at"?: string | null,"sort_key"?: number,"source"?: Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
+                    "appointment_id"?: string | null,"branch_id"?: string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code"?: string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"number"?: number,"on_my_way_at"?: string | null,"organization_id"?: string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"remote_travel_seconds"?: number | null,"service_day"?: string,"service_id"?: string,"serving_started_at"?: string | null,"sort_key"?: number,"source"?: Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -947,7 +999,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "accept_invitation":
+            "accept_appointment_request":
+{ Args: { "p_practitioner": string,"p_request": string,"p_starts_at": string }; Returns: Json
+                           },
+"accept_invitation":
 { Args: { "p_token": string }; Returns: string
                            },
 "admit_ticket":
@@ -988,6 +1043,37 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"assert_requests_open":
+{ Args: { "p_branch": string }; Returns: {
+              "almost_turn_threshold": number,
+"appointment_early_minutes": number,
+"appointment_late_grace_minutes": number,
+"appointment_mode": string,
+"appointment_no_show_minutes": number,
+"appointment_request_days": number,
+"appointment_requests_enabled": boolean,
+"appointment_walkin_ratio": number,
+"branch_id": string,
+"max_active_tickets_per_customer": number,
+"organization_id": string,
+"priorities_enabled": boolean,
+"public_listing_enabled": boolean,
+"rating_enabled": boolean,
+"remote_confirm_threshold": number,
+"remote_leave_margin_minutes": number,
+"remote_max_delays": number,
+"remote_max_distance_km": number | null,
+"remote_penalty_places": number,
+"remote_tickets_enabled": boolean,
+"remote_travel_kmh": number,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "branch_settings"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "assert_stats_access":
 { Args: { "p_branch": string,"p_org": string }; Returns: undefined
                            },
@@ -1006,8 +1092,14 @@ isOneToOne: false
 "branch_is_open":
 { Args: { "p_at"?: string,"p_branch": string }; Returns: boolean
                            },
+"branch_public":
+{ Args: { "p_branch": string }; Returns: Json
+                           },
 "branch_service_day":
 { Args: { "p_branch": string }; Returns: string
+                           },
+"branch_summary":
+{ Args: { "p_branch": string,"p_distance_m": number }; Returns: Json
                            },
 "broadcast":
 { Args: { "p_event": string,"p_payload": Json,"p_private": boolean,"p_topic": string }; Returns: undefined
@@ -1045,6 +1137,9 @@ isOneToOne: false
 "cancel_appointment_reminders":
 { Args: { "p_appointment": string }; Returns: undefined
                            },
+"cancel_my_appointment_request":
+{ Args: { "p_token": string }; Returns: Json
+                           },
 "cancel_my_ticket":
 { Args: { "p_token": string }; Returns: Json
                            },
@@ -1059,6 +1154,9 @@ isOneToOne: false
                            },
 "claim_notification_jobs":
 { Args: { "p_limit"?: number }; Returns: Json
+                           },
+"clear_request_codes":
+{ Args: { "p_request": string }; Returns: undefined
                            },
 "client_op_replay":
 { Args: { "p_op": string }; Returns: Json
@@ -1128,6 +1226,12 @@ isOneToOne: false
 "configure_notification_dispatch":
 { Args: { "p_secret": string,"p_url": string }; Returns: undefined
                            },
+"confirm_presence":
+{ Args: { "p_entry_code": string,"p_token": string }; Returns: Json
+                           },
+"create_appointment_request":
+{ Args: { "p_branch": string,"p_customer": string,"p_day": string,"p_label": string,"p_locale": string,"p_period": string,"p_phone_e164": string,"p_practitioner": string,"p_service": string,"p_starts_at": string }; Returns: Json
+                           },
 "create_branch":
 { Args: { "p_address"?: string,"p_city"?: string,"p_lat"?: number,"p_lng"?: number,"p_name": string,"p_org": string,"p_phone_e164"?: string }; Returns: string
                            },
@@ -1143,6 +1247,9 @@ isOneToOne: false
 "declare_practitioner_absence":
 { Args: { "p_kind": Database["public"]['Enums']["absence_kind"],"p_practitioner": string,"p_reason"?: string,"p_until"?: string }; Returns: Json
                            },
+"decline_appointment_request":
+{ Args: { "p_reason"?: string,"p_request": string }; Returns: Json
+                           },
 "disable_push_contact":
 { Args: { "p_contact": string }; Returns: undefined
                            },
@@ -1157,6 +1264,9 @@ isOneToOne: false
                            },
 "enqueue_appointment_notification":
 { Args: { "p_appointment": string,"p_at"?: string,"p_dedupe": string,"p_event": Database["public"]['Enums']["notif_event"] }; Returns: number
+                           },
+"enqueue_remote_notices":
+{ Args: { "p_service"?: string }; Returns: number
                            },
 "enqueue_ticket_notification":
 { Args: { "p_dedupe": string,"p_event": Database["public"]['Enums']["notif_event"],"p_payload"?: Json,"p_status"?: Database["public"]['Enums']["job_status"],"p_ticket": string }; Returns: number
@@ -1188,6 +1298,7 @@ isOneToOne: false
 "id": string,
 "is_remote": boolean,
 "number": number,
+"on_my_way_at": string | null,
 "organization_id": string,
 "preferred_counter_id": string | null,
 "presence_confirmed_at": string | null,
@@ -1199,6 +1310,7 @@ isOneToOne: false
 "rating_comment": string | null,
 "recall_count": number,
 "recalled_at": string | null,
+"remote_travel_seconds": number | null,
 "service_day": string,
 "service_id": string,
 "serving_started_at": string | null,
@@ -1214,6 +1326,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"get_appointment_request":
+{ Args: { "p_token": string }; Returns: Json
+                           },
 "get_branch_board":
 { Args: { "p_branch": string }; Returns: Json
                            },
@@ -1243,6 +1358,7 @@ isOneToOne: false
 "id": string,
 "is_remote": boolean,
 "number": number,
+"on_my_way_at": string | null,
 "organization_id": string,
 "preferred_counter_id": string | null,
 "presence_confirmed_at": string | null,
@@ -1254,6 +1370,7 @@ isOneToOne: false
 "rating_comment": string | null,
 "recall_count": number,
 "recalled_at": string | null,
+"remote_travel_seconds": number | null,
 "service_day": string,
 "service_id": string,
 "serving_started_at": string | null,
@@ -1297,11 +1414,17 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"issue_request_code":
+{ Args: { "p_request": string }; Returns: undefined
+                           },
 "jsonb_row_diff":
 { Args: { "p_new": Json,"p_old": Json }; Returns: Json
                            },
 "kick_notification_dispatch":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"list_appointment_requests":
+{ Args: { "p_branch": string,"p_pending"?: boolean }; Returns: Json
                            },
 "list_appointments":
 { Args: { "p_branch": string,"p_from": string,"p_practitioner"?: string,"p_to": string }; Returns: Json
@@ -1363,6 +1486,117 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"lock_pending_request":
+{ Args: { "p_request": string }; Returns: {
+              "appointment_id": string | null,
+"branch_id": string,
+"code_attempts": number,
+"code_expires_at": string | null,
+"code_hash": string | null,
+"codes_sent": number,
+"created_at": string,
+"customer_label": string | null,
+"customer_user_id": string | null,
+"decline_reason": string | null,
+"handled_at": string | null,
+"handled_by": string | null,
+"id": string,
+"locale": string,
+"organization_id": string,
+"phone_e164": string | null,
+"practitioner_id": string | null,
+"preferred_day": string | null,
+"preferred_period": string | null,
+"preferred_starts_at": string | null,
+"public_token": string,
+"service_id": string,
+"status": Database["public"]['Enums']["appointment_request_status"],
+"updated_at": string,
+"verified_at": string | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "appointment_requests"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"lock_remote_ticket":
+{ Args: { "p_token": string }; Returns: {
+              "appointment_id": string | null,
+"branch_id": string,
+"called_at": string | null,
+"counter_id": string | null,
+"created_at": string,
+"created_by": string | null,
+"customer_user_id": string | null,
+"delay_count": number,
+"display_code": string,
+"finished_at": string | null,
+"id": string,
+"is_remote": boolean,
+"number": number,
+"on_my_way_at": string | null,
+"organization_id": string,
+"preferred_counter_id": string | null,
+"presence_confirmed_at": string | null,
+"priority_level": number,
+"priority_reason": Database["public"]['Enums']["priority_reason"] | null,
+"public_token": string | null,
+"rated_at": string | null,
+"rating": number | null,
+"rating_comment": string | null,
+"recall_count": number,
+"recalled_at": string | null,
+"remote_travel_seconds": number | null,
+"service_day": string,
+"service_id": string,
+"serving_started_at": string | null,
+"sort_key": number,
+"source": Database["public"]['Enums']["ticket_source"],
+"status": Database["public"]['Enums']["ticket_status"],
+"transferred_from_id": string | null,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "tickets"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"lock_request_by_token":
+{ Args: { "p_token": string }; Returns: {
+              "appointment_id": string | null,
+"branch_id": string,
+"code_attempts": number,
+"code_expires_at": string | null,
+"code_hash": string | null,
+"codes_sent": number,
+"created_at": string,
+"customer_label": string | null,
+"customer_user_id": string | null,
+"decline_reason": string | null,
+"handled_at": string | null,
+"handled_by": string | null,
+"id": string,
+"locale": string,
+"organization_id": string,
+"phone_e164": string | null,
+"practitioner_id": string | null,
+"preferred_day": string | null,
+"preferred_period": string | null,
+"preferred_starts_at": string | null,
+"public_token": string,
+"service_id": string,
+"status": Database["public"]['Enums']["appointment_request_status"],
+"updated_at": string,
+"verified_at": string | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "appointment_requests"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "lock_staff_ticket":
 { Args: { "p_allowed": (Database["public"]['Enums']["ticket_status"])[],"p_ticket": string }; Returns: {
               "appointment_id": string | null,
@@ -1378,6 +1612,7 @@ isOneToOne: false
 "id": string,
 "is_remote": boolean,
 "number": number,
+"on_my_way_at": string | null,
 "organization_id": string,
 "preferred_counter_id": string | null,
 "presence_confirmed_at": string | null,
@@ -1389,6 +1624,7 @@ isOneToOne: false
 "rating_comment": string | null,
 "recall_count": number,
 "recalled_at": string | null,
+"remote_travel_seconds": number | null,
 "service_day": string,
 "service_id": string,
 "serving_started_at": string | null,
@@ -1413,8 +1649,14 @@ isOneToOne: false
 "mark_no_show":
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
                            },
+"mask_phone":
+{ Args: { "p_phone": string }; Returns: string
+                           },
 "move_back_ticket":
 { Args: { "p_places": number,"p_ticket": string }; Returns: Json
+                           },
+"nearby_branches":
+{ Args: { "p_lat"?: number,"p_lng"?: number,"p_query"?: string,"p_radius_km"?: number }; Returns: Json
                            },
 "next_ticket_number":
 { Args: { "p_day": string,"p_service": string }; Returns: number
@@ -1431,6 +1673,9 @@ isOneToOne: false
 "pause_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },
+"penalize_remote_ticket":
+{ Args: { "p_row": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: undefined
+                           },
 "pick_next_ticket":
 { Args: { "p_counter": string }; Returns: {
               "appointment_id": string | null,
@@ -1446,6 +1691,7 @@ isOneToOne: false
 "id": string,
 "is_remote": boolean,
 "number": number,
+"on_my_way_at": string | null,
 "organization_id": string,
 "preferred_counter_id": string | null,
 "presence_confirmed_at": string | null,
@@ -1457,6 +1703,7 @@ isOneToOne: false
 "rating_comment": string | null,
 "recall_count": number,
 "recalled_at": string | null,
+"remote_travel_seconds": number | null,
 "service_day": string,
 "service_id": string,
 "serving_started_at": string | null,
@@ -1555,11 +1802,29 @@ isOneToOne: false
 "register_push_contact":
 { Args: { "p_locale"?: string,"p_subscription": Json,"p_token": string }; Returns: Json
                            },
+"remote_travel_seconds":
+{ Args: { "p_distance_m": number,"p_kmh": number }; Returns: number
+                           },
+"request_notification_view":
+{ Args: { "p_request": string }; Returns: Json
+                           },
+"request_options":
+{ Args: { "p_branch": string }; Returns: Json
+                           },
+"request_staff_json":
+{ Args: { "p_request": string }; Returns: Json
+                           },
+"request_view":
+{ Args: { "p_request": string }; Returns: Json
+                           },
 "reroute_counter":
 { Args: { "p_practitioner": string }; Returns: string
                            },
 "reschedule_appointment":
 { Args: { "p_appointment": string,"p_practitioner"?: string,"p_starts_at": string }; Returns: Json
+                           },
+"resend_request_code":
+{ Args: { "p_token": string }; Returns: Json
                            },
 "resolve_entry":
 { Args: { "p_code": string }; Returns: Json
@@ -1590,6 +1855,9 @@ isOneToOne: false
 "set_counter_status":
 { Args: { "p_counter": string,"p_status": Database["public"]['Enums']["counter_status"] }; Returns: Json
                            },
+"set_remote_travel":
+{ Args: { "p_minutes": number,"p_token": string }; Returns: Json
+                           },
 "set_ticket_priority":
 { Args: { "p_reason": Database["public"]['Enums']["priority_reason"],"p_ticket": string }; Returns: Json
                            },
@@ -1598,6 +1866,55 @@ isOneToOne: false
                            },
 "shares_org_with":
 { Args: { "p_user": string }; Returns: boolean
+                           },
+"shift_ticket_back":
+{ Args: { "p_places": number,"p_row": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: {
+              "appointment_id": string | null,
+"branch_id": string,
+"called_at": string | null,
+"counter_id": string | null,
+"created_at": string,
+"created_by": string | null,
+"customer_user_id": string | null,
+"delay_count": number,
+"display_code": string,
+"finished_at": string | null,
+"id": string,
+"is_remote": boolean,
+"number": number,
+"on_my_way_at": string | null,
+"organization_id": string,
+"preferred_counter_id": string | null,
+"presence_confirmed_at": string | null,
+"priority_level": number,
+"priority_reason": Database["public"]['Enums']["priority_reason"] | null,
+"public_token": string | null,
+"rated_at": string | null,
+"rating": number | null,
+"rating_comment": string | null,
+"recall_count": number,
+"recalled_at": string | null,
+"remote_travel_seconds": number | null,
+"service_day": string,
+"service_id": string,
+"serving_started_at": string | null,
+"sort_key": number,
+"source": Database["public"]['Enums']["ticket_source"],
+"status": Database["public"]['Enums']["ticket_status"],
+"transferred_from_id": string | null,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "tickets"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"signal_on_my_way":
+{ Args: { "p_token": string }; Returns: Json
+                           },
+"staff_confirm_presence":
+{ Args: { "p_ticket": string }; Returns: Json
                            },
 "staff_ticket_command":
 { Args: { "p_client_op_id"?: string,"p_command": string,"p_ticket": string }; Returns: Json
@@ -1664,8 +1981,17 @@ isOneToOne: false
 "stats_totals":
 { Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
                            },
+"sweep_appointment_requests":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "sweep_appointments":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"sweep_remote_tickets":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"take_remote_ticket":
+{ Args: { "p_customer": string,"p_lat": number,"p_lng": number,"p_priority_reason": Database["public"]['Enums']["priority_reason"],"p_service": string }; Returns: Json
                            },
 "take_ticket":
 { Args: { "p_customer": string,"p_entry_code": string,"p_priority_reason": Database["public"]['Enums']["priority_reason"],"p_service": string,"p_source": Database["public"]['Enums']["ticket_source"] }; Returns: Json
@@ -1703,6 +2029,9 @@ isOneToOne: false
 "update_display":
 { Args: { "p_display": string,"p_name": string,"p_service_ids": (string)[],"p_show_ads": boolean }; Returns: undefined
                            },
+"verify_appointment_request":
+{ Args: { "p_code": string,"p_token": string }; Returns: Json
+                           },
 "walkins_since_appointment":
 { Args: { "p_counter": string,"p_day": string }; Returns: number
                            },
@@ -1720,7 +2049,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1836,7 +2165,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const
