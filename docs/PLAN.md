@@ -215,15 +215,17 @@ Flux d'appairage : l'écran `/tv` génère un code à 6 chiffres via `POST /api/
 | `ad_creatives` | `campaign_id`, `kind` (image/video), `storage_path`, `headline`, `offer_text`, `cta_url`, `promo_code`, `duration_seconds` (5-15) | |
 | `ad_schedules` | `campaign_id`, `weekday`, `start_time`, `end_time` | |
 | `ad_campaign_branches` | `campaign_id`, `branch_id` | ciblage matérialisé à l'approbation (`ST_DWithin`) ; PK composite |
-| `ad_events` | `campaign_id`, `creative_id`, `branch_id`, `display_id`, `surface`, `type` (impression/click/visit), `occurred_at` | **partitionnée par mois** ; insertion par lots |
-| `ad_daily_stats` | `campaign_id`, `day`, `branch_id`, `impressions`, `clicks`, `visits`, `quiz_plays`, `coupons_issued`, `coupons_redeemed` | rollup pg_cron horaire |
+| `ad_events` | `campaign_id`, `creative_id`, `branch_id`, `display_id`, `surface` (`tv`, `app`, `game`), `type` (impression/click/visit/skip), `occurred_at` | **partitionnée par mois** ; insertion par lots |
+| `ad_daily_stats` | `campaign_id`, `day`, `branch_id`, `impressions`, `clicks`, `visits`, `quiz_plays`, `game_plays`, `interstitial_impressions`, `interstitial_skips`, `coupons_issued`, `coupons_redeemed` | rollup pg_cron horaire |
 | `ad_sectors` | `code` (ex. `health`, `pharmacy`, `food`, `telecom`, `beauty`, `betting`, `alcohol`), `name`, `name_en`, `requires_health_visa` | référentiel modifiable par le super admin (§12.4) |
-| `organization_ad_preferences` | `organization_id` PK, `blocked_sectors text[]`, `quiz_enabled` (défaut true), `house_ads_enabled` | réglage par établissement (§12.4, §12.5) |
-| `ad_packages` | `code` (`maison`, `bronze`, `argent`, `or`), `name`, `price_xaf`, `duration_days`, `max_branches`, `share_of_voice`, `surfaces`, `quiz_allowed`, `active` | prix et contenu modifiables par le super admin, jamais en dur |
+| `organization_ad_preferences` | `organization_id` PK, `blocked_sectors text[]`, `quiz_enabled` (défaut true), `sky_catch_enabled` (défaut true), `house_ads_enabled` | réglage par établissement (§12.4, §12.5, §12.7) |
+| `ad_packages` | `code` (`maison`, `bronze`, `argent`, `or`), `name`, `price_xaf`, `duration_days`, `max_branches`, `share_of_voice` (poids de rotation : Or 50, Argent 30, Bronze 20 par défaut), `surfaces`, `quiz_allowed`, `game_skin_allowed` (Or par défaut), `active` | prix et contenu modifiables par le super admin, jamais en dur |
 | `ad_quizzes` | `campaign_id`, `title`, `reward_text`, `coupon_validity_days`, `max_coupons`, `status` (draft / pending_review / approved / rejected), `reviewed_by` | 3 à 5 questions (contrainte vérifiée à la soumission) |
 | `ad_quiz_questions` | `quiz_id`, `position`, `question`, `question_en`, `answers jsonb` (2 à 4 réponses, une seule correcte) | |
 | `ad_quiz_plays` | `quiz_id`, `branch_id`, `ticket_id`, `score`, `started_at`, `finished_at` | unique (`quiz_id`,`ticket_id`) : une partie par ticket ; aucune donnée personnelle |
-| `ad_coupons` | `campaign_id`, `play_id`, `code` (8 car.) unique, `qr_token` unique, `expires_at`, `redeemed_at`, `redeemed_by` (membre annonceur) | |
+| `ad_game_skins` | `campaign_id` unique, `plane_primary`, `plane_secondary` (couleurs), `coin_logo_path` (bucket `ad-creatives`, petit PNG/SVG), `end_title`, `end_title_en`, `reward_text`, `coupon_validity_days`, `max_coupons`, `status` (draft / pending_review / approved / rejected), `reviewed_by` | seulement si la formule l'autorise (`game_skin_allowed`, contrôle serveur) ; validé avec la campagne |
+| `ad_game_plays` | `game` (`sky_catch`), `skin_id` nullable, `branch_id`, `ticket_id`, `levels_completed`, `score`, `interstitials_shown`, `started_at`, `finished_at` | plusieurs parties par ticket, au plus un bon par ticket et par campagne ; aucune donnée personnelle |
+| `ad_coupons` | `campaign_id`, `play_id` (quiz) ou `game_play_id` (Sky Catch, un seul des deux), `code` (8 car.) unique, `qr_token` unique, `expires_at`, `redeemed_at`, `redeemed_by` (membre annonceur) | |
 
 `advertisers` reçoit `sector` (référence `ad_sectors`) ; `ad_campaigns` reçoit `sector`, `package_code` (référence `ad_packages`), `health_visa_number` et `health_visa_document_path` (obligatoires si le secteur l'exige).
 
@@ -361,7 +363,7 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | **M8** | Tableau de bord | Affluence horaire, attentes, performance par praticien, absents, notes, export CSV, temps réel | Vitest agrégats, Playwright dashboard |
 | **M9** | Distance | Établissements à proximité (PostGIS), ticket à distance, « quand partir », confirmation de présence, recul/annulation ; **demande de rendez-vous par le patient** (§12.6) | pgTAP sweeper et demandes de RDV, Playwright parcours distance et demande → validation à l'accueil |
 | **M10a** | Abonnements automatiques + paiements + super admin | Inscription en libre-service (téléphone vérifié par WhatsApp, Turnstile), essai Pro 14 j, assistant de démarrage, rappels J-7/J-3/J-1, paiement MTN MoMo / Orange Money via agrégateur, webhook signé et idempotent, factures PDF numérotées, grâce → lecture seule → suspension → suppression, limites des formules côté serveur, super admin (abonnements, revenus, jours offerts, remises, formules) — détail §11 | Vitest tarification + machine d'états, pgTAP limites / transitions différées / idempotence, Playwright inscription → essai → paiement simulé → activation → facture |
-| **M10b** | Publicité | Espace annonceur, ciblage, modération (visa santé obligatoire pour santé et pharmacie), secteurs bloqués par établissement, formules Maison / Bronze / Argent / Or, quiz sponsorisé avec bon de réduction à QR code, diffusion TV/app, stats ; paiement des campagnes avec le même agrégateur (§12.4, §12.5) | Playwright campagne → modération → paiement simulé → diffusion |
+| **M10b** | Publicité | Espace annonceur, ciblage, modération (visa santé obligatoire pour santé et pharmacie), secteurs bloqués par établissement, formules Maison / Bronze / Argent / Or, quiz sponsorisé et jeu **Sky Catch** (pubs interstitielles en rotation pondérée, habillage Or, bon de réduction à QR code), diffusion TV/app/jeu, stats ; paiement des campagnes avec le même agrégateur (§12.4, §12.5) | Playwright campagne → modération → paiement simulé → diffusion ; Sky Catch : pub entre deux niveaux, passable, jeu figé à l'appel, budget de Mon ticket inchangé, hors ligne |
 | **M11** | App Expo | Client + agent, réutilise `packages/shared` | Tests Jest/Detox de base |
 
 ### 7.1 Tables créées par module (migrations progressives)
@@ -377,7 +379,7 @@ Tokens dans `packages/config/tailwind` (CSS variables, clair/sombre via `prefers
 | M7 | `notification_contacts`, `notification_jobs`, `provider_webhook_events`, `whatsapp_opt_outs` |
 | M8 | `daily_branch_stats`, `daily_counter_stats`, vues `v_service_live` |
 | M10a | `plans`, `subscriptions`, `subscription_events`, `trial_claims`, `phone_verifications`, `invoice_sequences`, `invoices`, `payments`, `discounts`, `billing_reminders`, `messaging_usage`, `platform_settings`, bucket privé `invoices`, bucket `org-assets` |
-| M10b | `advertisers`, `advertiser_members`, `ad_*` (dont `ad_sectors`, `ad_packages`, `ad_quizzes`, `ad_quiz_questions`, `ad_quiz_plays`, `ad_coupons`), `organization_ad_preferences`, buckets `ad-creatives` et privé `ad-documents` |
+| M10b | `advertisers`, `advertiser_members`, `ad_*` (dont `ad_sectors`, `ad_packages`, `ad_quizzes`, `ad_quiz_questions`, `ad_quiz_plays`, `ad_game_skins`, `ad_game_plays`, `ad_coupons`), `organization_ad_preferences`, buckets `ad-creatives` et privé `ad-documents` |
 
 **Données de démo** (script idempotent, enrichi à chaque module) : **DOUALA CLINIC** (Akwa, Douala — Consultation générale `C`, Pédiatrie `P`, Laboratoire `L`, Caisse `K` ; cabinets 1-4, labo 1, caisse 1) et **Eneo — Agence Bonanjo, Douala** (Réclamations `R`, Abonnements `A`, Paiement facture `F` ; guichets 1-5).
 
@@ -525,13 +527,15 @@ Valeurs initiales (migration de données, **modifiables par le super admin**, ja
 ### 12.4 Publicité : secteurs, formules et visa santé (M10b)
 - **Secteurs bloqués par établissement** (`organization_ad_preferences.blocked_sectors`) : une clinique peut refuser, par exemple, les paris ou l'alcool ; le ciblage (`ad_campaign_branches`) exclut ces établissements.
 - **Formules** `ad_packages` : **Maison** (annonces de l'établissement pour ses propres services, sur ses écrans et pages, gratuites), **Bronze**, **Argent**, **Or** (part de diffusion, nombre d'établissements, surfaces TV/app, quiz autorisé ou non, durée). Prix et contenu en base, paramétrés par le super admin.
+- **Rotation pondérée** des pubs selon la formule (`share_of_voice` : Or 50 %, Argent 30 %, Bronze 20 % par défaut, modifiable par le super admin) parmi les campagnes éligibles pour l'agence : approuvées, dans leurs dates et horaires, ciblage de zone (`ad_campaign_branches`), secteurs bloqués exclus, surface demandée. Les annonces Maison comblent les trous si `house_ads_enabled`.
 - **Visa du ministère de la Santé** : une campagne d'un secteur `requires_health_visa` (santé, pharmacie) ne peut être approuvée (`approve_campaign`) sans numéro de visa et justificatif (bucket privé `ad-documents`) ; contrôle côté serveur, pas seulement dans l'interface.
 
 ### 12.5 Quiz sponsorisé pendant l'attente (M10b)
-- Carte **« Jouer en attendant »** sur Mon ticket, sous la carte du ticket et le bouton WhatsApp. Le jeu s'ouvre dans une feuille modale dont l'en-tête garde **toujours visibles le numéro et l'attente estimée** ; il ne remplace jamais la carte du ticket.
+- Carte **« Jouer en attendant »** sur Mon ticket, sous la carte du ticket et le bouton WhatsApp : **choix entre Quiz et Sky Catch** (§12.7) ; un jeu désactivé ou sans contenu n'est pas proposé, et la carte disparaît si aucun ne l'est. Le jeu s'ouvre dans une feuille modale dont l'en-tête garde **toujours visibles le numéro et l'attente estimée** ; il ne remplace jamais la carte du ticket.
 - Quiz de **3 à 5 questions** rattaché à une campagne ; questions créées par l'annonceur, **validées par le super admin** avec la campagne.
 - En fin de partie : **bon de réduction à QR code** (code court + QR, durée de validité). Le commerçant le scanne avec son compte annonceur (`redeem_coupon`) ; parties, bons émis et bons utilisés alimentent les statistiques de l'annonceur.
-- L'alerte **« c'est votre tour » interrompt toujours le jeu** : la feuille se ferme et l'état « appelé » s'affiche (événement temps réel du ticket).
+- **Pub interstitielle entre deux questions** (mêmes règles que Sky Catch, §12.7).
+- L'alerte **« c'est votre tour » interrompt toujours le jeu** : il se fige et affiche le numéro et le cabinet, avec vibration (même comportement que Sky Catch, §12.7).
 - **Aucune donnée personnelle** : la partie est liée au ticket (une partie par ticket), sans nom ni téléphone.
 - **Désactivable par établissement** (`organization_ad_preferences.quiz_enabled`).
 - **Léger (3G)** : chargé uniquement à l'ouverture (JSON de quelques Ko, sans image lourde), aucun JS ajouté au premier chargement de Mon ticket.
@@ -544,4 +548,25 @@ Valeurs initiales (migration de données, **modifiables par le super admin**, ja
 - **Réponse envoyée sur WhatsApp** (modèles `rdv_demande_confirmee`, `rdv_demande_modifiee`, `rdv_demande_refusee`, FR/EN, à faire approuver par Meta), puis les messages habituels du rendez-vous (rappels de la veille et 2 h avant).
 - **Option par agence** `branch_settings.appointment_requests_enabled`, **désactivée par défaut** ; limitation (une demande en attente par numéro et par agence, `check_rate_limit`).
 - Plus tard, en option : réservation directe sans validation sur les créneaux ouverts à la réservation en ligne.
+
+### 12.7 Sky Catch, jeu d'arcade pendant l'attente (M10b, décision du 28/10/2026)
+- **Principe** (repris de notre démo) : un avion se déplace au doigt (glisser horizontal ; flèches au clavier sur ordinateur), attrape des pièces et évite des obstacles. Niveaux courts (30 à 45 s), difficulté croissante, score et meilleur score local (`localStorage`, jamais envoyé avec un identifiant).
+- **Accès** : carte « Jouer en attendant » de Mon ticket → choix Quiz / Sky Catch, dans la même feuille modale que le quiz (§12.5), en-tête avec le numéro et l'attente estimée toujours visibles. Bouton pause (44 px) ; le jeu se met en pause quand l'onglet est masqué (`visibilitychange`).
+- **Pub interstitielle entre chaque niveau** (et entre chaque question du quiz) :
+  - courte (créatif de 5 à 15 s, image ou vidéo), **« Passer » après quelques secondes** (`platform_settings.interstitial_skip_after_seconds`, défaut 5) ;
+  - espacement minimal entre deux pubs (`platform_settings.interstitial_min_gap_seconds`) pour éviter la répétition si un niveau est perdu tout de suite ;
+  - choisie par la **rotation pondérée** de §12.4 (surface `game`), sans répéter la même pub deux fois de suite quand il y a une alternative ; sans pub éligible, le niveau suivant commence directement ;
+  - un lien « En savoir plus » vers l'annonceur (clic compté), jamais d'ouverture automatique.
+- **Sélection côté serveur** : `game_ad_batch(ticket_token, surface)` renvoie à l'ouverture un petit lot de pubs déjà filtrées (dates, horaires, zone, secteurs bloqués, préférences de l'établissement) et pondérées ; la pondération est vérifiée par pgTAP (distribution sur un grand nombre de tirages, tolérance fixée).
+- **Habillage sponsorisé (formule Or, `game_skin_allowed`)** : couleurs de l'avion, logo de l'annonceur sur les pièces, écran de fin avec **bon de réduction à QR code** (même mécanisme `ad_coupons` / `redeem_coupon` que le quiz, au plus un bon par ticket et par campagne). Habillage validé par le super admin avec la campagne ; logo léger (≤ 20 Ko).
+- **« C'est votre tour »** (événement temps réel du ticket, ou notification reçue) : le jeu **se fige immédiatement** (arrêt de la boucle, pub interstitielle comprise), un panneau affiche **le numéro et le cabinet / guichet**, avec **vibration** (`navigator.vibrate`, sans effet sur iPhone : flash visuel et carillon en repli) ; bouton « Fermer le jeu » vers Mon ticket. Une partie ne retarde jamais l'alerte.
+- **Performance** :
+  - **canvas 2D sans bibliothèque**, dessins vectoriels (aucune image hors logo sponsor), réserve d'objets (pas d'allocation par image), pas de temps fixe, `devicePixelRatio` plafonné à 2, passage automatique à 30 images/s si l'appareil n'en tient pas 60 ; animations réduites si `prefers-reduced-motion` ;
+  - **chargé à la demande** (`next/dynamic` à l'ouverture), aucun octet ajouté au premier chargement de Mon ticket (budget < 200 Ko, test Playwright) ; morceau du jeu ≤ 30 Ko compressé (test) ;
+  - cible : fluide sur Android d'entrée de gamme (profil Playwright avec processeur ralenti) ;
+  - **hors ligne une fois chargé** : morceau du jeu et lot de pubs mis en cache par le service worker ; les événements (parties, pubs vues, passées, cliquées) sont mis en file localement et envoyés par lots au retour du réseau (`POST /api/ads/events`, idempotent, rate-limité).
+- **Aucune donnée personnelle** : partie liée au ticket (comme le quiz), sans nom ni téléphone ; statistiques anonymes pour l'annonceur dans `ad_daily_stats` : parties jouées, pubs vues, passées, clics, bons émis et utilisés.
+- **Désactivable par établissement** (`organization_ad_preferences.sky_catch_enabled`), indépendamment du quiz.
+- **Accessibilité** : le jeu est facultatif et le quiz reste l'alternative accessible ; contrôles clavier, bouton pause et « Passer » étiquetés, contrastes AA en clair et en sombre.
+- **À fournir avant le M10b** : le code de la démo Sky Catch n'est pas dans le dépôt ; à déposer (par exemple `design/demos/sky-catch/`) pour reprendre son gameplay et ses visuels, réécrits selon ces contraintes.
 
