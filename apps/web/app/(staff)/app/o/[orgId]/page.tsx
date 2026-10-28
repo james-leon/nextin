@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, Circle, DoorOpen, QrCode, Stethoscope, UsersRound } from "lucide-react";
-import { SERVICE_COLORS } from "@nextin/shared";
+import { ChevronRight, ListChecks } from "lucide-react";
+import { localDate } from "@nextin/shared/appointments";
+import { comparisonRange, periodRange } from "@nextin/shared/stats";
 import { AdminPage } from "@/components/admin/admin-page";
-import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
-import { StatCard } from "@/components/ui/stat-card";
+import { MobileOrgNav, SetupOverview, setupSteps } from "@/components/admin/setup-overview";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { CalloutCard } from "@/components/ui/callout-card";
 import { getOrgContext } from "@/lib/admin/context";
+import type { DashboardData, DashboardQuery } from "@/lib/stats/dashboard";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,77 +17,85 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
+/**
+ * Vue d'ensemble : tableau de bord (maquette 06) pour les administrateurs et les responsables d'agence ;
+ * sinon, compteurs et étapes de démarrage.
+ */
 export default async function OrgOverview({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
   const ctx = await getOrgContext(orgId);
   const t = await getTranslations("overview");
+  const td = await getTranslations("dashboard");
   const ta = await getTranslations("admin");
   const supabase = await getSupabaseServerClient();
-  const count = (table: "branches" | "services" | "counters" | "memberships") =>
-    supabase.from(table).select("id", { count: "exact", head: true }).eq("organization_id", orgId);
-  const [branches, services, counters, members, firstBranch, invites] = await Promise.all([
-    count("branches"),
-    count("services"),
-    count("counters"),
-    count("memberships"),
-    supabase.from("branches").select("id").eq("organization_id", orgId).order("sort_order").limit(1).maybeSingle(),
-    supabase.from("invitations").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+
+  const { data: rows } = await supabase
+    .from("branches")
+    .select("id, name, timezone")
+    .eq("organization_id", orgId)
+    .eq("active", true)
+    .order("sort_order")
+    .order("name");
+  const branches = (rows ?? []).filter((b) => ctx.canManageOrg || ctx.managedBranchIds.includes(b.id));
+
+  if (!branches.length) {
+    return (
+      <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: "/app", label: ta("nav.organizations") }}>
+        <SetupOverview orgId={orgId} />
+        <MobileOrgNav orgId={orgId} />
+      </AdminPage>
+    );
+  }
+
+  const today = localDate(new Date(), branches[0]!.timezone);
+  const query: DashboardQuery = { branchId: ctx.canManageOrg ? null : branches[0]!.id, period: "day", anchor: today };
+  const range = periodRange(query.period, today);
+  const compare = comparisonRange(query.period, range, today);
+  const [{ data }, setup] = await Promise.all([
+    supabase.rpc("dashboard_stats", {
+      p_org: orgId,
+      p_branch: (query.branchId ?? null) as string,
+      p_from: range.from,
+      p_to: range.to,
+      p_compare_from: compare.from,
+      p_compare_to: compare.to,
+    }),
+    ctx.canManageOrg ? setupSteps(orgId) : Promise.resolve(null),
   ]);
-  const n = {
-    branches: branches.count ?? 0,
-    services: services.count ?? 0,
-    counters: counters.count ?? 0,
-    members: members.count ?? 0,
-  };
-  const b = firstBranch.data?.id;
-  const root = `/app/o/${orgId}`;
-  const steps = [
-    { key: "stepBranch", done: n.branches > 0, href: `${root}/branches`, icon: <Building2 />, color: "var(--brand-tile)" },
-    { key: "stepServices", done: n.services > 0, href: b ? `${root}/branches/${b}/services` : `${root}/branches`, icon: <Stethoscope />, color: "var(--accent-fill)" },
-    { key: "stepCounters", done: n.counters > 0, href: b ? `${root}/branches/${b}/counters` : `${root}/branches`, icon: <DoorOpen />, color: SERVICE_COLORS.green },
-    { key: "stepQr", done: false, href: b ? `${root}/branches/${b}/qr` : `${root}/branches`, icon: <QrCode />, color: SERVICE_COLORS.purple },
-    { key: "stepStaff", done: n.members > 1 || (invites.count ?? 0) > 0, href: `${root}/staff`, icon: <UsersRound />, color: SERVICE_COLORS.ochre },
-  ] as const;
+  if (!data) {
+    return (
+      <AdminPage title={t("title")} eyebrow={ctx.org.name}>
+        <CalloutCard icon={<ListChecks />}>{td("notAllowed")}</CalloutCard>
+        <MobileOrgNav orgId={orgId} />
+      </AdminPage>
+    );
+  }
 
   return (
-    <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: "/app", label: ta("nav.organizations") }}>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label={t("branches")} value={n.branches} />
-        <StatCard label={t("services")} value={n.services} />
-        <StatCard label={t("counters")} value={n.counters} />
-        <StatCard label={t("staff")} value={n.members} />
+    <>
+      <DashboardView
+        org={{ id: orgId, name: ctx.org.name }}
+        branches={branches.map((b) => ({ id: b.id, name: b.name }))}
+        canViewAll={ctx.canManageOrg}
+        today={today}
+        initialQuery={query}
+        initialData={data as unknown as DashboardData}
+      />
+      <div className="flex flex-col gap-5 px-4 lg:px-8">
+        {setup && !setup.complete ? (
+          <Link href={`/app/o/${orgId}/setup`} className="pressable block rounded-[var(--radius-lg)]">
+            <CalloutCard icon={<ListChecks />} tone="accent">
+              <span className="flex items-center gap-2">
+                <span className="flex-1">
+                  <strong className="font-semibold">{td("setup", { done: setup.done, total: setup.total })}.</strong> {td("setupBody")}
+                </span>
+                <ChevronRight aria-hidden className="size-5 shrink-0" />
+              </span>
+            </CalloutCard>
+          </Link>
+        ) : null}
+        <MobileOrgNav orgId={orgId} />
       </div>
-      <ListSection header={t("checklistTitle")} footer={t("checklistFooter")}>
-        {steps.map((s) => (
-          <ListRow
-            key={s.key}
-            href={s.href}
-            icon={<ListIcon color={s.color}>{s.icon}</ListIcon>}
-            title={t(s.key)}
-            detail={
-              s.done ? (
-                <span className="inline-flex items-center gap-1 text-green-text">
-                  <CheckCircle2 aria-hidden className="size-4 stroke-2" />
-                  {t("done")}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1">
-                  <Circle aria-hidden className="size-4 stroke-2" />
-                  {t("todo")}
-                </span>
-              )
-            }
-            accessory="chevron"
-          />
-        ))}
-      </ListSection>
-      <nav aria-label={ta("navLabel")} className="lg:hidden">
-        <ListSection>
-          <ListRow href={`${root}/branches`} icon={<ListIcon color="var(--brand-tile)"><Building2 /></ListIcon>} title={ta("nav.branches")} accessory="chevron" />
-          <ListRow href={`${root}/practitioners`} icon={<ListIcon color="var(--accent-fill)"><Stethoscope /></ListIcon>} title={ta("nav.practitioners")} accessory="chevron" />
-          <ListRow href={`${root}/staff`} icon={<ListIcon color={SERVICE_COLORS.ochre}><UsersRound /></ListIcon>} title={ta("nav.staff")} accessory="chevron" />
-        </ListSection>
-      </nav>
-    </AdminPage>
+    </>
   );
 }

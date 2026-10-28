@@ -279,6 +279,102 @@ async function ensureDemoAppointments(staffEmail: string, orgId: string, branch:
   await staff.auth.signOut();
 }
 
+/** Générateur pseudo-aléatoire déterministe (mulberry32) : historique de démo identique à chaque exécution. */
+function prng(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Historique (M8) : quatre semaines de passages terminés (jours ouvrés, pics à 9 h et 13 h), sessions des postes,
+ * quelques notes et absents, puis cumul des statistiques. Seulement si l'agence n'a aucun ticket des jours passés.
+ * Tickets anonymes (accueil), sans jeton ni numéro de téléphone.
+ */
+async function ensureDemoHistory(orgId: string, branch: { branchId: string; serviceIds: Map<string, string> }, perDay: Record<string, number>, seed: number) {
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+  const past = await must(db.from("tickets").select("id").eq("branch_id", branch.branchId).lt("service_day", todayIso).limit(1));
+  if (past.length) return;
+  const rand = prng(seed);
+  const counters = await must(
+    db.from("counters").select("id, counter_services(service_id)").eq("branch_id", branch.branchId).eq("active", true),
+  );
+  const services = await must(db.from("services").select("id, prefix, default_service_seconds").eq("branch_id", branch.branchId));
+  // Poids horaires (7 h → 16 h) : pic du matin et reprise après midi.
+  const weights = [3, 8, 12, 10, 7, 5, 8, 7, 4, 2];
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  const pickHour = () => {
+    let r = rand() * totalWeight;
+    for (let i = 0; i < weights.length; i++) if ((r -= weights[i]!) < 0) return 7 + i;
+    return 16;
+  };
+  for (let back = 28; back >= 1; back--) {
+    const day = new Date(today.getTime() - back * 86_400_000);
+    const iso = day.toISOString().slice(0, 10);
+    const dow = day.getUTCDay();
+    if (dow === 0) continue;
+    const dayFactor = dow === 6 ? 0.45 : dow === 1 ? 1.2 : 0.9 + rand() * 0.25;
+    const rows: Record<string, unknown>[] = [];
+    for (const svc of services) {
+      const count = Math.round((perDay[svc.prefix] ?? 0) * dayFactor);
+      const servingCounters = counters.filter((c) => (c.counter_services ?? []).some((cs) => cs.service_id === svc.id));
+      if (!count || !servingCounters.length) continue;
+      const arrivals = Array.from({ length: count }, () => {
+        const h = pickHour();
+        return Date.parse(`${iso}T${String(h - 1).padStart(2, "0")}:00:00Z`) + Math.floor(rand() * 3_600_000);
+      }).sort((a, b) => a - b);
+      arrivals.forEach((created, i) => {
+        const wait = (4 + rand() * (svc.prefix === "L" ? 30 : 22)) * 60_000;
+        const service = svc.default_service_seconds * (0.6 + rand() * 0.9) * 1000;
+        const r = rand();
+        const status = r < 0.05 ? "no_show" : r < 0.09 ? "cancelled" : "served";
+        const called = status === "cancelled" ? null : created + wait;
+        const counter = servingCounters[Math.floor(rand() * servingCounters.length)]!.id;
+        rows.push({
+          organization_id: orgId,
+          branch_id: branch.branchId,
+          service_id: svc.id,
+          service_day: iso,
+          number: i + 1,
+          display_code: `${svc.prefix}-${String(i + 1).padStart(3, "0")}`,
+          public_token: null,
+          source: rand() < 0.7 ? "qr" : "reception",
+          status,
+          sort_key: created * 1000,
+          counter_id: called ? counter : null,
+          created_at: new Date(created).toISOString(),
+          called_at: called ? new Date(called).toISOString() : null,
+          serving_started_at: status === "served" ? new Date(called! + 60_000).toISOString() : null,
+          finished_at: status === "served" ? new Date(called! + 60_000 + service).toISOString() : status === "cancelled" ? new Date(created + wait / 2).toISOString() : new Date(called! + 180_000).toISOString(),
+          rating: status === "served" && rand() < 0.3 ? (rand() < 0.75 ? 5 : rand() < 0.7 ? 4 : 3) : null,
+        });
+      });
+    }
+    for (let i = 0; i < rows.length; i += 500) await must(db.from("tickets").insert(rows.slice(i, i + 500)).select("id"));
+    // Postes ouverts de 7 h 30 à 17 h (heure de Douala), avec une courte pause.
+    await must(
+      db.from("counter_sessions").insert(
+        counters.map((c) => ({
+          organization_id: orgId,
+          branch_id: branch.branchId,
+          counter_id: c.id,
+          started_at: `${iso}T06:30:00Z`,
+          ended_at: `${iso}T16:00:00Z`,
+        })),
+      ).select("id"),
+    );
+  }
+  const from = new Date(today.getTime() - 28 * 86_400_000).toISOString().slice(0, 10);
+  const yesterday = new Date(today.getTime() - 86_400_000).toISOString().slice(0, 10);
+  await must(db.rpc("rollup_daily_stats_range", { p_from: from, p_to: yesterday }));
+}
+
 const COLORS = { blue: "#1A6BB5", green: "#2E8B57", purple: "#8E5BB5", ochre: "#B5651A", teal: "#13798A" };
 
 async function main() {
@@ -360,6 +456,8 @@ async function main() {
 
   await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 });
   await ensureDemoAppointments(USERS.clinicReception.email, clinic, akwa);
+  await ensureDemoHistory(clinic, akwa, { C: 38, P: 22, L: 30, K: 45 }, 2026);
+  await ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237);
   await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa) et Eneo — Douala (agence Bonanjo)");

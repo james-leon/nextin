@@ -17,7 +17,8 @@
     "./announcements": "./src/announcements/index.ts",
     "./notifications": "./src/notifications/index.ts",
     "./notifications/opt-in": "./src/notifications/opt-in.ts",
-    "./appointments": "./src/appointments/index.ts"
+    "./appointments": "./src/appointments/index.ts",
+    "./stats": "./src/stats/index.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p .",
