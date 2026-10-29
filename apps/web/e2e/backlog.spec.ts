@@ -60,6 +60,21 @@ test.describe("Backlog — ordinateur : gabarit du personnel", () => {
   });
 });
 
+test.describe("Backlog — téléphone : barre de navigation", () => {
+  test("une action longue reste entière, dans son bouton et dans l'écran", async ({ page }, info) => {
+    test.skip(info.project.name !== "mobile", "barre compacte du téléphone");
+    const b = await setUpBranch("Clinique Barre");
+    await login(page, b.email, `/app/o/${b.orgId}/ads`);
+    const action = page.getByRole("link", { name: "Nouvelle annonce Maison" });
+    const box = (await action.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    // Libellé non tronqué ni débordant : le texte tient dans la largeur du bouton.
+    expect(await action.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await expectTouchTargets(page);
+  });
+});
+
 test.describe("Backlog — poste du médecin", () => {
   test("ordinateur : deux colonnes et raccourcis clavier (avec aide et confirmation d'absence)", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "raccourcis clavier sur ordinateur");

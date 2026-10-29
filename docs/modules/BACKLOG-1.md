@@ -9,6 +9,7 @@ Captures avant / après : `docs/captures/backlog/before/` et `docs/captures/back
 - **Lien en double** : sur ordinateur, le lien de retour vers une rubrique déjà présente dans la barre latérale est masqué (`back.inSidebar`, calculé par `isSidebarDestination`, `lib/admin/nav.ts`). Doublons supprimés aussi sur la page de démarrage et les onglets de la modération.
 - **« Mes établissements »** : liste groupée sur téléphone, grille de cartes sur ordinateur (une seule liste, `role="list"`) ; « Poste » et « Espace annonceur » côte à côte.
 - **Revue de tous les écrans du personnel** sur téléphone, tablette et ordinateur : débordements corrigés (publicité de l'établissement, nouvelle campagne, rendez-vous, formules) ; toute grille responsive part de `grid-cols-1`.
+- **Barre de navigation sur téléphone** : retour et actions à leur largeur naturelle, le titre réduit se rétrécit ; une action longue (« Nouvelle annonce Maison », « Nouveau rendez-vous ») ne déborde plus de son bouton ni de l'écran (test sur téléphone).
 
 ## Poste médecin / agent (`/desk/counter/[counterId]`)
 - **Deux colonnes à partir de `lg`** : patient en cours et bouton principal à gauche ; « À suivre », chiffres du jour et actions secondaires à droite. Sur téléphone, inchangé (maquette 04, `BottomBar`).
@@ -51,7 +52,7 @@ Captures avant / après : `docs/captures/backlog/before/` et `docs/captures/back
 | pgTAP `backlog_presence.test.sql` (14) | Code tournant (minute en cours et précédente), secret illisible, réglage « écran TV seulement », droits |
 | pgTAP `backlog_ads.test.sql` (17) | Choix des agences (plafond, ciblage, droits), tirage, caissiers (ajout, retrait, droits limités, validation des bons) |
 | Vitest `shortcuts.test.ts` (12) | Raccourcis selon l'état du poste, cibles autorisées |
-| Playwright `backlog.spec.ts` | Gabarit ordinateur (actions alignées, barre latérale, pas de doublon, grille), poste médecin (deux colonnes, raccourcis, aide, confirmation d'absence, mode compact), ticket sur ordinateur, secteur dans « À proximité », présence par l'écran TV, choix des agences, caissier. Axe et cibles tactiles |
+| Playwright `backlog.spec.ts` | Gabarit ordinateur (actions alignées, barre latérale, pas de doublon, grille), action longue de la barre sur téléphone, poste médecin (deux colonnes, raccourcis, aide, confirmation d'absence, mode compact), ticket sur ordinateur, secteur dans « À proximité », présence par l'écran TV, choix des agences, caissier. Axe et cibles tactiles |
 | Playwright `platform-home.spec.ts` | Super admin sans établissement → console ; avec établissement → « Console Wintek » en tête |
 
 ## À faire de votre côté

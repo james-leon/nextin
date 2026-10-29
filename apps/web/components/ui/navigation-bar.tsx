@@ -99,15 +99,16 @@ export function NavigationBar({
           className,
         )}
       >
-        <div className={cn("mx-auto grid h-11 grid-cols-[1fr_auto_1fr] items-center gap-2 px-4", contentClassName)}>
-          <div className="flex min-w-0 justify-start">{back ? <BackButton back={back} /> : null}</div>
+        {/* Retour et actions à leur largeur naturelle (une action longue n'est jamais tronquée) ; le titre réduit se rétrécit. */}
+        <div className={cn("mx-auto grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4", contentClassName)}>
+          <div className="flex min-w-0 max-w-[40vw] justify-start">{back ? <BackButton back={back} /> : null}</div>
           {inline ? (
-            <h1 className="truncate text-headline">{title}</h1>
+            <h1 className="truncate text-center text-headline">{title}</h1>
           ) : (
             <p
               aria-hidden={!showBarTitle}
               className={cn(
-                "truncate text-headline transition-all duration-200",
+                "truncate text-center text-headline transition-all duration-200",
                 showBarTitle ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
               )}
             >
