@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import { PASSWORD, expectAccessible, expectTouchTargets, signInViaUi, uniqueEmail } from "./helpers";
 import { bannerPng } from "../../../scripts/demo-images";
-import { today } from "./ads-helpers";
+import { pairDisplay, today } from "./ads-helpers";
 import { addDoctors, rpc, setUpBranch, supabaseOptions } from "./queue-helpers";
 
 /**
@@ -20,8 +20,10 @@ const DESKTOP: Size = { name: "1440", width: 1440, height: 900, touch: false };
 const WIDE: Size = { name: "1920", width: 1920, height: 1080, touch: false };
 const ALL = [PHONE_360, PHONE, TABLET_PORTRAIT, TABLET_LANDSCAPE, DESKTOP, WIDE];
 
-type Screen = { name: string; path: string; user: "owner" | "advertiser"; primary?: (page: Page) => Locator };
-type Fixture = { owner: string; advertiser: string; screens: Screen[] };
+type User = "owner" | "advertiser" | "visitor";
+type Screen = { name: string; path: string; user: User; primary?: (page: Page) => Locator };
+type Fixture = { owner: string; advertiser: string; screens: Screen[]; branchId: string; staff: Awaited<ReturnType<typeof setUpBranch>>["staff"] };
+const USERS: User[] = ["owner", "advertiser", "visitor"];
 
 let fixture: Fixture;
 
@@ -29,7 +31,8 @@ test.beforeAll(async () => {
   test.setTimeout(120_000);
   const b = await setUpBranch(`Clinique Responsive ${Date.now()}`);
   await addDoctors(b);
-  for (let i = 0; i < 14; i++) await rpc(b.staff, "reception_create_ticket", { p_service: b.serviceId });
+  const tickets: { public_token: string }[] = [];
+  for (let i = 0; i < 14; i++) tickets.push(await rpc<{ public_token: string }>(b.staff, "reception_create_ticket", { p_service: b.serviceId }));
   const advertiser = uniqueEmail("annonceur");
   await admin.auth.admin.createUser({ email: advertiser, password: PASSWORD, email_confirm: true });
   const adv = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, supabaseOptions);
@@ -50,6 +53,8 @@ test.beforeAll(async () => {
   fixture = {
     owner: b.email,
     advertiser,
+    branchId: b.branchId,
+    staff: b.staff,
     screens: [
       { name: "home", path: "/app", user: "owner" },
       { name: "overview", path: root, user: "owner" },
@@ -78,6 +83,15 @@ test.beforeAll(async () => {
       { name: "ads-new", path: "/ads/campaigns/new", user: "advertiser", primary: (p) => p.getByRole("button", { name: "Enregistrer" }) },
       { name: "ads-redeem", path: "/ads/redeem", user: "advertiser" },
       { name: "ads-campaign", path: `/ads/campaigns/${campaignId}`, user: "advertiser", primary: (p) => p.getByRole("button", { name: "Soumettre à la validation" }) },
+      // Pages client (visiteur anonyme), barre d'onglets latérale à partir de 1024 px (R5).
+      { name: "client-scanner", path: "/", user: "visitor" },
+      { name: "client-code", path: "/c", user: "visitor" },
+      { name: "client-service", path: `/q/${b.entryCode}`, user: "visitor" },
+      { name: "client-ticket", path: `/t/${tickets[13]!.public_token}`, user: "visitor" },
+      { name: "client-my-ticket", path: "/t", user: "visitor" },
+      { name: "client-nearby", path: "/nearby", user: "visitor" },
+      { name: "client-branch", path: `/b/${b.branchId}`, user: "visitor" },
+      { name: "client-profile", path: "/profile", user: "visitor" },
     ],
   };
 });
@@ -85,18 +99,18 @@ test.beforeAll(async () => {
 const sessions = new Map<string, Awaited<ReturnType<BrowserContext["storageState"]>>>();
 
 /** Contexte à la taille voulue, déjà connecté (session mémorisée par compte). */
-async function open(browser: Browser, size: Size, user: "owner" | "advertiser", colorScheme: "light" | "dark" = "light") {
-  const email = user === "owner" ? fixture.owner : fixture.advertiser;
+async function open(browser: Browser, size: Size, user: User, colorScheme: "light" | "dark" = "light") {
+  const email = user === "owner" ? fixture.owner : user === "advertiser" ? fixture.advertiser : null;
   const context = await browser.newContext({
     viewport: { width: size.width, height: size.height },
     hasTouch: size.touch,
     isMobile: size.touch && size.width < 1024,
     colorScheme,
     locale: "fr-FR",
-    storageState: sessions.get(email),
+    storageState: email ? sessions.get(email) : undefined,
   });
   const page = await context.newPage();
-  if (!sessions.has(email)) {
+  if (email && !sessions.has(email)) {
     await page.goto("/login");
     await signInViaUi(page, email);
     await page.waitForURL((u) => !u.pathname.startsWith("/login"));
@@ -117,7 +131,8 @@ async function expectNoOverflow(page: Page, label: string) {
     const doc = document.documentElement;
     const cut: string[] = [];
     for (const el of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
-      if (el.offsetParent === null) continue;
+      // Doublons masqués aux lecteurs d'écran (titre réduit de la barre, identique au grand titre) : non jugés.
+      if (el.offsetParent === null || el.closest('[aria-hidden="true"]')) continue;
       const style = getComputedStyle(el);
       // Texte écrasé à zéro (colonne trop étroite) : le pire cas de texte coupé. Les textes réservés aux lecteurs
       // d'écran (`sr-only`, positionnés hors du flux) sont exclus.
@@ -209,7 +224,7 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
   for (const size of ALL) {
     test(`${size.name} px : pas de débordement, dernière ligne visible, action principale sans défilement`, async ({ browser }) => {
       test.setTimeout(240_000);
-      for (const user of ["owner", "advertiser"] as const) {
+      for (const user of USERS) {
         const { context, page } = await open(browser, size, user);
         for (const screen of fixture.screens.filter((s) => s.user === user)) {
           await visit(page, screen.path);
@@ -227,7 +242,7 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
 
   test("360 px avec la taille de texte à 125 % : rien ne déborde", async ({ browser }) => {
     test.setTimeout(240_000);
-    for (const user of ["owner", "advertiser"] as const) {
+    for (const user of USERS) {
       const { context, page } = await open(browser, PHONE_360, user);
       await context.addInitScript(() => {
         document.addEventListener("DOMContentLoaded", () => {
@@ -246,7 +261,7 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
     for (const size of [PHONE, TABLET_PORTRAIT, DESKTOP]) {
       test(`contrastes AA et rôles (axe) : ${scheme === "light" ? "clair" : "sombre"}, ${size.name} px`, async ({ browser }) => {
         test.setTimeout(240_000);
-        for (const user of ["owner", "advertiser"] as const) {
+        for (const user of USERS) {
           const { context, page } = await open(browser, size, user, scheme);
           for (const screen of fixture.screens.filter((s) => s.user === user)) {
             await visit(page, screen.path);
@@ -360,5 +375,31 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
       for (const h of segments) expect(h, `${screen.name} : segment sur deux lignes`).toBeLessThanOrEqual(44);
     }
     await context.close();
+  });
+
+  test("écran TV : proportions et textes entiers en 1280 × 720 comme en 3840 × 2160", async ({ browser, request }) => {
+    const device = await pairDisplay(request, fixture.staff, fixture.branchId, false);
+    for (const [width, height] of [
+      [1280, 720],
+      [1920, 1080],
+      [3840, 2160],
+    ] as const) {
+      const context = await browser.newContext({ viewport: { width, height }, locale: "fr-FR" });
+      await context.addInitScript((token) => localStorage.setItem("nextin-tv-token", token), device);
+      const page = await context.newPage();
+      await page.goto("/tv");
+      await expect(page.getByText("File d'attente", { exact: true })).toBeVisible();
+      await page.waitForTimeout(500);
+      const label = `TV ${width}×${height}`;
+      await expectNoOverflow(page, label);
+      // Tout l'écran, sans défilement : la page tient exactement dans la télévision.
+      const fits = await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 1);
+      expect(fits, `${label} : défilement vertical`).toBe(true);
+      // Proportions : le titre de la file occupe la même part de la hauteur quelle que soit la définition.
+      const ratio = await page.getByText("File d'attente", { exact: true }).evaluate((el) => el.getBoundingClientRect().height / window.innerHeight);
+      expect(ratio, `${label} : proportion du titre`).toBeGreaterThan(0.02);
+      expect(ratio, `${label} : proportion du titre`).toBeLessThan(0.06);
+      await context.close();
+    }
   });
 });

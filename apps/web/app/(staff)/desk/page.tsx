@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ChevronRight, ConciergeBell, DoorOpen } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
+import { SidebarShell } from "@/components/shell/sidebar-shell";
+import { StaffSidebar } from "@/components/staff/staff-sidebar";
 import { Badge } from "@/components/ui/badge";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { requireStaffSession } from "@/lib/auth/session";
@@ -59,7 +61,7 @@ function DeskTile({
  * (une colonne sur téléphone, deux sur tablette, trois sur ordinateur), avec statut et praticien.
  */
 export default async function DeskIndex() {
-  await requireStaffSession("/desk");
+  const session = await requireStaffSession("/desk");
   const t = await getTranslations("desk");
   const tk = await getTranslations("counterKinds");
   const tc = await getTranslations("common");
@@ -70,8 +72,9 @@ export default async function DeskIndex() {
     .eq("active", true)
     .order("name");
 
+  // Barre latérale du personnel (comme le back-office) : le contenu s'aligne sur les autres pages.
   return (
-    <main className="pb-24">
+    <SidebarShell labels={{ open: tc("sidebarShow"), close: tc("sidebarHide") }} sidebar={<StaffSidebar isPlatformAdmin={session.isPlatformAdmin} />}>
       <AdminPage title={t("title")} subtitle={t("subtitle")} back={{ href: "/app", label: tc("back") }}>
         {!branches?.length ? <CalloutCard icon={<DoorOpen />}>{t("noBranch")}</CalloutCard> : null}
         {(branches ?? []).map((b) => {
@@ -104,6 +107,6 @@ export default async function DeskIndex() {
           );
         })}
       </AdminPage>
-    </main>
+    </SidebarShell>
   );
 }

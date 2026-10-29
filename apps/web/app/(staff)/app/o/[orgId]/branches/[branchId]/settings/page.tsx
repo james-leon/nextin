@@ -21,7 +21,7 @@ export default async function BranchSettingsPage({ params }: { params: Promise<{
   const { data: s } = await supabase.from("branch_settings").select("*").eq("branch_id", branchId).maybeSingle();
   if (!s) notFound();
   return (
-    <AdminPage narrow title={t("title")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
+    <AdminPage title={t("title")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
       <ReadOnlyNotice show={!canManage} />
       <BranchSettingsForm
         action={saveBranchSettings.bind(null, orgId, branchId)}

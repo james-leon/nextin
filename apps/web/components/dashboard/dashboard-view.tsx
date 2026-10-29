@@ -212,10 +212,11 @@ export function DashboardView({
             </Button>
           ) : undefined
         }
-        contentClassName="max-w-none lg:px-8"
+        contentClassName="max-w-7xl md:px-8 lg:px-10"
       />
 
-      <div className="flex flex-col gap-5 px-4 pt-3 lg:px-8" aria-busy={loading}>
+      {/* Même zone de contenu que le back-office (max-w-7xl, marges 16/32/40 px), y compris en 1920 px. */}
+      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-3 md:px-8 lg:px-10" aria-busy={loading}>
         {/* Période, navigation et agence. */}
         <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

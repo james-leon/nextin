@@ -2,9 +2,10 @@
 
 import { useLiteT } from "@/lib/i18n/lite";
 import { Clock, MapPin, ScanLine, UserRound } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import { TabBar } from "@/components/ui/tab-bar";
 
-/** Onglets du client (maquette 01) : Scanner, À proximité (M9), Mon ticket, Profil. */
+/** Onglets du client (maquette 01) : Scanner, À proximité (M9), Mon ticket, Profil ; barre latérale sur ordinateur. */
 export function ClientTabBar({ active, className }: { active: "scan" | "nearby" | "ticket" | "profile"; className?: string }) {
   const t = useLiteT("client.tabs");
   return (
@@ -13,6 +14,7 @@ export function ClientTabBar({ active, className }: { active: "scan" | "nearby" 
       active={active}
       className={className}
       prefetch={false}
+      sidebar={<Logo />}
       items={[
         { key: "scan", label: t("scan"), icon: <ScanLine aria-hidden />, href: "/" },
         { key: "nearby", label: t("nearby"), icon: <MapPin aria-hidden />, href: "/nearby" },

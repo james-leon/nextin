@@ -11,6 +11,7 @@ export function ListSection({
   className,
   radioGroupLabel,
   checkboxGroupLabel,
+  listClassName,
   ...props
 }: HTMLAttributes<HTMLElement> & {
   header?: ReactNode;
@@ -19,6 +20,8 @@ export function ListSection({
   radioGroupLabel?: string;
   /** Transforme la liste en groupe de choix multiples (lignes role="checkbox"). */
   checkboxGroupLabel?: string;
+  /** Classes de la liste elle-même (ex. `lg:contents` pour fondre les lignes dans une grille). */
+  listClassName?: string;
 }) {
   return (
     <section className={cn("w-full", className)} {...props}>
@@ -28,7 +31,7 @@ export function ListSection({
       <ul
         role={radioGroupLabel ? "radiogroup" : checkboxGroupLabel ? "group" : "list"}
         aria-label={radioGroupLabel ?? checkboxGroupLabel}
-        className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary"
+        className={cn("squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary", listClassName)}
       >
         {children}
       </ul>

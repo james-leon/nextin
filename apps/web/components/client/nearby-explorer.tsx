@@ -109,7 +109,10 @@ export function NearbyExplorer({
   }
 
   const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }).format(updatedAt);
-  const showMap = wide || view === "map";
+  // Ordinateur : carte à droite sur toute la hauteur seulement avec un fournisseur de tuiles ; sans tuiles, le plan
+  // schématique ressemblerait à une grille vide : liste élargie en grille de cartes (revue responsive R5).
+  const mapOnDesktop = !!tilesUrl;
+  const showMap = wide ? mapOnDesktop : view === "map";
   const chosen = branches.find((b) => b.id === selected) ?? null;
 
   const list = (
@@ -120,7 +123,13 @@ export function NearbyExplorer({
       {branches.length === 0 ? (
         <CalloutCard icon={<MapPin />}>{position && !query ? t("emptyNear", { km: RADIUS_KM }) : t("empty")}</CalloutCard>
       ) : (
-        <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
+        <ul
+          role="list"
+          className={cn(
+            "squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary",
+            !mapOnDesktop && "lg:grid lg:grid-cols-2 lg:gap-3 lg:overflow-visible lg:rounded-none lg:bg-transparent xl:grid-cols-3",
+          )}
+        >
           {branches.map((b) => {
             const minutes = b.min_wait_seconds != null ? waitMinutes(b.min_wait_seconds) : null;
             return (
@@ -130,7 +139,7 @@ export function NearbyExplorer({
                   if (el) rows.current.set(b.id, el);
                   else rows.current.delete(b.id);
                 }}
-                className="group/row"
+                className={cn("group/row", !mapOnDesktop && "lg:squircle lg:overflow-hidden lg:rounded-[var(--radius-md)] lg:bg-grouped-secondary lg:shadow-card")}
               >
                 <Link
                   href={`/b/${b.id}`}
@@ -149,7 +158,7 @@ export function NearbyExplorer({
                   >
                     <OrgTypeIcon type={b.organization.type} />
                   </span>
-                  <span className="relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator">
+                  <span className={cn("relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator", !mapOnDesktop && "lg:after:hidden")}>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="truncate text-headline">
                         {b.organization.name}
@@ -230,10 +239,10 @@ export function NearbyExplorer({
           </CalloutCard>
         ) : null}
 
-        <div className="lg:grid lg:grid-cols-[minmax(22rem,26rem)_1fr] lg:items-start lg:gap-6">
+        <div className={cn(mapOnDesktop && "lg:grid lg:grid-cols-[minmax(22rem,26rem)_1fr] lg:items-start lg:gap-6")}>
           <div className={cn(!wide && view === "map" && "hidden")}>{list}</div>
           {showMap ? (
-            <div className="flex flex-col gap-3 lg:sticky lg:top-4">
+            <div className="flex flex-col gap-3 lg:sticky lg:top-14">
               <NearbyMap
                 branches={branches}
                 position={position}
@@ -241,7 +250,7 @@ export function NearbyExplorer({
                 onSelect={select}
                 tilesUrl={tilesUrl}
                 attribution={attribution}
-                className="h-[55dvh] min-h-80 lg:h-[calc(100dvh-17rem)]"
+                className="h-[55dvh] min-h-80 lg:h-[calc(100dvh-4.5rem)]"
               />
               {!wide && chosen ? (
                 <Link

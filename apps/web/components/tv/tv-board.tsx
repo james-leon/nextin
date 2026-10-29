@@ -49,15 +49,16 @@ export function TvBoard({
   const clock = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: session.branch.timezone }).format(now);
 
   return (
-    <main className="flex h-dvh flex-col gap-[2.2vh] overflow-hidden bg-tv px-[3.5vw] pt-[4vh] pb-[3.5vh] text-white">
-      <header className="flex items-center gap-6">
+    <main className="flex h-dvh flex-col gap-[2.2vh] overflow-hidden bg-tv px-[3.5vw] pt-[4vh] pb-[3.5vh] leading-snug text-white">
+      {/* Interligne sans unité et espacements en vh : proportions identiques de 720p à la 4K, aucun texte rogné. */}
+      <header className="flex items-center gap-[2.4vh]">
         <Logo tone="inverse" className="[&>span:first-child]:size-[5.5vh] [&>span:last-child]:text-[3.4vh]" />
         <p className="truncate text-[2.8vh] text-white/80">
           {session.organization.name} · {session.branch.name}
         </p>
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-[1.6vh]">
           {offline ? (
-            <span role="status" className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[2vh]">
+            <span role="status" className="flex items-center gap-[0.8vh] rounded-full bg-white/10 px-[1.6vh] py-[0.8vh] text-[2vh]">
               <WifiOff aria-hidden className="size-[2.4vh]" />
               {t("offline")}
             </span>
@@ -66,7 +67,7 @@ export function TvBoard({
             type="button"
             onClick={onEnableSound}
             className={cn(
-              "pressable flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-[2vh]",
+              "pressable flex min-h-[max(2.75rem,5vh)] items-center gap-[0.8vh] rounded-full px-[1.6vh] py-[0.8vh] text-[2vh]",
               soundOn ? "bg-white/10 text-white/80" : "bg-accent text-white",
             )}
           >
@@ -82,7 +83,7 @@ export function TvBoard({
           <section
             aria-live="assertive"
             aria-label={t("called")}
-            className="squircle flex min-h-0 flex-1 items-center justify-between gap-6 rounded-[2.4vw] bg-white px-[4vw] text-ticket-number"
+            className="squircle flex min-h-0 flex-1 items-center justify-between gap-[2.4vh] rounded-[2.4vw] bg-white px-[4vw] text-ticket-number"
           >
             {hero ? (
               <>
@@ -110,7 +111,7 @@ export function TvBoard({
             {others.length ? (
               <ul role="list" className="grid h-full grid-cols-3 gap-[1.6vw]">
                 {others.map((c) => (
-                  <li key={`${c.code}-${c.called_at}`} className="squircle flex items-center justify-between gap-3 rounded-[1.4vw] bg-tv-surface px-[1.8vw]">
+                  <li key={`${c.code}-${c.called_at}`} className="squircle flex items-center justify-between gap-[1.2vh] rounded-[1.4vw] bg-tv-surface px-[1.8vw]">
                     <span className="shrink-0 text-[4.4vh] leading-none font-extrabold whitespace-nowrap">
                       <span aria-hidden>{c.code}</span>
                       <span className="sr-only">{spellTicketCode(c.code)}</span>

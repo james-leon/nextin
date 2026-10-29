@@ -33,6 +33,8 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
   const [period, setPeriod] = useState<BillingPeriod>(initialPeriod);
   const firstFit = plans.find((p) => p.id === currentPlanId && p.fits) ?? plans.find((p) => p.code === "pro" && p.fits) ?? plans.find((p) => p.fits);
   const [selectedId, setSelectedId] = useState<string | null>(firstFit?.id ?? null);
+  // Téléphone : une formule affichée à la fois, choisie dans le sélecteur du haut (pas de défilement interminable).
+  const [viewId, setViewId] = useState<string | null>(firstFit?.id ?? plans[0]?.id ?? null);
   const [state, action, pending] = useActionState(checkout.bind(null, orgId), null);
 
   const selected = plans.find((p) => p.id === selectedId) ?? null;
@@ -71,6 +73,19 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
         </div>
       </div>
 
+      {plans.length > 1 ? (
+        <SegmentedControl
+          label={t("plansTitle")}
+          value={viewId ?? ""}
+          onValueChange={(id) => {
+            setViewId(id);
+            if (plans.find((p) => p.id === id)?.fits) setSelectedId(id);
+          }}
+          options={plans.map((p) => ({ value: p.id, label: name(p) }))}
+          className="md:hidden"
+        />
+      ) : null}
+
       <div role="radiogroup" aria-labelledby="plans-title" className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {plans.map((p) => {
           const q = p[period];
@@ -88,6 +103,7 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
                 "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-tint)]",
                 isSelected && "shadow-[0_0_0_2px_var(--accent-fill)]",
                 !p.fits && "opacity-60",
+                plans.length > 1 && p.id !== viewId && "hidden md:flex",
               )}
             >
               <span className="flex items-center justify-between gap-2">
@@ -131,7 +147,8 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
         {t("vatNote")} {status === "active" && paidPeriodRunning ? t("upgradeNote") : null}
       </p>
 
-      <form action={action}>
+      {/* `contents` : la barre colle au bas de la section (le formulaire ne crée pas de boîte). */}
+      <form action={action} className="contents">
         <input type="hidden" name="planId" value={selectedId ?? ""} />
         <input type="hidden" name="period" value={period} />
         <BottomBar>

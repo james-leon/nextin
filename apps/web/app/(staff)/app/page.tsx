@@ -53,9 +53,13 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
   const joinedOrg = joined ? byOrg.get(joined)?.org : undefined;
   // Super admin sans établissement : sa page d'accueil est la console (jamais d'invitation à créer un établissement).
   if (session.isPlatformAdmin && orgs.length === 0) redirect("/admin");
+  // Raccourcis en cartes dans la grille de l'ordinateur (même gabarit que les établissements).
+  const card =
+    "lg:pressable lg:squircle lg:h-full lg:flex-col lg:items-stretch lg:gap-4 lg:rounded-[var(--radius-xl)] lg:bg-grouped-secondary lg:p-5 lg:shadow-card lg:hover:bg-grouped-secondary lg:[&>span:first-child]:size-12 lg:[&>span:first-child]:rounded-[12px] lg:[&>span:first-child_svg]:size-6 lg:[&>span:last-child]:p-0 lg:[&>span:last-child]:after:hidden";
   const consoleRow = session.isPlatformAdmin ? (
-    <ListSection>
+    <ListSection className="lg:contents" listClassName="lg:contents">
       <ListRow
+        className={card}
         href="/admin"
         icon={
           <ListIcon color="var(--brand-tile)">
@@ -98,8 +102,10 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
           </CalloutCard>
         ) : null}
 
+        {/* Ordinateur : grille équilibrée — établissements, postes, espace annonceur, console, carte « + ». */}
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:gap-4">
         {orgs.length === 0 ? (
-          <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-10 text-center lg:mx-auto lg:w-full lg:max-w-xl">
+          <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-10 text-center lg:col-span-2">
             <span className="squircle flex size-16 items-center justify-center rounded-[18px] bg-accent-tint text-accent-on-tint">
               <Building2 aria-hidden className="size-8 stroke-[1.5]" />
             </span>
@@ -116,7 +122,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
             <ul
               role="list"
               aria-label={t("title")}
-              className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:rounded-none lg:bg-transparent"
+              className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary lg:contents"
             >
               {orgs.map(({ org, role }) => (
                 <li key={org.id} className="group/row">
@@ -160,20 +166,26 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
               ))}
             </ul>
             {session.isPlatformAdmin ? null : (
-              <Button asChild block variant="tinted" className="lg:w-auto lg:self-start">
+              <Button
+                asChild
+                block
+                variant="tinted"
+                className="lg:order-last lg:h-full lg:min-h-36 lg:flex-col lg:rounded-[var(--radius-xl)] lg:bg-transparent lg:shadow-[inset_0_0_0_1.5px_var(--separator)]"
+              >
                 <Link href="/app/new">
-                  <Plus aria-hidden className="size-5" />
+                  <Plus aria-hidden className="size-5 lg:size-7" />
                   {t("create")}
                 </Link>
               </Button>
             )}
           </>
         )}
-        {/* Raccourcis : côte à côte sur ordinateur. */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Raccourcis : cartes de la même grille sur ordinateur. */}
+        <div className="grid grid-cols-1 gap-6 lg:contents">
           {orgs.length > 0 ? (
-            <ListSection>
+            <ListSection className="lg:contents" listClassName="lg:contents">
               <ListRow
+                className={card}
                 href="/desk"
                 icon={
                   <ListIcon color="var(--accent-fill)">
@@ -187,8 +199,9 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
             </ListSection>
           ) : null}
           {/* Espace annonceur (M10b) : ouvert à tout compte, même sans établissement. */}
-          <ListSection>
+          <ListSection className="lg:contents" listClassName="lg:contents">
             <ListRow
+              className={card}
               href="/ads"
               icon={
                 <ListIcon color="var(--orange-fill)">
@@ -200,6 +213,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
               accessory="chevron"
             />
           </ListSection>
+        </div>
         </div>
       </div>
     </main>

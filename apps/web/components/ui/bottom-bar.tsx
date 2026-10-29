@@ -57,15 +57,15 @@ export function BottomBar({
         ref={setAnchor}
         className={cn(
           "safe-bottom z-20 bg-gradient-to-t from-grouped from-70% to-transparent pt-6 pb-4",
-          position === "fixed" &&
-            "fixed right-0 bottom-0 left-[var(--shell-sidebar,0px)] px-4 md:sticky md:right-auto md:left-auto md:px-0",
+          position === "fixed" && "fixed right-0 bottom-0 left-[var(--shell-sidebar,0px)] px-4 md:sticky md:right-auto md:left-auto md:px-0",
           position === "absolute" && "absolute inset-x-0 bottom-0 px-4",
           position === "sticky" && "sticky bottom-0 px-4",
           docked && "lg:hidden",
           className,
         )}
       >
-        <div className={cn("mx-auto flex max-w-lg flex-col gap-3", position === "fixed" && "md:max-w-none")}>
+        {/* Personnel (dans un cadre de page) : toute la largeur du contenu ; pages client : colonne centrée du contenu. */}
+        <div className={cn("mx-auto flex max-w-lg flex-col gap-3", position === "fixed" && (frame ? "md:max-w-none" : "md:px-4"))}>
           {summary ? <p className="text-center text-subheadline text-label-secondary">{summary}</p> : null}
           {children}
         </div>

@@ -295,6 +295,13 @@
 }
 
 @layer base {
+  /* Pages client à barre d'onglets latérale (ordinateur) : le contenu se décale de sa largeur. */
+  @media (min-width: 1024px) {
+    body:has([data-tab-sidebar]) {
+      --shell-sidebar: 15rem;
+      padding-left: 15rem;
+    }
+  }
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -343,14 +350,47 @@
   }
 }
 
-/* Rangée de pastilles qui défile horizontalement (filtres, villes) : dégradé sur les bords, jamais coupée net. */
+/* Rangée de pastilles qui défile horizontalement (filtres, villes) : jamais coupée net.
+   Fondu à droite tant que la rangée continue, à gauche une fois défilée (animation pilotée par le défilement) ;
+   sans défilement possible, aucun fondu. Navigateurs sans cette animation : fondu fixe à droite. */
+@property --fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 3rem;
+}
+@keyframes scroll-fade {
+  0% {
+    --fade-start: 0px;
+    --fade-end: 3rem;
+  }
+  12% {
+    --fade-start: 1.5rem;
+  }
+  88% {
+    --fade-end: 3rem;
+  }
+  100% {
+    --fade-start: 1.5rem;
+    --fade-end: 0px;
+  }
+}
 @utility scroll-fade-x {
   overflow-x: auto;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
   &::-webkit-scrollbar {
     display: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    --fade-end: 0px;
+    animation: scroll-fade linear both;
+    animation-timeline: scroll(self inline);
   }
 }
 @utility hairline-b {
