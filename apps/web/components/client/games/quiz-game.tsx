@@ -110,9 +110,9 @@ export function QuizGame({
         {t("questionOf", { n: index + 1, total: start.questions.length })} · {t("sponsoredBy", { advertiser: quiz.advertiser })}
       </p>
       <h2 className="px-4 text-title2 font-bold">{en && q.question_en ? q.question_en : q.question}</h2>
-      <ul role="radiogroup" aria-label={en && q.question_en ? q.question_en : q.question} className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
+      <div role="radiogroup" aria-label={en && q.question_en ? q.question_en : q.question} className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
         {q.answers.map((a, k) => (
-          <li key={k} className="group/row pl-4">
+          <div key={k} className="group/row pl-4">
             <button
               type="button"
               role="radio"
@@ -123,9 +123,9 @@ export function QuizGame({
               {selected === k ? <CheckCircle2 aria-hidden className="size-6 shrink-0 text-accent-text" /> : <Circle aria-hidden className="size-6 shrink-0 text-label-tertiary" />}
               {en && a.text_en ? a.text_en : a.text}
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
       <Button block onClick={next} disabled={selected === null} loading={sending} loadingLabel={t("loading")}>
         {last ? t("finish") : t("next")}
       </Button>

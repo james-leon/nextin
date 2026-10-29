@@ -1782,6 +1782,7 @@ export const fr = {
     addCreative: "Ajouter un visuel",
     editCreative: "Modifier le visuel",
     file: "Fichier",
+    kind: "Type de visuel",
     uploading: "Envoi du fichier…",
     headline: "Titre",
     offer: "Offre",
@@ -1877,6 +1878,7 @@ export const fr = {
     stop: "Arrêter l'annonce",
     stopTitle: "Arrêter cette annonce ?",
     stopBody: "Elle ne sera plus diffusée sur vos écrans ni dans l'application.",
+    saved: "Réglages enregistrés.",
     tvNote: "La publicité sur un écran TV se règle aussi écran par écran (Agences → Écrans).",
   },
   adsAdmin: {

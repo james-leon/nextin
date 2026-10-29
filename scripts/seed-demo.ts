@@ -1,11 +1,13 @@
 /**
  * Données de démo NextIn — idempotent (relançable sans doublons).
  * Enrichi à chaque module. M1 : comptes, établissements, personnel. M2 : agences, spécialités, praticiens,
- * services, guichets/cabinets, horaires et QR codes. M3 : file du jour (tickets en attente).
+ * services, guichets/cabinets, horaires et QR codes. M3 : file du jour (tickets en attente). M10b : annonceurs,
+ * campagnes (diffusée, en validation), annonce Maison.
  *
  * Usage : NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… SEED_DEMO_PASSWORD=… pnpm seed:demo
  */
 import { createClient } from "@supabase/supabase-js";
+import { bannerPng, coinLogoPng, demoVisaPdf } from "./demo-images";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -31,6 +33,8 @@ const USERS = {
   clinicDoctor: { email: "dr.mbarga@doualaclinic.demo", fullName: "Dr Paul Mbarga" },
   eneoAdmin: { email: "chef.agence@eneo.demo", fullName: "Serge Tchoupo" },
   eneoAgent: { email: "guichet1@eneo.demo", fullName: "Aïcha Bello" },
+  advertiser: { email: "marketing@saveurs-littoral.demo", fullName: "Saveurs du Littoral" },
+  pharmacy: { email: "contact@pharmacie-bonapriso.demo", fullName: "Pharmacie de Bonapriso" },
 } satisfies Record<string, DemoUser>;
 
 async function ensureUser(u: DemoUser): Promise<string> {
@@ -461,6 +465,139 @@ async function ensureDemoSubscription(orgId: string, mode: "paid" | "trial", pho
   await must(db.rpc("confirm_payment", { p_external_id: started.external_id, p_status: "succeeded", p_provider_ref: "fake_demo" }));
 }
 
+/** Client connecté (RPC exécutées avec les droits du compte, comme depuis l'application). */
+async function signedIn(email: string) {
+  const client = createClient(url!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await client.auth.signInWithPassword({ email, password: password! });
+  if (error) throw error;
+  return client;
+}
+
+async function upload(bucket: "ad-creatives" | "ad-documents", path: string, body: Buffer, contentType: string) {
+  const { error } = await db.storage.from(bucket).upload(path, body, { contentType, upsert: true });
+  if (error) throw new Error(`${bucket}/${path} : ${error.message}`);
+}
+
+type CreativeSeed = { file: string; from: string; to: string; headline: string; offer: string };
+
+async function addCreatives(client: Db, folder: string, campaignId: string, creatives: CreativeSeed[]) {
+  for (const c of creatives) {
+    const path = `${folder}/${campaignId}/${c.file}`;
+    await upload("ad-creatives", path, bannerPng(c.from, c.to), "image/png");
+    await must(client.rpc("save_creative", {
+      p_campaign: campaignId,
+      p_creative: null as unknown as string,
+      p_fields: { storage_path: path, kind: "image", headline: c.headline, offer_text: c.offer, cta_url: "", duration_seconds: 8 },
+    }));
+  }
+}
+
+/**
+ * M10b — publicité de démo (idempotent) : « Saveurs du Littoral » (formule Or, diffusée partout : TV, application,
+ * quiz et habillage de Sky Catch, payée par le faux fournisseur), « Pharmacie de Bonapriso » (Bronze, visa santé,
+ * en attente de validation dans la console) et une annonce Maison de DOUALA CLINIC.
+ */
+async function ensureDemoAds(clinicId: string) {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Douala" }).format(new Date());
+
+  const adv = await signedIn(USERS.advertiser.email);
+  const existing = await must(adv.from("advertisers").select("id").limit(1));
+  if (!existing.length) {
+    const advertiserId = (await must(adv.rpc("create_advertiser", { p_name: "Saveurs du Littoral", p_sector: "food", p_phone: "+237677300301", p_city: "Douala" }))) as string;
+    const campaignId = (await must(adv.rpc("save_campaign", {
+      p_campaign: null as unknown as string,
+      p_advertiser: advertiserId,
+      p_organization: null as unknown as string,
+      p_fields: { name: "Petit-déjeuner du Littoral", package_code: "or", sector: "food", starts_on: today, surfaces: ["tv", "app", "game"], target_cities: [], target_org_types: [], schedules: [] },
+    }))) as string;
+    await addCreatives(adv, advertiserId, campaignId, [
+      { file: "croissants.png", from: "#F58B1F", to: "#B5651A", headline: "Croissants tout chauds dès 6 h", offer: "-20 % sur présentation du bon" },
+      { file: "jus.png", from: "#2E8B57", to: "#13798A", headline: "Jus de fruits pressés du jour", offer: "Le deuxième offert" },
+    ]);
+    await must(adv.rpc("save_quiz", {
+      p_campaign: campaignId,
+      p_fields: {
+        title: "Les saveurs du Cameroun",
+        reward_text: "-10 % sur votre prochain petit-déjeuner",
+        coupon_validity_days: 30,
+        max_coupons: null,
+        questions: [
+          { question: "Avec quoi prépare-t-on le ndolé ?", answers: [{ text: "Des feuilles amères", correct: true }, { text: "Du manioc" }, { text: "Des arachides seules" }] },
+          { question: "Les beignets-haricots se mangent surtout…", answers: [{ text: "Le soir" }, { text: "Le matin", correct: true }] },
+          { question: "Quel fruit pousse en abondance à Njombé ?", answers: [{ text: "La banane", correct: true }, { text: "La pomme" }, { text: "La poire" }] },
+        ],
+      },
+    }));
+    const logo = `${advertiserId}/${campaignId}/piece.png`;
+    await upload("ad-creatives", logo, coinLogoPng("#B5651A"), "image/png");
+    await must(adv.rpc("save_game_skin", {
+      p_campaign: campaignId,
+      p_fields: {
+        plane_primary: "#B5651A",
+        plane_secondary: "#F58B1F",
+        coin_logo_path: logo,
+        end_title: "Bravo, pilote gourmand !",
+        reward_text: "Un croissant offert",
+        coupon_validity_days: 14,
+        max_coupons: null,
+        min_levels: 2,
+      },
+    }));
+    await must(adv.rpc("submit_campaign", { p_campaign: campaignId }));
+    const wintek = await signedIn(USERS.wintek.email);
+    await must(wintek.rpc("review_campaign", { p_campaign: campaignId, p_approve: true, p_note: "Conforme" }));
+    const checkout = (await must(adv.rpc("campaign_checkout", { p_campaign: campaignId }))) as { pay_token: string };
+    const started = (await must(
+      db.rpc("start_payment", { p_token: checkout.pay_token, p_provider: "fake", p_channel: "mtn_momo", p_msisdn: "+237677300301" }),
+    )) as { external_id: string };
+    await must(db.rpc("confirm_payment", { p_external_id: started.external_id, p_status: "succeeded", p_provider_ref: "fake_demo" }));
+  }
+
+  const pharmacy = await signedIn(USERS.pharmacy.email);
+  const pharmacyExisting = await must(pharmacy.from("advertisers").select("id").limit(1));
+  if (!pharmacyExisting.length) {
+    const advertiserId = (await must(pharmacy.rpc("create_advertiser", { p_name: "Pharmacie de Bonapriso", p_sector: "pharmacy", p_phone: "+237699300302", p_city: "Douala" }))) as string;
+    const campaignId = (await must(pharmacy.rpc("save_campaign", {
+      p_campaign: null as unknown as string,
+      p_advertiser: advertiserId,
+      p_organization: null as unknown as string,
+      p_fields: { name: "Semaine de la vitamine C", package_code: "bronze", sector: "pharmacy", starts_on: today, surfaces: ["tv"], target_cities: ["Douala"], target_org_types: ["clinic"], schedules: [] },
+    }))) as string;
+    await addCreatives(pharmacy, advertiserId, campaignId, [
+      { file: "vitamine.png", from: "#13798A", to: "#1A6BB5", headline: "Vitamine C : renforcez vos défenses", offer: "Conseils gratuits en officine" },
+    ]);
+    const visa = `${advertiserId}/${campaignId}/visa.pdf`;
+    await upload("ad-documents", visa, demoVisaPdf("MINSANTE-DEMO-0042"), "application/pdf");
+    await must(pharmacy.rpc("save_campaign", {
+      p_campaign: campaignId,
+      p_advertiser: null as unknown as string,
+      p_organization: null as unknown as string,
+      p_fields: {
+        name: "Semaine de la vitamine C", package_code: "bronze", sector: "pharmacy", starts_on: today, surfaces: ["tv"],
+        target_cities: ["Douala"], target_org_types: ["clinic"], schedules: [],
+        health_visa_number: "MINSANTE-DEMO-0042", health_visa_document_path: visa,
+      },
+    }));
+    // Laissée « En validation » : la console Wintek a une campagne à examiner.
+    await must(pharmacy.rpc("submit_campaign", { p_campaign: campaignId }));
+  }
+
+  const house = await must(db.from("ad_campaigns").select("id").eq("organization_id", clinicId).limit(1));
+  if (!house.length) {
+    const admin = await signedIn(USERS.clinicAdmin.email);
+    const campaignId = (await must(admin.rpc("save_campaign", {
+      p_campaign: null as unknown as string,
+      p_advertiser: null as unknown as string,
+      p_organization: clinicId,
+      p_fields: { name: "Vaccination le samedi", package_code: "maison", sector: "health", starts_on: today, surfaces: ["tv", "app"], target_cities: [], target_org_types: [], schedules: [] },
+    }))) as string;
+    await addCreatives(admin, `org-${clinicId}`, campaignId, [
+      { file: "vaccination.png", from: "#0D2C54", to: "#1A6BB5", headline: "Vaccination sans rendez-vous le samedi", offer: "De 8 h à 12 h, agence Akwa" },
+    ]);
+    await must(admin.rpc("submit_campaign", { p_campaign: campaignId }));
+  }
+}
+
 const COLORS = { blue: "#1A6BB5", green: "#2E8B57", purple: "#8E5BB5", ochre: "#B5651A", teal: "#13798A" };
 
 async function main() {
@@ -549,9 +686,11 @@ async function main() {
   await ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237);
   await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
   await ensureDemoRemote(akwa, bonanjo, ids.clinicAdmin);
+  await ensureDemoAds(clinic);
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa, Pro payé) et Eneo — Douala (agence Bonanjo, essai Pro)");
   console.log("  Console Wintek : /admin avec superadmin@nextin.demo");
+  console.log("  Espace annonceur : /ads avec marketing@saveurs-littoral.demo (campagne Or diffusée)");
   for (const u of Object.values(USERS)) console.log(`  ${u.email}`);
   console.log("  (mot de passe : valeur de SEED_DEMO_PASSWORD)");
 }

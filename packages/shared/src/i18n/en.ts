@@ -1784,6 +1784,7 @@ export const en: Messages = {
     addCreative: "Add a creative",
     editCreative: "Edit creative",
     file: "File",
+    kind: "Creative type",
     uploading: "Uploading…",
     headline: "Headline",
     offer: "Offer",
@@ -1879,6 +1880,7 @@ export const en: Messages = {
     stop: "Stop this ad",
     stopTitle: "Stop this ad?",
     stopBody: "It will no longer show on your screens or in the app.",
+    saved: "Settings saved.",
     tvNote: "Advertising on a TV screen can also be set screen by screen (Branches → Screens).",
   },
   adsAdmin: {

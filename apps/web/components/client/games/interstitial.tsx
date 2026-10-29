@@ -49,7 +49,7 @@ export function Interstitial({ ad, token, skipAfter, onDone }: { ad: AdCandidate
   const remaining = Math.max(1, Math.ceil(skipAfter - elapsed / 1000));
   return (
     <section aria-label={t("adLabel")} className="flex h-full flex-col gap-4 p-4">
-      <p className="self-start rounded-full bg-fill-tertiary px-3 py-1 text-caption font-semibold uppercase text-label-secondary">{t("adLabel")}</p>
+      <p className="self-start rounded-full bg-grouped-secondary px-3 py-1 text-caption font-semibold uppercase text-label-secondary shadow-card">{t("adLabel")}</p>
       <div className="squircle flex min-h-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
         <div className="relative min-h-0 flex-1 bg-fill-tertiary">
           {/* eslint-disable-next-line @next/next/no-img-element -- visuel du stockage public, déjà limité à 250 Ko */}

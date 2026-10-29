@@ -19,7 +19,7 @@ export default async function NewCampaignPage() {
   const data = await campaignFormData();
   return (
     <AdminPage title={t("newCampaign")} eyebrow={advertiser.name} back={{ href: "/ads", label: t("nav.campaigns") }} wide>
-      <CampaignForm mode="advertiser" {...data} action={saveCampaign.bind(null, { advertiserId: advertiser.id })} />
+      <CampaignForm mode="advertiser" {...data} defaultSector={advertiser.sector} action={saveCampaign.bind(null, { advertiserId: advertiser.id })} />
     </AdminPage>
   );
 }

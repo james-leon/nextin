@@ -9,8 +9,10 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SU
 /** Ouvre /app et vérifie qu'on arrive sur /login sans boucle de redirection. */
 async function expectLoginWithoutLoop(page: Page) {
   const redirects: string[] = [];
+  // Navigations seulement : les préchargements des liens de la page précédente (/ads, /app/settings…) sont aussi
+  // renvoyés vers la connexion, sans être une boucle.
   page.on("response", (r) => {
-    if (r.status() >= 300 && r.status() < 400) redirects.push(new URL(r.url()).pathname);
+    if (r.status() >= 300 && r.status() < 400 && r.request().isNavigationRequest()) redirects.push(new URL(r.url()).pathname);
   });
   await page.goto("/app");
   await expect(page).toHaveURL(/\/login\?next=%2Fapp$/);

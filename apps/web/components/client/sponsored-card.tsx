@@ -14,6 +14,7 @@ import { useLiteT } from "@/lib/i18n/lite";
 export function SponsoredCard({ token }: { token: string }) {
   const t = useLiteT("games");
   const [ad, setAd] = useState<AdCandidate | null>(null);
+  const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export function SponsoredCard({ token }: { token: string }) {
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true);
           trackAd(token, ad.creative_id, "app", "impression");
           io.disconnect();
         }
@@ -44,8 +46,11 @@ export function SponsoredCard({ token }: { token: string }) {
   const body = (
     <>
       <div className="relative aspect-video bg-fill-tertiary">
-        {/* eslint-disable-next-line @next/next/no-img-element -- visuel du stockage public (250 Ko au plus), chargé à la demande */}
-        <img crossOrigin="anonymous" src={adFileUrl(SUPABASE_URL, ad.path)} alt={ad.headline} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+        {/* Visuel chargé seulement quand la carte est à l'écran (budget du premier chargement). */}
+        {visible ? (
+          // eslint-disable-next-line @next/next/no-img-element -- visuel du stockage public (250 Ko au plus)
+          <img crossOrigin="anonymous" src={adFileUrl(SUPABASE_URL, ad.path)} alt={ad.headline} decoding="async" className="absolute inset-0 size-full object-cover" />
+        ) : null}
       </div>
       <div className="flex items-start gap-3 p-4">
         <div className="min-w-0 flex-1">

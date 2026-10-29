@@ -80,6 +80,8 @@ export async function CampaignPage({
   const ownerFolder = c.advertiser_id ?? `org-${c.organization_id}`;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const stats = statsResult.data as unknown as CampaignStats | null;
+  // Prix figé à la soumission ; avant, celui de la formule choisie.
+  const price = editable && !house ? pkg.price_xaf : c.price_xaf;
   const label = (x: { name: string; name_en: string | null }) => (locale === "en" ? (x.name_en ?? x.name) : x.name);
   const sectorName = locale === "en" ? sector.name_en : sector.name;
   const tw = await getTranslations("weekdays");
@@ -192,7 +194,7 @@ export async function CampaignPage({
                 subtitle={(schedules ?? []).map((s) => `${tw(String(s.weekday) as "1")} ${s.start_time.slice(0, 5)}–${s.end_time.slice(0, 5)}`).join(" · ")}
               />
             ) : null}
-            {!house ? <ListRow title={t("price")} detail={<span className="tabular">{c.price_xaf ? formatXaf(c.price_xaf, locale) : t("free")}</span>} /> : null}
+            {!house ? <ListRow title={t("price")} detail={<span className="tabular">{price ? formatXaf(price, locale) : t("free")}</span>} /> : null}
           </ListSection>
           {(invoices ?? []).length ? (
             <ListSection header={t("invoices")}>

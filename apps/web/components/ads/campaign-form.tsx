@@ -35,13 +35,15 @@ type Props = {
   cities: string[];
   today: string;
   initial?: CampaignInitial;
+  /** Nouvelle campagne : secteur de l'annonceur. */
+  defaultSector?: string;
   action: (prev: ActionResult | null, data: FormData) => Promise<ActionResult>;
 };
 
 const SURFACES: AdSurface[] = ["tv", "app", "game"];
 
 /** Réglages d'une campagne : formule, informations, surfaces, ciblage, plages. Une seule action : « Enregistrer ». */
-export function CampaignForm({ mode, packages, sectors, cities, today, initial, action }: Props) {
+export function CampaignForm({ mode, packages, sectors, cities, today, initial, defaultSector, action }: Props) {
   const t = useTranslations("ads");
   const tt = useTranslations("orgTypes");
   const tw = useTranslations("weekdays");
@@ -52,7 +54,7 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
   const [packageCode, setPackageCode] = useState(initial?.packageCode ?? offered.find((p) => p.code === "argent")?.code ?? offered[0]?.code ?? "");
   const pkg = offered.find((p) => p.code === packageCode);
   const [name, setName] = useState(initial?.name ?? "");
-  const [sector, setSector] = useState(initial?.sector ?? (mode === "house" ? "health" : (sectors[0]?.code ?? "")));
+  const [sector, setSector] = useState(initial?.sector ?? defaultSector ?? (mode === "house" ? "health" : (sectors[0]?.code ?? "")));
   const [startsOn, setStartsOn] = useState(initial?.startsOn ?? today);
   const [surfaces, setSurfaces] = useState<AdSurface[]>(initial?.surfaces ?? ["tv"]);
   const [targetCities, setTargetCities] = useState<string[]>(initial?.targetCities ?? []);

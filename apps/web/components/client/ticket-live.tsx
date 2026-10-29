@@ -13,7 +13,7 @@ import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { TicketHero } from "@/components/ui/ticket-hero";
-import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { savedTicket, saveTicket } from "@/lib/client/my-tickets";
@@ -22,6 +22,7 @@ import { callRpc } from "@/lib/client/supabase-public";
 import { waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
 import { PlayCard } from "./games/play-card";
+import { LazyMount } from "./lazy-mount";
 import { RemoteTicketCard } from "./remote-ticket-card";
 
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
@@ -51,6 +52,7 @@ export function TicketLive({
   whatsappNumber,
   vapidKey,
   couponBaseUrl,
+  gameCards,
 }: {
   token: string;
   initial: TicketView;
@@ -60,6 +62,8 @@ export function TicketLive({
   vapidKey: string | null;
   /** Adresse absolue des bons de réduction (`/coupon/`), encodée dans leur QR code. */
   couponBaseUrl: string;
+  /** Textes des cartes de jeu et de pub (les autres textes des jeux sont chargés avec la feuille). */
+  gameCards: Record<string, string>;
 }) {
   const t = useLiteT("client.ticket");
   const tk = useLiteT("counterKinds");
@@ -289,8 +293,16 @@ export function TicketLive({
           <CalloutCard icon={<Bell />}>{view.alerts?.whatsapp || view.alerts?.push ? t("keepOpenAlerts") : t("keepOpen")}</CalloutCard>
         ) : null}
 
-        {view.status === "waiting" ? <PlayCard token={token} onOpen={() => setPlaying(true)} /> : null}
-        {view.status === "waiting" ? <SponsoredCard token={token} /> : null}
+        {view.status === "waiting" ? (
+          <LiteIntlProvider locale={locale} messages={{ games: gameCards }}>
+            <LazyMount>
+              <div className="flex flex-col gap-4">
+                <PlayCard token={token} onOpen={() => setPlaying(true)} />
+                <SponsoredCard token={token} />
+              </div>
+            </LazyMount>
+          </LiteIntlProvider>
+        ) : null}
 
         {view.status === "served" ? (
           view.rating_enabled && view.rating == null ? (

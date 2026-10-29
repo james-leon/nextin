@@ -64,7 +64,7 @@ export default async function OrgAdsPage({
     >
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>
-          {ta("saved")}
+          {t("saved")}
         </CalloutCard>
       ) : null}
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">

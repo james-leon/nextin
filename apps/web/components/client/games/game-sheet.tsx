@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { BellRing, ChevronLeft, ChevronRight, CircleHelp, Plane, WifiOff, X } from "lucide-react";
 import { interstitialDue, type AdCandidate } from "@nextin/shared/ads";
 import { Button, IconButton } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { GameSession } from "@/lib/client/games";
 import { flushAdEvents } from "@/lib/client/ad-events";
 import { callRpc } from "@/lib/client/supabase-public";
-import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { QuizGame } from "./quiz-game";
 import { SkyCatch } from "./sky-catch";
 
@@ -29,7 +30,42 @@ const subscribeOnline = (cb: () => void) => {
  * Feuille « Jouer en attendant » (chargée à la demande) : plein écran, le numéro et l'attente restent visibles en
  * haut. À l'appel, le jeu se fige et « C'est votre tour » prend toute la place.
  */
-export function GameSheet({
+/**
+ * Charge les textes des jeux (route légère, mise en cache) puis affiche la feuille, dans un portail : la page du ticket
+ * derrière devient inerte (ni focus ni lecteur d'écran) tant que la feuille est ouverte.
+ */
+export function GameSheet(props: Parameters<typeof GameSheetContent>[0]) {
+  const [messages, setMessages] = useState<{ locale: string; games: Record<string, unknown> } | null>(null);
+  useEffect(() => {
+    const page = document.querySelector("main");
+    page?.setAttribute("inert", "");
+    return () => page?.removeAttribute("inert");
+  }, []);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/i18n/games")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m) => alive && m && setMessages(m))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return createPortal(
+    messages ? (
+      <LiteIntlProvider locale={messages.locale} messages={{ games: messages.games }}>
+        <GameSheetContent {...props} />
+      </LiteIntlProvider>
+    ) : (
+      <div role="dialog" aria-modal="true" aria-busy="true" aria-label={props.code} className="fixed inset-0 z-50 flex items-center justify-center bg-grouped">
+        <Spinner />
+      </div>
+    ),
+    document.body,
+  );
+}
+
+function GameSheetContent({
   token,
   code,
   status,

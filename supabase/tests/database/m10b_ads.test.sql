@@ -6,7 +6,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(93);
+select plan(97);
 
 create schema tests;
 create function tests.create_user(p_id uuid, p_email text, p_anon boolean default false) returns uuid language sql as $$
@@ -76,6 +76,10 @@ select tests.create_user('ab000000-0000-0000-0000-0000000000c1', 'clinique@m10b.
 select tests.create_user('ab000000-0000-0000-0000-0000000000e1', 'eneo@m10b.test');
 select tests.create_user('ab000000-0000-0000-0000-00000000000c', null, true);
 insert into public.platform_admins (user_id) values ('ab000000-0000-0000-0000-0000000000ff');
+
+-- Base de développement (démo, e2e) : les agences existantes sont mises de côté le temps du test (annulé à la fin),
+-- pour que les plafonds d'agences des formules et le ciblage ne portent que sur les agences du test.
+update public.branches set active = false where active;
 
 select tests.login_as('ab000000-0000-0000-0000-0000000000c1');
 insert into ids select 'clinic', public.create_organization('M10b Clinique', 'pgtap-m10b-clinic', 'clinic');
@@ -329,7 +333,15 @@ select is(public.record_ad_events(tests.id('bonanjo'), null, jsonb_build_array(j
 select is(public.record_ad_events((select id from public.branches where name = 'Mvan'), null, jsonb_build_array(jsonb_build_object('id', 'c0000000-0000-4000-8000-00000000000a',
   'creative_id', (select id from public.ad_creatives where campaign_id = tests.id('Pain')), 'surface', 'tv', 'type', 'impression', 'at', now()))), 0,
   'agence non ciblée : ignoré');
+-- Réception par l'application : agence déduite du jeton du ticket (ou de l'écran), jamais du client.
+select is(public.record_ticket_ad_events(tests.t('ticket'), jsonb_build_array(jsonb_build_object('id', 'c0000000-0000-4000-8000-00000000000b',
+  'creative_id', (select id from public.ad_creatives where campaign_id = tests.id('Gold') limit 1), 'surface', 'app', 'type', 'impression', 'at', now()))), 1,
+  'lot d''une page client : agence du ticket');
+select throws_ok($$ select public.record_ticket_ad_events('AAAAAAAAAAAAAAAAAAAAAA', '[]') $$, 'P0404', 'not_found', 'jeton de ticket inconnu : refusé');
+select throws_ok($$ select public.record_display_ad_events('inconnu-inconnu-inconnu', '[]') $$, '42501', 'not_allowed', 'écran inconnu : refusé');
 select tests.logout();
+select ok(not has_function_privilege('anon', 'public.record_ticket_ad_events(text, jsonb)', 'execute')
+  and not has_function_privilege('authenticated', 'public.record_display_ad_events(text, jsonb)', 'execute'), 'réception des événements : serveur seulement');
 select ok(public.rollup_ad_stats(2) > 0, 'cumuls quotidiens calculés');
 select tests.login_as('ab000000-0000-0000-0000-0000000000a1');
 insert into vals select 'stats', public.campaign_stats(tests.id('Pharma'));

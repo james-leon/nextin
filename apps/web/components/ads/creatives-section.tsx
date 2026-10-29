@@ -147,7 +147,7 @@ function CreativeSheet({
         <FormError message={top ?? uploadError} />
         {videoAllowed ? (
           <SegmentedControl
-            label={t("file")}
+            label={t("kind")}
             value={kind}
             onValueChange={(k) => {
               setKind(k);

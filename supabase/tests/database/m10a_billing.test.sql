@@ -373,7 +373,7 @@ select tests.logout();
 select is((tests.v('checkout4') ->> 'total_xaf')::integer, 40000, 'nouveau prix (50 000) et remise de 20 % appliqués');
 select is((select remaining_invoices::integer from public.discounts where organization_id = tests.id('d2')), 1, 'remise : une facture restante');
 select is((select count(*)::integer from public.audit_log where action in ('subscription.grant_days', 'subscription.discount', 'plan.update',
-  'platform.settings', 'org.suspend')), 5, 'actions du super admin journalisées');
+  'platform.settings', 'org.suspend') and actor_user_id = 'aa000000-0000-0000-0000-0000000000ff'), 5, 'actions du super admin journalisées');
 
 -- ─── RLS ─────────────────────────────────────────────────────────────────────
 select tests.as_anon();
