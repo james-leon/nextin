@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { CodeForm } from "@/components/client/code-form";
 import { NavigationBar } from "@/components/ui/navigation-bar";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("client.code");
@@ -15,7 +16,9 @@ export default async function CodePage() {
     <main className="min-h-dvh pb-40">
       <NavigationBar title={t("code.title")} back={{ href: "/", label: t("service.back") }} contentClassName="max-w-lg" />
       <div className="mx-auto max-w-lg px-4 pt-4">
-        <CodeForm />
+        <LiteMessages paths={["client.code"]}>
+          <CodeForm />
+        </LiteMessages>
       </div>
     </main>
   );

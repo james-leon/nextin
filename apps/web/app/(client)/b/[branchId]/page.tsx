@@ -9,6 +9,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { BranchPublic } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 type Params = { params: Promise<{ branchId: string }> };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -28,7 +29,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 /** Page publique d'une agence (M9) : files en direct, ticket à distance, demande de rendez-vous. */
 export default async function BranchPage({ params }: Params) {
   const branch = await load((await params).branchId);
-  if (branch) return <BranchView branch={branch} captchaSiteKey={captchaConfig().siteKey} />;
+  if (branch)
+    return (
+      <LiteMessages paths={["client.branch", "client.service", "errors", "orgTypes", "weekdays"]}>
+        <BranchView branch={branch} captchaSiteKey={captchaConfig().siteKey} />
+      </LiteMessages>
+    );
   const t = await getTranslations("client.branch");
   return (
     <main className="min-h-dvh pb-40">

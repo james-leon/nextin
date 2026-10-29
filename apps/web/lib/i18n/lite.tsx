@@ -6,12 +6,24 @@ import { formatMessage, type MessageValues } from "./format";
 /**
  * Traductions des pages client sans next-intl côté navigateur (budget < 200 Ko).
  * Le serveur transmet seulement les espaces de noms utiles ; même syntaxe de clés que next-intl.
+ * Un fournisseur imbriqué complète celui du dessus : le gabarit donne les textes communs, chaque page les siens.
  */
 type Messages = Record<string, unknown>;
 const Ctx = createContext<{ locale: string; messages: Messages }>({ locale: "fr", messages: {} });
 
+function isObject(value: unknown): value is Messages {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function merge(base: Messages, extra: Messages): Messages {
+  const out: Messages = { ...base };
+  for (const [key, value] of Object.entries(extra)) out[key] = isObject(out[key]) && isObject(value) ? merge(out[key], value) : value;
+  return out;
+}
+
 export function LiteIntlProvider({ locale, messages, children }: { locale: string; messages: Messages; children: ReactNode }) {
-  const value = useMemo(() => ({ locale, messages }), [locale, messages]);
+  const parent = useContext(Ctx).messages;
+  const value = useMemo(() => ({ locale, messages: merge(parent, messages) }), [locale, parent, messages]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

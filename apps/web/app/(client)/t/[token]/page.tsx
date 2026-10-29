@@ -9,6 +9,7 @@ import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { TicketView } from "@/lib/client/types";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 type Params = { params: Promise<{ token: string }> };
 
@@ -43,7 +44,9 @@ export default async function TicketPage({ params }: Params) {
     // Textes des cartes « Jouer en attendant » et « Sponsorisé » ; ceux des jeux arrivent avec la feuille.
     const cards = { cardTitle: games.cardTitle, cardBody: games.cardBody, open: games.open, sponsored: games.sponsored };
     return (
-      <TicketLive token={token} initial={view} whatsappNumber={whatsappNumber} vapidKey={vapidKey} couponBaseUrl={absoluteUrl("/coupon/")} gameCards={cards} />
+      <LiteMessages paths={["client.ticket", "errors", "counterKinds"]}>
+        <TicketLive token={token} initial={view} whatsappNumber={whatsappNumber} vapidKey={vapidKey} couponBaseUrl={absoluteUrl("/coupon/")} gameCards={cards} />
+      </LiteMessages>
     );
   }
 

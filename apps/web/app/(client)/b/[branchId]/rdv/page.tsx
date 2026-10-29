@@ -9,6 +9,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { RequestOptions } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 type Params = { params: Promise<{ branchId: string }> };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -24,7 +25,12 @@ export default async function RequestPage({ params }: Params) {
   const { data } = UUID.test(branchId)
     ? await callRpc<RequestOptions>("request_options", { p_branch: branchId })
     : { data: null };
-  if (data) return <RequestForm options={data} branchId={branchId} captchaSiteKey={captchaConfig().siteKey} />;
+  if (data)
+    return (
+      <LiteMessages paths={["client.request", "errors"]}>
+        <RequestForm options={data} branchId={branchId} captchaSiteKey={captchaConfig().siteKey} />
+      </LiteMessages>
+    );
   const t = await getTranslations("client.request");
   return (
     <main className="min-h-dvh pb-40">

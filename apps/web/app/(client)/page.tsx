@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Keyboard } from "lucide-react";
 import { ClientTabBar } from "@/components/client/client-tab-bar";
 import { QrScanner } from "@/components/client/qr-scanner";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("client.scanner");
@@ -20,7 +21,9 @@ export default async function ScannerPage() {
         <h1 className="mt-1 text-large-title leading-tight font-bold">{t("title")}</h1>
         <p className="mt-2 max-w-sm text-subheadline text-white/75">{t("body")}</p>
         <div className="mt-10 flex w-full flex-1 flex-col items-center justify-center">
-          <QrScanner />
+          <LiteMessages paths={["client.scanner"]}>
+            <QrScanner />
+          </LiteMessages>
         </div>
         <div className="mt-6 flex w-full max-w-lg flex-col gap-2">
           <Link

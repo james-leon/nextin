@@ -9,6 +9,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { RequestView } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 type Params = { params: Promise<{ token: string }> };
 const TOKEN = /^[A-Za-z0-9]{22}$/;
@@ -23,7 +24,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RequestStatusPage({ params }: Params) {
   const { token } = await params;
   const { data } = TOKEN.test(token) ? await callRpc<RequestView | null>("get_appointment_request", { p_token: token }) : { data: null };
-  if (data) return <RequestStatusView token={token} initial={data} captchaSiteKey={captchaConfig().siteKey} />;
+  if (data)
+    return (
+      <LiteMessages paths={["client.request", "client.requestStatus", "errors"]}>
+        <RequestStatusView token={token} initial={data} captchaSiteKey={captchaConfig().siteKey} />
+      </LiteMessages>
+    );
   const t = await getTranslations("client.requestStatus");
   return (
     <main className="min-h-dvh pb-40">

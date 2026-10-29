@@ -90,6 +90,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 ## Pages client (M4, `docs/modules/M4.md`)
 - `app/(client)` : `/` scanner, `/c` code, `/q/[code]` choix du service, `/t/[token]` ticket, `/t` onglet, `/profile`. RSC + petits composants client.
 - **Budget < 200 Ko** (test Playwright) : pas de supabase-js ni de next-intl côté navigateur sur ces pages. Utiliser `lib/client/*` (`callRpc`, `subscribeBroadcast`, session anonyme, `takeTicket`) et `useLiteT` / `useLiteLocale` (`lib/i18n/lite.tsx`) ; importer `@nextin/shared/queue/live` (sans Zod) plutôt que `@nextin/shared/queue`. Charger à la demande (`next/dynamic`) ce qui ne sert pas au premier affichage.
+- Textes : le gabarit client ne transmet que `common` et `client.tabs` ; chaque page entoure ses composants client de `LiteMessages paths={[…]}` (`lib/i18n/lite-server.tsx`) avec les seuls espaces de noms qu'ils utilisent (les fournisseurs imbriqués se complètent).
 - Pas de `crypto.randomUUID`, caméra ni presse-papiers sans repli : le test en Wi-Fi local est en `http`.
 - `Preferences` (apparence + langue) reçoit ses textes du serveur (`preferencesLabels()`). La déconnexion du personnel est dans `/app/settings`.
 
@@ -154,6 +155,13 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - « Mon ticket » : carte de jeu et pub montées par `LazyMount` (après le chargement), feuille de jeu `next/dynamic` avec ses textes de `/api/i18n/games` ; la feuille garde le numéro et l'attente en tête et se fige à l'appel. Ne rien ajouter au premier chargement de `/t` sans remesurer le budget (≈ 198 Ko).
 - Sky Catch : logique pure `@nextin/shared/ads/sky-catch` (testée), rendu canvas dans `components/client/games/sky-catch.tsx`, couleurs par jetons `--game-*`. Bons : `/coupon/<jeton>` (QR via `QrImage`), validation `/ads/redeem`.
 - Tests e2e de diffusion : agence dans une ville propre et campagne Or ciblant cette ville (`e2e/ads-helpers.ts`), la base locale contenant d'autres campagnes.
+
+## Backlog n° 1 (`docs/modules/BACKLOG-1.md`)
+- Gabarits à barre latérale : `data-shell="sidebar"` ; barre latérale = colonne pleine hauteur + contenu `sticky top-0 h-dvh`. Retour masqué sur ordinateur si la rubrique est dans la barre latérale (`isSidebarDestination`, `back.inSidebar`). Toute grille responsive part de `grid-cols-1`.
+- `NavigationBar` : sur ordinateur, les actions `trailing` s'alignent sur le grand titre (ne pas les repositionner écran par écran).
+- Poste : raccourcis `deskShortcut` / `shortcutTargetAllowed` (`@nextin/shared/desk`, mêmes règles que les boutons), mode compact `useDeskCompact` (`lib/desk/compact.ts`).
+- Présence à distance : code tournant de l'écran TV (`presence_code`, `presence_url`), réglage `remote_presence_tv_only` ; secret par agence jamais lisible (`branch_presence_secrets`).
+- Publicité : agences choisies (`set_campaign_branches`, plafond de la formule), rôle `cashier` (`/ads/redeem` seulement) ; scanner partagé `useQrCamera` (`lib/client/qr-camera.ts`). `ListRow disabled` pour une ligne non cochable. Icône de secteur : `OrgTypeIcon` (`components/ui`).
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

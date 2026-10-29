@@ -125,9 +125,11 @@ test.describe("Backlog — pages client", () => {
   });
 
   test("À proximité : icône et libellé du secteur de l'établissement", async ({ page }) => {
-    await setUpBranch("Clinique Secteur");
-    await page.goto("/nearby?q=Clinique%20Secteur");
-    const row = page.getByRole("link", { name: /Clinique Secteur/ }).first();
+    const name = `Clinique Secteur ${Date.now()}`;
+    await setUpBranch(name);
+    await page.goto("/nearby");
+    await page.getByRole("searchbox").fill(name);
+    const row = page.getByRole("link", { name: new RegExp(name) }).first();
     await expect(row).toBeVisible();
     await expect(row).toContainText("Clinique");
     await expectAccessible(page);
@@ -179,7 +181,8 @@ test.describe("Backlog — pages client", () => {
 test.describe("Backlog — publicité", () => {
   test("formule plafonnée : choix des agences avant la validation, puis agences affichées avant le paiement", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "parcours sur ordinateur");
-    const b = await setUpBranch("Clinique Choisie");
+    const branchName = `Clinique Choisie ${Date.now()}`;
+    await setUpBranch(branchName);
     const email = uniqueEmail("annonceur");
     await admin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
     const adv = await signedIn(email);
@@ -198,7 +201,7 @@ test.describe("Backlog — publicité", () => {
     await expect(page.getByRole("heading", { name: "Agences de diffusion" })).toBeVisible();
     await page.getByRole("button", { name: "Choisir les agences" }).click();
     const sheet = page.getByRole("dialog", { name: "Choisir les agences" });
-    await sheet.getByRole("checkbox", { name: /Clinique Choisie/ }).click();
+    await sheet.getByRole("checkbox", { name: new RegExp(branchName) }).click();
     await expectAccessible(page);
     await sheet.getByRole("button", { name: /Enregistrer · 1 sur 5/ }).click();
     await expect(page.getByText("1 agence choisie")).toBeVisible();
@@ -209,9 +212,8 @@ test.describe("Backlog — publicité", () => {
     await rpc(wintek.client, "review_campaign", { p_campaign: campaignId, p_approve: true, p_note: "" });
     await page.reload();
     const list = page.locator("section").filter({ has: page.getByRole("heading", { name: "Agences de diffusion" }) });
-    await expect(list.getByText("Clinique Choisie")).toBeVisible();
+    await expect(list.getByText(branchName)).toBeVisible();
     await expect(list.getByRole("listitem")).toHaveCount(1);
-    void b;
   });
 
   test("caissier : ajouté par le propriétaire, ne voit que « Valider un bon »", async ({ browser, page }, info) => {

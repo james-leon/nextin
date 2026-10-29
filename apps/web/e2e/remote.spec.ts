@@ -45,7 +45,7 @@ async function expectBottomBarClear(page: Page) {
   await page.waitForTimeout(300);
   const gap = await page.evaluate(() => {
     const bar = document.querySelector<HTMLElement>("main .safe-bottom.fixed");
-    const content = bar?.parentElement?.querySelector<HTMLElement>(":scope > div.mx-auto.flex-col") ?? null;
+    const content = bar?.parentElement?.querySelector<HTMLElement>(":scope > div.mx-auto") ?? null;
     const last = content?.lastElementChild as HTMLElement | null;
     const firstAction = bar?.querySelector<HTMLElement>("button, a");
     if (!bar || !last || !firstAction) return null;

@@ -112,58 +112,53 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
         ) : (
           <>
             {consoleRow}
-            {/* Ordinateur : grille de cartes ; téléphone et tablette : liste groupée iOS. */}
-            <ul role="list" aria-label={t("title")} className="hidden gap-4 lg:grid lg:grid-cols-3">
+            {/* Un seul balisage : liste groupée iOS sur téléphone et tablette, grille de cartes sur ordinateur. */}
+            <ul
+              role="list"
+              aria-label={t("title")}
+              className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:rounded-none lg:bg-transparent"
+            >
               {orgs.map(({ org, role }) => (
-                <li key={org.id}>
+                <li key={org.id} className="group/row">
                   <Link
                     href={`/app/o/${org.id}`}
-                    className="pressable squircle flex h-full flex-col gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card focus-visible:shadow-[0_0_0_3px_var(--accent-tint)] focus-visible:outline-none"
+                    className="flex w-full items-center gap-3 pl-4 transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_3px_var(--accent-tint)] lg:pressable lg:squircle lg:h-full lg:flex-col lg:items-stretch lg:gap-4 lg:rounded-[var(--radius-xl)] lg:bg-grouped-secondary lg:p-5 lg:shadow-card lg:hover:bg-grouped-secondary"
                   >
-                    <span className="flex items-start justify-between gap-3">
+                    <span className="flex shrink-0 items-start justify-between gap-3">
                       <span
                         aria-hidden
-                        className="squircle flex size-12 items-center justify-center rounded-[12px] text-white [&_svg]:size-6 [&_svg]:stroke-[1.75]"
+                        className="squircle flex size-[1.875rem] items-center justify-center rounded-[7px] text-white [&_svg]:size-[1.125rem] [&_svg]:stroke-2 lg:size-12 lg:rounded-[12px] lg:[&_svg]:size-6 lg:[&_svg]:stroke-[1.75]"
                         style={{ background: "var(--brand-tile)" }}
                       >
                         <OrgTypeIcon type={org.type} />
                       </span>
-                      {org.status === "active" ? (
-                        <ChevronRight aria-hidden className="size-5 text-label-tertiary" />
-                      ) : (
-                        <Badge tone={org.status === "suspended" ? "red" : "orange"}>{t(`status.${org.status}`)}</Badge>
-                      )}
+                      <span className="hidden lg:block">
+                        {org.status === "active" ? (
+                          <ChevronRight aria-hidden className="size-5 text-label-tertiary" />
+                        ) : (
+                          <Badge tone={org.status === "suspended" ? "red" : "orange"}>{t(`status.${org.status}`)}</Badge>
+                        )}
+                      </span>
                     </span>
-                    <span className="flex flex-col gap-0.5">
-                      <span className="text-headline">{org.name}</span>
-                      <span className="text-subheadline text-label-secondary">
-                        {tt(org.type)} · {tr(role)}
+                    <span className="relative flex min-h-11 min-w-0 flex-1 items-center gap-3 py-2.5 pr-4 list-separator lg:min-h-0 lg:p-0 lg:after:hidden">
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="truncate text-body font-semibold lg:text-headline">{org.name}</span>
+                        <span className="truncate text-subheadline text-label-secondary">
+                          {tt(org.type)} · {tr(role)}
+                        </span>
+                      </span>
+                      <span className="lg:hidden">
+                        {org.status === "active" ? (
+                          <ChevronRight aria-hidden className="size-[1.125rem] stroke-[2.25] text-label-tertiary" />
+                        ) : (
+                          <Badge tone={org.status === "suspended" ? "red" : "orange"}>{t(`status.${org.status}`)}</Badge>
+                        )}
                       </span>
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
-            <ListSection className="lg:hidden">
-              {orgs.map(({ org, role }) => (
-                <ListRow
-                  key={org.id}
-                  href={`/app/o/${org.id}`}
-                  icon={
-                    <ListIcon color="var(--brand-tile)">
-                      <OrgTypeIcon type={org.type} />
-                    </ListIcon>
-                  }
-                  title={<span className="font-semibold">{org.name}</span>}
-                  subtitle={`${tt(org.type)} · ${tr(role)}`}
-                  accessory={
-                    org.status === "active" ? "chevron" : (
-                      <Badge tone={org.status === "suspended" ? "red" : "orange"}>{t(`status.${org.status}`)}</Badge>
-                    )
-                  }
-                />
-              ))}
-            </ListSection>
             {session.isPlatformAdmin ? null : (
               <Button asChild block variant="tinted" className="lg:w-auto lg:self-start">
                 <Link href="/app/new">

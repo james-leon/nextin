@@ -4,6 +4,7 @@ import { ClientTabBar } from "@/components/client/client-tab-bar";
 import { NearbyExplorer } from "@/components/client/nearby-explorer";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
+import { LiteMessages } from "@/lib/i18n/lite-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("client.nearby");
@@ -21,11 +22,13 @@ export default async function NearbyPage() {
   const { data } = await callRpc<NearbyBranch[]>("nearby_branches", { p_lat: null, p_lng: null, p_radius_km: 25, p_query: null, p_limit: 12 });
   return (
     <>
-      <NearbyExplorer
-        initial={data ?? []}
-        tilesUrl={runtimeEnv("NEXT_PUBLIC_MAP_TILES_URL")}
-        attribution={runtimeEnv("NEXT_PUBLIC_MAP_ATTRIBUTION")}
-      />
+      <LiteMessages paths={["client.nearby", "orgTypes"]}>
+        <NearbyExplorer
+          initial={data ?? []}
+          tilesUrl={runtimeEnv("NEXT_PUBLIC_MAP_TILES_URL")}
+          attribution={runtimeEnv("NEXT_PUBLIC_MAP_ATTRIBUTION")}
+        />
+      </LiteMessages>
       <ClientTabBar active="nearby" />
     </>
   );
