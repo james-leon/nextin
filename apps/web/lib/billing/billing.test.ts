@@ -13,6 +13,7 @@ const t = (key: string, v?: Record<string, string | number>) => (v ? `${key}:${O
 const invoice: InvoiceDocumentData = {
   id: "i1",
   number: "FAC-2026-000042",
+  organization_id: "o1",
   status: "paid",
   billing_period: "annual",
   period_start: "2026-11-01T00:00:00Z",

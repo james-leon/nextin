@@ -3,23 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, ChevronLeft, CreditCard, LayoutGrid, Settings, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
+import { Building2, ChevronLeft, CreditCard, LayoutGrid, Megaphone, Settings, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Logo } from "@/components/ui/logo";
 
-export type AdminNavKey = "overview" | "branches" | "practitioners" | "staff" | "billing";
+export type AdminNavKey = "overview" | "branches" | "practitioners" | "staff" | "ads" | "billing";
 
 const ITEMS: { key: AdminNavKey; path: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }> }[] = [
   { key: "overview", path: "", icon: LayoutGrid },
   { key: "branches", path: "/branches", icon: Building2 },
   { key: "practitioners", path: "/practitioners", icon: Stethoscope },
   { key: "staff", path: "/staff", icon: UsersRound },
+  { key: "ads", path: "/ads", icon: Megaphone },
   { key: "billing", path: "/billing", icon: CreditCard },
 ];
 
-/** Entrées de navigation ; « Abonnement » réservé aux administrateurs de l'établissement. */
+/** Entrées de navigation ; « Publicité » et « Abonnement » réservés aux administrateurs de l'établissement. */
 export function adminNavItems(orgId: string, canManageOrg = true) {
-  return ITEMS.filter((i) => i.key !== "billing" || canManageOrg).map((i) => ({ ...i, href: `/app/o/${orgId}${i.path}` }));
+  return ITEMS.filter((i) => (i.key !== "billing" && i.key !== "ads") || canManageOrg).map((i) => ({ ...i, href: `/app/o/${orgId}${i.path}` }));
 }
 
 /** Barre latérale du back-office (maquette 06), visible à partir de la largeur tablette paysage. */

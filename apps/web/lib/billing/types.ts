@@ -80,7 +80,7 @@ export type BillingOverview = {
 };
 
 export type InvoiceLineData = {
-  kind: "plan" | "extra_branches" | "annual_note" | "discount" | "credit";
+  kind: "plan" | "extra_branches" | "annual_note" | "discount" | "credit" | "campaign";
   label: string;
   label_en: string;
   quantity?: number;
@@ -92,6 +92,10 @@ export type InvoiceLineData = {
 export type InvoiceDocumentData = {
   id: string;
   number: string;
+  /** M10b : facture d'une campagne publicitaire (annonceur), sinon abonnement. */
+  kind?: string;
+  organization_id: string | null;
+  advertiser_id?: string | null;
   status: "open" | "paid" | "void";
   billing_period: BillingPeriod;
   period_start: string;

@@ -9,6 +9,9 @@ import {
   adminGrantDaysSchema,
   adminPlanFormSchema,
   adminSuspensionSchema,
+  adPackageFormSchema,
+  adSectorFormSchema,
+  campaignReviewSchema,
   platformSettingsFormSchema,
 } from "@nextin/shared/schemas";
 import type { Json } from "@nextin/shared/database";
@@ -148,4 +151,74 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
   });
   if (error) return { ok: false, error: mapDbError(error) };
   done("/admin/settings");
+}
+
+/* ─── Publicité (M10b) ────────────────────────────────────────────────────── */
+
+const campaign = (id: string) => `/admin/ads/${id}`;
+
+/** Validation ou refus d'une campagne (motif obligatoire pour un refus, visa santé vérifié par la base). */
+export async function reviewCampaign(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = campaignReviewSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const { error } = await supabase.rpc("review_campaign", {
+    p_campaign: parsed.data.campaignId,
+    p_approve: parsed.data.approve,
+    p_note: parsed.data.note,
+  });
+  if (error) return { ok: false, error: mapDbError(error), fieldErrors: error.message === "reason_required" ? { note: "reason_required" } : undefined };
+  done(campaign(parsed.data.campaignId));
+}
+
+/** Pause ou reprise d'une campagne diffusée (motif obligatoire). */
+export async function setCampaignPaused(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = campaignReviewSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const { error } = await supabase.rpc("admin_set_campaign_paused", {
+    p_campaign: parsed.data.campaignId,
+    p_paused: parsed.data.approve,
+    p_reason: parsed.data.note,
+  });
+  if (error) return { ok: false, error: mapDbError(error), fieldErrors: error.message === "reason_required" ? { note: "reason_required" } : undefined };
+  done(campaign(parsed.data.campaignId));
+}
+
+export async function updateAdPackage(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = adPackageFormSchema.safeParse(formObject(data, ["surfaces"]));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  const { error } = await supabase.rpc("admin_update_ad_package", {
+    p_code: v.code,
+    p_fields: {
+      price_xaf: v.priceXaf,
+      duration_days: v.durationDays,
+      max_branches: v.maxBranches,
+      share_of_voice: v.shareOfVoice,
+      surfaces: v.surfaces,
+      quiz_allowed: v.quizAllowed,
+      game_skin_allowed: v.gameSkinAllowed,
+      active: v.active,
+    },
+  });
+  if (error) return { ok: false, error: mapDbError(error) };
+  done("/admin/ads/packages");
+}
+
+export async function upsertAdSector(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = adSectorFormSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  const { error } = await supabase.rpc("admin_upsert_ad_sector", {
+    p_code: v.code,
+    p_name: v.name,
+    p_name_en: v.nameEn,
+    p_requires_visa: v.requiresHealthVisa,
+    p_active: v.active,
+  });
+  if (error) return { ok: false, error: mapDbError(error) };
+  done("/admin/ads/packages");
 }

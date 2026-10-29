@@ -32,7 +32,7 @@ export function invoiceContent(inv: InvoiceDocumentData, locale: Locale, t: T, t
     issued: t("issued", { date: formatDay(inv.issued_at, locale) }),
     due: t("due", { date: formatDay(inv.due_at, locale) }),
     period: t("period", { from: formatDay(inv.period_start, locale), to: formatDay(inv.period_end, locale) }),
-    periodKind: t(inv.billing_period),
+    periodKind: inv.kind === "campaign" ? t("campaign") : t(inv.billing_period),
     seller: {
       heading: t("seller"),
       lines: [

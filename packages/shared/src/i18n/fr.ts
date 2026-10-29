@@ -1573,6 +1573,7 @@ export const fr = {
     niu: "NIU : {value}",
     monthly: "Abonnement mensuel",
     annual: "Abonnement annuel",
+    campaign: "Campagne publicitaire",
   },
   channels: { mtn_momo: "MTN Mobile Money", orange_money: "Orange Money" },
   pay: {
@@ -1618,7 +1619,7 @@ export const fr = {
     month: "Mois",
     title: "Console Wintek",
     eyebrow: "Super admin",
-    nav: { subscriptions: "Abonnements", plans: "Formules", settings: "Réglages" },
+    nav: { subscriptions: "Abonnements", plans: "Formules", ads: "Publicité", settings: "Réglages" },
     mrr: "Revenu mensuel récurrent",
     collected: "Encaissé ce mois-ci",
     trials: "Essais convertis (12 mois)",
@@ -1918,6 +1919,7 @@ export const fr = {
     requiresVisa: "Visa santé obligatoire",
     sectorActive: "Actif",
     addSector: "Ajouter un secteur",
+    inactive: "Inactif",
   },
   games: {
     cardTitle: "Jouer en attendant",

@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, Circle, CreditCard, DoorOpen, QrCode, Stethoscope, Tv, UsersRound } from "lucide-react";
+import { Building2, CheckCircle2, Circle, CreditCard, DoorOpen, Megaphone, QrCode, Stethoscope, Tv, UsersRound } from "lucide-react";
 import { SERVICE_COLORS } from "@nextin/shared";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { StatCard } from "@/components/ui/stat-card";
@@ -95,7 +95,10 @@ export async function MobileOrgNav({ orgId }: { orgId: string }) {
         <ListRow href={`${root}/practitioners`} icon={<ListIcon color="var(--accent-fill)"><Stethoscope /></ListIcon>} title={ta("nav.practitioners")} accessory="chevron" />
         <ListRow href={`${root}/staff`} icon={<ListIcon color={SERVICE_COLORS.ochre}><UsersRound /></ListIcon>} title={ta("nav.staff")} accessory="chevron" />
         {ctx.canManageOrg ? (
-          <ListRow href={`${root}/billing`} icon={<ListIcon color={SERVICE_COLORS.green}><CreditCard /></ListIcon>} title={ta("nav.billing")} accessory="chevron" />
+          <>
+            <ListRow href={`${root}/ads`} icon={<ListIcon color={SERVICE_COLORS.rose}><Megaphone /></ListIcon>} title={ta("nav.ads")} accessory="chevron" />
+            <ListRow href={`${root}/billing`} icon={<ListIcon color={SERVICE_COLORS.green}><CreditCard /></ListIcon>} title={ta("nav.billing")} accessory="chevron" />
+          </>
         ) : null}
       </ListSection>
     </nav>

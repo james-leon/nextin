@@ -114,5 +114,5 @@ export async function createBranchViaUi(page: Page, root: string, name: string) 
 export async function fullPageShot(page: Page, path: string) {
   const style = await page.addStyleTag({ content: "html{position:relative}.safe-bottom.fixed{position:absolute!important}" });
   await page.screenshot({ path, fullPage: true });
-  await style.evaluate((el) => el.remove());
+  await style.evaluate((el) => (el as Element).remove());
 }

@@ -1575,6 +1575,7 @@ export const en: Messages = {
     niu: "Tax ID (NIU): {value}",
     monthly: "Monthly subscription",
     annual: "Annual subscription",
+    campaign: "Advertising campaign",
   },
   channels: { mtn_momo: "MTN Mobile Money", orange_money: "Orange Money" },
   pay: {
@@ -1620,7 +1621,7 @@ export const en: Messages = {
     month: "Month",
     title: "Wintek console",
     eyebrow: "Super admin",
-    nav: { subscriptions: "Subscriptions", plans: "Plans", settings: "Settings" },
+    nav: { subscriptions: "Subscriptions", plans: "Plans", ads: "Advertising", settings: "Settings" },
     mrr: "Monthly recurring revenue",
     collected: "Collected this month",
     trials: "Trials converted (12 months)",
@@ -1920,6 +1921,7 @@ export const en: Messages = {
     requiresVisa: "Health visa required",
     sectorActive: "Active",
     addSector: "Add a sector",
+    inactive: "Inactive",
   },
   games: {
     cardTitle: "Play while you wait",

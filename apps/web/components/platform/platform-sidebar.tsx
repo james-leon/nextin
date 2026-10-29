@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, CreditCard, Layers, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, CreditCard, Layers, Megaphone, SlidersHorizontal } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/cn";
 
 const ITEMS = [
   { key: "subscriptions", href: "/admin", icon: CreditCard },
   { key: "plans", href: "/admin/plans", icon: Layers },
+  { key: "ads", href: "/admin/ads", icon: Megaphone },
   { key: "settings", href: "/admin/settings", icon: SlidersHorizontal },
 ] as const;
 
