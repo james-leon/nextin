@@ -85,7 +85,7 @@ export default async function SubscriptionDetail({
         suspendedForModeration={d.organization.status === "suspended" && !!d.organization.suspended_reason?.startsWith("moderation")}
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <ListSection header={t("history")}>
           {d.events.map((e, i) => (
             <ListRow

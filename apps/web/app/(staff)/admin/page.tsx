@@ -6,7 +6,7 @@ import { formatXaf } from "@nextin/shared";
 import { isLocale, type Locale } from "@nextin/shared/i18n";
 import { AdminPage } from "@/components/admin/admin-page";
 import { BarChart } from "@/components/dashboard/bar-chart";
-import { OrgTypeIcon } from "@/components/staff/org-type-icon";
+import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 import { PlatformNav } from "@/components/platform/platform-sidebar";
 import { Badge } from "@/components/ui/badge";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
@@ -55,7 +55,7 @@ export default async function PlatformHome({ searchParams }: { searchParams: Pro
         <StatCard label={t("trials")} value={<span className="tabular">{t("trialsValue", { converted: revenue.trials_converted, started: revenue.trials_started })}</span>} />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <section aria-labelledby="collected-title" className="squircle flex min-w-0 flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
           <div className="flex items-baseline justify-between gap-3">
             <h2 id="collected-title" className="text-headline">

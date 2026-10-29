@@ -109,7 +109,7 @@ export function DesignShowcase() {
         <p className="mt-1 text-subheadline text-label-secondary">{t("subtitle")}</p>
       </NavigationBar>
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-8 px-4 pt-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
         <aside className="hidden lg:block">
           <nav aria-label={t("title")} className="sticky top-16">
             <ListSection>
@@ -153,7 +153,7 @@ function Preferences({ themeLabel, languageLabel }: { themeLabel: string; langua
   const [pending, startTransition] = useTransition();
 
   return (
-    <Card className="grid gap-4 sm:grid-cols-2">
+    <Card className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="flex flex-col gap-2">
         <span className="px-1 text-footnote uppercase text-label-secondary">{themeLabel}</span>
         <SegmentedControl<ThemePreference>
@@ -195,7 +195,7 @@ function BrandSection() {
   const t = useTranslations("design");
   return (
     <Section id="brand" title={t("nav.brand")}>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="flex flex-col items-start justify-between gap-6">
           <Logo />
           <div className="flex items-center gap-3">
@@ -327,7 +327,7 @@ function ButtonsSection() {
   return (
     <Section id="buttons" title={tn("buttons")}>
       <Card className="flex flex-col gap-6">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Button block>{tm("service.take")}</Button>
           <Button block trailingIcon={<ArrowRight aria-hidden className="size-5 stroke-[2.25]" />}>
             {tm("counter.next")}
@@ -411,7 +411,7 @@ function ListsSection() {
   const tn = useTranslations("design.nav");
   return (
     <Section id="lists" title={tn("lists")}>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ListSection header={t("header")} footer={t("footer")}>
           <ListRow
             icon={
@@ -594,7 +594,7 @@ function FieldsSection() {
     <Section id="fields" title={tn("fields")}>
       <div className="flex flex-col gap-5">
         <SearchField label={t("search")} clearLabel={tc("close")} />
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <TextField
             label={t("code")}
             placeholder={t("codePlaceholder")}
@@ -1075,7 +1075,7 @@ function MockupsSection() {
   return (
     <Section id="mockups" title={t("nav.mockups")}>
       <p className="-mt-1 px-1 pb-6 text-subheadline text-label-secondary">{t("mockups.intro")}</p>
-      <div className="grid gap-10 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-10 xl:grid-cols-2">
         <MockScanner />
         <MockChooseService />
         <MockMyTicket />

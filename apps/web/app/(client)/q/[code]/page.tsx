@@ -26,9 +26,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: entry ? `${entry.organization.name} · ${t("title")}` : t("notFoundTitle"), robots: { index: false } };
 }
 
-/** Écran 02 : arrivée par le QR code de l'agence (/q/<jeton>) ou par le code court (/q/<CODE>). */
-export default async function EntryPage({ params }: Params) {
+/**
+ * Écran 02 : arrivée par le QR code de l'agence (/q/<jeton>) ou par le code court (/q/<CODE>). Le QR code de
+ * l'écran TV ajoute `?p=<code de présence>` (change chaque minute) : il confirme la présence d'un ticket à distance.
+ */
+export default async function EntryPage({ params, searchParams }: Params & { searchParams: Promise<{ p?: string }> }) {
   const { code } = await params;
+  const { p } = await searchParams;
+  const presenceCode = typeof p === "string" && /^[A-Za-z0-9]{6}$/.test(p) ? p.toUpperCase() : null;
   const entry = await resolve(code);
   const t = await getTranslations("client.service");
 
@@ -48,5 +53,5 @@ export default async function EntryPage({ params }: Params) {
     );
   }
 
-  return <ServiceChooser entry={entry} captchaSiteKey={captchaConfig().siteKey} />;
+  return <ServiceChooser entry={entry} presenceCode={presenceCode} captchaSiteKey={captchaConfig().siteKey} />;
 }

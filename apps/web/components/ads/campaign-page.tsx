@@ -13,6 +13,7 @@ import { ListRow, ListSection } from "@/components/ui/list";
 import { formatDay, formatShortDay } from "@/lib/billing/format";
 import { isEditable, type CampaignStats, type QuizAnswer } from "@/lib/ads/types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { BranchesSection, type BranchList, type BranchOption } from "./branches-section";
 import { CampaignPrimary } from "./campaign-primary";
 import { CampaignStatsView } from "./campaign-stats";
 import { CreativesSection } from "./creatives-section";
@@ -80,6 +81,13 @@ export async function CampaignPage({
   const ownerFolder = c.advertiser_id ?? `org-${c.organization_id}`;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const stats = statsResult.data as unknown as CampaignStats | null;
+  // Agences : choix possible tant que la campagne est modifiable (formule plafonnée), liste une fois validée.
+  const branchOptions =
+    !house && editable && pkg.max_branches != null
+      ? ((await supabase.rpc("campaign_branch_options", { p_campaign: c.id })).data as BranchOption[] | null)
+      : null;
+  const branchList =
+    !house && !editable ? ((await supabase.rpc("campaign_branch_list", { p_campaign: c.id })).data as BranchList | null) : null;
   // Prix figé à la soumission ; avant, celui de la formule choisie.
   const price = editable && !house ? pkg.price_xaf : c.price_xaf;
   const label = (x: { name: string; name_en: string | null }) => (locale === "en" ? (x.name_en ?? x.name) : x.name);
@@ -152,11 +160,12 @@ export async function CampaignPage({
         </CalloutCard>
       ) : null}
       {notice}
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-7">
           {!house && sector.requires_health_visa ? (
             <VisaCard campaignId={c.id} owner={ownerFolder} number={c.health_visa_number} hasDocument={!!c.health_visa_document_path} editable={editable} />
           ) : null}
+          {!house ? <BranchesSection campaignId={c.id} max={pkg.max_branches} options={branchOptions} list={branchList} /> : null}
           <CreativesSection
             campaignId={c.id}
             owner={ownerFolder}

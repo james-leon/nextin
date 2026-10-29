@@ -13,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NewCampaignPage() {
-  const { advertiser } = await getAdvertiserContext("/ads/campaigns/new");
-  if (!advertiser) redirect("/ads");
+  const { advertiser, role } = await getAdvertiserContext("/ads/campaigns/new");
+  if (!advertiser || role === "cashier") redirect("/ads");
   const t = await getTranslations("ads");
   const data = await campaignFormData();
   return (

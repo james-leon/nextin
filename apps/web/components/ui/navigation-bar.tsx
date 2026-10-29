@@ -4,11 +4,21 @@ import { useEffect, useRef, useState, type ReactNode, type RefObject } from "rea
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useMediaQuery } from "./use-media-query";
 
-type Back = { href?: string; onClick?: () => void; label: string };
+type Back = {
+  href?: string;
+  onClick?: () => void;
+  label: string;
+  /** Rubrique déjà présente dans la barre latérale : masqué sur ordinateur quand la page en a une. */
+  inSidebar?: boolean;
+};
 
 function BackButton({ back }: { back: Back }) {
-  const cls = "pressable -ml-2 flex h-11 min-w-11 max-w-full items-center pr-2 text-body text-accent-text";
+  const cls = cn(
+    "pressable -ml-2 flex h-11 min-w-11 max-w-full items-center pr-2 text-body text-accent-text",
+    back.inSidebar && "lg:in-data-[shell=sidebar]:hidden",
+  );
   const inner = (
     <>
       <ChevronLeft aria-hidden className="size-7 shrink-0 stroke-[2.25]" />
@@ -32,6 +42,8 @@ function BackButton({ back }: { back: Back }) {
  *   le grand titre se réduit dans une barre translucide au défilement (maquettes 02 et 04).
  * - `inline` : titre centré compact dès le départ (maquette 03 « Mon ticket »).
  * Bouton retour en haut à gauche, actions à droite. `scrollRoot` : conteneur défilant (sinon la fenêtre).
+ * Sur ordinateur (grand titre), les actions s'alignent avec le grand titre, puis remontent dans la barre compacte
+ * quand le titre se réduit : jamais collées au bord haut de l'écran.
  */
 export function NavigationBar({
   title,
@@ -74,6 +86,8 @@ export function NavigationBar({
   }, [scrollRoot]);
 
   const showBarTitle = inline || scrolled;
+  const desktop = useMediaQuery("(min-width: 1024px)");
+  const trailingInHeader = !inline && desktop && !scrolled && !!trailing;
 
   return (
     <>
@@ -100,7 +114,7 @@ export function NavigationBar({
               {title}
             </p>
           )}
-          <div className="flex min-w-0 items-center justify-end gap-1">{trailing}</div>
+          <div className="flex min-w-0 items-center justify-end gap-1">{trailingInHeader ? null : trailing}</div>
         </div>
       </div>
       {inline ? (
@@ -110,7 +124,14 @@ export function NavigationBar({
           {eyebrow ? (
             <p className="text-footnote font-semibold tracking-[0.06em] text-label-secondary uppercase">{eyebrow}</p>
           ) : null}
-          <h1 className="text-large-title font-bold">{title}</h1>
+          {trailingInHeader ? (
+            <div className="flex items-end justify-between gap-4">
+              <h1 className="min-w-0 text-large-title font-bold">{title}</h1>
+              <div className="flex shrink-0 items-center gap-2 pb-0.5">{trailing}</div>
+            </div>
+          ) : (
+            <h1 className="text-large-title font-bold">{title}</h1>
+          )}
           {children}
           <div ref={sentinel} aria-hidden className="h-px" />
         </div>

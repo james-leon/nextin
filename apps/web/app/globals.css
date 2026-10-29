@@ -69,6 +69,8 @@
   --tv-bg: #0b1f3b;
   --tv-surface: #16345e;
   --on-navy-control: rgb(255 255 255 / 0.14);
+  /* Carte « C'est votre tour » : vert profond de la marque, texte blanc conforme AA (5,4:1), clair comme sombre. */
+  --called-fill: #187a31;
   /* Sky Catch (M10b) : ciel, pièces, orages, lus par le rendu du canvas. */
   --game-sky-top: #5aa9e6;
   --game-sky-bottom: #d7ecfb;
@@ -174,6 +176,7 @@
   --color-orange-text: var(--orange-text);
   --color-orange-tint: var(--orange-tint);
   --color-green: var(--green-fill);
+  --color-called: var(--called-fill);
   --color-green-text: var(--green-text);
   --color-green-tint: var(--green-tint);
   --color-red: var(--red-fill);

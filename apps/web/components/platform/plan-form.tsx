@@ -51,12 +51,12 @@ export function PlanForm({ plan }: { plan: PlanFormValues }) {
     <form action={action} noValidate className="flex flex-col gap-6">
       <FormError message={top} />
       <input type="hidden" name="planId" value={plan.id} />
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <TextField name="name" label={t("planFields.name")} defaultValue={plan.name} required error={field("name")} />
         <TextField name="nameEn" label={t("planFields.nameEn")} defaultValue={plan.name_en ?? ""} error={field("nameEn")} />
       </div>
       <TextField name="description" label={t("planFields.description")} defaultValue={plan.description ?? ""} maxLength={240} error={field("description")} />
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Num name="basePriceXaf" label={t("planFields.basePrice")} value={plan.base_price_xaf} error={field("basePriceXaf")} />
         <Num name="includedBranches" label={t("planFields.includedBranches")} value={plan.included_branches} error={field("includedBranches")} />
         <Num name="extraBranchPriceXaf" label={t("planFields.extraBranchPrice")} value={plan.extra_branch_price_xaf} error={field("extraBranchPriceXaf")} />

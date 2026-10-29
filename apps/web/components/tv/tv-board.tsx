@@ -42,7 +42,8 @@ export function TvBoard({
 
   const { hero, others } = tvCalls(board, session.service_ids);
   const services = board.services.filter((s) => session.service_ids.length === 0 || session.service_ids.includes(s.id));
-  const qr = useMemo(() => (session.entry_url ? qrMatrix(session.entry_url, 2) : null), [session.entry_url]);
+  const qrUrl = session.presence_url ?? session.entry_url;
+  const qr = useMemo(() => (qrUrl ? qrMatrix(qrUrl, 2) : null), [qrUrl]);
   const counterKind = (c: BoardCall) => (c.counter_label ? c.counter_label : tk(c.counter_kind));
   const name = (s: (typeof services)[number]) => (locale === "en" && s.name_en ? s.name_en : s.name);
   const clock = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: session.branch.timezone }).format(now);

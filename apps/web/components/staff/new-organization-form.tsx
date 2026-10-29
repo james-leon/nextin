@@ -15,7 +15,7 @@ import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TextField } from "@/components/ui/text-field";
-import { OrgTypeIcon } from "./org-type-icon";
+import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 
 type OrgType = (typeof ORG_TYPES)[number];
 type Step = "phone" | "code" | "org";

@@ -20,7 +20,7 @@ import { BookingForm } from "./booking-form";
 import { longDay, shortDay, timeOf } from "./format";
 import { AppointmentStatusBadge } from "./status-badge";
 import { RequestsInbox } from "./requests-inbox";
-import { useMediaQuery } from "./use-media-query";
+import { useMediaQuery } from "@/components/ui/use-media-query";
 
 type View = "day" | "week" | "requests";
 type Pane = { kind: "detail"; id: string } | { kind: "book" } | { kind: "reschedule"; id: string } | null;
@@ -216,7 +216,7 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
         ) : null}
 
         {view === "requests" ? null : view === "day" ? (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
             <section aria-label={title}>
               {items === null ? (
                 loading
@@ -258,7 +258,7 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
             ) : null}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-7 md:gap-2 xl:gap-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-7 md:gap-2 xl:gap-3">
             {days.map((d) => {
               const dayItems = (items ?? []).filter((a) => localDate(a.starts_at, tz) === d);
               const s = shortDay(d, locale);

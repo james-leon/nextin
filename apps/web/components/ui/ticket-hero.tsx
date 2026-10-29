@@ -45,14 +45,14 @@ export function TicketHero({
       aria-live="polite"
       className={cn(
         "squircle relative overflow-hidden rounded-[var(--radius-xl)] px-5 pt-7 pb-5 text-center transition-colors duration-500",
-        called ? "bg-green text-white" : "bg-grouped-secondary shadow-floating",
+        called ? "bg-called text-white" : "bg-grouped-secondary shadow-floating",
         className,
       )}
     >
       <p
         className={cn(
           "text-footnote font-semibold tracking-[0.08em] uppercase",
-          called ? "text-white/90" : "text-label-secondary",
+          called ? "text-white" : "text-label-secondary",
         )}
       >
         {service}
@@ -61,10 +61,10 @@ export function TicketHero({
         <span aria-hidden>{code}</span>
         <span className="sr-only">{spellTicketCode(code)}</span>
       </p>
-      <p className={cn("mt-2 text-callout uppercase", called ? "text-white/90" : "text-label-secondary")}>{place}</p>
+      <p className={cn("mt-2 text-callout uppercase", called ? "text-white" : "text-label-secondary")}>{place}</p>
 
       {called ? (
-        <div className="mt-5 rounded-[var(--radius-lg)] bg-white/15 px-4 py-3">
+        <div className="mt-5 rounded-[var(--radius-lg)] bg-black/15 px-4 py-3">
           <p className="text-title2 font-bold">{calledTitle}</p>
           <p className="mt-0.5 text-callout">{calledBody}</p>
         </div>

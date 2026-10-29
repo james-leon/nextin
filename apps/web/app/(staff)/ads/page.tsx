@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Megaphone, Plus } from "lucide-react";
 import { isLocale } from "@nextin/shared/i18n";
@@ -21,7 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Espace annonceur : ouverture du compte, puis liste des campagnes. */
 export default async function AdsHome() {
-  const { advertiser } = await getAdvertiserContext();
+  const { advertiser, role } = await getAdvertiserContext();
+  // Caissier : seule la validation des bons le concerne.
+  if (role === "cashier") redirect("/ads/redeem");
   const t = await getTranslations("ads");
   const current = await getLocale();
   const locale = isLocale(current) ? current : "fr";
@@ -53,7 +56,7 @@ export default async function AdsHome() {
         </Button>
       }
     >
-      <AdsNav variant="inline" />
+      <AdsNav variant="inline" role={role} />
       <ListSection footer={campaigns?.length ? undefined : t("campaignsEmpty")}>
         {(campaigns ?? []).map((c) => (
           <ListRow

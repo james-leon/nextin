@@ -21,6 +21,7 @@ import type { BranchPublic } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { branchHoursStatus } from "@/lib/client/branch-hours";
 import { cn } from "@/lib/cn";
+import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 
 /**
  * Page publique d'une agence (M9) : état d'ouverture, itinéraire, files en direct ; ticket à distance si l'agence
@@ -29,6 +30,7 @@ import { cn } from "@/lib/cn";
  */
 export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; captchaSiteKey: string | null }) {
   const t = useLiteT("client.branch");
+  const to = useLiteT("orgTypes");
   const ts = useLiteT("client.service");
   const tw = useLiteT("weekdays");
   const te = useLiteT("errors");
@@ -133,6 +135,10 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
       <div className="mx-auto flex max-w-lg flex-col gap-6 px-4 pt-3 lg:grid lg:max-w-6xl lg:grid-cols-[1fr_22rem] lg:items-start lg:gap-8 lg:px-8">
         <div className="flex flex-col gap-6">
           <div className="flex flex-wrap items-center gap-2" role="status">
+            <Badge shape="pill">
+              <OrgTypeIcon type={branch.organization.type} />
+              {to(branch.organization.type)}
+            </Badge>
             <Badge shape="pill" tone={hours.open ? "green" : "neutral"}>
               <Clock aria-hidden />
               {hoursText}

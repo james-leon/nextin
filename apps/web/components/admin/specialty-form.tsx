@@ -18,7 +18,7 @@ export function SpecialtyForm({ action }: { action: (p: ActionResult | null, d: 
     <form action={formAction} noValidate className="flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4">
       <h3 className="text-headline">{t("newSpecialty")}</h3>
       <FormError message={top} />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <TextField name="name" label={t("specialtyName")} placeholder={t("specialtyNamePlaceholder")} required error={field("name")} className="[&_input]:bg-grouped-tertiary" />
         <TextField name="nameEn" label={t("specialtyNameEn")} lang="en" className="[&_input]:bg-grouped-tertiary" />
       </div>

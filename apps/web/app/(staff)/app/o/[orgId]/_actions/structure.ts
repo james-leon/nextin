@@ -263,6 +263,7 @@ export async function saveBranchSettings(orgId: string, branchId: string, _prev:
       remote_max_delays: v.remoteMaxDelays,
       remote_travel_kmh: v.remoteTravelKmh,
       remote_leave_margin_minutes: v.remoteLeaveMarginMinutes,
+      remote_presence_tv_only: v.remotePresenceTvOnly,
       appointment_requests_enabled: v.appointmentRequestsEnabled,
       appointment_request_days: v.appointmentRequestDays,
       appointment_request_max_pending: v.appointmentRequestMaxPending,

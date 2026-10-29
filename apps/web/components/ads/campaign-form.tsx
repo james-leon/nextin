@@ -89,7 +89,7 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
           <h2 id="pkg-title" className="px-4 text-title3 font-bold">
             {t("package")}
           </h2>
-          <div role="radiogroup" aria-labelledby="pkg-title" className="grid gap-3 sm:grid-cols-3">
+          <div role="radiogroup" aria-labelledby="pkg-title" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {offered.map((p) => {
               const selected = p.code === packageCode;
               return (
@@ -127,7 +127,7 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
         </section>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <TextField
           label={t("name")}
           placeholder={t("namePlaceholder")}
@@ -160,7 +160,7 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
           <h2 id="target-title" className="px-4 text-title3 font-bold">
             {t("targeting")}
           </h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <ListSection header={t("cities")} footer={t("citiesHint")} checkboxGroupLabel={t("cities")}>
               {cities.map((c) => (
                 <ListRow key={c} role="checkbox" selected={targetCities.includes(c)} onClick={() => setTargetCities((cur) => toggle(cur, c))} title={c} accessory="check" />

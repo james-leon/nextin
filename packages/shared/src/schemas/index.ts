@@ -222,6 +222,7 @@ export const branchSettingsFormSchema = z.object({
   remotePenaltyPlaces: z.coerce.number().int().min(1).max(20),
   remoteMaxDelays: z.coerce.number().int().min(1).max(5),
   remoteTravelKmh: z.coerce.number().int().min(5).max(80),
+  remotePresenceTvOnly: formBoolean,
   remoteLeaveMarginMinutes: z.coerce.number().int().min(0).max(60),
   appointmentRequestsEnabled: formBoolean,
   appointmentRequestDays: z.coerce.number().int().min(1).max(60),

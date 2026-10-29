@@ -261,7 +261,7 @@ export function DashboardView({
           ))}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
           <Panel title={t("hourly")} aside={hourPeak >= 0 ? t("peak", { hour: firstHour + hourPeak }) : t("hourlyUnit")}>
             {data.totals.issued ? (
               <BarChart
@@ -394,7 +394,7 @@ export function DashboardView({
           </Panel>
         ) : null}
 
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           <Panel title={t("services")}>
             {data.services.length ? (
               <ListSection className="-mx-5 [&>ul]:rounded-none [&>ul]:bg-transparent">

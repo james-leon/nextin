@@ -75,7 +75,7 @@ export function ScheduleEditor({
     new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
 
   return (
-    <div className="grid gap-7 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+    <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
       <div className="flex flex-col gap-7">
         <ListSection header={t("week")} footer={t("weekFooter")}>
           {[1, 2, 3, 4, 5, 6, 7].map((weekday) => {
@@ -116,7 +116,7 @@ export function ScheduleEditor({
           <form action={rangeAction} noValidate className="flex flex-col gap-4">
             <h2 className="px-4 text-footnote uppercase text-label-secondary">{t("addRange")}</h2>
             <FormError message={rangeErrors.top} />
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <SelectField
                 name="weekday"
                 label={t("weekday")}
@@ -169,7 +169,7 @@ export function ScheduleEditor({
           <form action={leaveAction} noValidate className="flex flex-col gap-4">
             <h2 className="px-4 text-footnote uppercase text-label-secondary">{t("addLeave")}</h2>
             <FormError message={leaveErrors.top} />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <TextField name="startsOn" type="date" label={t("leaveFrom")} required error={leaveErrors.field("startsOn")} />
               <TextField name="endsOn" type="date" label={t("leaveTo")} required error={leaveErrors.field("endsOn")} />
             </div>

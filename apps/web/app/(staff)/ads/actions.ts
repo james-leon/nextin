@@ -243,3 +243,38 @@ export async function redeemCoupon(_prev: ActionResult<{ coupon?: CouponCheck }>
   if (error) return { ok: false, error: mapDbError(error) };
   return { ok: true, coupon: coupon as unknown as CouponCheck };
 }
+
+/* ─── Agences choisies (formules plafonnées) ──────────────────────────────── */
+
+export async function saveCampaignBranches(campaignId: string, _prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const { supabase, c } = await loadCampaign(campaignId);
+  const ids = data.getAll("branchIds").map(String);
+  if (ids.length > 200 || !ids.every((v) => id.safeParse(v).success)) return { ok: false, error: "generic" };
+  const { error } = await supabase.rpc("set_campaign_branches", { p_campaign: c.id, p_branches: ids });
+  if (error) return { ok: false, error: mapDbError(error) };
+  done(campaignPath(c));
+}
+
+/* ─── Caissiers (propriétaire) ────────────────────────────────────────────── */
+
+export async function addCashier(advertiserId: string, _prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await client("/ads/cashiers");
+  const email = z.email().safeParse(String(data.get("email") ?? "").trim());
+  if (!id.safeParse(advertiserId).success || !email.success) return { ok: false, error: "generic", fieldErrors: { email: "email_invalid" } };
+  const { error } = await supabase.rpc("add_advertiser_cashier", { p_advertiser: advertiserId, p_email: email.data });
+  if (error) {
+    const code = mapDbError(error);
+    return { ok: false, error: code, fieldErrors: code === "user_not_found" ? { email: "user_not_found" } : undefined };
+  }
+  done("/ads/cashiers");
+}
+
+export async function removeCashier(advertiserId: string, userId: string): Promise<ActionResult> {
+  const supabase = await client("/ads/cashiers");
+  if (!id.safeParse(advertiserId).success || !id.safeParse(userId).success) return { ok: false, error: "not_found" };
+  const { error } = await supabase.rpc("remove_advertiser_cashier", { p_advertiser: advertiserId, p_user: userId });
+  if (error) return { ok: false, error: mapDbError(error) };
+  // Pas de « Caissier ajouté » après un retrait : simple rechargement de la liste.
+  revalidatePath("/ads/cashiers");
+  redirect("/ads/cashiers");
+}

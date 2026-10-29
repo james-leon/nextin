@@ -58,7 +58,7 @@ export default async function PlatformAdsPage({ searchParams }: { searchParams: 
           {TABS.map((k) => (
             <li key={k}>
               <Link
-                href={k === "pending" ? "/admin/ads" : `/admin/ads?tab=${k}`}
+                href={`/admin/ads?tab=${k}`}
                 aria-current={tab === k ? "page" : undefined}
                 className={cn(
                   "pressable inline-flex min-h-11 items-center rounded-full px-4 text-subheadline whitespace-nowrap",

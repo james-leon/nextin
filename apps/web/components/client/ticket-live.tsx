@@ -181,15 +181,17 @@ export function TicketLive({
   };
 
   return (
-    <main className={active && view.remote && !view.remote.presence_confirmed_at ? "min-h-dvh pb-48" : active ? "min-h-dvh pb-36" : "min-h-dvh pb-40"}>
+    <main className={active && view.remote && !view.remote.presence_confirmed_at ? "min-h-dvh pb-48 lg:pb-12" : active ? "min-h-dvh pb-36 lg:pb-12" : "min-h-dvh pb-40 lg:pb-12"}>
       <NavigationBar
         variant="inline"
         title={t("title")}
         back={back}
         trailing={<IconButton label={copied ? t("copied") : t("share")} icon={<Share />} variant="plain" onClick={share} />}
-        contentClassName="max-w-lg"
+        contentClassName="max-w-lg lg:max-w-5xl"
       />
-      <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 pt-3">
+      {/* Ordinateur : le ticket à gauche (héros, attente), alertes et actions à droite. */}
+      <div className="mx-auto grid max-w-lg grid-cols-1 gap-4 px-4 pt-3 lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:gap-8">
+        <div className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-16">
         {status === "offline" ? (
           <Badge shape="pill" tone="red" className="self-center" role="status">
             <WifiOff aria-hidden />
@@ -251,6 +253,8 @@ export function TicketLive({
           </Badge>
         ) : null}
 
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">
         {active && view.alerts?.whatsapp ? (
           <Badge shape="pill" tone="green" className="self-center" role="status">
             <Check aria-hidden />
@@ -319,6 +323,20 @@ export function TicketLive({
             <Link href={entry ? `/q/${entry}` : "/"}>{t("newTicket")}</Link>
           </Button>
         ) : null}
+        {active ? (
+          <TicketBottomActions
+            position="sticky"
+            className="hidden bg-none p-0 lg:block"
+            source={view.source}
+            onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
+            onMyWay={signalOnMyWay}
+            onMyWayHref={view.remote?.on_my_way_at ? "/" : undefined}
+            hideRemote={!view.remote || !!view.remote.presence_confirmed_at}
+            cancelLabel={t("cancel")}
+            onCancel={() => setConfirmCancel(true)}
+          />
+        ) : null}
+        </div>
       </div>
 
       {playing && (view.status === "waiting" || view.status === "called") ? (
@@ -339,6 +357,7 @@ export function TicketLive({
       {active ? (
         <>
           <TicketBottomActions
+            className="lg:hidden"
             source={view.source}
             onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
             onMyWay={signalOnMyWay}

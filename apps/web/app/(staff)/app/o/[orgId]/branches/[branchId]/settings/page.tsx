@@ -43,6 +43,7 @@ export default async function BranchSettingsPage({ params }: { params: Promise<{
           maxDelays: s.remote_max_delays,
           travelKmh: s.remote_travel_kmh,
           leaveMargin: s.remote_leave_margin_minutes,
+          presenceTvOnly: s.remote_presence_tv_only,
           requests: s.appointment_requests_enabled,
           requestDays: s.appointment_request_days,
           requestMaxPending: s.appointment_request_max_pending,

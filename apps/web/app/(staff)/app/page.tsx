@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, DoorOpen, Megaphone, Plus, Settings, ShieldCheck } from "lucide-react";
+import { Building2, CheckCircle2, ChevronRight, DoorOpen, Megaphone, Plus, Settings, ShieldCheck } from "lucide-react";
 import type { MemberRole } from "@nextin/shared";
 import type { Database } from "@nextin/shared/database";
-import { OrgTypeIcon } from "@/components/staff/org-type-icon";
+import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -69,7 +69,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
   ) : null;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-12">
+    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 lg:max-w-6xl pt-[max(env(safe-area-inset-top),1rem)] pb-12">
       <div className="flex h-11 items-center justify-between">
         <Logo />
         <Button asChild variant="plain" size="md">
@@ -99,7 +99,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
         ) : null}
 
         {orgs.length === 0 ? (
-          <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-10 text-center">
+          <section className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-10 text-center lg:mx-auto lg:w-full lg:max-w-xl">
             <span className="squircle flex size-16 items-center justify-center rounded-[18px] bg-accent-tint text-accent-on-tint">
               <Building2 aria-hidden className="size-8 stroke-[1.5]" />
             </span>
@@ -112,7 +112,39 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
         ) : (
           <>
             {consoleRow}
-            <ListSection>
+            {/* Ordinateur : grille de cartes ; téléphone et tablette : liste groupée iOS. */}
+            <ul role="list" aria-label={t("title")} className="hidden gap-4 lg:grid lg:grid-cols-3">
+              {orgs.map(({ org, role }) => (
+                <li key={org.id}>
+                  <Link
+                    href={`/app/o/${org.id}`}
+                    className="pressable squircle flex h-full flex-col gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card focus-visible:shadow-[0_0_0_3px_var(--accent-tint)] focus-visible:outline-none"
+                  >
+                    <span className="flex items-start justify-between gap-3">
+                      <span
+                        aria-hidden
+                        className="squircle flex size-12 items-center justify-center rounded-[12px] text-white [&_svg]:size-6 [&_svg]:stroke-[1.75]"
+                        style={{ background: "var(--brand-tile)" }}
+                      >
+                        <OrgTypeIcon type={org.type} />
+                      </span>
+                      {org.status === "active" ? (
+                        <ChevronRight aria-hidden className="size-5 text-label-tertiary" />
+                      ) : (
+                        <Badge tone={org.status === "suspended" ? "red" : "orange"}>{t(`status.${org.status}`)}</Badge>
+                      )}
+                    </span>
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-headline">{org.name}</span>
+                      <span className="text-subheadline text-label-secondary">
+                        {tt(org.type)} · {tr(role)}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <ListSection className="lg:hidden">
               {orgs.map(({ org, role }) => (
                 <ListRow
                   key={org.id}
@@ -132,6 +164,19 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                 />
               ))}
             </ListSection>
+            {session.isPlatformAdmin ? null : (
+              <Button asChild block variant="tinted" className="lg:w-auto lg:self-start">
+                <Link href="/app/new">
+                  <Plus aria-hidden className="size-5" />
+                  {t("create")}
+                </Link>
+              </Button>
+            )}
+          </>
+        )}
+        {/* Raccourcis : côte à côte sur ordinateur. */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {orgs.length > 0 ? (
             <ListSection>
               <ListRow
                 href="/desk"
@@ -145,30 +190,22 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                 accessory="chevron"
               />
             </ListSection>
-            {session.isPlatformAdmin ? null : (
-              <Button asChild block variant="tinted">
-                <Link href="/app/new">
-                  <Plus aria-hidden className="size-5" />
-                  {t("create")}
-                </Link>
-              </Button>
-            )}
-          </>
-        )}
-        {/* Espace annonceur (M10b) : ouvert à tout compte, même sans établissement. */}
-        <ListSection>
-          <ListRow
-            href="/ads"
-            icon={
-              <ListIcon color="var(--orange-fill)">
-                <Megaphone />
-              </ListIcon>
-            }
-            title={<span className="font-semibold">{ta("nav.advertiser")}</span>}
-            subtitle={tads("onboardingTitle")}
-            accessory="chevron"
-          />
-        </ListSection>
+          ) : null}
+          {/* Espace annonceur (M10b) : ouvert à tout compte, même sans établissement. */}
+          <ListSection>
+            <ListRow
+              href="/ads"
+              icon={
+                <ListIcon color="var(--orange-fill)">
+                  <Megaphone />
+                </ListIcon>
+              }
+              title={<span className="font-semibold">{ta("nav.advertiser")}</span>}
+              subtitle={tads("onboardingTitle")}
+              accessory="chevron"
+            />
+          </ListSection>
+        </div>
       </div>
     </main>
   );

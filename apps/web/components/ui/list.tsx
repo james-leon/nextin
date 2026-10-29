@@ -62,6 +62,8 @@ type RowProps = {
   onClick?: () => void;
   selected?: boolean;
   destructive?: boolean;
+  /** Ligne cliquable indisponible (ex. plafond atteint) : grisée, non activable. */
+  disabled?: boolean;
   className?: string;
   /** Rôle ARIA explicite : "radio" (choix exclusif) ou "checkbox" (choix multiple). */
   role?: string;
@@ -78,6 +80,7 @@ export function ListRow({
   onClick,
   selected,
   destructive,
+  disabled,
   className,
   role,
 }: RowProps) {
@@ -132,8 +135,9 @@ export function ListRow({
           type="button"
           onClick={onClick}
           role={role}
+          disabled={disabled}
           aria-checked={role === "radio" || role === "checkbox" ? !!selected : undefined}
-          className={cn(base, interactive)}
+          className={cn(base, disabled ? "opacity-40" : interactive)}
         >
           {content}
         </button>

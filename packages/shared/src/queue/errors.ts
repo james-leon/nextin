@@ -10,6 +10,7 @@ export const QUEUE_ERROR_CODES = [
   "not_allowed",
   "rate_limited",
   "invalid_entry",
+  "presence_tv_only",
   "branch_closed",
   "service_closed",
   "quota_reached",
@@ -47,6 +48,9 @@ export const QUEUE_ERROR_CODES = [
   "coupon_redeemed",
   "coupon_expired",
   "file_too_large",
+  // Backlog : agences choisies (formules plafonnées), caissiers.
+  "too_many_branches",
+  "user_not_found",
 ] as const;
 export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
 

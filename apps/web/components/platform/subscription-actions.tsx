@@ -24,7 +24,7 @@ type Props = {
 export function SubscriptionActions({ subscriptionId, organizationId, planId, plans, suspendedForModeration }: Props) {
   const t = useTranslations("platform");
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
       <ActionCard title={t("grantDays")} action={grantDays} submit={t("grant")}>
         {(field) => (
           <>

@@ -50,7 +50,7 @@ export function InviteForm({
           <p className="truncate rounded-[10px] bg-grouped-tertiary px-3 py-2.5 text-subheadline" title={state.link}>
             {state.link}
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button asChild variant="filled" block>
               <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle aria-hidden className="size-5" />

@@ -6,6 +6,7 @@ import { formatDistance } from "@nextin/shared/remote";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import type { GeoPosition } from "@/lib/client/geolocation";
 import type { NearbyBranch } from "@/lib/client/types";
+import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 import { cn } from "@/lib/cn";
 
 const TILE = 256;
@@ -54,6 +55,7 @@ export function NearbyMap({
   className?: string;
 }) {
   const t = useLiteT("client.nearby");
+  const to = useLiteT("orgTypes");
   const locale = useLiteLocale();
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -216,7 +218,7 @@ export function NearbyMap({
                 type="button"
                 onClick={() => onSelect(p.id)}
                 aria-pressed={isSelected}
-                aria-label={`${b.organization.name} · ${b.name} · ${b.is_open ? t("open") : t("closed")} · ${t("waiting", { count: b.waiting })}`}
+                aria-label={`${b.organization.name} (${to(b.organization.type)}) · ${b.name} · ${b.is_open ? t("open") : t("closed")} · ${t("waiting", { count: b.waiting })}`}
                 className={cn(
                   "pressable absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-full items-end justify-center pb-1 transition-transform duration-200 ease-[var(--ease-spring)]",
                   isSelected ? "z-20 scale-110" : "z-10",
@@ -229,6 +231,9 @@ export function NearbyMap({
                     b.is_open ? (isSelected ? "bg-navy" : "bg-accent") : "bg-label-secondary",
                   )}
                 >
+                  <span aria-hidden className="[&_svg]:size-3.5 [&_svg]:stroke-[2]">
+                    <OrgTypeIcon type={b.organization.type} />
+                  </span>
                   {b.is_open ? b.waiting : "–"}
                 </span>
               </button>

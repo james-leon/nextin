@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiteT } from "@/lib/i18n/lite";
 import { ScannerFrame } from "@/components/ui/scanner-frame";
 import { entryCodeFromScan } from "@/lib/client/entry-code";
-
-type Detector = { detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]> };
-type Phase = "idle" | "scanning" | "denied" | "unavailable" | "invalid";
+import { useQrCamera } from "@/lib/client/qr-camera";
 
 /**
  * Visée du QR code dans le cadre (maquette 01). Caméra arrière à la demande ;
@@ -17,61 +14,11 @@ type Phase = "idle" | "scanning" | "denied" | "unavailable" | "invalid";
 export function QrScanner() {
   const t = useLiteT("client.scanner");
   const router = useRouter();
-  const video = useRef<HTMLVideoElement>(null);
-  const stream = useRef<MediaStream | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
-
-  const stop = () => {
-    stream.current?.getTracks().forEach((track) => track.stop());
-    stream.current = null;
-  };
-  useEffect(() => stop, []);
-
-  async function start() {
-    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) return setPhase("unavailable");
-    try {
-      stream.current = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-    } catch (e) {
-      return setPhase((e as DOMException)?.name === "NotAllowedError" ? "denied" : "unavailable");
-    }
-    setPhase("scanning");
-    const el = video.current!;
-    el.srcObject = stream.current;
-    await el.play().catch(() => undefined);
-
-    const Native = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => Detector }).BarcodeDetector;
-    const native = Native ? new Native({ formats: ["qr_code"] }) : null;
-    const jsQR = native ? null : (await import("jsqr")).default;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-    const tick = async () => {
-      if (!stream.current) return;
-      let text: string | null = null;
-      if (el.readyState >= 2) {
-        if (native) {
-          text = (await native.detect(el).catch(() => []))[0]?.rawValue ?? null;
-        } else if (jsQR && ctx) {
-          canvas.width = el.videoWidth;
-          canvas.height = el.videoHeight;
-          ctx.drawImage(el, 0, 0);
-          text = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height)?.data ?? null;
-        }
-      }
-      if (text) {
-        const code = entryCodeFromScan(text);
-        if (code) {
-          navigator.vibrate?.(60);
-          stop();
-          router.push(`/q/${code}`);
-          return;
-        }
-        setPhase("invalid");
-      }
-      setTimeout(tick, 250);
-    };
-    tick();
-  }
+  const { video, phase, start, stop } = useQrCamera((text) => {
+    const code = entryCodeFromScan(text);
+    if (code) router.push(`/q/${code}`);
+    return !!code;
+  });
 
   const scanning = phase === "scanning" || phase === "invalid";
   const message =
@@ -81,7 +28,7 @@ export function QrScanner() {
     <div className="flex w-full max-w-64 flex-col items-center gap-4">
       <button
         type="button"
-        onClick={scanning ? () => (stop(), setPhase("idle")) : start}
+        onClick={scanning ? stop : start}
         aria-label={scanning ? t("stop") : t("start")}
         className="pressable w-full rounded-[18%]"
       >

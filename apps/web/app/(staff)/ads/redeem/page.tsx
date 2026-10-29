@@ -13,12 +13,13 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Validation d'un bon de réduction en caisse (commerçant annonceur, ou personnel pour une annonce Maison). */
 export default async function RedeemPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
   const { code } = await searchParams;
-  const { advertiser } = await getAdvertiserContext("/ads/redeem");
+  const { advertiser, role } = await getAdvertiserContext("/ads/redeem");
   const t = await getTranslations("ads");
   const initial = typeof code === "string" && /^[A-Za-z0-9]{8,22}$/.test(code) ? code : "";
   return (
     <AdminPage title={t("redeemTitle")} eyebrow={advertiser?.name ?? t("title")}>
-      <AdsNav variant="inline" />
+      <AdsNav variant="inline" role={role} />
+      {role === "cashier" ? <p className="px-4 text-footnote text-label-secondary">{t("cashierNotice")}</p> : null}
       <RedeemForm key={initial} initialCode={initial} />
     </AdminPage>
   );

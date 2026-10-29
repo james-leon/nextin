@@ -102,7 +102,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
         }
         contentClassName="max-w-5xl"
       />
-      <div className="mx-auto grid max-w-5xl gap-7 px-4 pt-3 lg:grid-cols-2 lg:items-start">
+      <div className="mx-auto grid grid-cols-1 max-w-5xl gap-7 px-4 pt-3 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-7">
           <ListSection>
             <ListRow

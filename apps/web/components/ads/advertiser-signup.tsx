@@ -30,7 +30,7 @@ export function AdvertiserSignup({ sectors }: { sectors: SectorRow[] }) {
       <FormError message={top} />
       <TextField name="name" label={t("advertiserName")} autoComplete="organization" required maxLength={120} error={field("name")} />
       <SelectField name="sector" label={t("sector")} options={sectors.map((s) => ({ value: s.code, label: locale === "en" ? s.name_en : s.name }))} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField name="phone" type="tel" inputMode="tel" autoComplete="tel-national" label={t("phone")} error={field("phone")} />
         <TextField name="city" label={t("city")} autoComplete="address-level2" maxLength={80} />
       </div>

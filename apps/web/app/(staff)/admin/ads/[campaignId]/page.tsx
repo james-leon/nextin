@@ -90,7 +90,7 @@ export default async function PlatformCampaignPage({
         </CalloutCard>
       ) : null}
       {c.moderation_note && c.status !== "pending_review" ? <CalloutCard icon={<Info />}>{c.moderation_note}</CalloutCard> : null}
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-7">
           {needsVisa ? (
             <ListSection header={t("visa")}>

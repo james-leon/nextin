@@ -83,7 +83,7 @@ export default async function BillingPage({
         </CalloutCard>
       ) : null}
 
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-7">
           <section aria-labelledby="sub-title" className="squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
             <div className="flex items-center justify-between gap-3">

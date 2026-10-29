@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
   if (!data) return json({ ok: false, error: "not_allowed" }, 401);
   const session = data as { entry: { token: string; short_code: string } | null; show_ads?: boolean };
   // Publicité (M10b) : visuels pondérés de l'agence, seulement si l'écran l'affiche.
-  const ads = session.show_ads ? ((await getSupabaseAdminClient().rpc("tv_ad_rotation", { p_device_token: token })).data ?? []) : [];
-  return json({ ok: true, session: { ...session, ads, entry_url: session.entry ? qrEntryUrl(session.entry.token) : null } });
+  const admin = getSupabaseAdminClient();
+  const ads = session.show_ads ? ((await admin.rpc("tv_ad_rotation", { p_device_token: token })).data ?? []) : [];
+  // QR code de l'écran : adresse d'entrée + code de présence de la minute (confirme la présence d'un ticket à distance).
+  const presence = session.entry ? ((await admin.rpc("tv_presence_code", { p_device_token: token })).data as { code: string } | null) : null;
+  const entryUrl = session.entry ? qrEntryUrl(session.entry.token) : null;
+  return json({
+    ok: true,
+    session: { ...session, ads, entry_url: entryUrl, presence_url: entryUrl && presence?.code ? `${entryUrl}?p=${presence.code}` : entryUrl },
+  });
 }

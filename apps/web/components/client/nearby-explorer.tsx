@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Building2, ChevronRight, LocateFixed, MapPin } from "lucide-react";
+import { ChevronRight, LocateFixed, MapPin } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { formatDistance } from "@nextin/shared/remote";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +14,9 @@ import { SearchField } from "@/components/ui/text-field";
 import { getPosition, positionGranted, type GeoPosition } from "@/lib/client/geolocation";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
-import { useMediaQuery } from "@/components/appointments/use-media-query";
+import { useMediaQuery } from "@/components/ui/use-media-query";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 import { cn } from "@/lib/cn";
 
 // Carte chargée seulement quand elle s'affiche (onglet Carte sur téléphone, colonne de droite sur ordinateur).
@@ -42,6 +43,7 @@ export function NearbyExplorer({
   attribution: string | null;
 }) {
   const t = useLiteT("client.nearby");
+  const to = useLiteT("orgTypes");
   const locale = useLiteLocale();
   const wide = useMediaQuery("(min-width: 1024px)");
   const [branches, setBranches] = useState(initial);
@@ -143,11 +145,14 @@ export function NearbyExplorer({
                     aria-hidden
                     className="squircle mt-3 flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-navy text-white [&_svg]:size-5 [&_svg]:stroke-[1.75]"
                   >
-                    <Building2 />
+                    <OrgTypeIcon type={b.organization.type} />
                   </span>
                   <span className="relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator">
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="truncate text-headline">{b.organization.name}</span>
+                      <span className="truncate text-headline">
+                        {b.organization.name}
+                        <span className="sr-only"> · {to(b.organization.type)}</span>
+                      </span>
                       <span className="truncate text-subheadline text-label-secondary">
                         {[b.name, b.city, b.distance_m != null ? t("distance", { distance: formatDistance(b.distance_m, locale) }) : null]
                           .filter(Boolean)

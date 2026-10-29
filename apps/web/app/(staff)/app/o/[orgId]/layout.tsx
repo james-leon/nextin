@@ -23,7 +23,7 @@ export default async function OrgLayout({ children, params }: { children: React.
   const suspended =
     ctx.org.status !== "suspended" ? null : sub?.status === "suspended" ? "subscription" : "moderation";
   return (
-    <div className="flex min-h-dvh lg:[--shell-sidebar:16rem]">
+    <div data-shell="sidebar" className="flex min-h-dvh lg:[--shell-sidebar:16rem]">
       <AdminSidebar orgId={ctx.org.id} orgName={ctx.org.name} canManageOrg={ctx.canManageOrg} isPlatformAdmin={ctx.session.isPlatformAdmin} />
       <main className="min-w-0 flex-1 pb-36">
         <BillingBanner banner={banner} orgId={orgId} canPay={ctx.canManageOrg} />

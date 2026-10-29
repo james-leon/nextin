@@ -71,7 +71,7 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
         </div>
       </div>
 
-      <div role="radiogroup" aria-labelledby="plans-title" className="grid gap-3 md:grid-cols-3">
+      <div role="radiogroup" aria-labelledby="plans-title" className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {plans.map((p) => {
           const q = p[period];
           const isSelected = p.id === selectedId;

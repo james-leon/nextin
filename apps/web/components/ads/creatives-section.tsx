@@ -44,7 +44,7 @@ export function CreativesSection({ campaignId, owner, creatives, editable, video
         ) : null}
       </div>
       <p className="px-4 text-footnote text-label-secondary">{t("creativesHint")}</p>
-      <ul role="list" className="grid gap-3 sm:grid-cols-2">
+      <ul role="list" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {creatives.map((c) => (
           <li key={c.id} className="squircle flex flex-col overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
             <div className="relative aspect-video bg-fill-tertiary">

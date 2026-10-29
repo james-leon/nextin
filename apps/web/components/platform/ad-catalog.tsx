@@ -25,7 +25,7 @@ export function AdCatalog({ packages, sectors }: { packages: PackageRow[]; secto
   const [pkg, setPkg] = useState<PackageRow | null>(null);
   const [sector, setSector] = useState<SectorRow | "new" | null>(null);
   return (
-    <div className="grid gap-7 lg:grid-cols-2 lg:items-start">
+    <div className="grid grid-cols-1 gap-7 lg:grid-cols-2 lg:items-start">
       <ListSection header={ta("package")}>
         {packages.map((p) => (
           <ListRow

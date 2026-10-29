@@ -13,7 +13,8 @@ const ICONS = {
   other: Shapes,
 } satisfies Record<OrgType, unknown>;
 
-export function OrgTypeIcon({ type }: { type: OrgType }) {
-  const Icon = ICONS[type];
+/** Icône du secteur d'un établissement (trait fin façon SF Symbols), décorative : le libellé est donné à côté. */
+export function OrgTypeIcon({ type }: { type: OrgType | string }) {
+  const Icon = ICONS[type as OrgType] ?? Shapes;
   return <Icon aria-hidden />;
 }

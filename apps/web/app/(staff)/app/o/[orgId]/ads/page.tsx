@@ -67,7 +67,7 @@ export default async function OrgAdsPage({
           {t("saved")}
         </CalloutCard>
       ) : null}
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         <AdPreferencesForm
           sectors={sectors ?? []}
           prefs={prefs ?? { blocked_sectors: [], quiz_enabled: true, sky_catch_enabled: true, house_ads_enabled: true }}

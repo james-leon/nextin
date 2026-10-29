@@ -46,7 +46,7 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
         <h2 id="legal-title" className="px-4 text-title3 font-bold">
           {t("legal")}
         </h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {text("companyLegalName", "company_legal_name", t("settingsFields.companyLegalName"), 160)}
           {text("companyAddress", "company_address", t("settingsFields.companyAddress"), 240)}
           {text("companyRc", "company_rc", t("settingsFields.companyRc"), 60)}
@@ -60,7 +60,7 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
         <h2 id="durations-title" className="px-4 text-title3 font-bold">
           {t("durations")}
         </h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {num("trialDays", "trial_days", t("settingsFields.trialDays"), 0, 90)}
           {num("graceDays", "grace_days", t("settingsFields.graceDays"), 0, 60)}
           {num("readOnlyDays", "read_only_days", t("settingsFields.readOnlyDays"), 1, 60)}

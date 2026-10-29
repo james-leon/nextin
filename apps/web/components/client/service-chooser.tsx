@@ -21,7 +21,16 @@ import { takeTicket } from "@/lib/client/take-ticket";
 import type { EntryInfo, TicketView } from "@/lib/client/types";
 
 /** Écran 02 « Choisir un service » : files en direct, accès prioritaire, une action principale. */
-export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; captchaSiteKey: string | null }) {
+export function ServiceChooser({
+  entry,
+  presenceCode = null,
+  captchaSiteKey,
+}: {
+  entry: EntryInfo;
+  /** Code de présence tournant du QR code de l'écran TV (`?p=`), sinon le code d'entrée imprimé. */
+  presenceCode?: string | null;
+  captchaSiteKey: string | null;
+}) {
   const t = useLiteT("client.service");
   const te = useLiteT("errors");
   const locale = useLiteLocale();
@@ -41,12 +50,13 @@ export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; ca
   // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
   useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
 
-  // Ticket à distance de cet appareil dans cette agence (M9) : scanner le QR code de l'accueil confirme la présence.
+  // Ticket à distance de cet appareil dans cette agence (M9) : scanner le QR code de l'écran TV (code tournant) ou,
+  // si l'agence l'accepte, celui de l'accueil confirme la présence.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       for (const saved of remoteTicketsFor(entry.branch.id)) {
-        const { data } = await callRpc<TicketView>("confirm_presence", { p_token: saved.token, p_entry_code: entry.entry_code });
+        const { data } = await callRpc<TicketView>("confirm_presence", { p_token: saved.token, p_entry_code: presenceCode ?? entry.entry_code });
         if (cancelled) return;
         if (data && (data.status === "waiting" || data.status === "called")) {
           router.replace(`/t/${saved.token}`);
@@ -57,7 +67,7 @@ export function ServiceChooser({ entry, captchaSiteKey }: { entry: EntryInfo; ca
     return () => {
       cancelled = true;
     };
-  }, [entry.branch.id, entry.entry_code, router]);
+  }, [entry.branch.id, entry.entry_code, presenceCode, router]);
 
   const name = (s: BoardService) => (locale === "en" && s.name_en ? s.name_en : s.name);
   const summary = (s: BoardService) => {

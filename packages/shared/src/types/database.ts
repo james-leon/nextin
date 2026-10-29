@@ -54,14 +54,14 @@ isOneToOne: false
                   ]
                 },"ad_campaigns": {
                   Row: {
-                    "advertiser_id": string | null,"created_at": string,"created_by": string | null,"ends_on": string,"health_visa_document_path": string | null,"health_visa_number": string | null,"id": string,"moderation_note": string | null,"name": string,"organization_id": string | null,"package_code": string,"paid_at": string | null,"price_xaf": number,"reviewed_at": string | null,"reviewed_by": string | null,"sector": string,"starts_on": string,"status": Database["public"]['Enums']["campaign_status"],"submitted_at": string | null,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"target_cities": (string)[],"target_org_types": (Database["public"]['Enums']["org_type"])[],"updated_at": string
+                    "advertiser_id": string | null,"chosen_branches": (string)[],"created_at": string,"created_by": string | null,"ends_on": string,"health_visa_document_path": string | null,"health_visa_number": string | null,"id": string,"moderation_note": string | null,"name": string,"organization_id": string | null,"package_code": string,"paid_at": string | null,"price_xaf": number,"reviewed_at": string | null,"reviewed_by": string | null,"sector": string,"starts_on": string,"status": Database["public"]['Enums']["campaign_status"],"submitted_at": string | null,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"target_cities": (string)[],"target_org_types": (Database["public"]['Enums']["org_type"])[],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "advertiser_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"ends_on": string,"health_visa_document_path"?: string | null,"health_visa_number"?: string | null,"id"?: string,"moderation_note"?: string | null,"name": string,"organization_id"?: string | null,"package_code": string,"paid_at"?: string | null,"price_xaf"?: number,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sector": string,"starts_on": string,"status"?: Database["public"]['Enums']["campaign_status"],"submitted_at"?: string | null,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"target_cities"?: (string)[],"target_org_types"?: (Database["public"]['Enums']["org_type"])[],"updated_at"?: string
+                    "advertiser_id"?: string | null,"chosen_branches"?: (string)[],"created_at"?: string,"created_by"?: string | null,"ends_on": string,"health_visa_document_path"?: string | null,"health_visa_number"?: string | null,"id"?: string,"moderation_note"?: string | null,"name": string,"organization_id"?: string | null,"package_code": string,"paid_at"?: string | null,"price_xaf"?: number,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sector": string,"starts_on": string,"status"?: Database["public"]['Enums']["campaign_status"],"submitted_at"?: string | null,"surfaces": (Database["public"]['Enums']["ad_surface"])[],"target_cities"?: (string)[],"target_org_types"?: (Database["public"]['Enums']["org_type"])[],"updated_at"?: string
                   }
                   Update: {
-                    "advertiser_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"ends_on"?: string,"health_visa_document_path"?: string | null,"health_visa_number"?: string | null,"id"?: string,"moderation_note"?: string | null,"name"?: string,"organization_id"?: string | null,"package_code"?: string,"paid_at"?: string | null,"price_xaf"?: number,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sector"?: string,"starts_on"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"submitted_at"?: string | null,"surfaces"?: (Database["public"]['Enums']["ad_surface"])[],"target_cities"?: (string)[],"target_org_types"?: (Database["public"]['Enums']["org_type"])[],"updated_at"?: string
+                    "advertiser_id"?: string | null,"chosen_branches"?: (string)[],"created_at"?: string,"created_by"?: string | null,"ends_on"?: string,"health_visa_document_path"?: string | null,"health_visa_number"?: string | null,"id"?: string,"moderation_note"?: string | null,"name"?: string,"organization_id"?: string | null,"package_code"?: string,"paid_at"?: string | null,"price_xaf"?: number,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sector"?: string,"starts_on"?: string,"status"?: Database["public"]['Enums']["campaign_status"],"submitted_at"?: string | null,"surfaces"?: (Database["public"]['Enums']["ad_surface"])[],"target_cities"?: (string)[],"target_org_types"?: (Database["public"]['Enums']["org_type"])[],"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -630,16 +630,36 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     }
                   ]
-                },"branch_settings": {
+                },"branch_presence_secrets": {
                   Row: {
-                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_request_max_pending": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
+                    "branch_id": string,"created_at": string,"organization_id": string,"secret": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                    "branch_id": string,"created_at"?: string,"organization_id": string,"secret": string
                   }
                   Update: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                    "branch_id"?: string,"created_at"?: string,"organization_id"?: string,"secret"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "branch_presence_secrets_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    }
+                  ]
+                },"branch_settings": {
+                  Row: {
+                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_request_max_pending": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"branch_id": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_presence_tv_only": boolean,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_presence_tv_only"?: boolean,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_presence_tv_only"?: boolean,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1807,6 +1827,9 @@ isOneToOne: true
 "ad_weighted_draw":
 { Args: { "p_candidates": Json,"p_count": number }; Returns: (string)[]
                            },
+"add_advertiser_cashier":
+{ Args: { "p_advertiser": string,"p_email": string }; Returns: string
+                           },
 "admin_apply_discount":
 { Args: { "p_invoices": number,"p_kind": string,"p_org": string,"p_reason": string,"p_value": number }; Returns: string
                            },
@@ -1845,6 +1868,9 @@ isOneToOne: true
                            },
 "admit_ticket":
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
+                           },
+"advertiser_cashiers":
+{ Args: { "p_advertiser": string }; Returns: Json
                            },
 "app_ad":
 { Args: { "p_ticket_token": string }; Returns: Json
@@ -1924,6 +1950,7 @@ isOneToOne: true
 "remote_max_delays": number,
 "remote_max_distance_km": number | null,
 "remote_penalty_places": number,
+"remote_presence_tv_only": boolean,
 "remote_tickets_enabled": boolean,
 "remote_travel_kmh": number,
 "updated_at": string
@@ -1991,8 +2018,17 @@ isOneToOne: true
 "call_ticket_internal":
 { Args: { "p_counter": string,"p_ticket": Omit<Database["public"]['Tables']["tickets"]['Row'], Database["public"]['Tables']["tickets"]['ComputedFields']> }; Returns: Json
                            },
+"campaign_branch_list":
+{ Args: { "p_campaign": string }; Returns: Json
+                           },
+"campaign_branch_options":
+{ Args: { "p_campaign": string }; Returns: Json
+                           },
 "campaign_checkout":
 { Args: { "p_campaign": string }; Returns: Json
+                           },
+"campaign_eligible_branches":
+{ Args: { "p_campaign": string }; Returns: string[]
                            },
 "campaign_stats":
 { Args: { "p_campaign": string }; Returns: Json
@@ -2505,6 +2541,7 @@ isOneToOne: true
 "lock_campaign_for_edit":
 { Args: { "p_campaign": string }; Returns: {
               "advertiser_id": string | null,
+"chosen_branches": (string)[],
 "created_at": string,
 "created_by": string | null,
 "ends_on": string,
@@ -2865,6 +2902,12 @@ isOneToOne: true
 "practitioner_late_until":
 { Args: { "p_practitioner": string }; Returns: string
                            },
+"presence_code":
+{ Args: { "p_branch": string,"p_minute": number }; Returns: string
+                           },
+"presence_minute":
+{ Args: { "p_at"?: string }; Returns: number
+                           },
 "purge_billing_personal_data":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -2931,6 +2974,9 @@ isOneToOne: true
                            },
 "remote_travel_seconds":
 { Args: { "p_distance_m": number,"p_kmh": number }; Returns: number
+                           },
+"remove_advertiser_cashier":
+{ Args: { "p_advertiser": string,"p_user": string }; Returns: undefined
                            },
 "request_notification_view":
 { Args: { "p_request": string }; Returns: Json
@@ -3008,6 +3054,9 @@ isOneToOne: true
                            },
 "set_branch_location":
 { Args: { "p_branch": string,"p_lat": number,"p_lng": number }; Returns: undefined
+                           },
+"set_campaign_branches":
+{ Args: { "p_branches": (string)[],"p_campaign": string }; Returns: number
                            },
 "set_counter_status":
 { Args: { "p_counter": string,"p_status": Database["public"]['Enums']["counter_status"] }; Returns: Json
@@ -3255,6 +3304,9 @@ isOneToOne: true
                            },
 "tv_poll_pairing":
 { Args: { "p_display": string,"p_poll_secret": string }; Returns: Json
+                           },
+"tv_presence_code":
+{ Args: { "p_device_token": string }; Returns: Json
                            },
 "tv_session":
 { Args: { "p_app_version"?: string,"p_device_token": string }; Returns: Json

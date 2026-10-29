@@ -30,6 +30,8 @@ type Settings = {
   maxDelays: number;
   travelKmh: number;
   leaveMargin: number;
+  /** Présence confirmée seulement par le QR code tournant de l'écran TV (ou par l'accueil). */
+  presenceTvOnly: boolean;
   requests: boolean;
   requestDays: number;
   requestMaxPending: number;
@@ -113,7 +115,7 @@ export function BranchSettingsForm({
           </span>
         </li>
       </ListSection>
-      <ListSection header={t("remoteHeader")} footer={v.remote ? t("remoteFooter") : undefined}>
+      <ListSection header={t("remoteHeader")} footer={v.remote ? (v.presenceTvOnly ? t("remoteFooterTv") : t("remoteFooter")) : undefined}>
         <ListSwitchRow title={t("remote")} subtitle={t("remoteHint")} checked={v.remote} onCheckedChange={(remote) => setV({ ...v, remote })} disabled={disabled} />
         {v.remote ? (
           <>
@@ -165,6 +167,13 @@ export function BranchSettingsForm({
               min={v.leaveMargin <= 0}
               max={v.leaveMargin >= 60}
               onChange={(d) => setV({ ...v, leaveMargin: v.leaveMargin + d })}
+              disabled={disabled}
+            />
+            <ListSwitchRow
+              title={t("presenceTvOnly")}
+              subtitle={t("presenceTvOnlyHint")}
+              checked={v.presenceTvOnly}
+              onCheckedChange={(presenceTvOnly) => setV({ ...v, presenceTvOnly })}
               disabled={disabled}
             />
           </>
@@ -254,6 +263,7 @@ export function BranchSettingsForm({
       <input type="hidden" name="remoteMaxDelays" value={v.maxDelays} />
       <input type="hidden" name="remoteTravelKmh" value={v.travelKmh} />
       <input type="hidden" name="remoteLeaveMarginMinutes" value={v.leaveMargin} />
+      <input type="hidden" name="remotePresenceTvOnly" value={String(v.presenceTvOnly)} />
       <input type="hidden" name="appointmentRequestsEnabled" value={String(v.requests)} />
       <input type="hidden" name="appointmentRequestDays" value={v.requestDays} />
       <input type="hidden" name="appointmentRequestMaxPending" value={v.requestMaxPending} />

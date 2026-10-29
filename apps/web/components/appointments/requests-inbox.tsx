@@ -18,7 +18,7 @@ import { listRequests, type AppointmentRequest, type AppointmentsContext, type S
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
 import { longDay, shortDay, timeOf } from "./format";
-import { useMediaQuery } from "./use-media-query";
+import { useMediaQuery } from "@/components/ui/use-media-query";
 
 type PractitionerSlot = Slot & { practitioner_id: string };
 
@@ -82,7 +82,7 @@ export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onB
   const detail = selected ? <RequestDetail key={selected.id} request={selected} ctx={ctx} onHandled={handled} /> : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
       <section aria-label={t("title")}>
         {items === null ? (
           <div role="status" className="flex flex-col gap-2">

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
-import { MobileOrgNav, SetupOverview, setupSteps } from "@/components/admin/setup-overview";
+import { SetupOverview, setupSteps } from "@/components/admin/setup-overview";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -50,8 +50,8 @@ export default async function SetupPage({
           <strong className="font-semibold">{to("finishTitle")}.</strong> {to("finishBody")}
         </CalloutCard>
       ) : null}
+      {/* Les étapes mènent déjà à chaque rubrique : pas de liste de navigation en double. */}
       <SetupOverview orgId={orgId} />
-      <MobileOrgNav orgId={orgId} />
       {setup?.complete && ctx.org.onboarding_step < 5 ? (
         <form action={finishSetup.bind(null, orgId)}>
           <BottomBar>

@@ -68,6 +68,8 @@ test.describe("M4 — parcours client", () => {
     await expect(page.getByText("C'est votre tour")).toBeVisible();
     await expect(page.getByText("Présentez-vous · Cabinet 3")).toBeVisible();
     await expect(page).toHaveTitle(/C'est votre tour · C-001/);
+    // Carte « C'est votre tour » : contraste AA vérifié (fond vert profond, texte blanc).
+    await expectAccessible(page);
 
     await rpc(staff, "admit_ticket", { p_ticket: called.id });
     await expect(page.getByText("Vous êtes reçu")).toBeVisible();
