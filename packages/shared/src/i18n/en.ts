@@ -1623,7 +1623,7 @@ export const en: Messages = {
     month: "Month",
     title: "Wintek console",
     eyebrow: "Super admin",
-    nav: { subscriptions: "Subscriptions", plans: "Plans", ads: "Advertising", settings: "Settings" },
+    nav: { subscriptions: "Subscriptions", plans: "Plans", ads: "Advertising", settings: "Settings", account: "My account" },
     mrr: "Monthly recurring revenue",
     collected: "Collected this month",
     trials: "Trials converted (12 months)",

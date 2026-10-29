@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Building2, CheckCircle2, DoorOpen, Megaphone, Plus, Settings, ShieldCheck } from "lucide-react";
 import type { MemberRole } from "@nextin/shared";
@@ -50,6 +51,22 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
   }
   const orgs = [...byOrg.values()].sort((a, b) => a.org.name.localeCompare(b.org.name));
   const joinedOrg = joined ? byOrg.get(joined)?.org : undefined;
+  // Super admin sans établissement : sa page d'accueil est la console (jamais d'invitation à créer un établissement).
+  if (session.isPlatformAdmin && orgs.length === 0) redirect("/admin");
+  const consoleRow = session.isPlatformAdmin ? (
+    <ListSection>
+      <ListRow
+        href="/admin"
+        icon={
+          <ListIcon color="var(--brand-tile)">
+            <ShieldCheck />
+          </ListIcon>
+        }
+        title={<span className="font-semibold">{ta("nav.platform")}</span>}
+        accessory="chevron"
+      />
+    </ListSection>
+  ) : null;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-12">
@@ -94,6 +111,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
           </section>
         ) : (
           <>
+            {consoleRow}
             <ListSection>
               {orgs.map(({ org, role }) => (
                 <ListRow
@@ -126,25 +144,15 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                 subtitle={td("openHint")}
                 accessory="chevron"
               />
-              {session.isPlatformAdmin ? (
-                <ListRow
-                  href="/admin"
-                  icon={
-                    <ListIcon color="var(--brand-tile)">
-                      <ShieldCheck />
-                    </ListIcon>
-                  }
-                  title={<span className="font-semibold">{ta("nav.platform")}</span>}
-                  accessory="chevron"
-                />
-              ) : null}
             </ListSection>
-            <Button asChild block variant="tinted">
-              <Link href="/app/new">
-                <Plus aria-hidden className="size-5" />
-                {t("create")}
-              </Link>
-            </Button>
+            {session.isPlatformAdmin ? null : (
+              <Button asChild block variant="tinted">
+                <Link href="/app/new">
+                  <Plus aria-hidden className="size-5" />
+                  {t("create")}
+                </Link>
+              </Button>
+            )}
           </>
         )}
         {/* Espace annonceur (M10b) : ouvert à tout compte, même sans établissement. */}

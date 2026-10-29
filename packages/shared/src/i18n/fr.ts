@@ -1621,7 +1621,7 @@ export const fr = {
     month: "Mois",
     title: "Console Wintek",
     eyebrow: "Super admin",
-    nav: { subscriptions: "Abonnements", plans: "Formules", ads: "Publicité", settings: "Réglages" },
+    nav: { subscriptions: "Abonnements", plans: "Formules", ads: "Publicité", settings: "Réglages", account: "Mon compte" },
     mrr: "Revenu mensuel récurrent",
     collected: "Encaissé ce mois-ci",
     trials: "Essais convertis (12 mois)",
