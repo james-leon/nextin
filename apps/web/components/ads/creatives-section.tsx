@@ -55,8 +55,9 @@ export function CreativesSection({ campaignId, owner, creatives, editable, video
                 <video src={adFileUrl(supabaseUrl, c.storage_path)} muted playsInline preload="metadata" className="absolute inset-0 size-full object-cover" />
               )}
             </div>
-            <div className="flex items-start gap-2 p-4">
-              <div className="min-w-0 flex-1">
+            {/* Texte sur toute la largeur de la carte, actions en dessous : rien n'écrase le titre dans une carte étroite. */}
+            <div className="flex flex-col gap-1 p-4">
+              <div className="min-w-0">
                 <p className="truncate text-headline">{c.headline}</p>
                 {c.offer_text ? <p className="truncate text-subheadline text-label-secondary">{c.offer_text}</p> : null}
                 <p className="text-footnote text-label-secondary">
@@ -64,7 +65,7 @@ export function CreativesSection({ campaignId, owner, creatives, editable, video
                 </p>
               </div>
               {editable ? (
-                <>
+                <div className="-mr-2 -mb-2 flex flex-wrap items-center justify-end gap-1">
                   <IconButton label={t("editCreative")} icon={<Pencil />} variant="plain" onClick={() => setEditing(c)} />
                   <ConfirmAction
                     action={deleteCreative.bind(null, campaignId, c.id)}
@@ -77,7 +78,7 @@ export function CreativesSection({ campaignId, owner, creatives, editable, video
                     size="md"
                     icon={<Trash2 />}
                   />
-                </>
+                </div>
               ) : null}
             </div>
           </li>

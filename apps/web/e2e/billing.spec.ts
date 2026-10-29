@@ -19,23 +19,6 @@ async function firstLoadBytes(page: Page, path: string) {
 }
 
 /** Espace entre le bas des cartes des formules (et de la note) et le bouton de la barre du bas, page tout en bas. */
-async function plansClearOfBottomBar(page: Page) {
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await page.waitForTimeout(300);
-  return page.evaluate(() => {
-    const section = document.querySelector<HTMLElement>("section[aria-labelledby=plans-title]");
-    const button = section?.querySelector<HTMLElement>(".safe-bottom button");
-    if (!section || !button) return null;
-    // Formules, note, et toute la colonne de droite (utilisation, factures) : la barre couvre toute la largeur.
-    const content = [
-      ...section.querySelectorAll<HTMLElement>("[role=radiogroup] > button, :scope > p"),
-      ...document.querySelectorAll<HTMLElement>("main section, main ul"),
-    ].filter((el) => !el.closest(".safe-bottom") && el.offsetParent !== null);
-    const bottom = Math.max(...content.map((el) => el.getBoundingClientRect().bottom));
-    return button.getBoundingClientRect().top - bottom;
-  });
-}
-
 /** Établissement en essai (inscription par l'interface) et page Abonnement ouverte. */
 async function trialOrg(page: Page, name: string) {
   const root = await createOrgViaUi(page, { orgName: name, email: uniqueEmail("billing") });
@@ -80,7 +63,7 @@ test.describe("M10a — abonnements et paiements", () => {
     expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
   });
 
-  test("ordinateur : la barre « Payer » ne recouvre jamais le bas des formules", async ({ page }, info) => {
+  test("ordinateur : « Payer » dans la barre de titre, jamais par-dessus les formules", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "mise en page ordinateur");
     await trialOrg(page, "Clinique Marge");
     for (const viewport of [
@@ -89,10 +72,19 @@ test.describe("M10a — abonnements et paiements", () => {
       { width: 1024, height: 768 },
     ]) {
       await page.setViewportSize(viewport);
-      const gap = await plansClearOfBottomBar(page);
-      console.log(`${viewport.width}×${viewport.height} : ${Math.round(gap ?? -1)} px`);
-      expect(gap, `${viewport.width}×${viewport.height}`).not.toBeNull();
-      expect(gap!, `${viewport.width}×${viewport.height}`).toBeGreaterThanOrEqual(8);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const pay = page.locator("button[type=submit]").filter({ visible: true });
+      await expect(pay, `${viewport.width}×${viewport.height}`).toHaveCount(1);
+      const top = (await pay.boundingBox())!;
+      expect(top.y + top.height, `${viewport.width}×${viewport.height} : à côté du titre`).toBeLessThan(200);
+      // Aucune barre en bas de l'écran : rien ne recouvre les formules.
+      await expect(page.locator(".safe-bottom").filter({ visible: true })).toHaveCount(0);
+      // Au défilement, l'action reste dans la barre compacte.
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await page.waitForTimeout(400);
+      const scrolled = (await pay.boundingBox())!;
+      expect(scrolled.y, `${viewport.width}×${viewport.height} : barre compacte`).toBeGreaterThanOrEqual(0);
+      expect(scrolled.y + scrolled.height).toBeLessThanOrEqual(60);
     }
   });
 

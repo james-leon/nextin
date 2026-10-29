@@ -13,7 +13,8 @@ export function CampaignPrimary({ campaignId, kind, label }: { campaignId: strin
   const te = useTranslations("errors");
   const [state, action, pending] = useActionState(() => (kind === "submit" ? submitCampaign : checkoutCampaign)(campaignId), null);
   return (
-    <form action={action}>
+    // `contents` : la barre colle au bas du contenu de la page (le formulaire ne crée pas de boîte).
+    <form action={action} className="contents">
       <BottomBar>
         <FormError message={state && !state.ok ? te(state.error) : null} />
         <Button type="submit" block loading={pending} loadingLabel={t("submitting")}>

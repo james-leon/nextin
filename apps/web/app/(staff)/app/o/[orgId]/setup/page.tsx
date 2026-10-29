@@ -53,7 +53,7 @@ export default async function SetupPage({
       {/* Les étapes mènent déjà à chaque rubrique : pas de liste de navigation en double. */}
       <SetupOverview orgId={orgId} />
       {setup?.complete && ctx.org.onboarding_step < 5 ? (
-        <form action={finishSetup.bind(null, orgId)}>
+        <form action={finishSetup.bind(null, orgId)} className="contents">
           <BottomBar>
             <Button type="submit" block>
               {to("finish")}

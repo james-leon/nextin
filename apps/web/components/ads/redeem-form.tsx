@@ -58,7 +58,7 @@ export function RedeemForm({ initialCode }: { initialCode: string }) {
           <video ref={video} muted playsInline aria-hidden className="absolute inset-0 size-full object-cover" />
           <span className="absolute inset-x-0 bottom-4 mx-auto w-fit rounded-full bg-black/60 px-3 py-1 text-footnote text-white">{t("scanAim")}</span>
         </div>
-        <Button type="button" variant="tinted" leadingIcon={<ScanLine />} onClick={scanning ? stop : start} className="self-start">
+        <Button type="button" variant="tinted" leadingIcon={<ScanLine />} onClick={scanning ? stop : start} className="h-auto min-h-[3.125rem] max-w-full self-start py-2 whitespace-normal">
           {scanning ? t("scanStop") : t("scan")}
         </Button>
         <p role="status" aria-live="polite" className="px-4 text-footnote text-label-secondary empty:hidden">

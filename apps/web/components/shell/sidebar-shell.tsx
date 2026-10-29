@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { SidebarToggleSlot } from "./shell-context";
 
 type Shell = {
   open: boolean;
@@ -36,10 +37,12 @@ export function SidebarShell({
   const value = useMemo(() => ({ open, setOpen, labels, toggle, setToggle }), [open, labels, toggle]);
   return (
     <ShellContext.Provider value={value}>
-      <div data-shell="sidebar" className="flex min-h-dvh lg:[--shell-sidebar:16rem]">
-        {sidebar}
-        <main className="min-w-0 flex-1 pb-36">{children}</main>
-      </div>
+      <SidebarToggleSlot.Provider value={<SidebarToggle />}>
+        <div data-shell="sidebar" className="flex min-h-dvh lg:[--shell-sidebar:16rem]">
+          {sidebar}
+          <main className="min-w-0 flex-1 pb-36">{children}</main>
+        </div>
+      </SidebarToggleSlot.Provider>
     </ShellContext.Provider>
   );
 }

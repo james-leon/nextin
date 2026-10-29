@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { cn } from "@/lib/cn";
+import { NoPageFrame } from "./page-frame";
 
 /** Alerte iOS centrée (270 px), deux actions séparées par des filets fins ; champ facultatif (`children`). */
 export function AlertDialog({
@@ -45,7 +46,11 @@ export function AlertDialog({
             {description ? (
               <AlertDialogPrimitive.Description className="mt-1 text-footnote">{description}</AlertDialogPrimitive.Description>
             ) : null}
-            {children ? <div className="mt-3 text-left">{children}</div> : null}
+            {children ? (
+              <div className="mt-3 text-left">
+                <NoPageFrame>{children}</NoPageFrame>
+              </div>
+            ) : null}
           </div>
           <div className="grid grid-cols-2 hairline-t">
             <AlertDialogPrimitive.Cancel className="h-11 text-body text-accent-text transition-colors active:bg-fill-tertiary">

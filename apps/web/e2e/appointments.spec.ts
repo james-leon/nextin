@@ -71,7 +71,8 @@ test.describe("M5b — rendez-vous", () => {
     await page.goto(`/desk/reception/${b.branchId}`);
     await page.getByRole("link", { name: /Rendez-vous/ }).first().click();
     await page.waitForURL(/\/appointments$/);
-    await expect(page.getByText("Sélectionnez un rendez-vous pour voir son détail.")).toBeVisible();
+    // Panneau de détail sans rendez-vous choisi : résumé du jour.
+    await expect(page.getByRole("heading", { name: "Résumé de la journée" })).toBeVisible();
     await page.getByRole("button", { name: "Nouveau rendez-vous" }).click();
     const panel = page.getByRole("complementary", { name: "Nouveau rendez-vous" });
     await expect(panel.getByRole("radio", { name: "Dr Abena" })).toHaveAttribute("aria-checked", "true");

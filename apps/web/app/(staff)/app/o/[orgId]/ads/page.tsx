@@ -56,7 +56,8 @@ export default async function OrgAdsPage({
         <Button asChild variant="gray" size="md">
           <Link href={`/app/o/${orgId}/ads/new`}>
             <Plus aria-hidden className="size-4" />
-            {t("newHouseAd")}
+            {/* Petit téléphone : « + » seul (libellé gardé pour les lecteurs d'écran), le titre réduit garde sa place. */}
+            <span className="max-sm:sr-only">{t("newHouseAd")}</span>
           </Link>
         </Button>
       }

@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import { PASSWORD, expectAccessible, expectTouchTargets, signInViaUi, uniqueEmail } from "./helpers";
+import { bannerPng } from "../../../scripts/demo-images";
+import { today } from "./ads-helpers";
 import { addDoctors, rpc, setUpBranch, supabaseOptions } from "./queue-helpers";
 
 /**
@@ -32,7 +34,16 @@ test.beforeAll(async () => {
   await admin.auth.admin.createUser({ email: advertiser, password: PASSWORD, email_confirm: true });
   const adv = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, supabaseOptions);
   await adv.auth.signInWithPassword({ email: advertiser, password: PASSWORD });
-  await rpc(adv, "create_advertiser", { p_name: "Boulangerie Responsive", p_sector: "food", p_phone: null, p_city: "Douala" });
+  const advertiserId = await rpc<string>(adv, "create_advertiser", { p_name: "Boulangerie Responsive", p_sector: "food", p_phone: null, p_city: "Douala" });
+  const campaignId = await rpc<string>(adv, "save_campaign", {
+    p_campaign: null,
+    p_advertiser: advertiserId,
+    p_organization: null,
+    p_fields: { name: "Rentrée gourmande", package_code: "argent", sector: "food", starts_on: today(), surfaces: ["tv"], target_cities: [], target_org_types: [], schedules: [] },
+  });
+  const creative = `${advertiserId}/${campaignId}/visuel.png`;
+  await adv.storage.from("ad-creatives").upload(creative, bannerPng("#1A6BB5", "#0D2C54"), { contentType: "image/png" });
+  await rpc(adv, "save_creative", { p_campaign: campaignId, p_creative: null, p_fields: { storage_path: creative, kind: "image", headline: "Pain tout chaud", duration_seconds: 8 } });
 
   const root = `/app/o/${b.orgId}`;
   const base = `${root}/branches/${b.branchId}`;
@@ -66,6 +77,7 @@ test.beforeAll(async () => {
       { name: "desk", path: `/desk/counter/${b.counterId}`, user: "owner", primary: (p) => p.getByRole("button", { name: /Alerter le suivant|Ouvrir le poste/ }) },
       { name: "ads-new", path: "/ads/campaigns/new", user: "advertiser", primary: (p) => p.getByRole("button", { name: "Enregistrer" }) },
       { name: "ads-redeem", path: "/ads/redeem", user: "advertiser" },
+      { name: "ads-campaign", path: `/ads/campaigns/${campaignId}`, user: "advertiser", primary: (p) => p.getByRole("button", { name: "Soumettre à la validation" }) },
     ],
   };
 });
@@ -105,8 +117,17 @@ async function expectNoOverflow(page: Page, label: string) {
     const doc = document.documentElement;
     const cut: string[] = [];
     for (const el of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
-      if (el.offsetParent === null || el.clientWidth <= 1) continue;
+      if (el.offsetParent === null) continue;
       const style = getComputedStyle(el);
+      // Texte écrasé à zéro (colonne trop étroite) : le pire cas de texte coupé. Les textes réservés aux lecteurs
+      // d'écran (`sr-only`, positionnés hors du flux) sont exclus.
+      // (`clientWidth` vaut toujours 0 pour une boîte en ligne : on ne juge que les boîtes de bloc.)
+      if (style.display === "inline" || style.display === "contents") continue;
+      if (el.getBoundingClientRect().width <= 1) {
+        const text = Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+        if (text && style.position !== "absolute" && el.getBoundingClientRect().height > 0) cut.push(`${el.tagName.toLowerCase()} « ${el.textContent?.trim().slice(0, 40)} » (largeur nulle)`);
+        continue;
+      }
       const clips = style.overflowX === "hidden" || style.overflowX === "clip";
       if (!clips || el.scrollWidth <= el.clientWidth + 1) continue;
       if (style.textOverflow === "ellipsis" || style.webkitLineClamp !== "none") continue;

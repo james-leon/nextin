@@ -29,7 +29,7 @@ export function PlatformNav({ variant, hasOrgs = true }: { variant: "sidebar" | 
   if (variant === "inline") {
     return (
       <nav aria-label={t("title")} className="md:hidden">
-        <ul role="list" className="flex gap-2 overflow-x-auto px-4 pb-1">
+        <ul role="list" className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
           {ITEMS.map((item) => (
             <li key={item.key}>
               <Link

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { SidebarToggle } from "@/components/shell/sidebar-shell";
+import { SidebarToggleSlot } from "@/components/shell/shell-context";
 import { usePageSlotSetter } from "./page-frame";
 import { useMediaQuery } from "./use-media-query";
 
@@ -16,6 +16,8 @@ type Back = {
   inSidebar?: boolean;
   /** Détail d'une vue maître-détail : la liste est visible à côté à partir de la tablette, retour masqué. */
   inSplit?: boolean;
+  /** Faux sur les pages client (budget 3G) : pas de préchargement de la page de retour. */
+  prefetch?: boolean;
 };
 
 function BackButton({ back }: { back: Back }) {
@@ -58,7 +60,7 @@ function BackButton({ back }: { back: Back }) {
     </>
   );
   return back.href ? (
-    <Link href={back.href} className={cls}>
+    <Link href={back.href} prefetch={back.prefetch} className={cls}>
       {inner}
     </Link>
   ) : (
@@ -120,6 +122,7 @@ export function NavigationBar({
   const showBarTitle = inline || scrolled;
   const desktop = useMediaQuery("(min-width: 1024px)");
   const setSlot = usePageSlotSetter();
+  const toggle = useContext(SidebarToggleSlot);
   // Action principale de la page (BottomBar) remontée ici sur ordinateur, à la suite des actions de la barre.
   const actions =
     trailing || setSlot ? (
@@ -143,9 +146,11 @@ export function NavigationBar({
         {/* Retour et actions à leur largeur naturelle (une action longue n'est jamais tronquée) ; le titre réduit se rétrécit. */}
         <div data-nav-grid className={cn("mx-auto grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4", contentClassName)}>
           <div className="-ml-2 flex min-w-0 items-center justify-start">
-            <span data-nav-toggle className="contents">
-              <SidebarToggle />
-            </span>
+            {toggle ? (
+              <span data-nav-toggle className="contents">
+                {toggle}
+              </span>
+            ) : null}
             {back ? (
               <div className="min-w-0 max-w-[40vw]">
                 <BackButton back={back} />

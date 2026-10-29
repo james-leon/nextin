@@ -116,14 +116,15 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.goto(`${root}/practitioners/new`);
     await page.getByLabel("Titre").fill("Dr");
     await page.getByLabel("Nom", { exact: true }).fill("Aline Ngo");
-    await page.getByLabel("Spécialité").selectOption({ label: "Pédiatrie" });
+    // La liste des praticiens (et son formulaire de spécialité) reste à côté du détail : libellé exact.
+    await page.getByLabel("Spécialité", { exact: true }).selectOption({ label: "Pédiatrie" });
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await page.waitForURL(/\/practitioners\?saved=1$/);
     await expect(page.getByRole("link", { name: /Dr Aline Ngo/ })).toContainText("Pédiatrie · Bonapriso");
     await expectAccessible(page);
   });
 
-  test("invitation d'un membre, adhésion, accès en lecture seule et gestion des droits", async ({ page, browser }) => {
+  test("invitation d'un membre, adhésion, accès en lecture seule et gestion des droits", async ({ page, browser }, info) => {
     const adminEmail = uniqueEmail("dir");
     const root = await createOrgViaUi(page, { orgName: "Clinique Équipe", email: adminEmail });
     const branch = await createBranchViaUi(page, root, "Deïdo");
@@ -173,12 +174,16 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByRole("radio", { name: "Agent / praticien" }).click();
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await page.waitForURL(/\/staff\?saved=1$/);
-    await expect(page.getByRole("link", { name: /Mireille Accueil/ })).toContainText("Agent / praticien · Deïdo");
+    // Ordinateur : tableau (rôle et agence en colonnes) ; téléphone : liste.
+    const memberRow = info.project.name === "desktop" ? page.getByRole("row", { name: /Mireille Accueil/ }) : page.getByRole("link", { name: /Mireille Accueil/ });
+    await expect(memberRow).toContainText(info.project.name === "desktop" ? /Agent \/ praticien.*Deïdo/ : /Agent \/ praticien · Deïdo/);
     await page.getByRole("link", { name: /Mireille Accueil/ }).click();
     await page.getByRole("button", { name: "Désactiver l'accès" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Désactiver l'accès" }).click();
     await page.waitForURL(/\/staff\?saved=1$/);
-    await expect(page.getByRole("listitem").filter({ hasText: "Mireille Accueil" })).toContainText("Accès désactivé");
+    await expect(
+      (info.project.name === "desktop" ? page.getByRole("row") : page.getByRole("listitem")).filter({ hasText: "Mireille Accueil" }),
+    ).toContainText("Accès désactivé");
   });
 
   test("PDF protégés : connexion exigée et isolation entre établissements", async ({ page, browser, request }) => {

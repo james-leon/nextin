@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Drawer } from "vaul";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { NoPageFrame } from "./page-frame";
 
 /**
  * Feuille modale iOS (sheet) : glisse depuis le bas avec un ressort, poignée, fermeture par geste,
@@ -56,7 +57,9 @@ export function Sheet({
               </span>
             </Drawer.Close>
           </div>
-          <div className="overflow-y-auto px-4 pb-4">{children}</div>
+          <div className="overflow-y-auto px-4 pb-4">
+            <NoPageFrame>{children}</NoPageFrame>
+          </div>
           {footer ? <div className="safe-bottom px-4 pt-2 pb-4">{footer}</div> : <div className="safe-bottom" />}
         </Drawer.Content>
       </Drawer.Portal>

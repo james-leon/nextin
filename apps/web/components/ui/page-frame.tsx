@@ -25,3 +25,8 @@ export function usePageFrame(): Frame | null {
 export function usePageSlotSetter(): ((el: HTMLElement | null) => void) | undefined {
   return useContext(FrameContext)?.setSlot;
 }
+
+/** Feuilles et alertes : leur `BottomBar` reste chez elles (le contexte React traverse les portails). */
+export function NoPageFrame({ children }: { children: ReactNode }) {
+  return <FrameContext.Provider value={null}>{children}</FrameContext.Provider>;
+}

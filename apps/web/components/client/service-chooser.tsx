@@ -108,7 +108,7 @@ export function ServiceChooser({
       <NavigationBar
         title={t("title")}
         eyebrow={entry.organization.name}
-        back={{ href: "/", label: t("back") }}
+        back={{ href: "/", label: t("back"), prefetch: false }}
         trailing={
           <Badge shape="pill" tone="green">
             <Check aria-hidden />

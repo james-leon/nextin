@@ -139,11 +139,12 @@ export function TicketLive({
 
   const serviceName = locale === "en" && view.service.name_en ? view.service.name_en : view.service.name;
   const place = view.organization.name;
+  // Pas de préchargement de la page de retour : chaque octet compte en 3G (budget < 200 Ko).
   const back = entry
-    ? { href: `/q/${entry}`, label: t("back") }
+    ? { href: `/q/${entry}`, label: t("back"), prefetch: false }
     : view.remote
-      ? { href: `/b/${view.branch.id}`, label: t("back") }
-      : { href: "/", label: t("home") };
+      ? { href: `/b/${view.branch.id}`, label: t("back"), prefetch: false }
+      : { href: "/", label: t("home"), prefetch: false };
   const nowServing = board?.calls.find((c) => isActiveCall(c) && c.service_id === view.service.id && c.code !== view.display_code);
 
   async function share() {
