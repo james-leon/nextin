@@ -52,7 +52,8 @@ test.describe("M6 — écran TV", () => {
     await expect
       .poll(async () => {
         await staff.reload();
-        return staff.getByRole("link", { name: /Salle d'attente/ }).innerText();
+        // Carte de l'écran (grille) : son statut « En ligne ».
+        return staff.getByRole("listitem").filter({ hasText: "Salle d'attente" }).innerText();
       }, { timeout: 20_000 })
       .toContain("En ligne");
 

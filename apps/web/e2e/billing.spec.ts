@@ -36,8 +36,9 @@ test.describe("M10a — abonnements et paiements", () => {
     await expectTouchTargets(page);
 
     // Essentiel, mensuel : 25 000 FCFA pour une agence.
-    await page.getByRole("radio", { name: /Essentiel/ }).click();
-    await expect(page.getByRole("radio", { name: /Essentiel/ })).toHaveAttribute("aria-checked", "true");
+    await page.getByRole("radio", { name: /Essentiel/ }).first().click();
+    // Téléphone : sélecteur de formule en haut et carte de la formule ; ordinateur : cartes seules.
+    await expect(page.getByRole("radio", { name: /Essentiel/ }).first()).toHaveAttribute("aria-checked", "true");
     await page.getByRole("button", { name: /^Payer 25\s000\sFCFA$/ }).click();
     await page.waitForURL(/\/pay\/[A-Za-z0-9]{32}$/);
 
@@ -93,7 +94,7 @@ test.describe("M10a — abonnements et paiements", () => {
 
   test("paiement refusé (numéro en 99999) : message clair, nouvel essai possible", async ({ page }) => {
     await trialOrg(page, "Clinique Refus");
-    await page.getByRole("radio", { name: /^Pro\b/ }).click();
+    await page.getByRole("radio", { name: /^Pro\b/ }).first().click();
     await page.getByRole("button", { name: /^Payer/ }).click();
     await page.waitForURL(/\/pay\//);
     await page.getByRole("radio", { name: "Orange Money" }).click();

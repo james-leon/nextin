@@ -106,26 +106,26 @@ test.describe("M5b — rendez-vous", () => {
     await expect(page.getByRole("button", { name: /M\.N\./ }).getByText("Arrivé")).toBeVisible();
 
     // Second rendez-vous : reprogrammation puis annulation.
+    // Lendemain : assez de créneaux libres quelle que soit l'heure du test (le soir, la journée est presque finie).
     await page.getByRole("button", { name: "Nouveau rendez-vous" }).click();
+    await panel.getByRole("radiogroup", { name: /^Jour · / }).getByRole("radio").nth(1).click();
     await slots.nth(1).click();
     await panel.getByLabel("Repère du patient (facultatif)").fill("A.T.");
     await panel.getByRole("button", { name: "Confirmer le rendez-vous" }).click();
     await panel.getByRole("button", { name: "Fait" }).click();
     await detail.getByRole("button", { name: "Reprogrammer" }).click();
     const reschedule = page.getByRole("complementary", { name: "Reprogrammer le rendez-vous" });
-    // Lendemain : assez de créneaux libres quelle que soit l'heure du test (le soir, la journée est presque finie).
-    await reschedule.getByRole("radiogroup", { name: /^Jour · / }).getByRole("radio").nth(1).click();
     await reschedule.getByRole("radiogroup", { name: "Créneaux libres" }).getByRole("radio").nth(2).click();
     await reschedule.getByRole("button", { name: "Reprogrammer" }).click();
     await expect(reschedule.getByText("Rendez-vous reprogrammé.")).toBeVisible();
     await reschedule.getByRole("button", { name: "Fait" }).click();
-    // La vue suit le rendez-vous reprogrammé (lendemain), puis revient au jour : l'ancien est « Reprogrammé ».
+    // Même journée (le lendemain) : l'ancien créneau est « Reprogrammé », le nouveau « Confirmé ».
+    await expect(page.getByRole("button", { name: /A\.T\..*Reprogrammé/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /A\.T\..*Confirmé/ })).toBeVisible();
     await detail.getByRole("button", { name: "Annuler le rendez-vous" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le rendez-vous" }).click();
     await expect(detail.getByText("Annulé")).toBeVisible();
     await page.getByRole("button", { name: "Aujourd'hui" }).click();
-    await expect(page.getByRole("button", { name: /A\.T\..*Reprogrammé/ })).toBeVisible();
 
     // Semaine : sept colonnes, le jour mène à la vue du jour.
     await page.getByRole("radio", { name: "Semaine" }).click();
@@ -144,22 +144,26 @@ test.describe("M5b — rendez-vous", () => {
     const b = await setUpBranch("Clinique RDV mobile");
     const docs = await addDoctors(b);
     await openAllDay(b, docs.abena);
-    await rpc(b.staff, "book_appointment", {
-      p_practitioner: docs.abena,
-      p_starts_at: (await rpc<{ starts_at: string }[]>(b.staff, "available_slots", { p_practitioner: docs.abena, p_from: new Date().toISOString().slice(0, 10), p_days: 2 }))[0]!.starts_at,
-      p_customer_label: "J.K.",
-    });
+    const firstSlot = (await rpc<{ starts_at: string }[]>(b.staff, "available_slots", { p_practitioner: docs.abena, p_from: new Date().toISOString().slice(0, 10), p_days: 2 }))[0]!.starts_at;
+    await rpc(b.staff, "book_appointment", { p_practitioner: docs.abena, p_starts_at: firstSlot, p_customer_label: "J.K." });
 
     await signIn(page, b, `/desk/reception/${b.branchId}/appointments`);
+    // Tard le soir, le premier créneau libre est le lendemain : afficher le jour de J.K.
+    const douala = (iso: string | Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Douala" }).format(new Date(iso));
+    if (douala(firstSlot) !== douala(new Date())) await page.getByRole("button", { name: "Jour suivant" }).click();
     await expect(page.getByRole("button", { name: /J\.K\./ })).toBeVisible({ timeout: 10_000 });
     await expectTouchTargets(page);
     await checkA11y(page);
     await page.getByRole("button", { name: "Nouveau rendez-vous" }).click();
     const sheet = page.getByRole("dialog", { name: "Nouveau rendez-vous" });
+    // Lendemain : des créneaux libres quelle que soit l'heure du test.
+    await sheet.getByRole("radiogroup", { name: /^Jour · / }).getByRole("radio").nth(1).click();
     await sheet.getByRole("radiogroup", { name: "Créneaux libres" }).getByRole("radio").first().click();
     await sheet.getByRole("button", { name: "Confirmer le rendez-vous" }).click();
     await expect(sheet.getByText("Rendez-vous confirmé.")).toBeVisible();
     await sheet.getByRole("button", { name: "Fait" }).click();
+    // La vue suit le nouveau rendez-vous (lendemain) : retour au jour de J.K. s'il est aujourd'hui.
+    if (douala(firstSlot) === douala(new Date())) await page.getByRole("button", { name: "Aujourd'hui" }).click();
     await page.getByRole("button", { name: /J\.K\./ }).click();
     await expect(page.getByRole("dialog", { name: "Détail du rendez-vous" }).getByRole("button", { name: "Reprogrammer" })).toBeVisible();
     await page.keyboard.press("Escape");
