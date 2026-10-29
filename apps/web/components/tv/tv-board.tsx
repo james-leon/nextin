@@ -11,6 +11,7 @@ import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { qrMatrix } from "@/lib/qr/matrix";
 import { tvCalls } from "@/lib/tv/calls";
 import { cn } from "@/lib/cn";
+import { TvAdSlot } from "./tv-ad-slot";
 import type { TvSession } from "./types";
 
 /** Écran de salle d'attente (maquette 05) : ticket appelé en héros, appels précédents, files, QR code d'entrée. */
@@ -20,8 +21,11 @@ export function TvBoard({
   offline,
   soundOn,
   onEnableSound,
+  adKey,
 }: {
   session: TvSession;
+  /** File des événements publicitaires de l'écran (jeton d'appareil). */
+  adKey: string;
   board: BranchBoard;
   offline: boolean;
   soundOn: boolean;
@@ -126,23 +130,25 @@ export function TvBoard({
         </div>
 
         <div className="flex min-h-0 flex-col gap-[2.2vh]">
-          <section aria-label={t("waitingHeader")} className="squircle flex min-h-0 flex-1 flex-col rounded-[2.4vw] bg-tv-surface px-[2.2vw] py-[3vh]">
-            <h2 className="pb-[1.5vh] text-[2.4vh] font-semibold tracking-[0.1em] text-white/80 uppercase">{t("waitingHeader")}</h2>
-            <ul role="list" className="flex min-h-0 flex-col gap-[1.6vh] overflow-hidden">
-              {services.map((s) => (
-                <li key={s.id} className="flex items-center gap-[1.2vw]">
-                  <ServiceTile letter={s.prefix} color={s.color} className="size-[6vh] rounded-[1.2vh] text-[3vh]" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-[2.8vh] leading-tight font-semibold">{name(s)}</span>
-                    <span className="truncate text-[2.3vh] text-white/80 tabular">
-                      {t("waiting", { count: s.waiting.length })}
-                      {s.waiting.length ? ` · ${t("wait", { minutes: waitMinutes(s.wait_seconds) })}` : ""}
+          <TvAdSlot ads={session.show_ads ? (session.ads ?? []) : []} adKey={adKey}>
+            <section aria-label={t("waitingHeader")} className="squircle flex min-h-0 flex-1 flex-col rounded-[2.4vw] bg-tv-surface px-[2.2vw] py-[3vh]">
+              <h2 className="pb-[1.5vh] text-[2.4vh] font-semibold tracking-[0.1em] text-white/80 uppercase">{t("waitingHeader")}</h2>
+              <ul role="list" className="flex min-h-0 flex-col gap-[1.6vh] overflow-hidden">
+                {services.map((s) => (
+                  <li key={s.id} className="flex items-center gap-[1.2vw]">
+                    <ServiceTile letter={s.prefix} color={s.color} className="size-[6vh] rounded-[1.2vh] text-[3vh]" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-[2.8vh] leading-tight font-semibold">{name(s)}</span>
+                      <span className="truncate text-[2.3vh] text-white/80 tabular">
+                        {t("waiting", { count: s.waiting.length })}
+                        {s.waiting.length ? ` · ${t("wait", { minutes: waitMinutes(s.wait_seconds) })}` : ""}
+                      </span>
                     </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </TvAdSlot>
           {qr ? (
             <section className="squircle flex items-center gap-[1.6vw] rounded-[2.4vw] bg-white px-[1.8vw] py-[2.2vh] text-ticket-number">
               <svg viewBox={`0 0 ${qr.size} ${qr.size}`} role="img" aria-label={t("scanTitle")} className="size-[15vh] shrink-0 rounded-[1vh]" shapeRendering="crispEdges">

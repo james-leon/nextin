@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
   });
   if (error) return json({ ok: false, error: "generic" }, 500);
   if (!data) return json({ ok: false, error: "not_allowed" }, 401);
-  const session = data as { entry: { token: string; short_code: string } | null };
-  return json({ ok: true, session: { ...session, entry_url: session.entry ? qrEntryUrl(session.entry.token) : null } });
+  const session = data as { entry: { token: string; short_code: string } | null; show_ads?: boolean };
+  // Publicité (M10b) : visuels pondérés de l'agence, seulement si l'écran l'affiche.
+  const ads = session.show_ads ? ((await getSupabaseAdminClient().rpc("tv_ad_rotation", { p_device_token: token })).data ?? []) : [];
+  return json({ ok: true, session: { ...session, ads, entry_url: session.entry ? qrEntryUrl(session.entry.token) : null } });
 }

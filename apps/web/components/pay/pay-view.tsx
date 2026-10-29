@@ -68,7 +68,13 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
   if (!view) return <Message icon={<Link2Off />} title={t("notFoundTitle")} body={t("notFoundBody")} tone="red" />;
   if (view.status === "paid") {
     return openedUnpaid ? (
-      <Message icon={<CheckCircle2 />} title={t("successTitle")} body={t("successBody", { organization: view.organization })} tone="green" action={{ href: "/app", label: t("open") }} />
+      <Message
+        icon={<CheckCircle2 />}
+        title={t("successTitle")}
+        body={view.campaign ? t("successCampaign", { campaign: view.campaign.name }) : t("successBody", { organization: view.organization })}
+        tone="green"
+        action={{ href: view.campaign ? "/ads" : "/app", label: t("open") }}
+      />
     ) : (
       <Message icon={<CheckCircle2 />} title={t("paidTitle")} body={t("paidBody", { date: day(view.paid_at ?? view.period_start, locale) })} tone="green" />
     );
@@ -110,7 +116,16 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
     }
   }
 
-  const planName = view.plan ? (locale === "en" ? (view.plan.name_en ?? view.plan.name) : view.plan.name) : "";
+  // Campagne publicitaire (M10b) : formule de la campagne ; sinon formule d'abonnement.
+  const planName = view.campaign
+    ? locale === "en"
+      ? view.campaign.package_en
+      : view.campaign.package
+    : view.plan
+      ? locale === "en"
+        ? (view.plan.name_en ?? view.plan.name)
+        : view.plan.name
+      : "";
   const failed = !waiting && (view.payment?.status === "failed" || view.payment?.status === "expired");
 
   return (
@@ -121,7 +136,9 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
       <header className="flex flex-col items-center gap-1 pt-8 pb-6 text-center">
         <p className="text-subheadline text-label-secondary">{t("invoice", { number: view.number })}</p>
         <p className="tabular text-large-title font-bold text-ticket-number">{xaf(view.total_xaf)}</p>
-        <p className="text-body">{t("for", { organization: view.organization })}</p>
+        <p className="text-body">
+          {view.campaign ? t("forCampaign", { campaign: view.campaign.name, organization: view.organization }) : t("for", { organization: view.organization })}
+        </p>
         <p className="text-subheadline text-label-secondary">
           {planName} · {t("period", { from: day(view.period_start, locale), to: day(view.period_end, locale) })}
         </p>

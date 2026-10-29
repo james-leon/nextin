@@ -10,6 +10,7 @@ import { Logo } from "@/components/ui/logo";
 import { useLiteT } from "@/lib/i18n/lite";
 import { TvBoard } from "./tv-board";
 import { TvPairing } from "./tv-pairing";
+import { tvAdKey } from "@/lib/client/ad-events";
 import type { TvSession } from "./types";
 
 const TOKEN_KEY = "nextin-tv-token";
@@ -176,7 +177,7 @@ export function TvApp() {
   if (token === null) return <TvPairing onPaired={(t) => tokenStore.set(t)} />;
   if (session?.unavailable) return <TvUnavailable />;
   if (!session || !board) return <main className="min-h-dvh bg-tv" aria-busy />;
-  return <TvBoard session={session} board={board} offline={offline} soundOn={soundOn} onEnableSound={enableSound} />;
+  return <TvBoard session={session} board={board} offline={offline} soundOn={soundOn} onEnableSound={enableSound} adKey={tvAdKey(token)} />;
 }
 
 /** Établissement suspendu : message neutre (jamais le motif), l'écran reste appairé pour la reprise. */

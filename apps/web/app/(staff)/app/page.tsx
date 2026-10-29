@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, DoorOpen, Plus, Settings, ShieldCheck } from "lucide-react";
+import { Building2, CheckCircle2, DoorOpen, Megaphone, Plus, Settings, ShieldCheck } from "lucide-react";
 import type { MemberRole } from "@nextin/shared";
 import type { Database } from "@nextin/shared/database";
 import { OrgTypeIcon } from "@/components/staff/org-type-icon";
@@ -31,6 +31,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
   const ts = await getTranslations("settings");
   const td = await getTranslations("desk");
   const ta = await getTranslations("admin");
+  const tads = await getTranslations("ads");
 
   const supabase = await getSupabaseServerClient();
   const { data } = await supabase
@@ -146,6 +147,20 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
             </Button>
           </>
         )}
+        {/* Espace annonceur (M10b) : ouvert à tout compte, même sans établissement. */}
+        <ListSection>
+          <ListRow
+            href="/ads"
+            icon={
+              <ListIcon color="var(--orange-fill)">
+                <Megaphone />
+              </ListIcon>
+            }
+            title={<span className="font-semibold">{ta("nav.advertiser")}</span>}
+            subtitle={tads("onboardingTitle")}
+            accessory="chevron"
+          />
+        </ListSection>
       </div>
     </main>
   );

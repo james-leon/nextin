@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
@@ -21,12 +21,16 @@ import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib
 import { callRpc } from "@/lib/client/supabase-public";
 import { waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
+import { PlayCard } from "./games/play-card";
 import { RemoteTicketCard } from "./remote-ticket-card";
 
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
 const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
 const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
 const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
+// Publicité et jeux (M10b) : jamais dans le premier chargement.
+const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
+const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
 
 const aheadKey = (token: string) => `nextin-ahead-${token}`;
 const noSubscribe = () => () => {};
@@ -46,6 +50,7 @@ export function TicketLive({
   initial,
   whatsappNumber,
   vapidKey,
+  couponBaseUrl,
 }: {
   token: string;
   initial: TicketView;
@@ -53,6 +58,8 @@ export function TicketLive({
   whatsappNumber: string | null;
   /** Clé publique VAPID (web push) ; null : pas de notification sur le téléphone. */
   vapidKey: string | null;
+  /** Adresse absolue des bons de réduction (`/coupon/`), encodée dans leur QR code. */
+  couponBaseUrl: string;
 }) {
   const t = useLiteT("client.ticket");
   const tk = useLiteT("counterKinds");
@@ -63,6 +70,7 @@ export function TicketLive({
   const [now, setNow] = useState(() => new Date());
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const lastAlert = useRef<string | null>(null);
   // Données gardées sur l'appareil, lues sans décalage d'hydratation (null / 0 côté serveur).
   const entry = useSyncExternalStore(noSubscribe, () => savedTicket(token)?.entry ?? null, () => null);
@@ -158,6 +166,7 @@ export function TicketLive({
   }
 
   const active = view.status === "waiting" || view.status === "called";
+  const closeGame = useCallback(() => setPlaying(false), []);
   const heroCommon = {
     code: view.display_code,
     service: serviceName,
@@ -280,6 +289,9 @@ export function TicketLive({
           <CalloutCard icon={<Bell />}>{view.alerts?.whatsapp || view.alerts?.push ? t("keepOpenAlerts") : t("keepOpen")}</CalloutCard>
         ) : null}
 
+        {view.status === "waiting" ? <PlayCard token={token} onOpen={() => setPlaying(true)} /> : null}
+        {view.status === "waiting" ? <SponsoredCard token={token} /> : null}
+
         {view.status === "served" ? (
           view.rating_enabled && view.rating == null ? (
             <TicketRating token={token} onRated={setView} />
@@ -296,6 +308,21 @@ export function TicketLive({
           </Button>
         ) : null}
       </div>
+
+      {playing && (view.status === "waiting" || view.status === "called") ? (
+        <GameSheet
+          token={token}
+          code={view.display_code}
+          status={
+            progress
+              ? `${progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes })} · ${t("ahead")} : ${progress.ahead}`
+              : t("calledTitle")
+          }
+          call={view.status === "called" ? { counter: view.counter ? counterName(view.counter) : "" } : null}
+          couponBaseUrl={couponBaseUrl}
+          onClose={closeGame}
+        />
+      ) : null}
 
       {active ? (
         <>

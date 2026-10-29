@@ -69,6 +69,14 @@
   --tv-bg: #0b1f3b;
   --tv-surface: #16345e;
   --on-navy-control: rgb(255 255 255 / 0.14);
+  /* Sky Catch (M10b) : ciel, pièces, orages, lus par le rendu du canvas. */
+  --game-sky-top: #5aa9e6;
+  --game-sky-bottom: #d7ecfb;
+  --game-cloud: rgb(255 255 255 / 0.7);
+  --game-coin: #f5b81f;
+  --game-coin-edge: #c98a0c;
+  --game-storm: #4b5563;
+  --game-bolt: #f58b1f;
 
   --elev-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.12), 0 2px 6px rgb(0 0 0 / 0.06);
@@ -106,6 +114,10 @@
   --red-on-tint: #ff8a84;
   --ticket-number: #ffffff;
   --brand-tile: #1a6bb5;
+  --game-sky-top: #0b1f3b;
+  --game-sky-bottom: #1f4f86;
+  --game-cloud: rgb(255 255 255 / 0.12);
+  --game-storm: #8b95a5;
   --elev-card: none;
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
 }
@@ -358,6 +370,15 @@
     linear-gradient(90deg, var(--fill-tertiary) 1px, transparent 1px);
   background-size: 48px 48px;
   background-position: center;
+}
+
+/* Appel pendant un jeu : éclair doux de l'écran (désactivé si l'utilisateur réduit les animations). */
+@keyframes call-flash {
+  0%, 100% { background-color: var(--bg-grouped); }
+  50% { background-color: var(--accent-tint); }
+}
+@utility call-flash {
+  animation: call-flash 900ms var(--ease-ios) 3;
 }
 
 @media (prefers-reduced-motion: reduce) {

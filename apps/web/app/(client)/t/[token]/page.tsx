@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { absoluteUrl } from "@nextin/shared";
 import { Ticket } from "lucide-react";
 import { TicketLive } from "@/components/client/ticket-live";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default async function TicketPage({ params }: Params) {
   if (view) {
     const whatsappNumber = runtimeEnv("NEXT_PUBLIC_WHATSAPP_NUMBER")?.replace(/\D/g, "") || null;
     const vapidKey = runtimeEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY") || null;
-    return <TicketLive token={token} initial={view} whatsappNumber={whatsappNumber} vapidKey={vapidKey} />;
+    return <TicketLive token={token} initial={view} whatsappNumber={whatsappNumber} vapidKey={vapidKey} couponBaseUrl={absoluteUrl("/coupon/")} />;
   }
 
   const t = await getTranslations("client.ticket");

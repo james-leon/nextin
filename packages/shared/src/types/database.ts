@@ -2892,8 +2892,14 @@ isOneToOne: true
 "record_ad_events":
 { Args: { "p_branch": string,"p_display": string,"p_events": Json }; Returns: number
                            },
+"record_display_ad_events":
+{ Args: { "p_device_token": string,"p_events": Json }; Returns: number
+                           },
 "record_service_duration":
 { Args: { "p_counter": string,"p_org": string,"p_seconds": number,"p_service": string }; Returns: undefined
+                           },
+"record_ticket_ad_events":
+{ Args: { "p_events": Json,"p_ticket_token": string }; Returns: number
                            },
 "record_webhook_event":
 { Args: { "p_event_id": string,"p_payload": Json,"p_provider": string }; Returns: boolean
