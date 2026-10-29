@@ -16,7 +16,7 @@ type Back = {
 
 function BackButton({ back }: { back: Back }) {
   const cls = cn(
-    "pressable -ml-2 flex h-11 min-w-11 max-w-full items-center pr-2 text-body text-accent-text",
+    "pressable flex h-11 min-w-11 max-w-full items-center pr-2 text-body text-accent-text",
     back.inSidebar && "lg:in-data-[shell=sidebar]:hidden",
   );
   const inner = (
@@ -101,7 +101,7 @@ export function NavigationBar({
       >
         {/* Retour et actions à leur largeur naturelle (une action longue n'est jamais tronquée) ; le titre réduit se rétrécit. */}
         <div className={cn("mx-auto grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4", contentClassName)}>
-          <div className="flex min-w-0 max-w-[40vw] justify-start">{back ? <BackButton back={back} /> : null}</div>
+          <div className="-ml-2 flex min-w-0 max-w-[40vw] justify-start">{back ? <BackButton back={back} /> : null}</div>
           {inline ? (
             <h1 className="truncate text-center text-headline">{title}</h1>
           ) : (

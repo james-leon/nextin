@@ -72,6 +72,11 @@ test.describe("Backlog — téléphone : barre de navigation", () => {
     // Libellé non tronqué ni débordant : le texte tient dans la largeur du bouton.
     expect(await action.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await expectTouchTargets(page);
+
+    // Retour : libellé court jamais tronqué (« Accueil »).
+    await page.goto(`/desk/reception/${b.branchId}/appointments`);
+    const back = page.getByRole("link", { name: "Accueil" }).first();
+    expect(await back.locator("span").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   });
 });
 
