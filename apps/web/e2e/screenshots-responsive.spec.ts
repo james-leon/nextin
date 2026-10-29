@@ -5,15 +5,18 @@ import { fullPageShot, signInViaUi } from "./helpers";
 import { supabaseOptions } from "./queue-helpers";
 
 /**
- * Revue responsive (`docs/REVUE-RESPONSIVE.md`) : captures des écrans du personnel dans les cinq tailles.
- * `RESPONSIVE_PHASE=before` → docs/captures/responsive/before/<écran>-<taille>.png (clair) ;
+ * Revue responsive (`docs/REVUE-RESPONSIVE.md`) : captures des écrans du personnel, des pages client et de l'écran TV.
+ * `RESPONSIVE_PHASE=before` (P1) ou `before-p2` → docs/captures/responsive/<phase>/<écran>-<taille>.png (clair) ;
  * `after` (défaut) → docs/captures/responsive/<écran>-<taille>.png et <écran>-<taille>-dark.png.
+ * `RESPONSIVE_ONLY=01-home,30-` : seulement les écrans dont le nom commence par l'un de ces préfixes.
  * À lancer sur une base propre (`pnpm db:reset` puis `pnpm seed:demo:local`) : seules les données de démo apparaissent.
  */
-const PHASE = process.env.RESPONSIVE_PHASE === "before" ? "before" : "after";
-const OUT = PHASE === "before" ? "../../docs/captures/responsive/before" : "../../docs/captures/responsive";
+const PHASE = process.env.RESPONSIVE_PHASE?.startsWith("before") ? process.env.RESPONSIVE_PHASE : "after";
+const OUT = PHASE === "after" ? "../../docs/captures/responsive" : `../../docs/captures/responsive/${PHASE}`;
 const THEMES: ("light" | "dark")[] =
-  PHASE === "before" || process.env.RESPONSIVE_THEMES === "light" ? ["light"] : ["light", "dark"];
+  PHASE !== "after" || process.env.RESPONSIVE_THEMES === "light" ? ["light"] : ["light", "dark"];
+const ONLY = process.env.RESPONSIVE_ONLY?.split(",").filter(Boolean) ?? [];
+const wanted = (name: string) => !ONLY.length || ONLY.some((prefix) => name.startsWith(prefix));
 const SIZES = {
   "390": { width: 390, height: 844, mobile: true, scale: 2 },
   "820": { width: 820, height: 1180, mobile: true, scale: 1 },
@@ -31,7 +34,16 @@ async function demoIds() {
   const { data: service } = await admin.from("services").select("id").eq("branch_id", branch!.id).order("sort_order").limit(1).single();
   const { data: practitioner } = await admin.from("practitioners").select("id").eq("organization_id", org!.id).order("display_name").limit(1).single();
   const { data: ticket } = await admin.from("tickets").select("id").eq("branch_id", branch!.id).order("created_at", { ascending: false }).limit(1).single();
-  return { orgId: org!.id, branchId: branch!.id, counterId: counter!.id, serviceId: service!.id, practitionerId: practitioner!.id, ticketId: ticket!.id };
+  const { data: qr } = await admin.from("qr_codes").select("token").eq("branch_id", branch!.id).is("service_id", null).eq("active", true).single();
+  return {
+    orgId: org!.id,
+    branchId: branch!.id,
+    counterId: counter!.id,
+    serviceId: service!.id,
+    practitionerId: practitioner!.id,
+    ticketId: ticket!.id,
+    entryCode: qr!.token as string,
+  };
 }
 
 type Shot = { name: string; path: string; full?: boolean; prepare?: (page: Page) => Promise<void> };
@@ -109,11 +121,12 @@ for (const size of Object.keys(SIZES) as Size[]) {
     const ids = await demoIds();
     for (const theme of THEMES) {
       for (const [email, shots] of Object.entries(screens(ids))) {
+        if (!shots.some((x) => wanted(x.name))) continue;
         const { context, page } = await open(browser, size, theme);
         await page.goto("/login");
         await signInViaUi(page, email, process.env.SEED_DEMO_PASSWORD!);
         await page.waitForURL((u) => !u.pathname.startsWith("/login"));
-        for (const shot of shots) {
+        for (const shot of shots.filter((x) => wanted(x.name))) {
           await page.goto(shot.path);
           await page.waitForLoadState("networkidle");
           if (shot.prepare) await shot.prepare(page);
@@ -128,8 +141,82 @@ for (const size of Object.keys(SIZES) as Size[]) {
   });
 }
 
+/** Pages client (visiteur anonyme), avec un vrai ticket pris dans l'agence de démo. */
+for (const size of Object.keys(SIZES) as Size[]) {
+  test(`@screenshots responsive client ${size}`, async ({ browser }, info) => {
+    test.skip(info.project.name !== "desktop", "captures pilotées une seule fois");
+    test.skip(!process.env.SEED_DEMO_PASSWORD, "données de démo requises (SEED_DEMO_PASSWORD)");
+    test.setTimeout(600_000);
+    await mkdir(OUT, { recursive: true });
+    const ids = await demoIds();
+    for (const theme of THEMES) {
+      const { context, page } = await open(browser, size, theme);
+      // Ticket en attente des données de démo (l'agence peut être fermée à l'heure des captures).
+      const { data: waiting } = await admin
+        .from("tickets")
+        .select("public_token")
+        .eq("branch_id", ids.branchId)
+        .eq("status", "waiting")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      const token = waiting!.public_token as string;
+      const shots: Shot[] = [
+        { name: "30-scanner", path: "/", full: false },
+        { name: "31-code", path: "/c" },
+        { name: "32-service-choice", path: `/q/${ids.entryCode}` },
+        { name: "33-ticket", path: `/t/${token}`, full: false },
+        { name: "34-nearby", path: "/nearby", full: false },
+        { name: "35-branch", path: `/b/${ids.branchId}` },
+        { name: "36-profile", path: "/profile" },
+      ];
+      for (const shot of shots.filter((x) => wanted(x.name))) {
+        await page.goto(shot.path);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(shot.name === "33-ticket" ? 4_000 : 700);
+        const file = `${OUT}/${shot.name}-${size}${theme === "dark" ? "-dark" : ""}.png`;
+        if (shot.full === false) await page.screenshot({ path: file });
+        else await fullPageShot(page, file);
+      }
+      await context.close();
+    }
+  });
+}
+
+/** Écran TV de la salle d'attente (appairé pour l'occasion) en 1280 × 720 et 3840 × 2160. */
+test("@screenshots responsive : écran TV en 720p et 4K", async ({ browser, request }, info) => {
+  test.skip(info.project.name !== "desktop", "captures pilotées une seule fois");
+  test.skip(!process.env.SEED_DEMO_PASSWORD, "données de démo requises (SEED_DEMO_PASSWORD)");
+  test.skip(!wanted("26-tv"), "écran non demandé");
+  test.setTimeout(300_000);
+  await mkdir(OUT, { recursive: true });
+  const ids = await demoIds();
+  const staff = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, supabaseOptions);
+  await staff.auth.signInWithPassword({ email: "directeur@doualaclinic.demo", password: process.env.SEED_DEMO_PASSWORD! });
+  const pairing = (await (await request.post("/api/tv/pair")).json()) as { displayId: string; code: string; pollSecret: string };
+  await staff.rpc("pair_display", { p_code: pairing.code, p_branch: ids.branchId, p_name: "Salle d'attente (captures)", p_service_ids: null, p_show_ads: false });
+  const { deviceToken } = (await (await request.post("/api/tv/pair/poll", { data: { displayId: pairing.displayId, pollSecret: pairing.pollSecret } })).json()) as {
+    deviceToken: string;
+  };
+  for (const [w, h] of [
+    [1280, 720],
+    [3840, 2160],
+  ] as const) {
+    const context = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, locale: "fr-FR" });
+    await context.addInitScript((token) => localStorage.setItem("nextin-tv-token", token), deviceToken);
+    const page = await context.newPage();
+    await page.goto("/tv");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2_000);
+    await page.screenshot({ path: `${OUT}/26-tv-${w}x${h}.png` });
+    await context.close();
+  }
+  await staff.rpc("revoke_display", { p_display: pairing.displayId }).then(() => undefined, () => undefined);
+});
+
 test("@screenshots responsive : mode compact du poste dans une fenêtre de 400 × 600", async ({ browser }, info) => {
   test.skip(info.project.name !== "desktop", "captures pilotées une seule fois");
+  test.skip(!wanted("25-desk-compact"), "écran non demandé");
   test.skip(!process.env.SEED_DEMO_PASSWORD, "données de démo requises (SEED_DEMO_PASSWORD)");
   await mkdir(OUT, { recursive: true });
   const ids = await demoIds();
