@@ -167,7 +167,10 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 ## Revue responsive (`docs/REVUE-RESPONSIVE.md`, notes `docs/modules/RESPONSIVE.md`)
 - Retour de la barre de navigation : libellé entier ou chevron seul (libellé gardé pour les lecteurs d'écran), jamais coupé. Sous-titres de `ListRow` : deux lignes au plus. `SegmentedControl` : une ligne. Rangées de pastilles : `scroll-fade-x`.
 - Détail d'une vue maître-détail : `@container` sur le panneau ; mises en page en colonnes par requêtes de conteneur (`@2xl:grid-cols-2`).
-- Captures : base propre (`pnpm db:reset` puis `pnpm seed:demo:local`), `RESPONSIVE_PHASE=before|after` avec `e2e/screenshots-responsive.spec.ts`.
+- Pages client ≥ 1024 px : `ClientTabBar` en barre latérale (`TabBar sidebar`, contenu décalé par `body:has([data-tab-sidebar])`) ; onglets et retours sans préchargement (`prefetch={false}`, budget).
+- Formulaire qui ne contient que sa `BottomBar` : `className="contents"` (sinon la barre ne peut pas coller au bas du contenu). Feuilles et alertes : `NoPageFrame` (leur barre ne remonte jamais dans la barre de titre).
+- Écran TV : tailles et espacements en `vh`/`vw`, interligne sans unité (`leading-snug` sur la racine) — vérifié en 720p, 1080p et 4K.
+- Captures : base propre (`pnpm db:reset` puis `pnpm seed:demo:local`), `RESPONSIVE_PHASE=before|before-p2|after` et `RESPONSIVE_ONLY=<préfixes>` avec `e2e/screenshots-responsive.spec.ts`.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

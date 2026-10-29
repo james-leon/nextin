@@ -1,6 +1,6 @@
-# Revue responsive — P1
+# Revue responsive — P1 et P2
 
-Statut : **P1 terminé, en attente de validation**. Référence : `docs/REVUE-RESPONSIVE.md`.
+Statut : **P1 validé ; P2 terminé, en attente de validation**. Référence : `docs/REVUE-RESPONSIVE.md`.
 Captures : `docs/captures/responsive/before/` (avant, clair) et `docs/captures/responsive/` (après, clair et `-dark`), en 390, 820, 1180, 1440 et 1920 px, plus le mode compact du poste en 400 × 600.
 
 ## Règles globales
@@ -49,5 +49,36 @@ Les captures sont prises sur une base propre (`pnpm db:reset` puis `pnpm seed:de
 | Playwright `responsive.spec.ts` | 21 écrans du personnel et de l'annonceur en 360, 390, 820, 1180, 1440 et 1920 px : aucun débordement horizontal ni texte coupé (aussi à 125 %), dernière ligne visible au-dessus des barres fixes, action principale visible sans défilement, aucune zone vide de plus de 40 % sur ordinateur, cibles tactiles sur téléphone et tablette, axe en clair et en sombre (390, 820, 1440). Barre latérale repliable, maître-détail, action dans la barre de titre, retour jamais tronqué, segmented control sur une ligne |
 | Vitest `agenda.test.ts` | Minutes dans le fuseau de l'agence, plage horaire, couloirs des rendez-vous qui se chevauchent |
 
-## Reste pour P2 et P3
-Pages client sur ordinateur (R5), états peu remplis (R6 : Mes établissements), Écrans TV en grille, Réglages de l'agence en deux colonnes, Abonnement, tableau de bord à 1920 px, écran TV en 720p et 4K (P2) ; publicité de l'établissement, choisir un service / scanner / code, campagne, valider un bon et console Wintek (P3).
+## P2
+Captures avant : `docs/captures/responsive/before-p2/` (clair) ; après : `docs/captures/responsive/` (clair et `-dark`).
+
+### Retouches du P1
+- Rangées de pastilles (praticiens, dates) : fondu sur le bord qui défile — à droite tant que la rangée continue, à gauche une fois défilée (animation pilotée par le défilement ; repli : fondu fixe à droite).
+- Choix du poste : barre latérale du personnel (Mes établissements, Postes, Espace annonceur, Réglages), contenu aligné sur les autres pages (`max-w-7xl`).
+
+### R5 — Pages client sur ordinateur
+- À partir de 1024 px, la barre d'onglets devient une barre latérale façon Mac : logo NextIn en tête, Scanner, À proximité, Mon ticket, Profil ; ligne choisie en accent plein. Même composant (CSS seulement) : rien de plus à charger.
+- « Mon ticket » : deux colonnes (backlog), conservées.
+- « À proximité » : avec un fournisseur de tuiles, liste à gauche et carte à droite sur toute la hauteur ; sans tuiles, la carte schématique est masquée et la liste s'élargit en grille de cartes (2 ou 3 par ligne).
+- Barre d'action des pages client sur tablette : à la largeur de la colonne du contenu.
+- Budget : onglets sans préchargement, rechargements d'« À proximité » limités à 20 agences ; pages client ≤ 198 Ko.
+
+### R6 — Écrans peu remplis
+- Mes établissements : grille équilibrée sur ordinateur (établissements, Ouvrir les postes, Espace annonceur, Console Wintek, carte « + » Créer un établissement) ; liste groupée inchangée sur téléphone.
+- Écrans TV sans écran : état vide centré, l'appairage à côté en action principale.
+- Panneaux de détail sans élément choisi (P1) : résumé chiffré.
+
+### Écrans
+| Écran | Changement |
+|---|---|
+| Écrans TV | Grille de cartes (nom, services, en ligne / hors ligne, dernière activité, Gérer, Révoquer) ; appairage dans une colonne à droite |
+| Réglages de l'agence | Deux colonnes : file et rendez-vous / distance et demandes ; « Enregistrer » dans la barre de titre |
+| Abonnement | Téléphone : sélecteur de formule en haut, une formule affichée à la fois ; « Payer » selon R3 ; en-tête et période sans débordement à 360 px |
+| Tableau de bord | Même zone que le back-office (`max-w-7xl`, marges 16/32/40 px) jusqu'en 1920 px |
+| Écran TV | Interligne sans unité et espacements en vh : proportions identiques en 1280 × 720, 1920 × 1080 et 3840 × 2160, plus aucun texte rogné |
+
+### Tests ajoutés
+`responsive.spec.ts` couvre aussi les 8 pages client (visiteur anonyme) dans les six tailles et l'écran TV en 1280 × 720, 1920 × 1080 et 3840 × 2160 (aucun débordement ni texte coupé, pas de défilement, proportions constantes).
+
+## Reste pour P3
+Publicité de l'établissement (secteurs en grille de cases), choisir un service / scanner / code (carte centrée plus large sur ordinateur), campagne, valider un bon et console Wintek (R1 et R3 en 1920 px et sur tablette), ticket imprimé (inchangé).
