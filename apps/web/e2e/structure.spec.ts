@@ -12,6 +12,8 @@ test.describe("M2 — structure de l'établissement", () => {
     const branch = await createBranchViaUi(page, root, "Akwa");
     await expect(page.getByRole("heading", { level: 1, name: "Akwa" })).toBeVisible();
     await expect(page.getByText("Lun–Ven 07:30–17:00 · Sam 08:00–12:00")).toBeVisible();
+    // Titre du document diffusé après la redirection : l'attendre avant axe.
+    await expect(page).toHaveTitle(/Akwa/);
     await expectAccessible(page);
 
     // Service : préfixe proposé depuis le nom.
