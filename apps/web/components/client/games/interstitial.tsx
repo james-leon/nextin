@@ -50,10 +50,10 @@ export function Interstitial({ ad, token, skipAfter, onDone }: { ad: AdCandidate
   return (
     <section aria-label={t("adLabel")} className="flex h-full flex-col gap-4 p-4">
       <p className="self-start rounded-full bg-grouped-secondary px-3 py-1 text-caption font-semibold uppercase text-label-secondary shadow-card">{t("adLabel")}</p>
-      <div className="squircle flex min-h-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
-        <div className="relative min-h-0 flex-1 bg-fill-tertiary">
+      <div className="squircle my-auto flex flex-col overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
+        <div className="relative aspect-video bg-fill-tertiary">
           {/* eslint-disable-next-line @next/next/no-img-element -- visuel du stockage public, déjà limité à 250 Ko */}
-          <img crossOrigin="anonymous" src={adFileUrl(SUPABASE_URL, ad.path)} alt={ad.headline} className="absolute inset-0 size-full object-contain" decoding="async" />
+          <img crossOrigin="anonymous" src={adFileUrl(SUPABASE_URL, ad.path)} alt={ad.headline} className="absolute inset-0 size-full object-cover" decoding="async" />
         </div>
         <div className="flex flex-col gap-1 p-4">
           <p className="text-headline">{ad.headline}</p>

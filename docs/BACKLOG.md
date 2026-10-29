@@ -48,3 +48,15 @@ Aujourd'hui, scanner le QR code imprimé de l'accueil (ou saisir son code court)
 
 ### « À proximité » : icône du secteur de l'établissement
 Chaque ligne de la liste (et la fiche de l'agence) affiche aujourd'hui un bâtiment générique. Utiliser une icône par secteur (`organizations.type` : clinique et hôpital, banque, télécom, électricité et eau, administration, autre), au trait fin façon SF Symbols (lucide), sur la tuile Navy ; même icône dans les repères de la carte si la place le permet. Libellé du secteur pour les lecteurs d'écran.
+
+## Publicité et accessibilité (relevé au M10b, 29/10/2026)
+
+### Contraste de la carte « C'est votre tour » (Mon ticket)
+Le ticket appelé (`TicketHero state="called"`) affiche du texte blanc sur le vert Wintek `#2EC04E` : contraste 2,2:1, sous le niveau AA (4,5:1 pour le texte courant, 3:1 pour le grand numéro). Les tests du M4 ne passaient pas axe dans cet état ; celui du M10b l'a relevé. Options : vert plus profond réservé à ce fond (ex. `#187A31`, ≈ 5:1 avec le blanc), ou carte blanche avec bandeau et pictogramme verts. À trancher avec la maquette 03, puis ajouter axe dans l'état « appelé » au test `client.spec.ts`.
+
+### Ciblage plus fin des formules plafonnées
+Bronze et Argent retiennent les agences les plus anciennes du ciblage (5 et 15). Permettre à l'annonceur de choisir ses agences (liste à cocher, limitée au plafond), ou répartir par tirage équitable, et l'afficher avant le paiement.
+
+### Application de caisse pour les bons
+Scanner le QR code d'un bon directement depuis `/ads/redeem` (caméra, comme le scanner client), et ouvrir l'accès à des comptes « caissier » de l'annonceur sans droits sur les campagnes.
+

@@ -192,7 +192,9 @@ export function SkyCatch({
     }
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const { width, height } = wrap.getBoundingClientRect();
+      const style = getComputedStyle(wrap);
+      const width = wrap.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const height = wrap.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
       const scale = Math.min(width / WORLD.width, height / WORLD.height);
       canvas.style.width = `${WORLD.width * scale}px`;
       canvas.style.height = `${WORLD.height * scale}px`;

@@ -16,7 +16,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
 - `packages/payments` — contrat `PaymentProvider` des agrégateurs Mobile Money et faux fournisseur (M10a), côté serveur uniquement.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
-- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
+- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent, images générées par `demo-images.ts`), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
 
 ## Commandes
@@ -144,6 +144,16 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Paiement : `/pay/<jeton>` (page légère < 200 Ko, `useLiteT`) → `POST /api/payments` → `PaymentProvider.createCheckout` ; état par `POST /api/payments/status` ; webhook `/api/payments/webhook/<fournisseur>` signé, enregistré (`record_webhook_event`) puis **revérifié par `fetchStatus`** avant activation. Faux fournisseur : `PAYMENT_PROVIDER=fake`, `PAYMENT_WEBHOOK_SECRET` requis, numéro en `99999` = échec.
 - Messages du compte : file `account_messages` (base) → expéditeur M7 (`lib/notifications/account.ts`) ; modèles `ACCOUNT_TEMPLATES` (`@nextin/shared/billing`), mêmes règles que les modèles Meta du M7. Quota WhatsApp : `quota_exceeded` dans `claim_notification_jobs` (« c'est votre tour » toujours envoyé).
 - Back-office : bandeau `BillingBanner` et `SuspendedGate` dans le gabarit de l'établissement ; page `/app/o/<org>/billing` (administrateurs). Console super admin `/admin` (abonnements, formules, réglages) ; toute action avec motif, journalisée par la base.
+
+## Publicité (M10b, `docs/modules/M10b.md`)
+- Formules `ad_packages` (Maison, Bronze, Argent, Or) et secteurs `ad_sectors` modifiables par le super admin : aucun prix, part de diffusion ni surface en dur. Visa santé exigé à la soumission **et** à la validation pour les secteurs `requires_health_visa` (sauf annonces Maison).
+- Écritures uniquement par RPC (`save_campaign`, `save_creative`, `save_quiz`, `save_game_skin`, `submit_campaign`, `review_campaign`, `campaign_checkout`, `set_ad_preferences`, `redeem_coupon`…). Paiement des campagnes : facture `invoices.kind = 'campaign'` puis `/pay/<jeton>` et `confirm_payment` (même agrégateur que le M10a).
+- Diffusion calculée par la base (`ad_candidates`, `ad_weighted_draw`) ; côté appareil, `nextAd` (`@nextin/shared/ads`) suit la même règle. Les annonces Maison comblent la part non vendue. Secteurs refusés par établissement appliqués par la base.
+- Fichiers : `ad-creatives` (public) et `ad-documents` (privé), chemin `<annonceur | org-<établissement>>/<campagne>/<fichier>` ; poids vérifié par la base (`ad_file_size`). Application et jeux : images seulement.
+- Événements (affichage, clic, « Passer ») : file de l'appareil (`lib/client/ad-events.ts`) → `POST /api/ads/events` → `record_ticket_ad_events` / `record_display_ad_events` (agence déduite du jeton, idempotent, limité). Jamais d'identifiant client ; statistiques par `campaign_stats` (cumuls horaires).
+- « Mon ticket » : carte de jeu et pub montées par `LazyMount` (après le chargement), feuille de jeu `next/dynamic` avec ses textes de `/api/i18n/games` ; la feuille garde le numéro et l'attente en tête et se fige à l'appel. Ne rien ajouter au premier chargement de `/t` sans remesurer le budget (≈ 198 Ko).
+- Sky Catch : logique pure `@nextin/shared/ads/sky-catch` (testée), rendu canvas dans `components/client/games/sky-catch.tsx`, couleurs par jetons `--game-*`. Bons : `/coupon/<jeton>` (QR via `QrImage`), validation `/ads/redeem`.
+- Tests e2e de diffusion : agence dans une ville propre et campagne Or ciblant cette ville (`e2e/ads-helpers.ts`), la base locale contenant d'autres campagnes.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).
