@@ -75,6 +75,8 @@ test.describe("M10a — abonnements et paiements", () => {
       await page.evaluate(() => window.scrollTo(0, 0));
       const pay = page.locator("button[type=submit]").filter({ visible: true });
       await expect(pay, `${viewport.width}×${viewport.height}`).toHaveCount(1);
+      // La barre de titre se réorganise au changement de taille : attendre que le bouton ait sa place.
+      await expect.poll(async () => (await pay.boundingBox())?.y ?? -1).toBeGreaterThanOrEqual(0);
       const top = (await pay.boundingBox())!;
       expect(top.y + top.height, `${viewport.width}×${viewport.height} : à côté du titre`).toBeLessThan(200);
       // Aucune barre en bas de l'écran : rien ne recouvre les formules.
@@ -82,6 +84,7 @@ test.describe("M10a — abonnements et paiements", () => {
       // Au défilement, l'action reste dans la barre compacte.
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       await page.waitForTimeout(400);
+      await expect.poll(async () => (await pay.boundingBox())?.y ?? -1).toBeGreaterThanOrEqual(0);
       const scrolled = (await pay.boundingBox())!;
       expect(scrolled.y, `${viewport.width}×${viewport.height} : barre compacte`).toBeGreaterThanOrEqual(0);
       expect(scrolled.y + scrolled.height).toBeLessThanOrEqual(60);

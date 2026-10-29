@@ -26,6 +26,8 @@ const NearbyMap = dynamic(() => import("./nearby-map").then((m) => m.NearbyMap),
 });
 
 const RADIUS_KM = 25;
+/** Agences rechargées autour du client ou pour une recherche : 20 au plus (réponse légère en 3G). */
+const LIMIT = 20;
 type Locate = "idle" | "locating" | "located" | "denied" | "unavailable";
 
 /**
@@ -83,7 +85,7 @@ export function NearbyExplorer({
     const load = () =>
       callRpc<NearbyBranch[]>(
         "nearby_branches",
-        { p_lat: position?.lat ?? null, p_lng: position?.lng ?? null, p_radius_km: RADIUS_KM, p_query: query.trim() || null },
+        { p_lat: position?.lat ?? null, p_lng: position?.lng ?? null, p_radius_km: RADIUS_KM, p_query: query.trim() || null, p_limit: LIMIT },
         { signal: controller.signal },
       ).then(({ data }) => {
         if (data) {
