@@ -13,6 +13,7 @@ export function TabBar({
   onSelect,
   label,
   position = "fixed",
+  prefetch,
   className,
 }: {
   items: readonly TabItem[];
@@ -20,6 +21,8 @@ export function TabBar({
   onSelect?: (key: string) => void;
   label: string;
   position?: "fixed" | "sticky" | "static";
+  /** Faux sur les pages client (budget 3G) : les onglets ne préchargent pas leur page. */
+  prefetch?: boolean;
   className?: string;
 }) {
   return (
@@ -55,7 +58,7 @@ export function TabBar({
           return (
             <li key={item.key}>
               {item.href ? (
-                <Link href={item.href} aria-current={selected ? "page" : undefined} className={cls}>
+                <Link href={item.href} prefetch={prefetch} aria-current={selected ? "page" : undefined} className={cls}>
                   {inner}
                 </Link>
               ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { addDays, localDate, weekDays, weekStart } from "@nextin/shared/appointments";
@@ -101,9 +101,17 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
   const key = `${from}|${to}|${practitioner}`;
   const items = data?.key === key ? data.items : null;
 
+  // Période affichée : une réponse arrivée après un changement de jour (ex. reprogrammation au lendemain) est ignorée,
+  // sinon elle écraserait la période courante et la liste resterait « Chargement… ».
+  const shown = useRef(key);
+  useEffect(() => {
+    shown.current = key;
+  }, [key]);
+
   const load = useCallback(async () => {
+    const requested = `${from}|${to}|${practitioner}`;
     const next = await listAppointments(supabase, ctx.branch.id, from, to, practitioner === "all" ? null : practitioner).catch(() => null);
-    if (next) setData({ key: `${from}|${to}|${practitioner}`, items: next });
+    if (next && shown.current === requested) setData({ key: requested, items: next });
   }, [supabase, ctx.branch.id, from, to, practitioner]);
 
   useEffect(() => {

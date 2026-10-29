@@ -12,6 +12,7 @@ export function ClientTabBar({ active, className }: { active: "scan" | "nearby" 
       label={t("label")}
       active={active}
       className={className}
+      prefetch={false}
       items={[
         { key: "scan", label: t("scan"), icon: <ScanLine aria-hidden />, href: "/" },
         { key: "nearby", label: t("nearby"), icon: <MapPin aria-hidden />, href: "/nearby" },

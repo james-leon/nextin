@@ -113,14 +113,19 @@ test.describe("M5b — rendez-vous", () => {
     await panel.getByRole("button", { name: "Fait" }).click();
     await detail.getByRole("button", { name: "Reprogrammer" }).click();
     const reschedule = page.getByRole("complementary", { name: "Reprogrammer le rendez-vous" });
+    // Lendemain : assez de créneaux libres quelle que soit l'heure du test (le soir, la journée est presque finie).
+    await reschedule.getByRole("radiogroup", { name: /^Jour · / }).getByRole("radio").nth(1).click();
     await reschedule.getByRole("radiogroup", { name: "Créneaux libres" }).getByRole("radio").nth(2).click();
     await reschedule.getByRole("button", { name: "Reprogrammer" }).click();
     await expect(reschedule.getByText("Rendez-vous reprogrammé.")).toBeVisible();
     await reschedule.getByRole("button", { name: "Fait" }).click();
-    await expect(page.getByRole("button", { name: /A\.T\..*Reprogrammé/ })).toBeVisible();
+    // La vue suit le rendez-vous reprogrammé (lendemain), puis revient au jour : l'ancien est « Reprogrammé ».
+    await expect(page.getByRole("button", { name: /A\.T\..*Confirmé/ })).toBeVisible();
     await detail.getByRole("button", { name: "Annuler le rendez-vous" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le rendez-vous" }).click();
     await expect(detail.getByText("Annulé")).toBeVisible();
+    await page.getByRole("button", { name: "Aujourd'hui" }).click();
+    await expect(page.getByRole("button", { name: /A\.T\..*Reprogrammé/ })).toBeVisible();
 
     // Semaine : sept colonnes, le jour mène à la vue du jour.
     await page.getByRole("radio", { name: "Semaine" }).click();
