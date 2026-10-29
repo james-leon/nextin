@@ -1,9 +1,17 @@
 import type { ReactNode } from "react";
 import { NavigationBar } from "@/components/ui/navigation-bar";
+import { PageFrame } from "@/components/ui/page-frame";
 import { isSidebarDestination } from "@/lib/admin/nav";
 import { cn } from "@/lib/cn";
 
-/** Gabarit d'une page du back-office : grand titre iOS, retour en haut à gauche, contenu centré. */
+/** Marges latérales du contenu : 16 px sur téléphone, 32 px sur tablette, 40 px sur ordinateur (revue responsive R1). */
+export const PAGE_GUTTER = "px-4 md:px-8 lg:px-10";
+
+/**
+ * Gabarit d'une page du back-office : grand titre iOS, retour en haut à gauche, action principale (`BottomBar`)
+ * dans la barre de titre sur ordinateur. Pleine largeur disponible jusqu'à `max-w-7xl` (listes en maître-détail ou
+ * en grille) ; `narrow` réserve une colonne centrée aux formulaires purs (création, édition).
+ */
 export function AdminPage({
   title,
   eyebrow,
@@ -12,7 +20,8 @@ export function AdminPage({
   trailing,
   children,
   className,
-  wide,
+  narrow,
+  inSplit,
 }: {
   title: string;
   eyebrow?: string;
@@ -21,15 +30,24 @@ export function AdminPage({
   trailing?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** Page en colonnes sur grand écran (listes et détails côte à côte) au lieu d'une colonne centrée. */
-  wide?: boolean;
+  /** Formulaire pur : colonne centrée (max-w-3xl). */
+  narrow?: boolean;
+  /** Détail d'une vue maître-détail : retour masqué à partir de la tablette (la liste est à côté). */
+  inSplit?: boolean;
 }) {
+  const width = narrow ? "max-w-3xl" : "max-w-7xl";
   return (
-    <>
-      <NavigationBar title={title} eyebrow={eyebrow} back={back ? { ...back, inSidebar: isSidebarDestination(back.href) } : undefined} trailing={trailing} contentClassName={wide ? "max-w-6xl" : "max-w-3xl"}>
+    <PageFrame>
+      <NavigationBar
+        title={title}
+        eyebrow={eyebrow}
+        back={back ? { ...back, inSidebar: isSidebarDestination(back.href), inSplit } : undefined}
+        trailing={trailing}
+        contentClassName={cn(width, "md:px-8 lg:px-10")}
+      >
         {subtitle ? <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p> : null}
       </NavigationBar>
-      <div className={cn("mx-auto flex flex-col gap-7 px-4 pt-3", wide ? "max-w-6xl" : "max-w-3xl", className)}>{children}</div>
-    </>
+      <div className={cn("mx-auto flex flex-col gap-7 pt-3", PAGE_GUTTER, width, className)}>{children}</div>
+    </PageFrame>
   );
 }

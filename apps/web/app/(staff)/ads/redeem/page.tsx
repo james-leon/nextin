@@ -17,7 +17,7 @@ export default async function RedeemPage({ searchParams }: { searchParams: Promi
   const t = await getTranslations("ads");
   const initial = typeof code === "string" && /^[A-Za-z0-9]{8,22}$/.test(code) ? code : "";
   return (
-    <AdminPage title={t("redeemTitle")} eyebrow={advertiser?.name ?? t("title")}>
+    <AdminPage narrow title={t("redeemTitle")} eyebrow={advertiser?.name ?? t("title")}>
       <AdsNav variant="inline" role={role} />
       {role === "cashier" ? <p className="px-4 text-footnote text-label-secondary">{t("cashierNotice")}</p> : null}
       <RedeemForm key={initial} initialCode={initial} />

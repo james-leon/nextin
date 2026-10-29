@@ -35,6 +35,8 @@ export type ReceptionData = {
   counters: ReceptionCounter[];
   /** Rendez-vous du jour encore attendus (confirmés, heure à venir ou en cours de tolérance). */
   upcomingAppointments: number;
+  /** Les prochains d'entre eux (8 au plus), pour la colonne « Rendez-vous du jour » sur ordinateur. */
+  nextAppointments: { id: string; startsAt: string; practitionerId: string; serviceId: string }[];
   /** Demandes de rendez-vous en attente de réponse (M9). */
   pendingRequests: number;
 };
@@ -73,13 +75,15 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
     supabase.from("practitioner_absences").select("id, practitioner_id, kind, until, created_at").eq("branch_id", branchId).is("ended_at", null),
   ]);
   const today = serviceDay(branch.timezone);
-  const { count: upcoming } = await supabase
+  const { data: next, count: upcoming } = await supabase
     .from("appointments")
-    .select("id", { count: "exact", head: true })
+    .select("id, starts_at, practitioner_id, service_id", { count: "exact" })
     .eq("branch_id", branchId)
     .eq("status", "confirmed")
     .gte("starts_at", new Date(Date.now() - 60 * 60_000).toISOString())
-    .lt("starts_at", `${today}T23:59:59${offsetOf(branch.timezone)}`);
+    .lt("starts_at", `${today}T23:59:59${offsetOf(branch.timezone)}`)
+    .order("starts_at")
+    .limit(8);
   const { count: requests } = await supabase
     .from("appointment_requests")
     .select("id", { count: "exact", head: true })
@@ -134,6 +138,7 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       practitionerId: c.default_practitioner_id,
     })),
     upcomingAppointments: upcoming ?? 0,
+    nextAppointments: (next ?? []).map((a) => ({ id: a.id, startsAt: a.starts_at, practitionerId: a.practitioner_id, serviceId: a.service_id })),
     pendingRequests: requests ?? 0,
   };
 }

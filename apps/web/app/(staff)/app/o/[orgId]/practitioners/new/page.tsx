@@ -20,7 +20,7 @@ export default async function NewPractitionerPage({ params }: { params: Promise<
   if (!branches.length) notFound();
   const t = await getTranslations("practitioners");
   return (
-    <AdminPage title={t("new")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}/practitioners`, label: t("title") }}>
+    <AdminPage inSplit title={t("new")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}/practitioners`, label: t("title") }}>
       <PractitionerForm action={savePractitioner.bind(null, orgId, null)} specialties={specialties} branches={branches} />
     </AdminPage>
   );

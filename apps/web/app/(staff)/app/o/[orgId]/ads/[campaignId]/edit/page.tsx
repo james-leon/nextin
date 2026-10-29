@@ -28,7 +28,7 @@ export default async function EditHouseAdPage({ params }: { params: Promise<{ or
   const t = await getTranslations("ads");
   const data = await campaignFormData();
   return (
-    <AdminPage title={found.campaign.name} eyebrow={t("edit")} back={{ href: path, label: found.campaign.name }} wide>
+    <AdminPage title={found.campaign.name} eyebrow={t("edit")} back={{ href: path, label: found.campaign.name }}>
       <CampaignForm mode="house" {...data} initial={found.initial} action={saveCampaign.bind(null, { campaignId })} />
     </AdminPage>
   );

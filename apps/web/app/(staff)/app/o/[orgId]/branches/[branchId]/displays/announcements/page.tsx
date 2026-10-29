@@ -22,7 +22,7 @@ export default async function AnnouncementsPage({ params }: Props) {
   const { data: s } = await supabase.from("announcement_settings").select("*").eq("branch_id", branchId).maybeSingle();
   const quiet = (s?.quiet_hours as { from: string; to: string }[] | null)?.[0] ?? null;
   return (
-    <AdminPage title={t("announcements")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}/displays`, label: t("title") }}>
+    <AdminPage narrow title={t("announcements")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}/displays`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
       <AnnouncementSettingsForm
         action={saveAnnouncementSettings.bind(null, orgId, branchId)}

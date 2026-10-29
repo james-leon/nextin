@@ -30,7 +30,7 @@ export default async function EditServicePage({ params }: { params: Promise<{ or
   ]);
   if (!s) notFound();
   return (
-    <AdminPage title={s.name} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/branches/${branchId}/services`, label: t("title") }}>
+    <AdminPage inSplit title={s.name} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/branches/${branchId}/services`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
       <ServiceForm
         action={saveService.bind(null, orgId, branchId, serviceId)}

@@ -54,7 +54,6 @@ export default async function PractitionerSchedulePage({
   const name = [p.title, p.display_name].filter(Boolean).join(" ");
   return (
     <AdminPage
-      wide
       title={t("title")}
       eyebrow={name}
       subtitle={t("subtitle")}

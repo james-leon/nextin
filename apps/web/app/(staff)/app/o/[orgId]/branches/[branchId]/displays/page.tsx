@@ -55,7 +55,7 @@ export default async function DisplaysPage({ params, searchParams }: Props) {
           });
 
   return (
-    <AdminPage title={t("title")} eyebrow={branch.name} back={{ href: base, label: branch.name }}>
+    <AdminPage narrow title={t("title")} eyebrow={branch.name} back={{ href: base, label: branch.name }}>
       <SavedNotice show={!!saved || !!paired || !!revoked} message={paired ? t("paired") : revoked ? t("revoked") : undefined} />
       <ListSection header={t("listHeader")} footer={displays.data?.length ? undefined : t("none")}>
         {(displays.data ?? []).map((d) => {

@@ -254,6 +254,7 @@
   --animate-pop-in: pop-in 320ms var(--ease-spring);
   --animate-fade-in: fade-in 200ms var(--ease-ios);
   --animate-banner-in: banner-in 480ms var(--ease-spring);
+  --animate-slide-in-left: slide-in-left 360ms var(--ease-spring);
 
   @keyframes pop-in {
     from {
@@ -271,6 +272,14 @@
     }
     to {
       opacity: 1;
+    }
+  }
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
     }
   }
   @keyframes banner-in {
@@ -334,6 +343,16 @@
   }
 }
 
+/* Rangée de pastilles qui défile horizontalement (filtres, villes) : dégradé sur les bords, jamais coupée net. */
+@utility scroll-fade-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 @utility hairline-b {
   box-shadow: inset 0 -0.5px 0 var(--separator);
 }

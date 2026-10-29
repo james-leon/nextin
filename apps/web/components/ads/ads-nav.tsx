@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ChevronLeft, Megaphone, ScanLine, UsersRound } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/cn";
+import { SidebarPanel } from "@/components/shell/sidebar-shell";
 
 const ITEMS = [
   { key: "campaigns", href: "/ads", icon: Megaphone },
@@ -29,7 +30,7 @@ export function AdsNav({ variant, advertiser, role }: { variant: "sidebar" | "in
 
   if (variant === "inline") {
     return (
-      <nav aria-label={t("title")} className="lg:hidden">
+      <nav aria-label={t("title")} className="md:hidden">
         <ul role="list" className="flex gap-2 overflow-x-auto">
           {items.map((item) => (
             <li key={item.key}>
@@ -50,9 +51,7 @@ export function AdsNav({ variant, advertiser, role }: { variant: "sidebar" | "in
     );
   }
   return (
-    <aside className="hidden w-64 shrink-0 bg-grouped-secondary shadow-[inset_-0.5px_0_0_var(--separator)] lg:block">
-      {/* Colonne sur toute la hauteur de la page (fond, séparateur) ; contenu collant à la fenêtre au défilement. */}
-      <div className="sticky top-0 flex h-dvh flex-col gap-6 overflow-y-auto px-3 py-5">
+    <SidebarPanel>
         <div className="px-3">
           <Logo />
         </div>
@@ -85,7 +84,6 @@ export function AdsNav({ variant, advertiser, role }: { variant: "sidebar" | "in
             })}
           </ul>
         </nav>
-      </div>
-    </aside>
+    </SidebarPanel>
   );
 }

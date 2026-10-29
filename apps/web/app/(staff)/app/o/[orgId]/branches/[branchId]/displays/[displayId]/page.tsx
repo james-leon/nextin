@@ -35,7 +35,7 @@ export default async function DisplayPage({ params }: Props) {
   if (!display) notFound();
   const name = display.name ?? "";
   return (
-    <AdminPage title={name} eyebrow={t("title")} back={{ href: `/app/o/${orgId}/branches/${branchId}/displays`, label: t("title") }}>
+    <AdminPage narrow title={name} eyebrow={t("title")} back={{ href: `/app/o/${orgId}/branches/${branchId}/displays`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
       <DisplayForm
         action={updateDisplay.bind(null, orgId, branchId, displayId)}

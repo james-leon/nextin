@@ -12,6 +12,7 @@ import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
+import { PageFrame } from "@/components/ui/page-frame";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -89,266 +90,292 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   }
 
   return (
-    <main className="min-h-dvh pb-40">
-      <NavigationBar
-        title={t("title")}
-        eyebrow={`${data.branch.organizationName} · ${data.branch.name}`}
-        back={{ href: "/desk", label: td("title") }}
-        trailing={
-          <Badge shape="pill" tone="green">
-            <span aria-hidden className="size-2 rounded-full bg-green" />
-            {t("live")}
-          </Badge>
-        }
-        contentClassName="max-w-5xl"
-      />
-      <div className="mx-auto grid grid-cols-1 max-w-5xl gap-7 px-4 pt-3 lg:grid-cols-2 lg:items-start">
-        <div className="flex flex-col gap-7">
-          <ListSection>
-            <ListRow
-              href={`/desk/reception/${branchId}/appointments`}
-              icon={
-                <ListIcon>
-                  <CalendarDays />
-                </ListIcon>
-              }
-              title={tap("open")}
-              subtitle={tap("upcoming", { count: data.upcomingAppointments })}
-              accessory="chevron"
-            />
-            <ListRow
-              href={`/desk/reception/${branchId}/appointments?view=requests`}
-              icon={
-                <ListIcon color={data.pendingRequests ? "var(--orange-fill)" : "var(--accent-fill)"}>
-                  <Inbox />
-                </ListIcon>
-              }
-              title={t("requestsTitle")}
-              subtitle={t("requestsCount", { count: data.pendingRequests })}
-              accessory={
-                data.pendingRequests ? (
-                  <Badge tone="orange" className="mr-1 tabular">
-                    {data.pendingRequests}
-                  </Badge>
-                ) : (
-                  "chevron"
-                )
-              }
-            />
-          </ListSection>
-          <ListSection header={t("servicesHeader")}>
-            {data.services.map((s) => {
-              const b = data.board?.services.find((x) => x.id === s.id);
+    <PageFrame>
+      <main className="min-h-dvh pb-40 md:pb-8">
+        <NavigationBar
+          title={t("title")}
+          eyebrow={`${data.branch.organizationName} · ${data.branch.name}`}
+          back={{ href: "/desk", label: td("title") }}
+          trailing={
+            <Badge shape="pill" tone="green">
+              <span aria-hidden className="size-2 rounded-full bg-green" />
+              {t("live")}
+            </Badge>
+          }
+          contentClassName="max-w-7xl md:px-8 lg:px-10"
+        />
+        {/* Téléphone : une colonne ; tablette : rendez-vous en haut puis deux colonnes ;
+            ordinateur : services et praticiens / file d'attente / rendez-vous du jour, sur toute la largeur. */}
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-7 px-4 pt-3 md:grid-cols-2 md:px-8 lg:grid-cols-3 lg:items-start lg:px-10">
+          <div className="flex flex-col gap-7 md:col-span-2 lg:order-last lg:col-span-1">
+            <ListSection>
+              <ListRow
+                href={`/desk/reception/${branchId}/appointments`}
+                icon={
+                  <ListIcon>
+                    <CalendarDays />
+                  </ListIcon>
+                }
+                title={tap("open")}
+                subtitle={tap("upcoming", { count: data.upcomingAppointments })}
+                accessory="chevron"
+              />
+              <ListRow
+                href={`/desk/reception/${branchId}/appointments?view=requests`}
+                icon={
+                  <ListIcon color={data.pendingRequests ? "var(--orange-fill)" : "var(--accent-fill)"}>
+                    <Inbox />
+                  </ListIcon>
+                }
+                title={t("requestsTitle")}
+                subtitle={t("requestsCount", { count: data.pendingRequests })}
+                accessory={
+                  data.pendingRequests ? (
+                    <Badge tone="orange" className="mr-1 tabular">
+                      {data.pendingRequests}
+                    </Badge>
+                  ) : (
+                    "chevron"
+                  )
+                }
+              />
+            </ListSection>
+            {data.nextAppointments.length ? (
+              <ListSection header={t("todayHeader")} className="hidden lg:block">
+                {data.nextAppointments.map((a) => {
+                  const service = serviceById.get(a.serviceId);
+                  const doctor = data.practitioners.find((p) => p.id === a.practitionerId);
+                  return (
+                    <ListRow
+                      key={a.id}
+                      href={`/desk/reception/${branchId}/appointments`}
+                      icon={service ? <ServiceTile letter={service.prefix} color={service.color} /> : undefined}
+                      title={<span className="font-semibold tabular">{time(a.startsAt)}</span>}
+                      subtitle={[doctor?.name, service?.name].filter(Boolean).join(" · ") || undefined}
+                      accessory="chevron"
+                    />
+                  );
+                })}
+              </ListSection>
+            ) : (
+              <p className="hidden px-4 text-footnote text-label-secondary lg:block">{t("todayEmpty")}</p>
+            )}
+          </div>
+          <div className="flex flex-col gap-7">
+            <ListSection header={t("servicesHeader")}>
+              {data.services.map((s) => {
+                const b = data.board?.services.find((x) => x.id === s.id);
+                return (
+                  <ListRow
+                    key={s.id}
+                    icon={<ServiceTile letter={s.prefix} color={s.color} />}
+                    title={s.name}
+                    subtitle={
+                      <span className="tabular">
+                        {b?.waiting.length ? t("waitingSummary", { count: b.waiting.length, minutes: waitMinutes(b.wait_seconds) }) : t("queueEmpty")}
+                      </span>
+                    }
+                  />
+                );
+              })}
+            </ListSection>
+
+            {activeCalls.length ? (
+              <ListSection header={t("callsHeader")}>
+                {activeCalls.slice(0, 6).map((c) => {
+                  const counter = c.counter_label ?? `${kindLabel(c.counter_kind)} ${c.counter_number}`;
+                  return (
+                    <ListRow
+                      key={c.code}
+                      title={<span className="font-semibold">{c.code}</span>}
+                      detail={c.status === "called" ? t("calledAt", { counter }) : t("servingAt", { counter })}
+                    />
+                  );
+                })}
+              </ListSection>
+            ) : null}
+
+            {data.practitioners.length ? (
+              <ListSection header={t("practitionersHeader")}>
+                {data.practitioners.map((p) => (
+                  <ListRow
+                    key={p.id}
+                    onClick={() => setAbsenceFor(p)}
+                    icon={
+                      <ListIcon color={p.absence ? "var(--orange-fill)" : "var(--green-fill)"}>
+                        {p.absence ? <UserRoundX /> : <UserRound />}
+                      </ListIcon>
+                    }
+                    title={p.name}
+                    detail={
+                      p.absence
+                        ? p.absence.kind === "late" && p.absence.until
+                          ? ta("activeLate", { time: time(p.absence.until) })
+                          : ta("activeAbsent")
+                        : ta("present")
+                    }
+                    accessory="chevron"
+                  />
+                ))}
+              </ListSection>
+            ) : null}
+          </div>
+
+          <ListSection header={t("queueHeader", { count: data.waiting.length })} footer={data.waiting.length ? undefined : t("queueEmpty")}>
+            {data.waiting.map((tk2) => {
+              const service = serviceById.get(tk2.serviceId);
+              const doctor = practitionerOfCounter(tk2.preferredCounterId);
               return (
                 <ListRow
-                  key={s.id}
-                  icon={<ServiceTile letter={s.prefix} color={s.color} />}
-                  title={s.name}
-                  subtitle={
-                    <span className="tabular">
-                      {b?.waiting.length ? t("waitingSummary", { count: b.waiting.length, minutes: waitMinutes(b.wait_seconds) }) : t("queueEmpty")}
+                  key={tk2.id}
+                  onClick={() => setSelected(tk2)}
+                  icon={service ? <ServiceTile letter={service.prefix} color={service.color} /> : undefined}
+                  title={
+                    <span className="flex items-baseline gap-3">
+                      <span className="w-16 shrink-0 font-semibold">{tk2.code}</span>
+                      <span className="truncate text-label-secondary">
+                        {td(`source.${tk2.source}`)} · {time(tk2.createdAt)}
+                      </span>
                     </span>
+                  }
+                  subtitle={
+                    tk2.remote ? (
+                      <span className={tk2.remote.confirmed ? "text-green-text" : "text-orange-text"}>
+                        {tk2.remote.confirmed ? t("remoteHere") : tk2.remote.onMyWay ? t("remoteOnWay") : t("remotePending")}
+                        {tk2.remote.delays ? ` · ${t("remoteDelayed", { count: tk2.remote.delays })}` : ""}
+                      </span>
+                    ) : doctor ? (
+                      t("forPractitioner", { name: doctor.name })
+                    ) : undefined
+                  }
+                  accessory={
+                    tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
                   }
                 />
               );
             })}
           </ListSection>
+          {/* Tablette : barre collée en bas, à la largeur exacte du contenu ; ordinateur : dans la barre de titre. */}
+          <BottomBar className="md:col-span-2 lg:col-span-3">
+            <Button block onClick={() => setCreateOpen(true)} leadingIcon={<Plus aria-hidden className="size-5 stroke-[2.25]" />}>
+              {t("newTicket")}
+            </Button>
+          </BottomBar>
+        </div>
 
-          {activeCalls.length ? (
-            <ListSection header={t("callsHeader")}>
-              {activeCalls.slice(0, 6).map((c) => {
-                const counter = c.counter_label ?? `${kindLabel(c.counter_kind)} ${c.counter_number}`;
-                return (
+        <CreateTicketSheet data={data} open={createOpen} onOpenChange={setCreateOpen} onCreated={() => void refresh()} />
+
+        {selected ? (
+          <Sheet
+            open={!!selected && !transferOpen && !cancelOpen && !priorityOpen}
+            onOpenChange={(o) => !o && setSelected(null)}
+            title={t("ticketActions", { code: selected.code })}
+            closeLabel={tc("close")}
+          >
+            <div className="flex flex-col gap-4 pt-2">
+              {selected.remote && !selected.remote.confirmed ? (
+                <ListSection>
                   <ListRow
-                    key={c.code}
-                    title={<span className="font-semibold">{c.code}</span>}
-                    detail={c.status === "called" ? t("calledAt", { counter }) : t("servingAt", { counter })}
+                    onClick={() => command("staff_confirm_presence", { p_ticket: selected.id })}
+                    icon={<ListIcon color="var(--green-fill)"><ScanLine /></ListIcon>}
+                    title={t("confirmPresence")}
                   />
-                );
-              })}
-            </ListSection>
-          ) : null}
-
-          {data.practitioners.length ? (
-            <ListSection header={t("practitionersHeader")}>
-              {data.practitioners.map((p) => (
+                </ListSection>
+              ) : null}
+              <ListSection>
+                {selected.priorityReason ? (
+                  <ListRow
+                    onClick={() => command("set_ticket_priority", { p_ticket: selected.id, p_reason: null })}
+                    icon={<ListIcon color="var(--orange-fill)"><StarOff /></ListIcon>}
+                    title={t("removePriority")}
+                  />
+                ) : (
+                  <ListRow
+                    onClick={() => setPriorityOpen(true)}
+                    icon={<ListIcon color="var(--orange-fill)"><Star /></ListIcon>}
+                    title={t("setPriority")}
+                    accessory="chevron"
+                  />
+                )}
                 <ListRow
-                  key={p.id}
-                  onClick={() => setAbsenceFor(p)}
-                  icon={
-                    <ListIcon color={p.absence ? "var(--orange-fill)" : "var(--green-fill)"}>
-                      {p.absence ? <UserRoundX /> : <UserRound />}
-                    </ListIcon>
-                  }
-                  title={p.name}
-                  detail={
-                    p.absence
-                      ? p.absence.kind === "late" && p.absence.until
-                        ? ta("activeLate", { time: time(p.absence.until) })
-                        : ta("activeAbsent")
-                      : ta("present")
-                  }
+                  onClick={() => setTransferOpen(true)}
+                  icon={<ListIcon color="var(--accent-fill)"><Shuffle /></ListIcon>}
+                  title={t("reorient")}
                   accessory="chevron"
+                />
+                <ListRow
+                  onClick={() => command("move_back_ticket", { p_ticket: selected.id, p_places: 3 })}
+                  icon={<ListIcon color="var(--brand-tile)"><ArrowDown /></ListIcon>}
+                  title={t("moveBack")}
+                />
+                <ListRow
+                  href={`/desk/print/${selected.id}`}
+                  icon={<ListIcon color="var(--brand-tile)"><Printer /></ListIcon>}
+                  title={t("print")}
+                  accessory="chevron"
+                />
+              </ListSection>
+              <ListSection>
+                <ListRow onClick={() => setCancelOpen(true)} icon={<ListIcon color="var(--red-fill)"><Ban /></ListIcon>} title={t("cancelTicket")} destructive />
+              </ListSection>
+            </div>
+          </Sheet>
+        ) : null}
+
+        {selected ? (
+          <Sheet open={priorityOpen} onOpenChange={setPriorityOpen} title={t("setPriority")} closeLabel={tc("close")}>
+            <ListSection radioGroupLabel={t("reason")}>
+              {PRIORITY_REASONS.map((r: PriorityReason) => (
+                <ListRow
+                  key={r}
+                  onClick={() => {
+                    setPriorityOpen(false);
+                    void command("set_ticket_priority", { p_ticket: selected.id, p_reason: r });
+                  }}
+                  title={tr(r)}
                 />
               ))}
             </ListSection>
-          ) : null}
-        </div>
+          </Sheet>
+        ) : null}
 
-        <ListSection header={t("queueHeader", { count: data.waiting.length })} footer={data.waiting.length ? undefined : t("queueEmpty")}>
-          {data.waiting.map((tk2) => {
-            const service = serviceById.get(tk2.serviceId);
-            const doctor = practitionerOfCounter(tk2.preferredCounterId);
-            return (
-              <ListRow
-                key={tk2.id}
-                onClick={() => setSelected(tk2)}
-                icon={service ? <ServiceTile letter={service.prefix} color={service.color} /> : undefined}
-                title={
-                  <span className="flex items-baseline gap-3">
-                    <span className="w-16 shrink-0 font-semibold">{tk2.code}</span>
-                    <span className="truncate text-label-secondary">
-                      {td(`source.${tk2.source}`)} · {time(tk2.createdAt)}
-                    </span>
-                  </span>
-                }
-                subtitle={
-                  tk2.remote ? (
-                    <span className={tk2.remote.confirmed ? "text-green-text" : "text-orange-text"}>
-                      {tk2.remote.confirmed ? t("remoteHere") : tk2.remote.onMyWay ? t("remoteOnWay") : t("remotePending")}
-                      {tk2.remote.delays ? ` · ${t("remoteDelayed", { count: tk2.remote.delays })}` : ""}
-                    </span>
-                  ) : doctor ? (
-                    t("forPractitioner", { name: doctor.name })
-                  ) : undefined
-                }
-                accessory={
-                  tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
-                }
-              />
-            );
-          })}
-        </ListSection>
-      </div>
+        {selected ? (
+          <TransferSheet
+            code={selected.code}
+            services={data.services.filter((s) => s.id !== selected.serviceId)}
+            open={transferOpen}
+            onOpenChange={setTransferOpen}
+            onConfirm={(serviceId) => void command("transfer_ticket", { p_ticket: selected.id, p_target_service: serviceId })}
+          />
+        ) : null}
 
-      <BottomBar>
-        <Button block onClick={() => setCreateOpen(true)} leadingIcon={<Plus aria-hidden className="size-5 stroke-[2.25]" />}>
-          {t("newTicket")}
-        </Button>
-      </BottomBar>
+        {selected && cancelOpen ? (
+          <AlertDialog
+            open
+            onOpenChange={setCancelOpen}
+            title={t("cancelTitle", { code: selected.code })}
+            description={t("cancelBody")}
+            cancelLabel={t("keep")}
+            actionLabel={t("cancelTicket")}
+            destructive
+            onAction={() => void command("cancel_ticket", { p_ticket: selected.id })}
+          />
+        ) : null}
 
-      <CreateTicketSheet data={data} open={createOpen} onOpenChange={setCreateOpen} onCreated={() => void refresh()} />
-
-      {selected ? (
-        <Sheet
-          open={!!selected && !transferOpen && !cancelOpen && !priorityOpen}
-          onOpenChange={(o) => !o && setSelected(null)}
-          title={t("ticketActions", { code: selected.code })}
-          closeLabel={tc("close")}
-        >
-          <div className="flex flex-col gap-4 pt-2">
-            {selected.remote && !selected.remote.confirmed ? (
-              <ListSection>
-                <ListRow
-                  onClick={() => command("staff_confirm_presence", { p_ticket: selected.id })}
-                  icon={<ListIcon color="var(--green-fill)"><ScanLine /></ListIcon>}
-                  title={t("confirmPresence")}
-                />
-              </ListSection>
-            ) : null}
-            <ListSection>
-              {selected.priorityReason ? (
-                <ListRow
-                  onClick={() => command("set_ticket_priority", { p_ticket: selected.id, p_reason: null })}
-                  icon={<ListIcon color="var(--orange-fill)"><StarOff /></ListIcon>}
-                  title={t("removePriority")}
-                />
-              ) : (
-                <ListRow
-                  onClick={() => setPriorityOpen(true)}
-                  icon={<ListIcon color="var(--orange-fill)"><Star /></ListIcon>}
-                  title={t("setPriority")}
-                  accessory="chevron"
-                />
-              )}
-              <ListRow
-                onClick={() => setTransferOpen(true)}
-                icon={<ListIcon color="var(--accent-fill)"><Shuffle /></ListIcon>}
-                title={t("reorient")}
-                accessory="chevron"
-              />
-              <ListRow
-                onClick={() => command("move_back_ticket", { p_ticket: selected.id, p_places: 3 })}
-                icon={<ListIcon color="var(--brand-tile)"><ArrowDown /></ListIcon>}
-                title={t("moveBack")}
-              />
-              <ListRow
-                href={`/desk/print/${selected.id}`}
-                icon={<ListIcon color="var(--brand-tile)"><Printer /></ListIcon>}
-                title={t("print")}
-                accessory="chevron"
-              />
-            </ListSection>
-            <ListSection>
-              <ListRow onClick={() => setCancelOpen(true)} icon={<ListIcon color="var(--red-fill)"><Ban /></ListIcon>} title={t("cancelTicket")} destructive />
-            </ListSection>
-          </div>
-        </Sheet>
-      ) : null}
-
-      {selected ? (
-        <Sheet open={priorityOpen} onOpenChange={setPriorityOpen} title={t("setPriority")} closeLabel={tc("close")}>
-          <ListSection radioGroupLabel={t("reason")}>
-            {PRIORITY_REASONS.map((r: PriorityReason) => (
-              <ListRow
-                key={r}
-                onClick={() => {
-                  setPriorityOpen(false);
-                  void command("set_ticket_priority", { p_ticket: selected.id, p_reason: r });
-                }}
-                title={tr(r)}
-              />
-            ))}
-          </ListSection>
-        </Sheet>
-      ) : null}
-
-      {selected ? (
-        <TransferSheet
-          code={selected.code}
-          services={data.services.filter((s) => s.id !== selected.serviceId)}
-          open={transferOpen}
-          onOpenChange={setTransferOpen}
-          onConfirm={(serviceId) => void command("transfer_ticket", { p_ticket: selected.id, p_target_service: serviceId })}
-        />
-      ) : null}
-
-      {selected && cancelOpen ? (
-        <AlertDialog
-          open
-          onOpenChange={setCancelOpen}
-          title={t("cancelTitle", { code: selected.code })}
-          description={t("cancelBody")}
-          cancelLabel={t("keep")}
-          actionLabel={t("cancelTicket")}
-          destructive
-          onAction={() => void command("cancel_ticket", { p_ticket: selected.id })}
-        />
-      ) : null}
-
-      {absenceFor ? (
-        <AbsenceSheet
-          key={absenceFor.id}
-          practitioner={{ id: absenceFor.id, name: absenceFor.name }}
-          active={absenceFor.absence}
-          open
-          onOpenChange={(o) => !o && setAbsenceFor(null)}
-          onDone={(message) => {
-            toast(message, <UserRoundX aria-hidden />);
-            void refresh();
-          }}
-        />
-      ) : null}
-    </main>
+        {absenceFor ? (
+          <AbsenceSheet
+            key={absenceFor.id}
+            practitioner={{ id: absenceFor.id, name: absenceFor.name }}
+            active={absenceFor.absence}
+            open
+            onOpenChange={(o) => !o && setAbsenceFor(null)}
+            onDone={(message) => {
+              toast(message, <UserRoundX aria-hidden />);
+              void refresh();
+            }}
+          />
+        ) : null}
+      </main>
+    </PageFrame>
   );
 }

@@ -19,7 +19,7 @@ export default async function InvitePage({ params }: { params: Promise<{ orgId: 
   const t = await getTranslations("staffMgmt");
   const branches = await manageableBranches(ctx);
   return (
-    <AdminPage title={t("inviteTitle")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}/staff`, label: t("title") }}>
+    <AdminPage narrow title={t("inviteTitle")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}/staff`, label: t("title") }}>
       <InviteForm
         action={inviteMember.bind(null, orgId)}
         actorRole={ctx.canManageOrg ? "org_admin" : "branch_manager"}

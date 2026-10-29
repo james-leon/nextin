@@ -19,7 +19,7 @@ export default async function NewCounterPage({ params }: { params: Promise<{ org
   const t = await getTranslations("counters");
   const data = await counterFormData(branchId);
   return (
-    <AdminPage title={t("new")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}/counters`, label: t("title") }}>
+    <AdminPage inSplit title={t("new")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}/counters`, label: t("title") }}>
       <CounterForm action={saveCounter.bind(null, orgId, branchId, null)} {...data} />
     </AdminPage>
   );

@@ -160,7 +160,7 @@ export function BookingForm({
         <h3 id="booking-day" className="px-4 text-footnote uppercase text-label-secondary">
           {t("date")} · {longDay(date, locale)}
         </h3>
-        <div role="radiogroup" aria-labelledby="booking-day" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div role="radiogroup" aria-labelledby="booking-day" className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
           {days.map((d) => {
             const s = shortDay(d, locale);
             return (

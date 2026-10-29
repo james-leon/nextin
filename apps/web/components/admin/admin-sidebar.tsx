@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Building2, ChevronLeft, CreditCard, LayoutGrid, Megaphone, Settings, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { SidebarPanel } from "@/components/shell/sidebar-shell";
 import { Logo } from "@/components/ui/logo";
 
 export type AdminNavKey = "overview" | "branches" | "practitioners" | "staff" | "ads" | "billing";
@@ -43,9 +44,7 @@ export function AdminSidebar({
     [...items].reverse().find((i) => (i.path ? pathname.startsWith(i.href) : pathname === i.href))?.key ?? "overview";
 
   return (
-    <aside className="hidden w-64 shrink-0 bg-grouped-secondary shadow-[inset_-0.5px_0_0_var(--separator)] lg:block">
-      {/* Colonne sur toute la hauteur de la page (fond, séparateur) ; contenu collant à la fenêtre au défilement. */}
-      <div className="sticky top-0 flex h-dvh flex-col gap-6 overflow-y-auto px-3 py-5">
+    <SidebarPanel>
         <div className="px-3">
           <Logo />
         </div>
@@ -98,7 +97,6 @@ export function AdminSidebar({
           <Settings aria-hidden className="size-5 stroke-[1.75]" />
           {ts("open")}
         </Link>
-      </div>
-    </aside>
+    </SidebarPanel>
   );
 }

@@ -6,9 +6,12 @@ import { AdminPage } from "@/components/admin/admin-page";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { SavedNotice } from "@/components/admin/saved-notice";
 import { Badge } from "@/components/ui/badge";
+import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
+import { DataTable, td, th } from "@/components/ui/data-table";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { getOrgContext } from "@/lib/admin/context";
+import { cn } from "@/lib/cn";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { revokeInvitation } from "../_actions/people";
 
@@ -45,11 +48,28 @@ export default async function StaffPage({
   const branchName = new Map((branches ?? []).map((b) => [b.id, b.name]));
   const scope = (branchId: string | null) => (branchId ? branchName.get(branchId) : ta("allBranches"));
 
+  const members_ = members ?? [];
+  const expires = (iso: string) => format.dateTime(new Date(iso), { day: "numeric", month: "long" });
+  const revoke = (inv: { id: string; email: string | null }) => (
+    <ConfirmAction
+      action={revokeInvitation.bind(null, orgId, inv.id)}
+      label={ta("cancel")}
+      title={t("revoke")}
+      body={inv.email ?? ""}
+      confirmLabel={t("revoke")}
+      block={false}
+      size="md"
+      icon={<X aria-hidden className="size-4" />}
+    />
+  );
+
   return (
     <AdminPage title={t("title")} subtitle={t("subtitle")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: ta("nav.overview") }}>
       <SavedNotice show={!!saved} />
-      <ListSection header={t("members")}>
-        {(members ?? []).map((m) => {
+
+      {/* Téléphone et tablette : liste groupée (sous-titre sur deux lignes au plus). */}
+      <ListSection header={t("members")} className="lg:hidden">
+        {members_.map((m) => {
           const self = m.user_id === ctx.session.userId;
           return (
             <ListRow
@@ -73,29 +93,71 @@ export default async function StaffPage({
         })}
       </ListSection>
 
+      {/* Ordinateur : tableau (nom, rôle, agences, e-mail, statut, actions). */}
+      <section aria-labelledby="members-title" className="hidden flex-col gap-1.5 lg:flex">
+        <h2 id="members-title" className="px-4 text-footnote uppercase text-label-secondary">
+          {t("members")}
+        </h2>
+        <DataTable
+          label={t("members")}
+          head={
+            <>
+              <th scope="col" className={th}>{t("colName")}</th>
+              <th scope="col" className={th}>{t("colRole")}</th>
+              <th scope="col" className={th}>{t("colScope")}</th>
+              <th scope="col" className={th}>{t("colEmail")}</th>
+              <th scope="col" className={th}>{t("colStatus")}</th>
+              <th scope="col" className={cn(th, "text-right")}>{t("colActions")}</th>
+            </>
+          }
+        >
+          {members_.map((m) => {
+            const self = m.user_id === ctx.session.userId;
+            const editable = ctx.canManageStaff && !self;
+            return (
+              <tr key={m.membership_id}>
+                <td className={td}>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <ListIcon color={m.active ? "var(--brand-tile)" : "var(--label-tertiary)"}>
+                      <UserRound />
+                    </ListIcon>
+                    <span className="truncate font-semibold">{m.full_name || m.email}</span>
+                    {self ? <Badge tone="accent">{t("you")}</Badge> : null}
+                  </span>
+                </td>
+                <td className={cn(td, "whitespace-nowrap")}>{tr(m.role)}</td>
+                <td className={td}>{scope(m.branch_id)}</td>
+                <td className={cn(td, "max-w-72 truncate text-label-secondary")}>{m.email}</td>
+                <td className={td}>{m.active ? <Badge tone="green">{t("active")}</Badge> : <Badge tone="orange">{t("inactive")}</Badge>}</td>
+                <td className={cn(td, "text-right")}>
+                  {editable ? (
+                    <Button asChild variant="plain" size="md">
+                      <Link href={`/app/o/${orgId}/staff/${m.membership_id}`} aria-label={`${t("edit")} · ${m.full_name || m.email}`}>
+                        {t("edit")}
+                      </Link>
+                    </Button>
+                  ) : null}
+                </td>
+              </tr>
+            );
+          })}
+        </DataTable>
+      </section>
+
       {ctx.canManageStaff ? (
         <>
-          <ListSection header={t("invitations")}>
+          <ListSection header={t("invitations")} className={invitations?.length ? "lg:hidden" : undefined}>
             {invitations?.length ? (
               invitations.map((inv) => (
                 <li key={inv.id} className="group/row pl-4">
                   <span className="list-separator flex min-h-11 items-center justify-between gap-3 py-2 pr-2">
                     <span className="flex min-w-0 flex-col">
                       <span className="truncate text-body">{inv.email}</span>
-                      <span className="text-subheadline text-label-secondary">
-                        {[tr(inv.role), scope(inv.branch_id), t("expires", { date: format.dateTime(new Date(inv.expires_at), { day: "numeric", month: "long" }) })].join(" · ")}
+                      <span className="line-clamp-2 text-subheadline text-label-secondary">
+                        {[tr(inv.role), scope(inv.branch_id), t("expires", { date: expires(inv.expires_at) })].join(" · ")}
                       </span>
                     </span>
-                    <ConfirmAction
-                      action={revokeInvitation.bind(null, orgId, inv.id)}
-                      label={ta("cancel")}
-                      title={t("revoke")}
-                      body={inv.email ?? ""}
-                      confirmLabel={t("revoke")}
-                      block={false}
-                      size="md"
-                      icon={<X aria-hidden className="size-4" />}
-                    />
+                    {revoke(inv)}
                   </span>
                 </li>
               ))
@@ -103,12 +165,44 @@ export default async function StaffPage({
               <li className="px-4 py-3 text-body text-label-secondary">{t("noInvitations")}</li>
             )}
           </ListSection>
-          <Button asChild block>
-            <Link href={`/app/o/${orgId}/staff/invite`}>
-              <UserPlus aria-hidden className="size-5" />
-              {t("invite")}
-            </Link>
-          </Button>
+          {invitations?.length ? (
+            <section aria-labelledby="invitations-title" className="hidden flex-col gap-1.5 lg:flex">
+              <h2 id="invitations-title" className="px-4 text-footnote uppercase text-label-secondary">
+                {t("invitations")}
+              </h2>
+              <DataTable
+                label={t("invitations")}
+                head={
+                  <>
+                    <th scope="col" className={th}>{t("colEmail")}</th>
+                    <th scope="col" className={th}>{t("colRole")}</th>
+                    <th scope="col" className={th}>{t("colScope")}</th>
+                    <th scope="col" className={th}>{t("colExpires")}</th>
+                    <th scope="col" className={cn(th, "text-right")}>{t("colActions")}</th>
+                  </>
+                }
+              >
+                {invitations.map((inv) => (
+                  <tr key={inv.id}>
+                    <td className={cn(td, "max-w-80 truncate")}>{inv.email}</td>
+                    <td className={cn(td, "whitespace-nowrap")}>{tr(inv.role)}</td>
+                    <td className={td}>{scope(inv.branch_id)}</td>
+                    <td className={cn(td, "whitespace-nowrap text-label-secondary")}>{expires(inv.expires_at)}</td>
+                    <td className={cn(td, "text-right")}>{revoke(inv)}</td>
+                  </tr>
+                ))}
+              </DataTable>
+            </section>
+          ) : null}
+          {/* Action principale : en bas sur téléphone et tablette, dans la barre de titre sur ordinateur. */}
+          <BottomBar>
+            <Button asChild block>
+              <Link href={`/app/o/${orgId}/staff/invite`}>
+                <UserPlus aria-hidden className="size-5" />
+                {t("invite")}
+              </Link>
+            </Button>
+          </BottomBar>
         </>
       ) : null}
     </AdminPage>

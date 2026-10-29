@@ -83,7 +83,7 @@ export default async function PlatformCampaignPage({
     : null;
 
   return (
-    <AdminPage title={c.name} eyebrow={owner} back={{ href: "/admin/ads", label: t("title") }} wide>
+    <AdminPage title={c.name} eyebrow={owner} back={{ href: "/admin/ads", label: t("title") }}>
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>
           {t("saved")}

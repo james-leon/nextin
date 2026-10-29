@@ -46,7 +46,6 @@ export default async function AdsHome() {
     <AdminPage
       title={t("nav.campaigns")}
       eyebrow={advertiser.name}
-      wide
       trailing={
         <Button asChild variant="gray" size="md">
           <Link href="/ads/campaigns/new">

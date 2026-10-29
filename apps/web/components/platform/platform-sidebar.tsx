@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ChevronLeft, CreditCard, Layers, Megaphone, SlidersHorizontal, UserRound } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/cn";
+import { SidebarPanel } from "@/components/shell/sidebar-shell";
 
 const ITEMS = [
   { key: "subscriptions", href: "/admin", icon: CreditCard },
@@ -27,7 +28,7 @@ export function PlatformNav({ variant, hasOrgs = true }: { variant: "sidebar" | 
 
   if (variant === "inline") {
     return (
-      <nav aria-label={t("title")} className="lg:hidden">
+      <nav aria-label={t("title")} className="md:hidden">
         <ul role="list" className="flex gap-2 overflow-x-auto px-4 pb-1">
           {ITEMS.map((item) => (
             <li key={item.key}>
@@ -57,9 +58,7 @@ export function PlatformNav({ variant, hasOrgs = true }: { variant: "sidebar" | 
   }
 
   return (
-    <aside className="hidden w-64 shrink-0 bg-grouped-secondary shadow-[inset_-0.5px_0_0_var(--separator)] lg:block">
-      {/* Colonne sur toute la hauteur de la page (fond, séparateur) ; contenu collant à la fenêtre au défilement. */}
-      <div className="sticky top-0 flex h-dvh flex-col gap-6 overflow-y-auto px-3 py-5">
+    <SidebarPanel>
         <div className="px-3">
           <Logo />
         </div>
@@ -101,7 +100,6 @@ export function PlatformNav({ variant, hasOrgs = true }: { variant: "sidebar" | 
           <UserRound aria-hidden className="size-5 stroke-[1.75]" />
           {t("nav.account")}
         </Link>
-      </div>
-    </aside>
+    </SidebarPanel>
   );
 }

@@ -47,7 +47,7 @@ export default async function PlatformHome({ searchParams }: { searchParams: Pro
   const href = (s: StatusFilter) => `/admin?${new URLSearchParams({ ...(s !== "all" ? { status: s } : {}), ...(q ? { q } : {}) })}`;
 
   return (
-    <AdminPage title={t("title")} eyebrow={t("eyebrow")} wide>
+    <AdminPage title={t("title")} eyebrow={t("eyebrow")}>
       <PlatformNav variant="inline" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard label={t("mrr")} value={<span className="tabular">{xaf(revenue.mrr_xaf)}</span>} />

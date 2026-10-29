@@ -12,7 +12,8 @@ import { supabaseOptions } from "./queue-helpers";
  */
 const PHASE = process.env.RESPONSIVE_PHASE === "before" ? "before" : "after";
 const OUT = PHASE === "before" ? "../../docs/captures/responsive/before" : "../../docs/captures/responsive";
-const THEMES: ("light" | "dark")[] = PHASE === "before" ? ["light"] : ["light", "dark"];
+const THEMES: ("light" | "dark")[] =
+  PHASE === "before" || process.env.RESPONSIVE_THEMES === "light" ? ["light"] : ["light", "dark"];
 const SIZES = {
   "390": { width: 390, height: 844, mobile: true, scale: 2 },
   "820": { width: 820, height: 1180, mobile: true, scale: 1 },

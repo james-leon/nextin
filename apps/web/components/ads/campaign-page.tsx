@@ -142,7 +142,6 @@ export async function CampaignPage({
       title={c.name}
       eyebrow={owner?.name ?? ""}
       back={back}
-      wide
       trailing={
         editable ? (
           <Button asChild variant="gray" size="md">

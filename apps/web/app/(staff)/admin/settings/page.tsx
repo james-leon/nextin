@@ -22,7 +22,7 @@ export default async function PlatformSettingsPage({ searchParams }: { searchPar
   const values = data as unknown as PlatformSettingsValues;
   const missing = !values.company_legal_name || !values.company_rc || !values.company_niu;
   return (
-    <AdminPage title={t("settingsTitle")} eyebrow={t("title")}>
+    <AdminPage narrow title={t("settingsTitle")} eyebrow={t("title")}>
       <PlatformNav variant="inline" />
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>

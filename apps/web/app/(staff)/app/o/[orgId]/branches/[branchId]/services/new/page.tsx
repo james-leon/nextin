@@ -24,7 +24,7 @@ export default async function NewServicePage({ params }: { params: Promise<{ org
     listSpecialties(orgId),
   ]);
   return (
-    <AdminPage title={t("new")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}/services`, label: t("title") }}>
+    <AdminPage inSplit title={t("new")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}/services`, label: t("title") }}>
       <ServiceForm
         action={saveService.bind(null, orgId, branchId, null)}
         takenPrefixes={(existing ?? []).map((s) => s.prefix)}

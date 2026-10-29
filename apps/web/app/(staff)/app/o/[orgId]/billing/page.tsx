@@ -71,7 +71,7 @@ export default async function BillingPage({
     max == null ? `${used ?? 0} · ${t("unlimited")}` : t("ofLimit", { used: used ?? 0, limit: max });
 
   return (
-    <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: to("title") }} wide>
+    <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: to("title") }}>
       {scheduled ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>
           {t("scheduled")}
@@ -86,8 +86,8 @@ export default async function BillingPage({
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-7">
           <section aria-labelledby="sub-title" className="squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
-            <div className="flex items-center justify-between gap-3">
-              <h2 id="sub-title" className="text-title2 font-bold">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <h2 id="sub-title" className="min-w-0 text-title2 font-bold">
                 {s ? planName(e.subscribed_plan_code ?? e.plan_code) : t("pilot")}
               </h2>
               {s ? (

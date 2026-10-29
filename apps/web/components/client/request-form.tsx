@@ -232,7 +232,7 @@ export function RequestForm({ options, branchId, captchaSiteKey }: { options: Re
             <h2 id="request-day" className="px-4 text-footnote text-label-secondary uppercase">
               {t("dayHeader")}
             </h2>
-            <div role="radiogroup" aria-labelledby="request-day" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+            <div role="radiogroup" aria-labelledby="request-day" className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
               {days.map((d) => {
                 const count = perDay.get(d)?.length ?? 0;
                 const active = d === day;

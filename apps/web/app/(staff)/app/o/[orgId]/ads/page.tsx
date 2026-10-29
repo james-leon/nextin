@@ -52,7 +52,6 @@ export default async function OrgAdsPage({
     <AdminPage
       title={t("title")}
       eyebrow={ctx.org.name}
-      wide
       trailing={
         <Button asChild variant="gray" size="md">
           <Link href={`/app/o/${orgId}/ads/new`}>

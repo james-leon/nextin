@@ -29,7 +29,7 @@ export default async function MemberPage({ params }: { params: Promise<{ orgId: 
   const t = await getTranslations("staffMgmt");
   const tr = await getTranslations("roles");
   return (
-    <AdminPage title={m.full_name || m.email} subtitle={[tr(m.role), m.full_name ? m.email : null].filter(Boolean).join(" · ")} back={{ href: `/app/o/${orgId}/staff`, label: t("title") }}>
+    <AdminPage narrow title={m.full_name || m.email} subtitle={[tr(m.role), m.full_name ? m.email : null].filter(Boolean).join(" · ")} back={{ href: `/app/o/${orgId}/staff`, label: t("title") }}>
       <MembershipForm action={updateMembership.bind(null, orgId, membershipId)} actorRole={actorRole} initial={{ role: m.role, branchId: m.branch_id }} branches={branches} />
       <div className="flex flex-col gap-1">
         <ConfirmAction

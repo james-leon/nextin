@@ -21,7 +21,7 @@ export default async function AdPackagesPage({ searchParams }: { searchParams: P
     supabase.from("ad_sectors").select("*").order("sort_order"),
   ]);
   return (
-    <AdminPage title={t("packagesTitle")} back={{ href: "/admin/ads", label: t("title") }} wide>
+    <AdminPage title={t("packagesTitle")} back={{ href: "/admin/ads", label: t("title") }}>
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>
           {t("saved")}

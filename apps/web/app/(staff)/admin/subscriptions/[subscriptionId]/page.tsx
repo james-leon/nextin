@@ -48,7 +48,7 @@ export default async function SubscriptionDetail({
   const eventKey = (type: string) => (t.has(`events.${type}` as Parameters<typeof t.has>[0]) ? t(`events.${type}` as Parameters<typeof t>[0]) : type);
 
   return (
-    <AdminPage title={d.organization.name} eyebrow={t("detailTitle")} back={{ href: "/admin", label: t("nav.subscriptions") }} wide>
+    <AdminPage title={d.organization.name} eyebrow={t("detailTitle")} back={{ href: "/admin", label: t("nav.subscriptions") }}>
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>
           {t("saved")}

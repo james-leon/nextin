@@ -56,7 +56,7 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
         <h2 id="plans-title" className="text-title3 font-bold">
           {t("plansTitle")}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <SegmentedControl
             label={t("periodLabel")}
             value={period}
@@ -65,7 +65,7 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
               { value: "monthly", label: t("monthly") },
               { value: "annual", label: t("annual") },
             ]}
-            className="w-56"
+            className="w-56 max-w-full"
           />
           <Badge tone="green">{t("annualSaving")}</Badge>
         </div>

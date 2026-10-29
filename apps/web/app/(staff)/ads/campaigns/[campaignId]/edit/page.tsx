@@ -26,7 +26,7 @@ export default async function EditCampaignPage({ params }: { params: Promise<{ c
   const t = await getTranslations("ads");
   const data = await campaignFormData();
   return (
-    <AdminPage title={found.campaign.name} eyebrow={t("edit")} back={{ href: `/ads/campaigns/${campaignId}`, label: found.campaign.name }} wide>
+    <AdminPage title={found.campaign.name} eyebrow={t("edit")} back={{ href: `/ads/campaigns/${campaignId}`, label: found.campaign.name }}>
       <CampaignForm mode="advertiser" {...data} initial={found.initial} action={saveCampaign.bind(null, { campaignId })} />
     </AdminPage>
   );

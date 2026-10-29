@@ -329,7 +329,7 @@ function RequestDetail({
       {other ? (
         <section aria-label={t("other")} className="flex flex-col gap-3">
           {bookable.length > 1 ? (
-            <div role="radiogroup" aria-label={ta("practitioner")} className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            <div role="radiogroup" aria-label={ta("practitioner")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
               {bookable.map((p) => (
                 <button
                   key={p.id}
@@ -347,7 +347,7 @@ function RequestDetail({
               ))}
             </div>
           ) : null}
-          <div role="radiogroup" aria-label={ta("date")} className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div role="radiogroup" aria-label={ta("date")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
             {days.map((d) => {
               const s = shortDay(d, locale);
               return (

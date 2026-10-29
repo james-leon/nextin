@@ -83,13 +83,13 @@ export async function SetupOverview({ orgId }: { orgId: string }) {
   );
 }
 
-/** Navigation de l'établissement sur téléphone et tablette (la barre latérale apparaît à partir de `lg`). */
+/** Navigation de l'établissement sur téléphone (barre latérale repliable sur tablette, fixe à partir de `lg`). */
 export async function MobileOrgNav({ orgId }: { orgId: string }) {
   const ta = await getTranslations("admin");
   const ctx = await getOrgContext(orgId);
   const root = `/app/o/${orgId}`;
   return (
-    <nav aria-label={ta("navLabel")} className="lg:hidden">
+    <nav aria-label={ta("navLabel")} className="md:hidden">
       <ListSection>
         <ListRow href={`${root}/branches`} icon={<ListIcon color="var(--brand-tile)"><Building2 /></ListIcon>} title={ta("nav.branches")} accessory="chevron" />
         <ListRow href={`${root}/practitioners`} icon={<ListIcon color="var(--accent-fill)"><Stethoscope /></ListIcon>} title={ta("nav.practitioners")} accessory="chevron" />

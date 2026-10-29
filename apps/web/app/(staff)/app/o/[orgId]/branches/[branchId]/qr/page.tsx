@@ -44,7 +44,7 @@ export default async function QrPage({
   const link = main ? qrEntryUrl(main.token) : null;
 
   return (
-    <AdminPage title={t("title")} subtitle={t("subtitle")} eyebrow={branch.name} back={{ href: base, label: branch.name }}>
+    <AdminPage narrow title={t("title")} subtitle={t("subtitle")} eyebrow={branch.name} back={{ href: base, label: branch.name }}>
       <SavedNotice show={!!regenerated} message={t("regenerated")} />
       {main && link ? (
         <section className="flex flex-col items-center gap-5 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 shadow-card">

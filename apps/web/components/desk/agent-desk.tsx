@@ -35,7 +35,7 @@ const MAX_ROWS = 6;
 
 /**
  * Poste agent / cabinet (maquette 04) : appel en deux temps, un seul bouton principal qui change de rôle.
- * Ordinateur : deux colonnes (patient en cours et bouton principal ; à suivre, statistiques, actions) et raccourcis
+ * Tablette et ordinateur : deux colonnes (patient en cours et bouton principal ; à suivre, statistiques, actions) et raccourcis
  * clavier (aide « ? »). Mode compact mémorisé sur l'appareil : numéro, chrono, bouton principal, nombre en attente.
  */
 export function AgentDesk({
@@ -263,7 +263,7 @@ export function AgentDesk({
   }
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-lg px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-40 lg:max-w-6xl lg:pb-12">
+    <main className="mx-auto min-h-dvh w-full max-w-lg px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-40 md:max-w-7xl md:px-8 md:pb-12 lg:px-10">
       <div className="flex h-11 items-center justify-between gap-2">
         {statusBadge}
         <div className="flex items-center gap-1">
@@ -286,7 +286,7 @@ export function AgentDesk({
         <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p>
       </header>
 
-      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:gap-8">
+      <div className="flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_20rem] md:items-start md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8">
         <div className="flex min-w-0 flex-col gap-5">
           {!online || pending.length ? (
             <CalloutCard icon={online ? <RefreshCw /> : <CloudOff />} tone={online ? "accent" : "red"} role="status">
@@ -348,7 +348,7 @@ export function AgentDesk({
           ) : null}
 
           {/* Ordinateur : bouton principal sous le patient en cours (la barre du bas reste pour le téléphone). */}
-          <div className="hidden lg:block">{primaryButton}</div>
+          <div className="hidden md:block">{primaryButton}</div>
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
@@ -387,7 +387,9 @@ export function AgentDesk({
         </div>
       </div>
 
-      <BottomBar className="lg:hidden">{primaryButton}</BottomBar>
+      <BottomBar dock={false} className="md:hidden">
+        {primaryButton}
+      </BottomBar>
       {sheets}
     </main>
   );

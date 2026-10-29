@@ -60,7 +60,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Accents Wintek **avec parcimonie** : Navy `#0D2C54` (marque), Blue `#1A6BB5` = **seule couleur d'action** (`bg-accent`, `text-accent-text`, `text-accent-on-tint` sur fond teinté), Orange `#F58B1F` (attention), Green `#2EC04E` (succès). Orange/Green en fond ou icône ; pour du texte, utiliser `text-orange-text` / `text-green-text` (AA).
 - `text-label-tertiary` : icônes, chevrons, placeholders seulement — jamais pour du texte informatif (contraste).
 - **Formes** : fond groupé `#F2F2F7`, cartes blanches, rayons continus 12–22 px (`rounded-[var(--radius-*)]` + `squircle`), séparateurs 0,5 px (`hairline-*`), ombres très douces (`shadow-card`).
-- **Composants** (`components/ui`) : `Button` (filled/tinted/gray/plain/destructive/destructive-plain/navy, `leadingIcon`/`trailingIcon`), `IconButton` (label obligatoire), `ListSection`/`ListRow`/`ListSwitchRow`, `Card`, `StatCard`, `CalloutCard`, `Switch`, `SegmentedControl`, `TextField`/`SearchField`, `NavigationBar` (`large` avec sur-titre et grand titre réductible, ou `inline` ; retour en haut à gauche), `TabBar` (translucide, en bas sur mobile), `BottomBar` (action principale collée en bas), `Sheet` (vaul), `AlertDialog`, `Badge` (`pill` pour un statut, `tag` pour une étiquette)/`StatusDot`, `ProgressBar`, `Skeleton`, `Spinner`, `ToastProvider`, `TicketHero`, `NowServingCard`, `ServiceTile`, `ScannerFrame`, `Logo`/`LogoMark`. Réutiliser avant de créer.
+- **Composants** (`components/ui`) : `Button` (filled/tinted/gray/plain/destructive/destructive-plain/navy, `leadingIcon`/`trailingIcon`), `IconButton` (label obligatoire), `ListSection`/`ListRow`/`ListSwitchRow`, `Card`, `StatCard`, `CalloutCard`, `Switch`, `SegmentedControl`, `TextField`/`SearchField`, `NavigationBar` (`large` avec sur-titre et grand titre réductible, ou `inline` ; retour en haut à gauche), `TabBar` (translucide, en bas sur mobile), `BottomBar` (action principale : fixe en bas sur téléphone, à la largeur du contenu sur tablette, dans la barre de titre sur ordinateur via `PageFrame`), `DataTable` (tableau sur ordinateur), `CheckPicker` (longue liste à cocher avec recherche), `IconLink` (« + » d'une liste), `Sheet` (vaul), `AlertDialog`, `Badge` (`pill` pour un statut, `tag` pour une étiquette)/`StatusDot`, `ProgressBar`, `Skeleton`, `Spinner`, `ToastProvider`, `TicketHero`, `NowServingCard`, `ServiceTile`, `ScannerFrame`, `Logo`/`LogoMark`. Réutiliser avant de créer.
 - **Mouvement** : ressort CSS `ease-[var(--ease-spring)]`, 200–420 ms, jamais gratuit ; retour tactile immédiat (`pressable`) ; `prefers-reduced-motion` respecté.
 - **Clair et sombre** sur chaque écran (`data-theme` sur `<html>`, préférence Auto/Clair/Sombre).
 - **Accessibilité** : cibles ≥ 44 px (testé), contrastes AA (axe testé en clair et sombre), `aria-label` sur tout bouton icône, libellés associés aux champs, navigation clavier (`:focus-visible`), rôles ARIA corrects (ex. `ListSection radioGroupLabel` pour les choix exclusifs).
@@ -75,7 +75,8 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 ## Back-office (`/app/o/[orgId]/…`)
 - Contexte et droits : `getOrgContext(orgId)` (`lib/admin/context.ts`), `getBranch(orgId, branchId)` ; 404 si l'établissement ou l'agence n'est pas accessible.
 - Mutations : server actions dans `app/(staff)/app/o/[orgId]/_actions/` (Zod → Supabase sous RLS → `revalidatePath` → redirection `?saved=1`). Toujours `.select(...)` après un update/delete et refuser si aucune ligne n'est touchée (RLS silencieuse).
-- Gabarit `AdminPage`, formulaires clients avec `useActionState` + `useFormErrors`, action principale dans `BottomBar` (décalée de la barre latérale via `--shell-sidebar`), confirmations par `ConfirmAction`.
+- Gabarit `AdminPage` (large par défaut : `max-w-7xl`, marges 16/32/40 px ; `narrow` réservé aux formulaires purs), formulaires clients avec `useActionState` + `useFormErrors`, action principale dans `BottomBar` (remontée dans la barre de titre sur ordinateur ; un bouton d'envoi y reste relié à son formulaire), confirmations par `ConfirmAction`.
+- Listes du back-office : maître-détail par un `layout.tsx` (`MasterDetail`, `SplitListPane`, `SplitRow`, `SplitPlaceholder` ; détail en `AdminPage inSplit`) ou tableau (`DataTable`) sur ordinateur ; jamais une liste étirée sur 1 200 px.
 - PDF : `@react-pdf/renderer` (`lib/pdf/`), police Inter embarquée ; QR codes vectoriels via `qrMatrix` (`lib/qr/matrix.ts`), URL toujours `qrEntryUrl(token)`.
 
 ## File d'attente (M3, `docs/modules/M3.md`)
@@ -107,7 +108,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Écritures uniquement par RPC (`book_appointment`, `reschedule_appointment`, `cancel_appointment`, `check_in_appointment`, `mark_appointment_no_show`). Repère du patient (`customer_label`, initiales) : jamais annoncé, affiché sur TV ni envoyé.
 - Règle d'équité : `pickNextTicket` (`@nextin/shared/appointments`) et `public.fair_pick` doivent rester identiques (`fairness.fixtures.json`, recopié dans `m5b_appointments.test.sql` et vérifié par Vitest).
 - Messages de rendez-vous : contacts et jobs rattachés au rendez-vous (`ticket_id` nul) ; à l'arrivée, le numéro est recopié sur le ticket.
-- **Responsive obligatoire** pour tout nouvel écran : téléphone (360 px+), tablette portrait et paysage, ordinateur (1440 px+) avec une vraie mise en page (listes et détail côte à côte, `AdminPage wide`, `useMediaQuery`). Captures Playwright dans les quatre tailles, cibles tactiles testées sur mobile.
+- **Responsive obligatoire** pour tout nouvel écran : téléphone (360 px+), tablette portrait et paysage, ordinateur (1440 et 1920 px) avec une vraie mise en page (maître-détail, grilles, `useMediaQuery`). Captures dans les cinq tailles (390, 820, 1180, 1440, 1920), critères de `docs/REVUE-RESPONSIVE.md` §4 vérifiés par `e2e/responsive.spec.ts` (ajouter chaque nouvel écran à sa liste).
 
 ## Écran TV (M6, `docs/modules/M6.md`)
 - `/tv` sans compte : code à 6 chiffres → `pair_display` (back-office « Écrans ») → jeton d'appareil (seule l'empreinte en base, jamais lisible) ; `GET /api/tv/session` chaque minute, 401 = retour à l'appairage.
@@ -157,11 +158,16 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Tests e2e de diffusion : agence dans une ville propre et campagne Or ciblant cette ville (`e2e/ads-helpers.ts`), la base locale contenant d'autres campagnes.
 
 ## Backlog n° 1 (`docs/modules/BACKLOG-1.md`)
-- Gabarits à barre latérale : `data-shell="sidebar"` ; barre latérale = colonne pleine hauteur + contenu `sticky top-0 h-dvh`. Retour masqué sur ordinateur si la rubrique est dans la barre latérale (`isSidebarDestination`, `back.inSidebar`). Toute grille responsive part de `grid-cols-1`.
+- Gabarits à barre latérale : `SidebarShell` + `SidebarPanel` (`components/shell`) ; fixe à partir de 1024 px, repliable sur tablette portrait (bouton dans la barre de navigation, Échap, fermeture en naviguant), absente sur téléphone (navigation par listes). Retour masqué sur ordinateur si la rubrique est dans la barre latérale (`isSidebarDestination`, `back.inSidebar`). Toute grille responsive part de `grid-cols-1`.
 - `NavigationBar` : sur ordinateur, les actions `trailing` s'alignent sur le grand titre (ne pas les repositionner écran par écran).
 - Poste : raccourcis `deskShortcut` / `shortcutTargetAllowed` (`@nextin/shared/desk`, mêmes règles que les boutons), mode compact `useDeskCompact` (`lib/desk/compact.ts`).
 - Présence à distance : code tournant de l'écran TV (`presence_code`, `presence_url`), réglage `remote_presence_tv_only` ; secret par agence jamais lisible (`branch_presence_secrets`).
 - Publicité : agences choisies (`set_campaign_branches`, plafond de la formule), rôle `cashier` (`/ads/redeem` seulement) ; scanner partagé `useQrCamera` (`lib/client/qr-camera.ts`). `ListRow disabled` pour une ligne non cochable. Icône de secteur : `OrgTypeIcon` (`components/ui`).
+
+## Revue responsive (`docs/REVUE-RESPONSIVE.md`, notes `docs/modules/RESPONSIVE.md`)
+- Retour de la barre de navigation : libellé entier ou chevron seul (libellé gardé pour les lecteurs d'écran), jamais coupé. Sous-titres de `ListRow` : deux lignes au plus. `SegmentedControl` : une ligne. Rangées de pastilles : `scroll-fade-x`.
+- Détail d'une vue maître-détail : `@container` sur le panneau ; mises en page en colonnes par requêtes de conteneur (`@2xl:grid-cols-2`).
+- Captures : base propre (`pnpm db:reset` puis `pnpm seed:demo:local`), `RESPONSIVE_PHASE=before|after` avec `e2e/screenshots-responsive.spec.ts`.
 
 ## i18n
 - Dictionnaires typés `packages/shared/src/i18n/{fr,en}.ts` ; `fr` est la source, `en` doit avoir exactement les mêmes clés et variables (test Vitest).

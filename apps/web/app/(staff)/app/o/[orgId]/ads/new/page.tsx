@@ -20,7 +20,7 @@ export default async function NewHouseAdPage({ params }: { params: Promise<{ org
   const t = await getTranslations("adPrefs");
   const data = await campaignFormData();
   return (
-    <AdminPage title={t("newHouseAd")} eyebrow={ctx.org.name} subtitle={t("houseIntro")} back={{ href: `/app/o/${orgId}/ads`, label: t("title") }} wide>
+    <AdminPage title={t("newHouseAd")} eyebrow={ctx.org.name} subtitle={t("houseIntro")} back={{ href: `/app/o/${orgId}/ads`, label: t("title") }}>
       <CampaignForm mode="house" {...data} action={saveCampaign.bind(null, { organizationId: orgId })} />
     </AdminPage>
   );

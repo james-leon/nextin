@@ -30,7 +30,7 @@ export default async function EditCounterPage({ params }: { params: Promise<{ or
   ]);
   if (!c) notFound();
   return (
-    <AdminPage title={`${tk(c.kind)} ${c.number}`} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/branches/${branchId}/counters`, label: t("title") }}>
+    <AdminPage inSplit title={`${tk(c.kind)} ${c.number}`} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/branches/${branchId}/counters`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
       <CounterForm
         action={saveCounter.bind(null, orgId, branchId, counterId)}

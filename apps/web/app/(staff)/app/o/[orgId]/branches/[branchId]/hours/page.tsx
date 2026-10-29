@@ -30,7 +30,7 @@ export default async function HoursPage({ params }: { params: Promise<{ orgId: s
     };
   });
   return (
-    <AdminPage title={t("title")} subtitle={t("subtitle")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
+    <AdminPage narrow title={t("title")} subtitle={t("subtitle")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
       <ReadOnlyNotice show={!canManage} />
       <HoursForm action={saveOpeningHours.bind(null, orgId, branchId)} initial={initial} disabled={!canManage} />
     </AdminPage>

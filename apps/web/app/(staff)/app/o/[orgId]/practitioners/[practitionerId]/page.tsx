@@ -35,7 +35,7 @@ export default async function EditPractitionerPage({ params }: { params: Promise
   const ts = await getTranslations("schedule");
   const branchOptions = canManage ? branches : p.branch ? [p.branch] : [];
   return (
-    <AdminPage title={[p.title, p.display_name].filter(Boolean).join(" ")} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/practitioners`, label: t("title") }}>
+    <AdminPage inSplit title={[p.title, p.display_name].filter(Boolean).join(" ")} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/practitioners`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
       <ListSection>
         <ListRow

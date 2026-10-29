@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Clock, ConciergeBell, DoorOpen, Info, QrCode, SlidersHorizontal, Stethoscope, Tv } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Clock, ConciergeBell, DoorOpen, Info, QrCode, SlidersHorizontal, Stethoscope, Tv } from "lucide-react";
 import { SERVICE_COLORS, summarizeOpeningHours } from "@nextin/shared";
 import { AdminPage } from "@/components/admin/admin-page";
 import { SavedNotice } from "@/components/admin/saved-notice";
@@ -36,67 +37,75 @@ export default async function BranchPage({ params, searchParams }: Props) {
   const place = [branch.address, branch.city].filter(Boolean).join(", ");
 
   return (
-    <AdminPage title={branch.name} eyebrow={ctx.org.name} subtitle={place || undefined} back={{ href: `/app/o/${orgId}/branches`, label: t("title") }}>
+    <AdminPage inSplit title={branch.name} eyebrow={ctx.org.name} subtitle={place || undefined} back={{ href: `/app/o/${orgId}/branches`, label: t("title") }}>
       <SavedNotice show={!!saved} />
-      <ListSection>
-        <ListRow
-          href={`${base}/services`}
-          icon={<ListIcon color="var(--accent-fill)"><Stethoscope /></ListIcon>}
-          title={t("servicesCount", { count: services.count ?? 0 })}
-          accessory="chevron"
-        />
-        <ListRow
-          href={`${base}/counters`}
-          icon={<ListIcon color={SERVICE_COLORS.green}><DoorOpen /></ListIcon>}
-          title={t("countersCount", { count: counters.count ?? 0 })}
-          accessory="chevron"
-        />
-        <ListRow
-          href={`${base}/qr`}
-          icon={<ListIcon color={SERVICE_COLORS.purple}><QrCode /></ListIcon>}
-          title={t("qr")}
-          subtitle={qr.data ? qr.data.short_code : undefined}
-          accessory="chevron"
-        />
-        <ListRow
-          href={`${base}/displays`}
-          icon={<ListIcon color="var(--brand-tile)"><Tv /></ListIcon>}
-          title={tv("link")}
-          subtitle={tv("linkHint")}
-          accessory="chevron"
-        />
-      </ListSection>
-      <ListSection>
-        <ListRow
-          href={`${base}/hours`}
-          icon={<ListIcon color={SERVICE_COLORS.ochre}><Clock /></ListIcon>}
-          title={t("hours")}
-          subtitle={summarizeOpeningHours(hours.data ?? [], (d) => tw(String(d) as "1"), th("closed"))}
-          accessory="chevron"
-        />
-        <ListRow
-          href={`${base}/settings`}
-          icon={<ListIcon color={SERVICE_COLORS.slate}><SlidersHorizontal /></ListIcon>}
-          title={t("settings")}
-          accessory="chevron"
-        />
-        <ListRow
-          href={`${base}/edit`}
-          icon={<ListIcon color="var(--brand-tile)"><Info /></ListIcon>}
-          title={t("info")}
-          subtitle={branch.phone_e164 ?? undefined}
-          accessory="chevron"
-        />
-      </ListSection>
-      <ListSection>
-        <ListRow
-          href={`/desk/reception/${branchId}`}
-          icon={<ListIcon color="var(--orange-fill)"><ConciergeBell /></ListIcon>}
-          title={td("open")}
-          subtitle={td("openHint")}
-          accessory="chevron"
-        />
-      </ListSection>
+      {/* Deux colonnes dès que le panneau de détail est assez large (ordinateur) : structure / fonctionnement. */}
+      <div className="grid grid-cols-1 gap-6 @2xl:grid-cols-2 @2xl:items-start">
+        <ListSection header={t("structure")}>
+          <ListRow
+            href={`${base}/services`}
+            icon={<ListIcon color="var(--accent-fill)"><Stethoscope /></ListIcon>}
+            title={t("servicesCount", { count: services.count ?? 0 })}
+            accessory="chevron"
+          />
+          <ListRow
+            href={`${base}/counters`}
+            icon={<ListIcon color={SERVICE_COLORS.green}><DoorOpen /></ListIcon>}
+            title={t("countersCount", { count: counters.count ?? 0 })}
+            accessory="chevron"
+          />
+          <ListRow
+            href={`${base}/qr`}
+            icon={<ListIcon color={SERVICE_COLORS.purple}><QrCode /></ListIcon>}
+            title={t("qr")}
+            subtitle={qr.data ? qr.data.short_code : undefined}
+            accessory="chevron"
+          />
+          <ListRow
+            href={`${base}/displays`}
+            icon={<ListIcon color="var(--brand-tile)"><Tv /></ListIcon>}
+            title={tv("link")}
+            subtitle={tv("linkHint")}
+            accessory="chevron"
+          />
+        </ListSection>
+        <ListSection header={t("operations")}>
+          <ListRow
+            href={`${base}/hours`}
+            icon={<ListIcon color={SERVICE_COLORS.ochre}><Clock /></ListIcon>}
+            title={t("hours")}
+            subtitle={summarizeOpeningHours(hours.data ?? [], (d) => tw(String(d) as "1"), th("closed"))}
+            accessory="chevron"
+          />
+          <ListRow
+            href={`${base}/settings`}
+            icon={<ListIcon color={SERVICE_COLORS.slate}><SlidersHorizontal /></ListIcon>}
+            title={t("settings")}
+            accessory="chevron"
+          />
+          <ListRow
+            href={`${base}/edit`}
+            icon={<ListIcon color="var(--brand-tile)"><Info /></ListIcon>}
+            title={t("info")}
+            subtitle={branch.phone_e164 ?? undefined}
+            accessory="chevron"
+          />
+        </ListSection>
+      </div>
+      {/* Postes de l'agence : carte d'accès à l'accueil (et aux guichets depuis le choix du poste). */}
+      <Link
+        href={`/desk/reception/${branchId}`}
+        className="pressable squircle flex items-center gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card transition-colors hover:bg-fill-tertiary/50"
+      >
+        <span aria-hidden className="squircle flex size-12 shrink-0 items-center justify-center rounded-[12px] bg-orange text-white [&_svg]:size-6 [&_svg]:stroke-[1.75]">
+          <ConciergeBell />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-headline">{td("open")}</span>
+          <span className="text-subheadline text-label-secondary">{td("openHint")}</span>
+        </span>
+        <ChevronRight aria-hidden className="size-5 shrink-0 stroke-[2.25] text-label-tertiary" />
+      </Link>
     </AdminPage>
   );
 }

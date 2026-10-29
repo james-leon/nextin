@@ -17,7 +17,7 @@ export default async function NewBranchPage({ params }: { params: Promise<{ orgI
   if (!ctx.canManageOrg) notFound();
   const t = await getTranslations("branches");
   return (
-    <AdminPage title={t("new")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}/branches`, label: t("title") }}>
+    <AdminPage inSplit title={t("new")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}/branches`, label: t("title") }}>
       <BranchForm action={createBranch.bind(null, orgId)} submitLabel={t("create")} submittingLabel={t("creating")} />
     </AdminPage>
   );

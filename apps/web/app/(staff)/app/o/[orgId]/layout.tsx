@@ -1,11 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import { billingBanner } from "@nextin/shared/billing";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { BillingBanner } from "@/components/billing/billing-banner";
 import { SuspendedGate } from "@/components/billing/suspended-gate";
+import { SidebarShell } from "@/components/shell/sidebar-shell";
 import { getOrgContext } from "@/lib/admin/context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-/** Back-office d'un établissement : barre latérale (grand écran), bandeau d'abonnement, contenu. */
+/** Back-office d'un établissement : barre latérale (repliable sur tablette portrait), bandeau d'abonnement, contenu. */
 export default async function OrgLayout({ children, params }: { children: React.ReactNode; params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
   const ctx = await getOrgContext(orgId);
@@ -22,15 +24,16 @@ export default async function OrgLayout({ children, params }: { children: React.
   );
   const suspended =
     ctx.org.status !== "suspended" ? null : sub?.status === "suspended" ? "subscription" : "moderation";
+  const t = await getTranslations("common");
   return (
-    <div data-shell="sidebar" className="flex min-h-dvh lg:[--shell-sidebar:16rem]">
-      <AdminSidebar orgId={ctx.org.id} orgName={ctx.org.name} canManageOrg={ctx.canManageOrg} isPlatformAdmin={ctx.session.isPlatformAdmin} />
-      <main className="min-w-0 flex-1 pb-36">
-        <BillingBanner banner={banner} orgId={orgId} canPay={ctx.canManageOrg} />
-        <SuspendedGate orgId={orgId} reason={ctx.session.isPlatformAdmin ? null : suspended} canPay={ctx.canManageOrg}>
-          {children}
-        </SuspendedGate>
-      </main>
-    </div>
+    <SidebarShell
+      labels={{ open: t("sidebarShow"), close: t("sidebarHide") }}
+      sidebar={<AdminSidebar orgId={ctx.org.id} orgName={ctx.org.name} canManageOrg={ctx.canManageOrg} isPlatformAdmin={ctx.session.isPlatformAdmin} />}
+    >
+      <BillingBanner banner={banner} orgId={orgId} canPay={ctx.canManageOrg} />
+      <SuspendedGate orgId={orgId} reason={ctx.session.isPlatformAdmin ? null : suspended} canPay={ctx.canManageOrg}>
+        {children}
+      </SuspendedGate>
+    </SidebarShell>
   );
 }

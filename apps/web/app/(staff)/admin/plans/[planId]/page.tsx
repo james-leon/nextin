@@ -36,7 +36,7 @@ export default async function PlanEditPage({
     .maybeSingle();
   if (!plan) notFound();
   return (
-    <AdminPage title={plan.name} eyebrow={t("planEdit")} back={{ href: "/admin/plans", label: t("plansTitle") }}>
+    <AdminPage narrow title={plan.name} eyebrow={t("planEdit")} back={{ href: "/admin/plans", label: t("plansTitle") }}>
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>
           {ta("saved")}

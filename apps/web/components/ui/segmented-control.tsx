@@ -45,7 +45,7 @@ export function SegmentedControl<T extends string>({
         <ToggleGroup.Item
           key={o.value}
           value={o.value}
-          className="relative z-10 rounded-[8px] px-3 text-subheadline font-medium text-label data-[state=on]:font-semibold before:absolute before:inset-x-0 before:-inset-y-[3px] before:content-['']"
+          className="relative z-10 min-w-0 truncate rounded-[8px] px-2 text-subheadline font-medium whitespace-nowrap text-label data-[state=on]:font-semibold before:absolute before:inset-x-0 before:-inset-y-[3px] before:content-['']"
         >
           {o.label}
         </ToggleGroup.Item>

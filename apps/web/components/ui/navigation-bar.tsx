@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ReactNode, type RefObject } from "rea
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { SidebarToggle } from "@/components/shell/sidebar-shell";
+import { usePageSlotSetter } from "./page-frame";
 import { useMediaQuery } from "./use-media-query";
 
 type Back = {
@@ -12,17 +14,47 @@ type Back = {
   label: string;
   /** Rubrique déjà présente dans la barre latérale : masqué sur ordinateur quand la page en a une. */
   inSidebar?: boolean;
+  /** Détail d'une vue maître-détail : la liste est visible à côté à partir de la tablette, retour masqué. */
+  inSplit?: boolean;
 };
 
 function BackButton({ back }: { back: Back }) {
+  const label = useRef<HTMLSpanElement>(null);
+  const [iconOnly, setIconOnly] = useState(false);
+
+  // Règle iOS : si le libellé ne tient pas en entier, seul le chevron reste (libellé gardé pour les lecteurs d'écran) ;
+  // jamais un mot coupé. Place disponible : 40 % de la fenêtre au plus, moins les actions de droite.
+  useEffect(() => {
+    const span = label.current;
+    const grid = span?.closest<HTMLElement>("[data-nav-grid]");
+    if (!span || !grid) return;
+    const measure = () => {
+      const style = getComputedStyle(grid);
+      const inner = grid.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const trailing = grid.querySelector<HTMLElement>("[data-nav-trailing]")?.offsetWidth ?? 0;
+      const toggle = grid.querySelector<HTMLElement>("[data-nav-toggle] > button")?.offsetWidth ?? 0;
+      const available = Math.min(window.innerWidth * 0.4, inner - trailing - 16) - toggle - 28;
+      setIconOnly(span.scrollWidth > available);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(grid);
+    const trailing = grid.querySelector("[data-nav-trailing]");
+    if (trailing) observer.observe(trailing);
+    return () => observer.disconnect();
+  }, [back.label]);
+
   const cls = cn(
     "pressable flex h-11 min-w-11 max-w-full items-center pr-2 text-body text-accent-text",
     back.inSidebar && "lg:in-data-[shell=sidebar]:hidden",
+    back.inSplit && "md:hidden",
   );
   const inner = (
     <>
       <ChevronLeft aria-hidden className="size-7 shrink-0 stroke-[2.25]" />
-      <span className="truncate">{back.label}</span>
+      <span ref={label} className={iconOnly ? "sr-only" : "whitespace-nowrap"}>
+        {back.label}
+      </span>
     </>
   );
   return back.href ? (
@@ -87,7 +119,16 @@ export function NavigationBar({
 
   const showBarTitle = inline || scrolled;
   const desktop = useMediaQuery("(min-width: 1024px)");
-  const trailingInHeader = !inline && desktop && !scrolled && !!trailing;
+  const setSlot = usePageSlotSetter();
+  // Action principale de la page (BottomBar) remontée ici sur ordinateur, à la suite des actions de la barre.
+  const actions =
+    trailing || setSlot ? (
+      <>
+        {trailing}
+        {setSlot ? <span ref={setSlot} className="contents" /> : null}
+      </>
+    ) : null;
+  const trailingInHeader = !inline && desktop && !scrolled && !!actions;
 
   return (
     <>
@@ -100,8 +141,17 @@ export function NavigationBar({
         )}
       >
         {/* Retour et actions à leur largeur naturelle (une action longue n'est jamais tronquée) ; le titre réduit se rétrécit. */}
-        <div className={cn("mx-auto grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4", contentClassName)}>
-          <div className="-ml-2 flex min-w-0 max-w-[40vw] justify-start">{back ? <BackButton back={back} /> : null}</div>
+        <div data-nav-grid className={cn("mx-auto grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4", contentClassName)}>
+          <div className="-ml-2 flex min-w-0 items-center justify-start">
+            <span data-nav-toggle className="contents">
+              <SidebarToggle />
+            </span>
+            {back ? (
+              <div className="min-w-0 max-w-[40vw]">
+                <BackButton back={back} />
+              </div>
+            ) : null}
+          </div>
           {inline ? (
             <h1 className="truncate text-center text-headline">{title}</h1>
           ) : (
@@ -115,7 +165,9 @@ export function NavigationBar({
               {title}
             </p>
           )}
-          <div className="flex min-w-0 items-center justify-end gap-1">{trailingInHeader ? null : trailing}</div>
+          <div data-nav-trailing className="flex min-w-0 items-center justify-end gap-1">
+            {trailingInHeader ? null : actions}
+          </div>
         </div>
       </div>
       {inline ? (
@@ -128,7 +180,7 @@ export function NavigationBar({
           {trailingInHeader ? (
             <div className="flex items-end justify-between gap-4">
               <h1 className="min-w-0 text-large-title font-bold">{title}</h1>
-              <div className="flex shrink-0 items-center gap-2 pb-0.5">{trailing}</div>
+              <div className="flex shrink-0 items-center gap-2 pb-0.5">{actions}</div>
             </div>
           ) : (
             <h1 className="text-large-title font-bold">{title}</h1>

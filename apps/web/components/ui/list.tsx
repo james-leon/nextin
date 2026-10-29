@@ -67,6 +67,8 @@ type RowProps = {
   className?: string;
   /** Rôle ARIA explicite : "radio" (choix exclusif) ou "checkbox" (choix multiple). */
   role?: string;
+  /** Élément affiché dans le panneau de détail (vue maître-détail) : surligné, `aria-current="page"`. */
+  current?: boolean;
 };
 
 export function ListRow({
@@ -83,14 +85,16 @@ export function ListRow({
   disabled,
   className,
   role,
+  current,
 }: RowProps) {
   const content = (
     <>
       {icon}
-      <span className="relative flex min-h-11 flex-1 items-center gap-3 py-2.5 pr-4 list-separator">
+      <span className="relative flex min-h-11 min-w-0 flex-1 items-center gap-3 py-2.5 pr-4 list-separator">
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className={cn("truncate text-body", destructive && "text-red-text")}>{title}</span>
-          {subtitle ? <span className="truncate text-subheadline text-label-secondary">{subtitle}</span> : null}
+          <span className={cn("truncate text-body", destructive && "text-red-text", current && "font-semibold text-accent-on-tint")}>{title}</span>
+          {/* Sous-titre : deux lignes au plus, coupé avec des points de suspension (adresses e-mail comprises). */}
+          {subtitle ? <span className={cn("line-clamp-2 text-subheadline [overflow-wrap:anywhere]", current ? "text-label" : "text-label-secondary")}>{subtitle}</span> : null}
         </span>
         {detail !== undefined ? <span className="shrink-0 text-body text-label-secondary">{detail}</span> : null}
         {accessory === "chevron" ? (
@@ -122,7 +126,7 @@ export function ListRow({
   if (href) {
     return (
       <li className="group/row">
-        <Link href={href} className={cn(base, interactive)}>
+        <Link href={href} aria-current={current ? "page" : undefined} className={cn(base, current ? "bg-accent-tint" : interactive)}>
           {content}
         </Link>
       </li>

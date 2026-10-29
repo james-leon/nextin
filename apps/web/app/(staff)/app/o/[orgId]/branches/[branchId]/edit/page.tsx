@@ -18,7 +18,7 @@ export default async function EditBranchPage({ params }: { params: Promise<{ org
   const t = await getTranslations("branches");
   const ta = await getTranslations("admin");
   return (
-    <AdminPage title={t("editTitle")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
+    <AdminPage narrow title={t("editTitle")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
       <ReadOnlyNotice show={!canManage} />
       <fieldset disabled={!canManage} className="contents">
         <BranchForm

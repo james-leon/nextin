@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import Link from "next/link";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/cn";
@@ -108,3 +109,24 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </button>
   );
 });
+
+/** Lien icône circulaire 44 × 44 px (ex. « + » d'une liste dans la barre de navigation). Libellé obligatoire. */
+export function IconLink({ href, label, icon, variant = "plain", className }: { href: string; label: string; icon: ReactNode; variant?: "gray" | "plain" | "tinted"; className?: string }) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className={cn(
+        "pressable inline-flex size-11 shrink-0 items-center justify-center rounded-full",
+        "[&_svg]:size-6 [&_svg]:stroke-[2]",
+        variant === "gray" && "bg-fill-tertiary text-accent-on-tint",
+        variant === "plain" && "text-accent-text",
+        variant === "tinted" && "bg-accent-tint text-accent-on-tint",
+        className,
+      )}
+    >
+      {icon}
+    </Link>
+  );
+}

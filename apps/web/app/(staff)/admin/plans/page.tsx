@@ -23,7 +23,7 @@ export default async function PlansPage() {
   const supabase = await getSupabaseServerClient();
   const { data: plans } = await supabase.from("plans").select("id, name, base_price_xaf, included_branches, active").order("sort_order");
   return (
-    <AdminPage title={t("plansTitle")} eyebrow={t("title")}>
+    <AdminPage narrow title={t("plansTitle")} eyebrow={t("title")}>
       <PlatformNav variant="inline" />
       <ListSection footer={t("planNote")}>
         {(plans ?? []).map((p) => (

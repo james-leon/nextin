@@ -39,7 +39,7 @@ export default async function SetupPage({
     trialDays = data?.trial_days ?? null;
   }
   return (
-    <AdminPage title={t("setupTitle")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: to("title") }}>
+    <AdminPage narrow title={t("setupTitle")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: to("title") }}>
       {welcome && trialDays !== null ? (
         <CalloutCard tone="accent" role="status" icon={<Sparkles />}>
           <strong className="font-semibold">{tb("welcomeTitle")}.</strong> {tb("welcomeBody", { days: trialDays })}

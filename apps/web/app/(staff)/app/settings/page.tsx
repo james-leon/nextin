@@ -26,7 +26,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return (
     <main className="pb-24">
-      <AdminPage title={t("title")} back={{ href: back, label: tc("back") }}>
+      <AdminPage narrow title={t("title")} back={{ href: back, label: tc("back") }}>
         <ListSection header={t("account")}>
           <ListRow
             icon={

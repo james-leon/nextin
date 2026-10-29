@@ -23,7 +23,7 @@ export default async function CashiersPage({ searchParams }: { searchParams: Pro
   const supabase = await getSupabaseServerClient();
   const { data } = await supabase.rpc("advertiser_cashiers", { p_advertiser: advertiser.id });
   return (
-    <AdminPage title={t("cashiersTitle")} eyebrow={advertiser.name} subtitle={t("cashiersBody")} wide>
+    <AdminPage title={t("cashiersTitle")} eyebrow={advertiser.name} subtitle={t("cashiersBody")}>
       <AdsNav variant="inline" role={role} />
       {saved ? (
         <CalloutCard tone="green" role="status" icon={<CheckCircle2 />}>

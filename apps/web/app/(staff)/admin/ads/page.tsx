@@ -42,7 +42,6 @@ export default async function PlatformAdsPage({ searchParams }: { searchParams: 
   return (
     <AdminPage
       title={t("title")}
-      wide
       trailing={
         <Button asChild variant="gray" size="md">
           <Link href="/admin/ads/packages">

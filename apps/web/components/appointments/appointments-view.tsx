@@ -20,7 +20,9 @@ import { BookingForm } from "./booking-form";
 import { longDay, shortDay, timeOf } from "./format";
 import { AppointmentStatusBadge } from "./status-badge";
 import { RequestsInbox } from "./requests-inbox";
+import { StatCard } from "@/components/ui/stat-card";
 import { useMediaQuery } from "@/components/ui/use-media-query";
+import { WeekAgenda } from "./week-agenda";
 
 type View = "day" | "week" | "requests";
 type Pane = { kind: "detail"; id: string } | { kind: "book" } | { kind: "reschedule"; id: string } | null;
@@ -32,6 +34,44 @@ function TimeColumn({ a, tz, locale }: { a: Appointment; tz: string; locale: str
       <span className="text-callout font-semibold">{timeOf(a.starts_at, locale, tz)}</span>
       <span className="text-footnote text-label-secondary">{timeOf(a.ends_at, locale, tz)}</span>
     </span>
+  );
+}
+
+/**
+ * Panneau de détail sans rendez-vous choisi (ordinateur) : résumé du jour — nombre, arrivés, absents, prochains.
+ */
+function DaySummary({ items, tz, locale, onOpen }: { items: Appointment[]; tz: string; locale: string; onOpen: (id: string) => void }) {
+  const t = useTranslations("appointments");
+  const booked = items.filter((a) => a.display_status !== "cancelled" && a.display_status !== "rescheduled");
+  const arrived = booked.filter((a) => a.display_status === "checked_in" || a.display_status === "completed").length;
+  const absent = booked.filter((a) => a.display_status === "no_show").length;
+  const next = booked.filter((a) => a.display_status === "confirmed" || a.display_status === "waiting").slice(0, 4);
+  return (
+    <div className="flex flex-col gap-5">
+      <h2 className="text-title3 font-semibold">{t("summaryTitle")}</h2>
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label={t("summaryTotal")} value={booked.length} className="bg-grouped" />
+        <StatCard label={t("summaryArrived")} value={arrived} className="bg-grouped" />
+        <StatCard label={t("summaryAbsent")} value={absent} className="bg-grouped" />
+      </div>
+      <ListSection header={t("summaryNext")} footer={next.length ? t("selectHint") : undefined}>
+        {next.length ? (
+          next.map((a) => (
+            <ListRow
+              key={a.id}
+              onClick={() => onOpen(a.id)}
+              icon={<TimeColumn a={a} tz={tz} locale={locale} />}
+              title={a.customer_label ?? t("noLabel")}
+              subtitle={a.practitioner.name}
+              detail={<AppointmentStatusBadge status={a.display_status} />}
+              className="bg-grouped"
+            />
+          ))
+        ) : (
+          <li className="px-4 py-3 text-body text-label-secondary">{t("summaryNone")}</li>
+        )}
+      </ListSection>
+    </div>
   );
 }
 
@@ -170,7 +210,7 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
             options={[
               { value: "day", label: t("day") },
               { value: "week", label: t("week") },
-              { value: "requests", label: pendingRequests ? `${t("requestsView")} (${pendingRequests})` : t("requestsView") },
+              { value: "requests", label: pendingRequests ? `${t("requestsView")} · ${pendingRequests}` : t("requestsView") },
             ]}
             className="w-full md:w-96"
           />
@@ -196,7 +236,7 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
         ) : null}
 
         {view !== "requests" && ctx.practitioners.length > 1 ? (
-          <div role="radiogroup" aria-label={t("practitionerFilter")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          <div role="radiogroup" aria-label={t("practitionerFilter")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
             {[{ id: "all", name: t("allPractitioners") }, ...ctx.practitioners].map((p) => (
               <button
                 key={p.id}
@@ -249,14 +289,24 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
                 ) : selected ? (
                   detailContent(selected)
                 ) : (
-                  <div className="flex flex-col items-center gap-2 py-16 text-center">
-                    <CalendarDays aria-hidden className="size-10 stroke-[1.5] text-label-tertiary" />
-                    <p className="text-body text-label-secondary">{t("selectHint")}</p>
-                  </div>
+                  <DaySummary items={items ?? []} tz={tz} locale={locale} onOpen={(id) => setPane({ kind: "detail", id })} />
                 )}
               </aside>
             ) : null}
           </div>
+        ) : desktop ? (
+          <WeekAgenda
+            days={days}
+            items={items ?? []}
+            today={ctx.today}
+            tz={tz}
+            locale={locale}
+            onOpenDay={(d) => {
+              setDate(d);
+              setView("day");
+            }}
+            onOpen={(id) => setPane({ kind: "detail", id })}
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-7 md:gap-2 xl:gap-3">
             {days.map((d) => {
@@ -319,13 +369,14 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
             })}
           </div>
         )}
-      </div>
 
-      <BottomBar className="lg:hidden">
-        <Button block leadingIcon={<Plus />} onClick={() => setPane({ kind: "book" })}>
-          {t("new")}
-        </Button>
-      </BottomBar>
+        {/* Tablette : barre collée en bas, à la largeur exacte du contenu ; ordinateur : action dans la barre de titre. */}
+        <BottomBar className="lg:hidden">
+          <Button block leadingIcon={<Plus />} onClick={() => setPane({ kind: "book" })}>
+            {t("new")}
+          </Button>
+        </BottomBar>
+      </div>
 
       {/* Téléphone, tablette et vue semaine : détail, prise et reprogrammation en feuille. */}
       {!inline && pane ? (
