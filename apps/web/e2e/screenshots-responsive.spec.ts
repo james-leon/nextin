@@ -34,6 +34,7 @@ async function demoIds() {
   const { data: service } = await admin.from("services").select("id").eq("branch_id", branch!.id).order("sort_order").limit(1).single();
   const { data: practitioner } = await admin.from("practitioners").select("id").eq("organization_id", org!.id).order("display_name").limit(1).single();
   const { data: ticket } = await admin.from("tickets").select("id").eq("branch_id", branch!.id).order("created_at", { ascending: false }).limit(1).single();
+  const { data: campaign } = await admin.from("ad_campaigns").select("id").eq("name", "Petit-déjeuner du Littoral").limit(1).maybeSingle();
   const { data: qr } = await admin.from("qr_codes").select("token").eq("branch_id", branch!.id).is("service_id", null).eq("active", true).single();
   return {
     orgId: org!.id,
@@ -43,6 +44,7 @@ async function demoIds() {
     practitionerId: practitioner!.id,
     ticketId: ticket!.id,
     entryCode: qr!.token as string,
+    campaignId: (campaign?.id as string | undefined) ?? null,
   };
 }
 
@@ -94,6 +96,7 @@ function screens(ids: Awaited<ReturnType<typeof demoIds>>): Record<string, Shot[
     "marketing@saveurs-littoral.demo": [
       { name: "22-ads-new", path: "/ads/campaigns/new" },
       { name: "23-ads-redeem", path: "/ads/redeem" },
+      ...(ids.campaignId ? [{ name: "27-ads-campaign", path: `/ads/campaigns/${ids.campaignId}` }] : []),
     ],
     "superadmin@nextin.demo": [{ name: "24-admin", path: "/admin" }],
   };
