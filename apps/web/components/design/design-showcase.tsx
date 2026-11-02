@@ -4,6 +4,7 @@ import { useRef, useState, useTransition, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
+  Accessibility,
   ArrowRight,
   Bell,
   Building2,
@@ -951,9 +952,9 @@ function MockChooseService() {
         </NavigationBar>
         <div className="flex flex-col gap-5 px-4 pt-3">
           <ServicePicker />
-          <ListSection>
-            <ListSwitchRow title={t("priority")} subtitle={t("priorityHint")} />
-          </ListSection>
+          <CalloutCard icon={<Accessibility />} tone="accent">
+            {t("priorityInfo")}
+          </CalloutCard>
         </div>
       </div>
       <BottomBar position="absolute" summary={t("people", { count: 6, minutes: 18 })}>

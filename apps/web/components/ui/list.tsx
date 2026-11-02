@@ -72,6 +72,8 @@ type RowProps = {
   role?: string;
   /** Élément affiché dans le panneau de détail (vue maître-détail) : surligné, `aria-current="page"`. */
   current?: boolean;
+  /** Commande à côté de la ligne (ex. « Prioritaire ») : hors de la ligne cliquable, jamais imbriquée dans un bouton. */
+  trailing?: ReactNode;
 };
 
 export function ListRow({
@@ -89,6 +91,7 @@ export function ListRow({
   className,
   role,
   current,
+  trailing,
 }: RowProps) {
   const content = (
     <>
@@ -114,30 +117,34 @@ export function ListRow({
     </>
   );
 
-  const base = cn("flex w-full items-center gap-3 pl-4 text-left", className);
+  const base = cn("flex w-full items-center gap-3 pl-4 text-left", trailing ? "min-w-0 flex-1" : null, className);
+  const liClass = trailing ? "group/row flex items-stretch" : "group/row";
+  const side = trailing ? <span className="flex shrink-0 items-center pr-4 list-separator">{trailing}</span> : null;
   const interactive = "transition-colors active:bg-fill-tertiary hover:bg-fill-tertiary/50";
 
   if (href && download) {
     return (
-      <li className="group/row">
+      <li className={liClass}>
         <a href={href} download className={cn(base, interactive)}>
           {content}
         </a>
+        {side}
       </li>
     );
   }
   if (href) {
     return (
-      <li className="group/row">
+      <li className={liClass}>
         <Link href={href} aria-current={current ? "page" : undefined} className={cn(base, current ? "bg-accent-tint" : interactive)}>
           {content}
         </Link>
+        {side}
       </li>
     );
   }
   if (onClick) {
     return (
-      <li className="group/row" role={role === "radio" || role === "checkbox" ? "none" : undefined}>
+      <li className={liClass} role={role === "radio" || role === "checkbox" ? "none" : undefined}>
         <button
           type="button"
           onClick={onClick}
@@ -148,6 +155,15 @@ export function ListRow({
         >
           {content}
         </button>
+        {side}
+      </li>
+    );
+  }
+  if (trailing) {
+    return (
+      <li className={liClass}>
+        <span className={base}>{content}</span>
+        {side}
       </li>
     );
   }

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
             p_service: input.serviceId,
             p_source: input.source,
             p_entry_code: (input.entryCode ?? null) as string,
-            p_priority_reason: (input.priorityReason ?? null) as PriorityReason,
+            p_priority_reason: null as unknown as PriorityReason,
             p_customer: userId,
           }),
   });

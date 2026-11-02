@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, Ban, CalendarDays, Inbox, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { ArrowDown, Ban, CalendarDays, Inbox, Plus, Printer, ScanLine, Shuffle, StarOff, UserRound, UserRoundX } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
-import { isActiveCall, PRIORITY_REASONS, type PriorityReason } from "@nextin/shared/queue/live";
+import { isActiveCall } from "@nextin/shared/queue/live";
 import { staffTopic } from "@nextin/shared/queue/realtime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { loadReception, type ReceptionData, type ReceptionPractitioner, type Rec
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AbsenceSheet } from "./absence-sheet";
 import { CreateTicketSheet } from "./create-ticket-sheet";
+import { PriorityButton } from "./priority-button";
 import { TransferSheet } from "./transfer-sheet";
 
 /** Poste d'accueil : créer des tickets, priorités, réorientations, absences des praticiens, vue en direct. */
@@ -28,7 +29,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   const td = useTranslations("desk");
   const ta = useTranslations("absence");
   const tk = useTranslations("counterKinds");
-  const tr = useTranslations("client.service.reasons");
+  const tr = useTranslations("priorityReasons");
   const tc = useTranslations("common");
   const te = useTranslations("errors");
   const tap = useTranslations("appointments");
@@ -38,7 +39,6 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   const [data, setData] = useState(initial);
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<ReceptionTicket | null>(null);
-  const [priorityOpen, setPriorityOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [absenceFor, setAbsenceFor] = useState<ReceptionPractitioner | null>(null);
@@ -251,6 +251,11 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   accessory={
                     tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
                   }
+                  trailing={
+                    tk2.priorityReason ? undefined : (
+                      <PriorityButton code={tk2.code} onGrant={(r) => void command("set_ticket_priority", { p_ticket: tk2.id, p_reason: r })} />
+                    )
+                  }
                 />
               );
             })}
@@ -267,7 +272,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
 
         {selected ? (
           <Sheet
-            open={!!selected && !transferOpen && !cancelOpen && !priorityOpen}
+            open={!!selected && !transferOpen && !cancelOpen}
             onOpenChange={(o) => !o && setSelected(null)}
             title={t("ticketActions", { code: selected.code })}
             closeLabel={tc("close")}
@@ -289,14 +294,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                     icon={<ListIcon color="var(--orange-fill)"><StarOff /></ListIcon>}
                     title={t("removePriority")}
                   />
-                ) : (
-                  <ListRow
-                    onClick={() => setPriorityOpen(true)}
-                    icon={<ListIcon color="var(--orange-fill)"><Star /></ListIcon>}
-                    title={t("setPriority")}
-                    accessory="chevron"
-                  />
-                )}
+                ) : null}
                 <ListRow
                   onClick={() => setTransferOpen(true)}
                   icon={<ListIcon color="var(--accent-fill)"><Shuffle /></ListIcon>}
@@ -319,23 +317,6 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                 <ListRow onClick={() => setCancelOpen(true)} icon={<ListIcon color="var(--red-fill)"><Ban /></ListIcon>} title={t("cancelTicket")} destructive />
               </ListSection>
             </div>
-          </Sheet>
-        ) : null}
-
-        {selected ? (
-          <Sheet open={priorityOpen} onOpenChange={setPriorityOpen} title={t("setPriority")} closeLabel={tc("close")}>
-            <ListSection radioGroupLabel={t("reason")}>
-              {PRIORITY_REASONS.map((r: PriorityReason) => (
-                <ListRow
-                  key={r}
-                  onClick={() => {
-                    setPriorityOpen(false);
-                    void command("set_ticket_priority", { p_ticket: selected.id, p_reason: r });
-                  }}
-                  title={tr(r)}
-                />
-              ))}
-            </ListSection>
           </Sheet>
         ) : null}
 

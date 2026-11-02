@@ -21,6 +21,7 @@
     "db:types": "node scripts/db-types.mjs",
     "e2e:local": "node scripts/local-env.mjs pnpm --filter @nextin/web build && node scripts/local-env.mjs pnpm --filter @nextin/web test:e2e",
     "db:stop": "node scripts/local-env.mjs npx supabase stop",
+    "e2e:cleanup": "node scripts/e2e-cleanup.mjs",
     "seed:demo:local": "node scripts/local-env.mjs node --env-file-if-exists=apps/web/.env.local --import tsx scripts/seed-demo.ts",
     "dev:local": "node scripts/local-env.mjs pnpm --filter @nextin/web dev",
     "db:test:sql": "node scripts/db-test.mjs",

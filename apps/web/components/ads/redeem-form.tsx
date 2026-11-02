@@ -48,6 +48,8 @@ export function RedeemForm({ initialCode }: { initialCode: string }) {
   return (
     <div className="flex flex-col gap-6">
       <p className="px-4 text-subheadline text-label-secondary">{t("redeemBody")}</p>
+      {/* Tablette et ordinateur : la caméra à gauche, la saisie du code à droite. */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-start">
       <section className="flex flex-col gap-3">
         {/* Un seul élément vidéo (le flux de la caméra y est attaché), visible pendant la visée. */}
         <div
@@ -58,7 +60,7 @@ export function RedeemForm({ initialCode }: { initialCode: string }) {
           <video ref={video} muted playsInline aria-hidden className="absolute inset-0 size-full object-cover" />
           <span className="absolute inset-x-0 bottom-4 mx-auto w-fit rounded-full bg-black/60 px-3 py-1 text-footnote text-white">{t("scanAim")}</span>
         </div>
-        <Button type="button" variant="tinted" leadingIcon={<ScanLine />} onClick={scanning ? stop : start} className="h-auto min-h-[3.125rem] max-w-full self-start py-2 whitespace-normal">
+        <Button type="button" variant="tinted" leadingIcon={<ScanLine />} onClick={scanning ? stop : start} className="h-auto min-h-[3.125rem] max-w-full self-start py-2 whitespace-normal md:w-full md:self-stretch md:mt-[1.375rem]">
           {scanning ? t("scanStop") : t("scan")}
         </Button>
         <p role="status" aria-live="polite" className="px-4 text-footnote text-label-secondary empty:hidden">
@@ -80,10 +82,11 @@ export function RedeemForm({ initialCode }: { initialCode: string }) {
           error={field("code")}
           className="[&_input]:font-mono [&_input]:tracking-widest"
         />
-        <Button type="submit" variant="gray" loading={pending && !usable} loadingLabel={t("checking")} className="self-start">
+        <Button type="submit" variant="gray" loading={pending && !usable} loadingLabel={t("checking")} className="self-start md:self-stretch">
           {t("check")}
         </Button>
       </form>
+      </div>
 
       {coupon ? (
         <section aria-live="polite" className="squircle flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-7 text-center shadow-card">

@@ -295,9 +295,9 @@
 }
 
 @layer base {
-  /* Pages client à barre d'onglets latérale (ordinateur) : le contenu se décale de sa largeur. */
+  /* Pages client à barre d'onglets latérale (ordinateur) : le contenu se décale de sa largeur (place réservée avant le chargement du menu). */
   @media (min-width: 1024px) {
-    body:has([data-tab-sidebar]) {
+    body:has([data-tab-sidebar], [data-reserve-tab-sidebar]) {
       --shell-sidebar: 15rem;
       padding-left: 15rem;
     }

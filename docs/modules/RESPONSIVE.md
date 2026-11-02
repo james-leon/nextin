@@ -1,6 +1,6 @@
 # Revue responsive — P1 et P2
 
-Statut : **P1 validé ; P2 terminé, en attente de validation**. Référence : `docs/REVUE-RESPONSIVE.md`.
+Statut : **P1 et P2 validés ; P3 terminé, en attente de validation finale**. Référence : `docs/REVUE-RESPONSIVE.md`.
 Captures : `docs/captures/responsive/before/` (avant, clair) et `docs/captures/responsive/` (après, clair et `-dark`), en 390, 820, 1180, 1440 et 1920 px, plus le mode compact du poste en 400 × 600.
 
 ## Règles globales
@@ -80,5 +80,40 @@ Captures avant : `docs/captures/responsive/before-p2/` (clair) ; après : `docs/
 ### Tests ajoutés
 `responsive.spec.ts` couvre aussi les 8 pages client (visiteur anonyme) dans les six tailles et l'écran TV en 1280 × 720, 1920 × 1080 et 3840 × 2160 (aucun débordement ni texte coupé, pas de défilement, proportions constantes).
 
-## Reste pour P3
-Publicité de l'établissement (secteurs en grille de cases), choisir un service / scanner / code (carte centrée plus large sur ordinateur), campagne, valider un bon et console Wintek (R1 et R3 en 1920 px et sur tablette), ticket imprimé (inchangé).
+## P3
+Captures avant : `docs/captures/responsive/before-p3/` (clair) ; après : `docs/captures/responsive/` (clair et `-dark`).
+
+### Accès prioritaire accordé par le personnel
+- « Choisir un service » : l'interrupteur « Accès prioritaire » est remplacé par une ligne d'information « Enceinte, âgée ou en situation de handicap ? Signalez-vous à l'accueil. » (si l'agence accorde des priorités).
+- Base : `take_ticket` et `take_remote_ticket` refusent tout motif envoyé par un client (`priority_staff_only`, P0422) ; leur corps d'origine devient `take_ticket_core` / `take_remote_ticket_core` (aucun droit d'exécution). Migration `20261111090000_responsive_staff_priority.sql`, test pgTAP dans `m3_queue.test.sql`. L'API `/api/tickets` ne transmet plus de motif.
+- Priorité accordée uniquement par `set_ticket_priority` (journalisé, motif), par l'accueil à la création d'un ticket ou à l'arrivée d'un rendez-vous.
+- Bouton « Prioritaire » en un geste sur chaque ticket en attente, à l'accueil et au poste (« À suivre ») : il ouvre le choix du motif (Grossesse, Personne âgée, Handicap). Composant `PriorityButton`, emplacement `trailing` de `ListRow` (jamais imbriqué dans la ligne cliquable).
+- « Mon ticket » affiche « Accès prioritaire » dès que la priorité est accordée (mise à jour en direct).
+- Motifs : dictionnaire `priorityReasons` (personnel).
+
+### Pages client sur ordinateur
+| Écran | Changement |
+|---|---|
+| Choisir un service | Menu latéral client (chargé seulement à partir de 1024 px, place réservée dès le rendu serveur), colonne d'environ 640 px, titre sur une ligne, résumé et « Prendre mon ticket » juste sous le contenu |
+| Mon ticket | Menu latéral client, deux colonnes centrées dans l'espace restant |
+| Scanner | Carte centrée d'environ 640 px (titre, viseur, saisie du code) |
+| Code | Menu latéral, colonne d'environ 640 px, « Continuer » juste sous le champ |
+
+`DesktopClientSidebar` (`components/client`) : `ClientTabBar` en `next/dynamic` monté par `useMediaQuery` ; budget des pages client inchangé sur téléphone.
+
+### Personnel
+| Écran | Changement |
+|---|---|
+| Publicité de l'établissement | Secteurs refusés en grille de cases à cocher à partir de la tablette (liste sur téléphone) |
+| Valider un bon | Caméra et saisie du code côte à côte à partir de la tablette |
+| Console Wintek | Abonnements en tableau sur ordinateur (établissement, formule, agences, échéance, dernier paiement, statut), liste sur téléphone et tablette |
+| Campagne, ticket imprimé | Vérifiés en 1920 px et sur tablette, inchangés |
+
+### Données de test
+- `pnpm e2e:cleanup` (`scripts/e2e-cleanup.mjs` + `scripts/e2e-cleanup.sql`) supprime les établissements et annonceurs dont tous les membres sont des comptes de test (`@nextin.test`), et ces comptes. Base locale par défaut ; `pnpm e2e:cleanup -- --remote` pour le projet distant lié (`pnpm db:link`, `SUPABASE_ACCESS_TOKEN`).
+- Lancé automatiquement à la fin de Playwright sur la base locale (`e2e/global-teardown.ts` ; `E2E_KEEP_DATA=1` pour garder les données).
+- `seed:demo` ne crée que des données réalistes (DOUALA CLINIC, Eneo Douala, Saveurs du Littoral, Pharmacie de Bonapriso).
+
+### Divers
+- `next.config` : indicateur de dev en bas à gauche.
+- Captures pleine page : la barre d'action n'est plus forcée en bas de la page à partir de 768 px (elle suit le contenu, comme à l'écran).

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
 import { optInLink } from "@nextin/shared/notifications/opt-in";
 import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
@@ -21,6 +21,7 @@ import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib
 import { callRpc } from "@/lib/client/supabase-public";
 import { waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
+import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import { PlayCard } from "./games/play-card";
 import { LazyMount } from "./lazy-mount";
 import { RemoteTicketCard } from "./remote-ticket-card";
@@ -190,6 +191,7 @@ export function TicketLive({
         trailing={<IconButton label={copied ? t("copied") : t("share")} icon={<Share />} variant="plain" onClick={share} />}
         contentClassName="max-w-lg lg:max-w-5xl"
       />
+      <DesktopClientSidebar active="ticket" />
       {/* Ordinateur : le ticket à gauche (héros, attente), alertes et actions à droite. */}
       <div className="mx-auto grid max-w-lg grid-cols-1 gap-4 px-4 pt-3 lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:gap-8">
         <div className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-16">
@@ -246,6 +248,14 @@ export function TicketLive({
             {view.status === "no_show" ? <p className="text-body text-label-secondary">{t("noShowBody")}</p> : null}
           </section>
         )}
+
+        {/* Accès prioritaire : accordé uniquement par le personnel (accueil, poste ou arrivée d'un rendez-vous). */}
+        {active && view.priority_reason ? (
+          <Badge shape="pill" tone="accent" className="self-center" data-testid="ticket-priority">
+            <BadgeCheck aria-hidden />
+            {t("priority")}
+          </Badge>
+        ) : null}
 
         {view.status === "called" && call && call.recall_count > 0 ? (
           <Badge shape="pill" tone="orange" className="self-center">

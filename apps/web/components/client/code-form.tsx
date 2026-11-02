@@ -28,7 +28,8 @@ export function CodeForm() {
         autoFocus
         className="[&_input]:text-title3 [&_input]:font-semibold [&_input]:tracking-[0.3em] [&_input]:uppercase"
       />
-      <BottomBar>
+      {/* Ordinateur : juste sous le champ (colonne déjà en retrait). */}
+      <BottomBar className="lg:static lg:bg-none lg:pt-2" contentClassName="md:px-0 lg:max-w-none">
         <Button type="submit" block loading={pending}>
           {t("submit")}
         </Button>

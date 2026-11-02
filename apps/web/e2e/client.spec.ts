@@ -51,17 +51,24 @@ test.describe("M4 — parcours client", () => {
     await expectAccessible(page);
     await expectTouchTargets(page);
 
-    // Accès prioritaire : motif obligatoire, choisi dans une liste.
-    await page.getByLabel("Accès prioritaire").click();
-    await page.getByRole("radio", { name: "Grossesse" }).click();
+    // Accès prioritaire : plus demandé par le client ; une ligne d'information renvoie vers l'accueil.
+    await expect(page.getByText("Enceinte, âgée ou en situation de handicap ? Signalez-vous à l'accueil.")).toBeVisible();
+    await expect(page.getByRole("switch")).toHaveCount(0);
     await page.getByRole("button", { name: "Prendre mon ticket" }).click();
     await page.waitForURL(/\/t\/[A-Za-z0-9]{22}$/);
+    const token = page.url().split("/t/")[1]!;
     const hero = page.locator("section[aria-live]").first();
     await expect(hero).toContainText("C-001");
     await expect(hero).toContainText("Devant vous");
     await expect(page.getByText("Gardez cette page ouverte")).toBeVisible();
     await expectAccessible(page);
     await expectTouchTargets(page);
+
+    // Priorité accordée par le personnel (motif journalisé) : « Accès prioritaire » apparaît sur le ticket, en direct.
+    const { data: mine } = await staff.from("tickets").select("id, priority_reason").eq("public_token", token).single();
+    expect(mine!.priority_reason).toBeNull();
+    await rpc(staff, "set_ticket_priority", { p_ticket: mine!.id, p_reason: "pregnancy" });
+    await expect(page.getByTestId("ticket-priority")).toHaveText("Accès prioritaire");
 
     // « Alerter le suivant » : la page passe en « C'est votre tour » sans rechargement.
     const called = await rpc<{ id: string }>(staff, "call_next", { p_counter: counterId });

@@ -1,4 +1,3 @@
-import type { PriorityReason } from "@nextin/shared/queue/live";
 import { clearAnonSession, getAnonAccessToken, hasAnonSession } from "./anon-session";
 import { requestTurnstileToken } from "./turnstile";
 
@@ -12,7 +11,7 @@ export type TakeTicketOutcome =
  */
 export async function takeTicket(
   input:
-    | { serviceId: string; source: "qr" | "short_code"; entryCode: string; priorityReason: PriorityReason | null }
+    | { serviceId: string; source: "qr" | "short_code"; entryCode: string }
     | { serviceId: string; source: "remote"; position: { lat: number; lng: number } | null },
   captcha: { siteKey: string | null; container: HTMLElement | null },
 ): Promise<TakeTicketOutcome> {
@@ -48,7 +47,6 @@ export async function takeTicket(
                 serviceId: input.serviceId,
                 source: input.source,
                 entryCode: input.entryCode,
-                priorityReason: input.priorityReason ?? undefined,
                 captchaToken,
               },
         ),

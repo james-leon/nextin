@@ -133,7 +133,7 @@ test.describe("M5 — accueil", () => {
     await print.close();
 
     await page.getByRole("button", { name: "Fermer" }).click();
-    await expect(page.getByRole("button", { name: /C-001/ })).toContainText("Pour Dr Abena");
+    await expect(page.getByRole("button", { name: /^C-001/ })).toContainText("Pour Dr Abena");
   });
 
   test("absence d'un praticien : ses patients passent chez un collègue ; priorité, recul, annulation", async ({ page }, info) => {
@@ -152,22 +152,23 @@ test.describe("M5 — accueil", () => {
     await expect(page.getByRole("button", { name: /^Dr Abena/ })).toContainText("Absent");
     const moved = await b.staff.from("tickets").select("preferred_counter_id").eq("id", forAbena.id).single();
     expect(moved.data!.preferred_counter_id).toBe(cab4);
-    await expect(page.getByRole("button", { name: /C-001/ })).toContainText("Pour Dr Bilong");
+    await expect(page.getByRole("button", { name: /^C-001/ })).toContainText("Pour Dr Bilong");
 
-    await page.getByRole("button", { name: /C-002/ }).click();
-    await page.getByRole("button", { name: "Rendre prioritaire" }).click();
-    await page.getByRole("button", { name: "Personne âgée" }).click();
-    await expect(page.getByRole("button", { name: /C-002/ })).toContainText("Personne âgée");
+    // Priorité en un geste : bouton « Prioritaire » de la ligne, puis le motif (accordée par le personnel seulement).
+    await page.getByRole("button", { name: "Rendre le ticket C-002 prioritaire" }).click();
+    await page.getByRole("dialog", { name: /Motif de priorité · C-002/ }).getByRole("button", { name: "Personne âgée" }).click();
+    await expect(page.getByRole("button", { name: /^C-002/ })).toContainText("Personne âgée");
+    await expect(page.getByRole("button", { name: "Rendre le ticket C-002 prioritaire" })).toHaveCount(0);
 
-    await page.getByRole("button", { name: /C-001/ }).click();
+    await page.getByRole("button", { name: /^C-001/ }).click();
     await page.getByRole("button", { name: "Reculer de 3 places" }).click();
-    await page.getByRole("button", { name: /C-003/ }).click();
+    await page.getByRole("button", { name: /^C-003/ }).click();
     await page.getByRole("button", { name: "Annuler le ticket" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le ticket" }).click();
     await expect(page.getByText("File d'attente · 2")).toBeVisible();
     const queue = page.locator("section", { has: page.getByRole("heading", { name: /File d'attente/ }) });
-    const codes = await queue.getByRole("button").allInnerTexts();
-    expect(codes.map((c) => c.match(/C-\d{3}/)?.[0])).toEqual(["C-002", "C-001"]);
+    const codes = (await queue.getByRole("button").allInnerTexts()).map((c) => c.match(/^C-\d{3}/)?.[0]).filter(Boolean);
+    expect(codes).toEqual(["C-002", "C-001"]);
   });
 });
 

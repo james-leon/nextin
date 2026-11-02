@@ -138,7 +138,7 @@ test.describe("M9 — ticket à distance", () => {
     await expect(staffPage.getByText(/Reculé 1 fois/)).toBeVisible({ timeout: 20_000 });
 
     // Confirmation par l'accueil (patient arrivé sans scanner).
-    await staffPage.getByRole("button", { name: /C-001/ }).click();
+    await staffPage.getByRole("button", { name: /^C-001/ }).click();
     await staffPage.getByRole("button", { name: "Confirmer la présence" }).click();
     await expect(page.getByText("Présence confirmée : vous serez appelé à votre tour.")).toBeVisible({ timeout: 15_000 });
     await staffPage.close();

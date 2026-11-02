@@ -243,13 +243,15 @@ export const inviteFormSchema = z
 
 /* ─── M3 : prise de ticket ──────────────────────────────────────────────── */
 
-/** Demande de ticket d'un client (route POST /api/tickets). L'accueil passe par la RPC du personnel. */
+/**
+ * Demande de ticket d'un client (route POST /api/tickets). L'accueil passe par la RPC du personnel.
+ * Jamais de priorité demandée par le client (revue responsive P3) : elle est accordée par le personnel.
+ */
 export const takeTicketSchema = z
   .object({
     serviceId: z.uuid(),
     source: z.enum(["qr", "short_code", "remote"]),
     entryCode: z.string().trim().min(6).max(64).regex(/^[A-Za-z0-9]+$/, "invalid_entry").optional(),
-    priorityReason: z.enum(PRIORITY_REASONS).optional(),
     captchaToken: z.string().max(2048).optional(),
     // M9 — ticket à distance : position du client (calcul du trajet, jamais enregistrée).
     latitude: z.number().min(-90).max(90).optional(),

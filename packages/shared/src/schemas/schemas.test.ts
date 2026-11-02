@@ -101,9 +101,11 @@ describe("M3 schemas", () => {
     expect(r.error?.issues[0]?.message).toBe("invalid_entry");
     expect(takeTicketSchema.safeParse({ serviceId, source: "remote" }).success).toBe(true);
   });
-  it("refuse la source accueil et les motifs inconnus", () => {
+  it("refuse la source accueil et ne transmet jamais de priorité demandée par le client", () => {
     expect(takeTicketSchema.safeParse({ serviceId, source: "reception", entryCode: "ABCDEF" }).success).toBe(false);
-    expect(takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "ABCDEF", priorityReason: "vip" }).success).toBe(false);
+    const r = takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "ABCDEF", priorityReason: "pregnancy" });
+    expect(r.success).toBe(true);
+    expect(r.data).not.toHaveProperty("priorityReason");
   });
 });
 

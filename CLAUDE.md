@@ -16,7 +16,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
 - `packages/payments` — contrat `PaymentProvider` des agrégateurs Mobile Money et faux fournisseur (M10a), côté serveur uniquement.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
-- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent, images générées par `demo-images.ts`), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
+- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent, images générées par `demo-images.ts`), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`, `e2e-cleanup.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
 
 ## Commandes
@@ -84,6 +84,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Un seul ticket `called`/`serving` par poste (index unique) ; `call_next` refuse `counter_busy` tant que le patient alerté n'est pas traité ; `FOR UPDATE SKIP LOCKED`.
 - Commandes des postes idempotentes via `p_client_op_id` (rejeu hors ligne) ; toute écriture sur `tickets` passe par une RPC.
 - Prise de ticket client : `POST /api/tickets` uniquement (Zod → session cookie ou Bearer → `throttle_ticket_request` → Turnstile → `take_ticket` en service role). Ne jamais exposer `take_ticket` au client.
+- **Priorité accordée par le personnel uniquement** : `set_ticket_priority` (bouton « Prioritaire » `PriorityButton` à l'accueil et au poste), création à l'accueil, arrivée d'un rendez-vous. `take_ticket` / `take_remote_ticket` refusent tout motif (`priority_staff_only`) ; motifs dans `priorityReasons`.
 - Erreurs métier : message = code (`counter_busy`, `branch_closed`…), SQLSTATE `P04xx` ; `queueErrorCode` / `mapDbError` → dictionnaire `errors`.
 - Estimation : `packages/shared/src/queue/estimate.ts` et `public.estimate_wait_seconds` doivent rester identiques (fixtures partagées, test de parité).
 - Temps réel : topics de `@nextin/shared/queue` (`boardTopic`, `ticketTopic`, `staffTopic`), alimentés par les déclencheurs SQL ; jamais de nom ni d'identifiant client dans une diffusion.
@@ -167,9 +168,10 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 ## Revue responsive (`docs/REVUE-RESPONSIVE.md`, notes `docs/modules/RESPONSIVE.md`)
 - Retour de la barre de navigation : libellé entier ou chevron seul (libellé gardé pour les lecteurs d'écran), jamais coupé. Sous-titres de `ListRow` : deux lignes au plus. `SegmentedControl` : une ligne. Rangées de pastilles : `scroll-fade-x`.
 - Détail d'une vue maître-détail : `@container` sur le panneau ; mises en page en colonnes par requêtes de conteneur (`@2xl:grid-cols-2`).
-- Pages client ≥ 1024 px : `ClientTabBar` en barre latérale (`TabBar sidebar`, contenu décalé par `body:has([data-tab-sidebar])`) ; onglets et retours sans préchargement (`prefetch={false}`, budget).
+- Pages client ≥ 1024 px : `ClientTabBar` en barre latérale (`TabBar sidebar`, contenu décalé par `body:has([data-tab-sidebar])`) ; onglets et retours sans préchargement (`prefetch={false}`, budget). Pages sans onglets sur téléphone (choix du service, ticket, code) : `DesktopClientSidebar` (chargé à partir de 1024 px). Formulaires client courts : colonne ≈ 640 px (`lg:max-w-[40rem]`), action juste sous le contenu.
 - Formulaire qui ne contient que sa `BottomBar` : `className="contents"` (sinon la barre ne peut pas coller au bas du contenu). Feuilles et alertes : `NoPageFrame` (leur barre ne remonte jamais dans la barre de titre).
 - Écran TV : tailles et espacements en `vh`/`vw`, interligne sans unité (`leading-snug` sur la racine) — vérifié en 720p, 1080p et 4K.
+- Données de test : `pnpm e2e:cleanup` (comptes `@nextin.test`, établissements et annonceurs de test), lancé aussi à la fin de Playwright en local ; `-- --remote` pour le projet distant lié.
 - Captures : base propre (`pnpm db:reset` puis `pnpm seed:demo:local`), `RESPONSIVE_PHASE=before|before-p2|after` et `RESPONSIVE_ONLY=<préfixes>` avec `e2e/screenshots-responsive.spec.ts`.
 
 ## i18n

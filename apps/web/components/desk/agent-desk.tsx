@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, ArrowRight, CloudOff, Keyboard, Maximize2, Minimize2, RefreshCw, UserRoundX } from "lucide-react";
 import { formatElapsed } from "@nextin/shared";
+import type { PriorityReason } from "@nextin/shared/queue/live";
 import {
   averageServiceSeconds,
   DESK_SHORTCUTS,
@@ -26,7 +27,9 @@ import { Sheet } from "@/components/ui/sheet";
 import { StatCard } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
 import { PractitionerAppointments } from "@/components/appointments/practitioner-appointments";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AbsenceSheet, type ActiveAbsence } from "./absence-sheet";
+import { PriorityButton } from "./priority-button";
 import { TransferSheet, type BranchService } from "./transfer-sheet";
 import { setDeskCompact, useDeskCompact } from "@/lib/desk/compact";
 import { useDesk, type DeskCounter } from "./use-desk";
@@ -59,7 +62,7 @@ export function AgentDesk({
   const t = useTranslations("desk");
   const ta = useTranslations("absence");
   const te = useTranslations("errors");
-  const tr = useTranslations("client.service.reasons");
+  const tr = useTranslations("priorityReasons");
   const tc = useTranslations("common");
   const locale = useLocale();
   const toast = useToast();
@@ -87,6 +90,15 @@ export function AgentDesk({
   const avg = averageServiceSeconds(view);
   const statusTone = view.counterStatus === "open" ? "green" : view.counterStatus === "paused" ? "orange" : "neutral";
   const offlineOnly = () => toast(t("onlineOnly"), <CloudOff aria-hidden />);
+
+  // Priorité accordée par le personnel (en ligne uniquement, journalisée par la base).
+  async function grantPriority(ticketId: string, reason: PriorityReason) {
+    if (!online) return offlineOnly();
+    const { error } = await getSupabaseBrowserClient().rpc("set_ticket_priority", { p_ticket: ticketId, p_reason: reason });
+    if (error) toast(te.has(error.message as never) ? te(error.message as never) : te("generic"));
+    else toast(t("priorityGranted"));
+    await refresh();
+  }
 
   const primary = {
     open: { label: t("openCounter"), run: () => setStatus("open") },
@@ -152,6 +164,7 @@ export function AgentDesk({
           </span>
         ) : undefined
       }
+      trailing={tk.priorityReason ? undefined : <PriorityButton code={tk.code} disabled={!online} onGrant={(r) => void grantPriority(tk.id, r)} />}
     />
   );
 

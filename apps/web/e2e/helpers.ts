@@ -112,7 +112,10 @@ export async function createBranchViaUi(page: Page, root: string, name: string) 
  * la page défilée jusqu'au bout. Sans cela, la capture la dessine au milieu de la page, sur le contenu.
  */
 export async function fullPageShot(page: Page, path: string) {
-  const style = await page.addStyleTag({ content: "html{position:relative}.safe-bottom.fixed{position:absolute!important}" });
+  // Barre d'action fixe (téléphone seulement) : collée au bas de la capture pleine page. À partir de 768 px, elle suit le contenu.
+  const style = await page.addStyleTag({
+    content: "html{position:relative}@media (max-width:767.98px){.safe-bottom.fixed{position:absolute!important}}",
+  });
   await page.screenshot({ path, fullPage: true });
   await style.evaluate((el) => (el as Element).remove());
 }

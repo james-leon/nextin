@@ -37,7 +37,7 @@ export function CreateTicketSheet({
   const t = useTranslations("reception");
   const tc = useTranslations("common");
   const te = useTranslations("errors");
-  const tr = useTranslations("client.service.reasons");
+  const tr = useTranslations("priorityReasons");
   const locale = useLocale();
   const supabase = getSupabaseBrowserClient();
   const [serviceId, setServiceId] = useState<string | null>(data.services[0]?.id ?? null);

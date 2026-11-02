@@ -19,6 +19,7 @@ export function BottomBar({
   position = "fixed",
   dock = true,
   className,
+  contentClassName,
 }: {
   summary?: ReactNode;
   children: ReactNode;
@@ -27,6 +28,8 @@ export function BottomBar({
   /** Faux : jamais déplacée dans la barre de titre (la page place elle-même son action sur ordinateur). */
   dock?: boolean;
   className?: string;
+  /** Largeur de la colonne intérieure (pages client plus larges sur ordinateur). */
+  contentClassName?: string;
 }) {
   const frame = usePageFrame();
   const docked = dock && position === "fixed" && !!frame;
@@ -65,7 +68,7 @@ export function BottomBar({
         )}
       >
         {/* Personnel (dans un cadre de page) : toute la largeur du contenu ; pages client : colonne centrée du contenu. */}
-        <div className={cn("mx-auto flex max-w-lg flex-col gap-3", position === "fixed" && (frame ? "md:max-w-none" : "md:px-4"))}>
+        <div className={cn("mx-auto flex max-w-lg flex-col gap-3", position === "fixed" && (frame ? "md:max-w-none" : "md:px-4"), contentClassName)}>
           {summary ? <p className="text-center text-subheadline text-label-secondary">{summary}</p> : null}
           {children}
         </div>

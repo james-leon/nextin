@@ -5,7 +5,7 @@ set search_path = public, extensions;
 -- M10a : `create_organization` réservé à l'inscription ; appel direct permis dans ce test (annulé au rollback).
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(114);
+select plan(117);
 
 create schema tests;
 create function tests.create_user(p_id uuid, p_email text, p_anonymous boolean default false) returns uuid language sql as $$
@@ -143,8 +143,11 @@ select throws_ok($$ select public.take_ticket((select id from ids where name = '
   'e3000000-0000-0000-0000-000000000001') $$, 'P0422', 'active_ticket_exists', 'un client ne cumule pas les tickets');
 select is(tests.error_detail($$ select public.take_ticket((select id from ids where name = 'consult'), 'qr', (select v from vals where name = 'qr'), null,
   'e3000000-0000-0000-0000-000000000001') $$), (select v from vals where name = 'c1'), 'le ticket actif est rendu au client');
-insert into vals select 'c2', public.take_ticket((select id from ids where name = 'consult'), 'short_code', lower((select v from vals where name = 'short')),
+-- Priorité accordée par le personnel uniquement (revue responsive P3) : le corps d'origine est appelé directement ici.
+select tests.logout();
+insert into vals select 'c2', public.take_ticket_core((select id from ids where name = 'consult'), 'short_code', lower((select v from vals where name = 'short')),
   'pregnancy', 'e3000000-0000-0000-0000-000000000002')->>'public_token';
+select tests.as_service();
 select is((select (display_code, priority_level, source::text) from public.tickets where public_token = (select v from vals where name = 'c2')),
   ('C-002'::text, 1::smallint, 'short_code'::text), 'code court accepté (casse ignorée), priorité grossesse');
 select throws_ok($$ select public.take_ticket((select id from ids where name = 'consult'), 'qr', (select v from vals where name = 'eneo_qr'), null,
@@ -153,8 +156,15 @@ select throws_ok($$ select public.take_ticket((select id from ids where name = '
   'e3000000-0000-0000-0000-000000000003') $$, 'P0422', 'remote_not_allowed', 'ticket à distance refusé si désactivé');
 select throws_ok($$ select public.take_ticket((select id from ids where name = 'consult'), 'reception', null, null,
   'e3000000-0000-0000-0000-000000000003') $$, 'P0422', 'invalid_entry', 'la source « accueil » est réservée au personnel');
-select throws_ok($$ select public.take_ticket((select id from ids where name = 'lab'), 'qr', (select v from vals where name = 'qr'), 'elderly',
+select throws_ok($$ select public.take_ticket((select id from ids where name = 'consult'), 'qr', (select v from vals where name = 'qr'), 'elderly',
+  'e3000000-0000-0000-0000-000000000003') $$, 'P0422', 'priority_staff_only', 'take_ticket refuse toute priorité envoyée par un client');
+select throws_ok($$ select public.take_remote_ticket((select id from ids where name = 'consult'), 4.05, 9.7, 'pregnancy',
+  'e3000000-0000-0000-0000-000000000003') $$, 'P0422', 'priority_staff_only', 'take_remote_ticket refuse toute priorité envoyée par un client');
+select is((select count(*)::int from public.tickets where customer_user_id = 'e3000000-0000-0000-0000-000000000003'), 0, 'aucun ticket créé par ces demandes');
+select tests.logout();
+select throws_ok($$ select public.take_ticket_core((select id from ids where name = 'lab'), 'qr', (select v from vals where name = 'qr'), 'elderly',
   'e3000000-0000-0000-0000-000000000003') $$, 'P0422', 'priority_not_allowed', 'priorité refusée sur un service qui ne l''autorise pas');
+select tests.as_service();
 select throws_ok($$ select public.take_ticket((select id from ids where name = 'consult'), 'qr', (select v from vals where name = 'qr'), null,
   null) $$, '42501', null, 'un client identifié (session anonyme) est requis');
 insert into vals select 'l1', public.take_ticket((select id from ids where name = 'lab'), 'qr', (select v from vals where name = 'qr'), null,

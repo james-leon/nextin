@@ -9,6 +9,7 @@ import { BarChart } from "@/components/dashboard/bar-chart";
 import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 import { PlatformNav } from "@/components/platform/platform-sidebar";
 import { Badge } from "@/components/ui/badge";
+import { DataTable, td, th } from "@/components/ui/data-table";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatShortDay } from "@/lib/billing/format";
@@ -114,7 +115,48 @@ export default async function PlatformHome({ searchParams }: { searchParams: Pro
             ))}
           </ul>
         </nav>
-        <ListSection footer={subs.length ? undefined : t("empty")}>
+        {/* Ordinateur : tableau (une colonne par information) ; téléphone et tablette : liste groupée. */}
+        {subs.length ? (
+          <DataTable label={t("nav.subscriptions")} className="hidden lg:block" head={
+            <>
+              <th scope="col" className={th}>{t("colOrganization")}</th>
+              <th scope="col" className={th}>{t("colPlan")}</th>
+              <th scope="col" className={cn(th, "text-right")}>{t("colBranches")}</th>
+              <th scope="col" className={th}>{t("colPeriod")}</th>
+              <th scope="col" className={th}>{t("colLastPayment")}</th>
+              <th scope="col" className={th}>{t("colStatus")}</th>
+            </>
+          }>
+            {subs.map((s) => (
+              <tr key={s.id} className="transition-colors hover:bg-fill-tertiary/50">
+                <td className={td}>
+                  <Link href={`/admin/subscriptions/${s.id}`} className="flex min-h-11 items-center gap-3 font-semibold text-accent-text">
+                    <ListIcon color="var(--brand-tile)">
+                      <OrgTypeIcon type={s.org_type as Parameters<typeof OrgTypeIcon>[0]["type"]} />
+                    </ListIcon>
+                    {s.organization}
+                  </Link>
+                </td>
+                <td className={td}>{s.plan_name}</td>
+                <td className={cn(td, "text-right tabular")}>{s.branches}</td>
+                <td className={cn(td, "whitespace-nowrap")}>
+                  {s.status === "trialing" && s.trial_ends_at
+                    ? t("rowTrial", { date: formatShortDay(s.trial_ends_at, locale) })
+                    : s.current_period_end
+                      ? t("rowPeriod", { date: formatShortDay(s.current_period_end, locale) })
+                      : t("rowNone")}
+                </td>
+                <td className={cn(td, "text-label-secondary")}>
+                  {s.last_payment ? `${formatShortDay(s.last_payment.paid_at, locale)} · ${xaf(s.last_payment.total_xaf)}` : t("noPayment")}
+                </td>
+                <td className={td}>
+                  <Badge tone={TONE[s.status]}>{tb(`status.${s.status}`)}</Badge>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        ) : null}
+        <ListSection footer={subs.length ? undefined : t("empty")} className={subs.length ? "lg:hidden" : undefined}>
           {subs.map((s) => (
             <ListRow
               key={s.id}

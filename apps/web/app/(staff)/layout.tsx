@@ -42,7 +42,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
         ads: m.ads,
         adPrefs: m.adPrefs,
         adsAdmin: m.adsAdmin,
-        client: { service: { reasons: m.client.service.reasons } },
+        priorityReasons: m.priorityReasons,
       }}
     >
       <ToastProvider>{children}</ToastProvider>

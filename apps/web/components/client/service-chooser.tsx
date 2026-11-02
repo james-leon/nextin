@@ -3,24 +3,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { useRouter } from "next/navigation";
-import { Check, Clock } from "lucide-react";
+import { Accessibility, Check, Clock } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
-import { PRIORITY_REASONS, type BranchBoard, type BoardService, type PriorityReason } from "@nextin/shared/queue/live";
+import type { BranchBoard, BoardService } from "@nextin/shared/queue/live";
 import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListRow, ListSection } from "@/components/ui/list";
-import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { remoteTicketsFor, saveTicket } from "@/lib/client/my-tickets";
 import { callRpc } from "@/lib/client/supabase-public";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { takeTicket } from "@/lib/client/take-ticket";
+import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import type { EntryInfo, TicketView } from "@/lib/client/types";
 
-/** Écran 02 « Choisir un service » : files en direct, accès prioritaire, une action principale. */
+/**
+ * Écran 02 « Choisir un service » : files en direct, une action principale. L'accès prioritaire n'est plus demandé ici :
+ * une ligne d'information renvoie vers l'accueil, seul le personnel l'accorde (revue responsive P3).
+ * Ordinateur : menu latéral client, colonne centrée d'environ 640 px, résumé et bouton juste sous le contenu.
+ */
 export function ServiceChooser({
   entry,
   presenceCode = null,
@@ -42,8 +46,6 @@ export function ServiceChooser({
     [board, entry.service_id],
   );
   const [selected, setSelected] = useState<string | null>(entry.service_id ?? services[0]?.id ?? null);
-  const [priority, setPriority] = useState(false);
-  const [reason, setReason] = useState<PriorityReason>("appointment");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,7 +77,7 @@ export function ServiceChooser({
     return s.waiting.length === 0 && minutes === 0 ? t("noWait") : t("people", { count: s.waiting.length, minutes });
   };
   const current = services.find((s) => s.id === selected) ?? null;
-  const priorityAllowed = entry.priorities_enabled && !!current && entry.priority_service_ids.includes(current.id);
+  const priorityOffered = entry.priorities_enabled && entry.priority_service_ids.length > 0;
 
   async function submit() {
     if (!current) return;
@@ -86,7 +88,6 @@ export function ServiceChooser({
         serviceId: current.id,
         source: entry.source,
         entryCode: entry.entry_code,
-        priorityReason: priority && priorityAllowed ? reason : null,
       },
       { siteKey: captchaSiteKey, container: captchaRef.current },
     );
@@ -104,7 +105,7 @@ export function ServiceChooser({
   }
 
   return (
-    <main className="min-h-dvh pb-48">
+    <main className="min-h-dvh pb-48 md:pb-8">
       <NavigationBar
         title={t("title")}
         eyebrow={entry.organization.name}
@@ -115,14 +116,15 @@ export function ServiceChooser({
             {entry.source === "qr" ? t("recognized") : t("codeRecognized")}
           </Badge>
         }
-        contentClassName="max-w-lg"
+        contentClassName="max-w-lg lg:max-w-[40rem]"
       >
         <p className="mt-1 text-subheadline text-label-secondary">
           {entry.branch.name} · {t("subtitle")}
         </p>
       </NavigationBar>
 
-      <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3">
+      <DesktopClientSidebar active="scan" />
+      <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3 lg:max-w-[40rem]">
         {!entry.branch.is_open ? (
           <CalloutCard icon={<Clock />} role="status">
             {t("branchClosed")}
@@ -147,31 +149,13 @@ export function ServiceChooser({
           </ListSection>
         )}
 
-        {priorityAllowed ? (
-          <>
-            <ListSection>
-              <ListSwitchRow title={t("priority")} subtitle={t("priorityHint")} checked={priority} onCheckedChange={setPriority} />
-            </ListSection>
-            {priority ? (
-              <ListSection header={t("reasonHeader")} footer={t("reasonFooter")} radioGroupLabel={t("reasonHeader")}>
-                {PRIORITY_REASONS.map((r) => (
-                  <ListRow
-                    key={r}
-                    role="radio"
-                    selected={reason === r}
-                    onClick={() => setReason(r)}
-                    title={t(`reasons.${r}`)}
-                    accessory="check"
-                  />
-                ))}
-              </ListSection>
-            ) : null}
-          </>
-        ) : null}
+        {priorityOffered ? <CalloutCard icon={<Accessibility />} tone="accent">{t("priorityInfo")}</CalloutCard> : null}
         <div ref={captchaRef} className="flex justify-center empty:hidden" />
       </div>
 
       <BottomBar
+        className="lg:static lg:bg-none lg:pt-2"
+        contentClassName="lg:max-w-[40rem]"
         summary={
           error ? (
             <span role="alert" className="text-red-text">

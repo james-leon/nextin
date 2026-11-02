@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
   // Test sur téléphone en Wi-Fi (scripts/dev-lan.mjs) : le serveur de dev accepte l'adresse IP du PC.
   allowedDevOrigins: process.env.DEV_LAN_HOST ? [process.env.DEV_LAN_HOST] : [],
   agentRules: false,
+  // Indicateur du serveur de dev en bas à gauche : il ne recouvre plus les actions en bas à droite.
+  devIndicators: { position: "bottom-left" },
   // Génération PDF côté serveur ; les polices Inter (OFL) accompagnent les fonctions serverless.
   serverExternalPackages: ["@react-pdf/renderer"],
   outputFileTracingIncludes: { "/**": ["./lib/pdf/fonts/*.woff"] },
