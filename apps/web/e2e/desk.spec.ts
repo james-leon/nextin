@@ -167,7 +167,7 @@ test.describe("M5 — accueil", () => {
     await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le ticket" }).click();
     await expect(page.getByText("File d'attente · 2")).toBeVisible();
     const queue = page.locator("section", { has: page.getByRole("heading", { name: /File d'attente/ }) });
-    const codes = (await queue.getByRole("button").allInnerTexts()).map((c) => c.match(/^C-\d{3}/)?.[0]).filter(Boolean);
+    const codes = (await queue.getByRole("button").allInnerTexts()).map((c) => c.match(/C-\d{3}/)?.[0]).filter(Boolean);
     expect(codes).toEqual(["C-002", "C-001"]);
   });
 });

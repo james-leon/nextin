@@ -230,23 +230,21 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   key={tk2.id}
                   onClick={() => setSelected(tk2)}
                   icon={service ? <ServiceTile letter={service.prefix} color={service.color} /> : undefined}
-                  title={
-                    <span className="flex items-baseline gap-3">
-                      <span className="w-16 shrink-0 font-semibold">{tk2.code}</span>
-                      <span className="truncate text-label-secondary">
-                        {td(`source.${tk2.source}`)} · {time(tk2.createdAt)}
-                      </span>
-                    </span>
-                  }
+                  // Titre : le numéro ; sous-titre : origine et heure, puis présence ou praticien (la ligne garde la place du bouton « Prioritaire »).
+                  title={<span className="font-semibold">{tk2.code}</span>}
                   subtitle={
-                    tk2.remote ? (
-                      <span className={tk2.remote.confirmed ? "text-green-text" : "text-orange-text"}>
-                        {tk2.remote.confirmed ? t("remoteHere") : tk2.remote.onMyWay ? t("remoteOnWay") : t("remotePending")}
-                        {tk2.remote.delays ? ` · ${t("remoteDelayed", { count: tk2.remote.delays })}` : ""}
-                      </span>
-                    ) : doctor ? (
-                      t("forPractitioner", { name: doctor.name })
-                    ) : undefined
+                    <>
+                      {td(`source.${tk2.source}`)} · {time(tk2.createdAt)}
+                      {tk2.remote ? (
+                        <span className={tk2.remote.confirmed ? "text-green-text" : "text-orange-text"}>
+                          {" · "}
+                          {tk2.remote.confirmed ? t("remoteHere") : tk2.remote.onMyWay ? t("remoteOnWay") : t("remotePending")}
+                          {tk2.remote.delays ? ` · ${t("remoteDelayed", { count: tk2.remote.delays })}` : ""}
+                        </span>
+                      ) : doctor ? (
+                        ` · ${t("forPractitioner", { name: doctor.name })}`
+                      ) : null}
+                    </>
                   }
                   accessory={
                     tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
