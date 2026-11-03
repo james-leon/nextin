@@ -59,7 +59,12 @@ export function BookingForm({
   const supabase = getSupabaseBrowserClient();
   const bookable = ctx.practitioners.filter((p) => p.hasSchedule);
   const [practitionerId, setPractitionerId] = useState<string | null>(reschedule?.practitioner.id ?? bookable[0]?.id ?? null);
-  const [date, setDate] = useState(ctx.today);
+  // Reprogrammation : on part du jour du rendez-vous (s'il n'est pas passé), sinon d'aujourd'hui.
+  const [date, setDate] = useState(() => {
+    if (!reschedule) return ctx.today;
+    const own = localDate(reschedule.starts_at, ctx.branch.timeZone);
+    return own > ctx.today ? own : ctx.today;
+  });
   const [slotData, setSlotData] = useState<{ key: string; slots: Slot[] } | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [label, setLabel] = useState("");
