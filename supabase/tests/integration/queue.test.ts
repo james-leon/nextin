@@ -201,6 +201,8 @@ describe("temps réel", () => {
       p_entry_code: qr.data.token,
       p_priority_reason: null,
       p_customer: anon.data.user!.id,
+      // Clinique : nom obligatoire par défaut (jamais diffusé, voir customer_names.test.sql).
+      p_customer_name: "Patient Intégration",
     });
     const mine = await listen(visitor, ticketTopic(ticket.public_token), "ticket");
     assert.equal(mine.status, "SUBSCRIBED");

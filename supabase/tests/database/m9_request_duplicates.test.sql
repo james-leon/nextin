@@ -6,6 +6,8 @@ set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
 select plan(12);
+-- Nom du client non demandé ici (sujet testé dans customer_names.test.sql).
+alter table public.branch_settings alter column customer_name_mode set default 'off';
 
 create schema tests;
 create function tests.as_role(p_role text) returns void language plpgsql as $$
