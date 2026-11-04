@@ -202,10 +202,23 @@ function BrandSection() {
         <Card className="flex flex-col items-start justify-between gap-6">
           <Logo />
           <div className="flex items-center gap-3">
-            <LogoMark label={t("brand.logo")} className="size-14 rounded-[15px]" />
+            <LogoMark label={t("brand.logo")} className="size-14" />
             <LogoMark className="size-11" />
-            <LogoMark className="size-8 rounded-[8px]" />
+            <LogoMark className="size-8" />
           </div>
+          <div className="flex items-end gap-4">
+            <figure className="flex flex-col items-center gap-1">
+              {/* eslint-disable-next-line @next/next/no-img-element -- icône PWA telle qu'installée */}
+              <img src="/icons/icon-192.png" alt="" width={56} height={56} className="squircle size-14 rounded-[13px]" />
+              <figcaption className="text-caption text-label-secondary">{t("brand.appIcon")}</figcaption>
+            </figure>
+            <figure className="flex flex-col items-center gap-1">
+              {/* eslint-disable-next-line @next/next/no-img-element -- favicon (N seul) */}
+              <img src="/brand/nextin-favicon.svg" alt="" width={32} height={32} className="size-8" />
+              <figcaption className="text-caption text-label-secondary">{t("brand.favicon")}</figcaption>
+            </figure>
+          </div>
+          <p className="text-footnote text-label-secondary">{t("brand.iconNote")}</p>
         </Card>
         <Card className="flex flex-col justify-between gap-6 bg-tv text-white">
           <Logo tone="inverse" />

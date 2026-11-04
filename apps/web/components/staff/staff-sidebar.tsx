@@ -28,7 +28,7 @@ export function StaffSidebar({ isPlatformAdmin }: { isPlatformAdmin: boolean }) 
   return (
     <SidebarPanel>
       <div className="px-3">
-        <Logo />
+        <Logo className="h-10" />
       </div>
       <nav aria-label={t("staffNavLabel")}>
         <ul role="list" className="flex flex-col gap-1">

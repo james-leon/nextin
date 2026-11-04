@@ -1,4 +1,5 @@
 import { Document, Page, Path, Rect, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import { PdfLogo } from "./brand";
 import { qrMatrix } from "@/lib/qr/matrix";
 import { registerFonts } from "./register-fonts";
 
@@ -46,7 +47,6 @@ export function QrPosterDocument({ format, orgName, branchName, url, shortCode, 
     topBar: { position: "absolute", top: 0, left: 0, right: 0, height: s(6), backgroundColor: BLUE },
     header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     brand: { flexDirection: "row", alignItems: "center" },
-    brandName: { fontSize: s(17), fontWeight: 700, marginLeft: s(7) },
     org: { fontSize: s(8.5), fontWeight: 600, letterSpacing: s(1.3), color: GREY, textTransform: "uppercase", maxWidth: s(180), textAlign: "right" },
     headline: { marginTop: s(26), fontSize: s(38), lineHeight: 1.02, fontWeight: 800, letterSpacing: s(-1.3), textAlign: "center" },
     subtitle: { marginTop: s(9), fontSize: s(11.5), color: GREY, textAlign: "center" },
@@ -69,11 +69,7 @@ export function QrPosterDocument({ format, orgName, branchName, url, shortCode, 
         {format === "a4" ? <View style={styles.topBar} fixed /> : null}
         <View style={styles.header}>
           <View style={styles.brand}>
-            <Svg width={s(24)} height={s(24)} viewBox="0 0 24 24">
-              <Rect x={0} y={0} width={24} height={24} rx={6} ry={6} fill={BLUE} />
-              <Path d="M7 12h10M13 8l4 4-4 4" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </Svg>
-            <Text style={styles.brandName}>NextIn</Text>
+            <PdfLogo height={s(34)} />
           </View>
           <Text style={styles.org}>{branchName ? `${orgName} · ${branchName}` : orgName}</Text>
         </View>

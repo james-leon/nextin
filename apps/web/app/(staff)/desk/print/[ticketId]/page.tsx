@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { absoluteUrl, spellTicketCode } from "@nextin/shared";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { PrintTrigger } from "@/components/desk/print-trigger";
+import { Logo } from "@/components/ui/logo";
 import { requireStaffSession } from "@/lib/auth/session";
 import { qrMatrix } from "@/lib/qr/matrix";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -32,7 +33,6 @@ export default async function PrintTicketPage({ params, searchParams }: Props) {
     .maybeSingle();
   if (!ticket) notFound();
   const t = await getTranslations("print");
-  const tr = await getTranslations("reception");
   const locale = await getLocale();
   const branch = ticket.branch as { name: string; timezone: string; organization: { name: string } | null };
   const service = ticket.service as { name: string } | null;
@@ -86,7 +86,8 @@ export default async function PrintTicketPage({ params, searchParams }: Props) {
         ) : null}
         <p className="mt-[2mm] text-[8.5pt] leading-tight">{t("keep")}</p>
         <p className="text-[8pt]">{t("takenAt", { date, time })}</p>
-        <p className="text-[7pt]">NextIn · {tr("title")}</p>
+        {/* Logo horizontal, version claire (le ticket est toujours en clair). */}
+        <Logo className="mt-[1mm] h-[8mm]" />
       </article>
     </main>
   );

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListRow, ListSection } from "@/components/ui/list";
-import { Logo } from "@/components/ui/logo";
+import { LogoImage } from "@/components/ui/logo-image";
 import { Spinner } from "@/components/ui/spinner";
 import { TextField } from "@/components/ui/text-field";
 import { requestTurnstileToken } from "@/lib/client/turnstile";
@@ -131,7 +131,7 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-44">
       <div className="flex h-11 items-center">
-        <Logo />
+        <LogoImage className="h-10" />
       </div>
       <header className="flex flex-col items-center gap-1 pt-8 pb-6 text-center">
         <p className="text-subheadline text-label-secondary">{t("invoice", { number: view.number })}</p>
@@ -235,7 +235,7 @@ function Message({
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-12">
       <div className="flex h-11 items-center">
-        <Logo />
+        <LogoImage className="h-10" />
       </div>
       <section className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <span className={`squircle flex size-16 items-center justify-center rounded-[18px] [&_svg]:size-8 [&_svg]:stroke-[1.75] ${colors[tone]}`} aria-hidden>

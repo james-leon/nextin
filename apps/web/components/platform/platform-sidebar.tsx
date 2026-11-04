@@ -60,7 +60,7 @@ export function PlatformNav({ variant, hasOrgs = true }: { variant: "sidebar" | 
   return (
     <SidebarPanel>
         <div className="px-3">
-          <Logo />
+          <Logo className="h-10" />
         </div>
         <div className="px-3">
           <p className="truncate text-headline">{t("title")}</p>

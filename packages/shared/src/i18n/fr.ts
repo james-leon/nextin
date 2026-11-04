@@ -1621,6 +1621,9 @@ export const fr = {
       logo: "Logo NextIn",
       tagline: "Ne faites plus la queue",
       scannerFrame: "Cadre de visée",
+      appIcon: "Icône de l'application",
+      favicon: "Favicon",
+      iconNote: "Icône seule quand la place manque ; logo horizontal sinon (version claire sur fond clair, sombre sur fond sombre).",
     },
     mockups: {
       later: "Écran TV (05) : M6 · Tableau de bord (06) : M8 · Supports QR à imprimer (07, 08) : M2.",

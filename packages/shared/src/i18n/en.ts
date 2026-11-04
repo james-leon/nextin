@@ -1623,6 +1623,9 @@ export const en: Messages = {
       logo: "NextIn logo",
       tagline: "Skip the queue",
       scannerFrame: "Viewfinder",
+      appIcon: "App icon",
+      favicon: "Favicon",
+      iconNote: "Icon alone when space is short; horizontal logo otherwise (light version on light backgrounds, dark on dark).",
     },
     mockups: {
       later: "TV screen (05): M6 · Dashboard (06): M8 · Printable QR materials (07, 08): M2.",

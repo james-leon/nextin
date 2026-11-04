@@ -52,7 +52,7 @@ export function TvBoard({
     <main className="flex h-dvh flex-col gap-[2.2vh] overflow-hidden bg-tv px-[3.5vw] pt-[4vh] pb-[3.5vh] leading-snug text-white">
       {/* Interligne sans unité et espacements en vh : proportions identiques de 720p à la 4K, aucun texte rogné. */}
       <header className="flex items-center gap-[2.4vh]">
-        <Logo tone="inverse" className="[&>span:first-child]:size-[5.5vh] [&>span:last-child]:text-[3.4vh]" />
+        <Logo tone="inverse" className="h-[7vh]" />
         <p className="truncate text-[2.8vh] text-white/80">
           {session.organization.name} · {session.branch.name}
         </p>

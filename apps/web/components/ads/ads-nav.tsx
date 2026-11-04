@@ -53,7 +53,7 @@ export function AdsNav({ variant, advertiser, role }: { variant: "sidebar" | "in
   return (
     <SidebarPanel>
         <div className="px-3">
-          <Logo />
+          <Logo className="h-10" />
         </div>
         <div className="px-3">
           <p className="truncate text-headline">{advertiser ?? t("title")}</p>

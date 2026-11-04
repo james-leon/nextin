@@ -61,7 +61,7 @@ export function TvPairing({ onPaired }: { onPaired: (deviceToken: string) => voi
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-10 bg-tv px-12 text-center text-white">
-      <Logo tone="inverse" className="[&>span:first-child]:size-14 [&>span:last-child]:text-title1" />
+      <Logo tone="inverse" className="h-20" />
       <h1 className="text-[clamp(2rem,4vw,3.5rem)] leading-tight font-bold">{t("pairTitle")}</h1>
       <p
         aria-live="polite"

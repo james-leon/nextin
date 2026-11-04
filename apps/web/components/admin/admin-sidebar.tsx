@@ -46,7 +46,7 @@ export function AdminSidebar({
   return (
     <SidebarPanel>
         <div className="px-3">
-          <Logo />
+          <Logo className="h-10" />
         </div>
         <div className="px-3">
           <p className="truncate text-headline">{orgName}</p>

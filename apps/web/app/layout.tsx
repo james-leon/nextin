@@ -12,7 +12,12 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "NextIn", statusBarStyle: "default" },
   formatDetection: { telephone: false },
   icons: {
-    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    // Favicon : N seul (SVG pour les navigateurs récents, PNG 32 et 16 en repli). Icône pleine pour iOS.
+    icon: [
+      { url: "/brand/nextin-favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
 };

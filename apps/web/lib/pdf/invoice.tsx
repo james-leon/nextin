@@ -1,9 +1,9 @@
-import { Document, Page, Path, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { PdfLogo } from "./brand";
 import { registerFonts } from "./register-fonts";
 
 // Document imprimé : couleurs fixes (marque Wintek), gabarit sobre façon Apple.
 const NAVY = "#0D2C54";
-const BLUE = "#1A6BB5";
 const GREEN = "#1E7F35";
 const GREY = "#56606F";
 const HAIRLINE = "#E3E3E8";
@@ -32,7 +32,6 @@ const styles = StyleSheet.create({
   page: { fontFamily: "Inter", fontSize: 9.5, color: NAVY, paddingTop: 48, paddingBottom: 56, paddingHorizontal: 48 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   brand: { flexDirection: "row", alignItems: "center", gap: 8 },
-  brandName: { fontSize: 15, fontWeight: 700 },
   title: { fontSize: 24, fontWeight: 800, textAlign: "right" },
   meta: { color: GREY, textAlign: "right", marginTop: 3 },
   parties: { flexDirection: "row", gap: 24, marginTop: 32 },
@@ -58,16 +57,6 @@ const styles = StyleSheet.create({
   footer: { position: "absolute", bottom: 28, left: 48, right: 48, fontSize: 7.5, color: GREY, textAlign: "center" },
 });
 
-/** Tuile bleue à flèche blanche (logo NextIn), vectorielle. */
-function LogoTile() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path d="M6 0h12a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6V6a6 6 0 0 1 6-6z" fill={BLUE} />
-      <Path d="M7 12h9M12.5 7.5L17 12l-4.5 4.5" stroke="#FFFFFF" strokeWidth={2.2} fill="none" />
-    </Svg>
-  );
-}
-
 /** Facture d'abonnement (§11.6), rendue à la demande à partir de l'instantané figé en base. */
 export function InvoiceDocument(c: InvoiceContent) {
   registerFonts();
@@ -76,8 +65,7 @@ export function InvoiceDocument(c: InvoiceContent) {
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.brand}>
-            <LogoTile />
-            <Text style={styles.brandName}>NextIn</Text>
+            <PdfLogo height={30} />
           </View>
           <View>
             <Text style={styles.title}>{c.title}</Text>

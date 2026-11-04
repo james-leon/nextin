@@ -185,7 +185,7 @@ function TvUnavailable() {
   const t = useLiteT("tv");
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-tv p-16 text-center text-white">
-      <Logo />
+      <Logo tone="inverse" className="h-[12vh]" />
       <h1 className="text-[4vw] leading-tight font-bold">{t("unavailableTitle")}</h1>
       <p className="text-[2vw] text-white/75">{t("unavailableBody")}</p>
     </main>
