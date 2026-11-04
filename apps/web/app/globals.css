@@ -14,9 +14,9 @@
   color-scheme: light;
 
   /* Fonds (style A : fond plus clair, cartes blanches) */
-  --bg-grouped: #f5f5f7;
+  --bg-grouped: #f7f9fc;
   --bg-grouped-secondary: #ffffff;
-  --bg-grouped-tertiary: #f5f5f7;
+  --bg-grouped-tertiary: #f7f9fc;
   --bg-elevated: #ffffff;
 
   /* Libellés */
@@ -28,8 +28,9 @@
   --label-on-accent: #ffffff;
 
   /* Séparateurs et remplissages */
-  --separator: rgb(60 60 67 / 0.29);
-  --separator-opaque: #c6c6c8;
+  /* Bordures de SchoolMaster (#E8EDF4). */
+  --separator: #e8edf4;
+  --separator-opaque: #e8edf4;
   --fill: rgb(120 120 128 / 0.2);
   --fill-secondary: rgb(120 120 128 / 0.16);
   --fill-tertiary: rgb(118 118 128 / 0.12);
@@ -53,9 +54,9 @@
   --orange-fill: #f58b1f;
   --orange-text: #a3550a;
   --orange-tint: rgb(245 139 31 / 0.15);
-  --green-fill: #2ec04e;
+  --green-fill: #15a05a;
   --green-text: #176b2c;
-  --green-tint: rgb(46 192 78 / 0.15);
+  --green-tint: rgb(21 160 90 / 0.14);
   --red-fill: #d70015;
   --red-text: #d70015;
   --red-tint: rgb(255 59 48 / 0.12);
@@ -119,7 +120,7 @@
   --orange-text: #ffaa55;
   --orange-tint: rgb(245 139 31 / 0.22);
   --green-text: #5fd97a;
-  --green-tint: rgb(46 192 78 / 0.22);
+  --green-tint: rgb(21 160 90 / 0.24);
   --red-fill: #d70015;
   --red-text: #ff6961;
   --red-tint: rgb(255 69 58 / 0.2);
@@ -149,13 +150,24 @@
   }
 }
 
+/* Piles de polices : Inter / Sora (next/font, classes sur <html>), police système en repli. */
+:root {
+  --system-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
+  --app-font-sans: var(--font-inter), var(--system-font);
+  --app-font-display: var(--font-sora), var(--font-inter), var(--system-font);
+}
+/* Pages client : police système au premier affichage, Inter et Sora une fois la page chargée
+   (`FontsAfterLoad` pose data-fonts-ready) — le premier chargement reste sous 200 Ko. */
+html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
+  --app-font-sans: var(--system-font);
+  --app-font-display: var(--system-font);
+}
+
 @theme inline {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", Roboto,
-    system-ui, sans-serif;
-  /* Police d'affichage des grands titres (alignement SchoolMaster) : police système en attendant le nom confirmé ;
-     `--font-display-brand` sera fourni par next/font une fois la police choisie. */
-  --font-display: var(--font-display-brand, -apple-system), BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", Roboto,
-    system-ui, sans-serif;
+  /* Texte courant en Inter, grands titres et titres de section en Sora (polices de SchoolMaster, next/font).
+     Variables résolues à l'exécution : les pages client affichent d'abord la police système (budget). */
+  --font-sans: var(--app-font-sans);
+  --font-display: var(--app-font-display);
   --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
 
   --color-grouped: var(--bg-grouped);
@@ -329,6 +341,14 @@
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
     background: var(--bg-grouped);
+  }
+  /* Grands titres et titres de section : Sora (titres de liste et légendes restent en Inter). */
+  :where(h1, h2) {
+    font-family: var(--app-font-display);
+    /* Sora est plus large que la police système : un mot long (« établissements ») ne doit jamais déborder
+       d'un écran de 360 px avec un texte agrandi — césure française, sinon coupure en dernier recours. */
+    hyphens: auto;
+    overflow-wrap: break-word;
   }
   body {
     @apply bg-grouped text-label font-sans text-body antialiased;

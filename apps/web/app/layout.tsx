@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { getLocale } from "next-intl/server";
 import { themeInitScript } from "@/components/theme/theme";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { inter, sora } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f9fc" },
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
@@ -29,7 +30,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className={`${inter.variable} ${sora.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

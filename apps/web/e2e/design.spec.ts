@@ -42,7 +42,7 @@ test.describe("/design — vitrine du design system", () => {
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await page.getByRole("radio", { name: "Clair" }).click();
-    await expect(page.locator("body")).toHaveCSS("background-color", "rgb(245, 245, 247)");
+    await expect(page.locator("body")).toHaveCSS("background-color", "rgb(247, 249, 252)");
   });
 
   test("le mode Auto suit le réglage du système", async ({ browser }) => {

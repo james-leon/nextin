@@ -3,8 +3,11 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
-const securityHeaders = [
-  { key: "X-Content-Type-Options", value: "nosniff" },
+// nosniff sur toutes les réponses ; les en-têtes propres aux documents (cadres, référent, permissions) ne sont pas
+// renvoyés avec les fichiers statiques versionnés de /_next/static (sans effet sur un script ou une feuille de style,
+// et autant d'octets en moins sur chaque requête des pages client, budget < 200 Ko).
+const contentTypeHeaders = [{ key: "X-Content-Type-Options", value: "nosniff" }];
+const documentHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Permissions-Policy", value: "camera=(self), geolocation=(self), microphone=()" },
@@ -27,7 +30,8 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      { source: "/:path*", headers: securityHeaders },
+      { source: "/:path*", headers: contentTypeHeaders },
+      { source: "/((?!_next/static/).*)", headers: documentHeaders },
       {
         source: "/sw.js",
         headers: [

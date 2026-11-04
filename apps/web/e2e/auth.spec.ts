@@ -226,16 +226,24 @@ test.describe("M1 — authentification et établissements", () => {
     await expect(page).toHaveURL(/\/app$/);
   });
 
-  test("CGU et politique de confidentialité : bientôt disponibles", async ({ page }) => {
+  test("CGU et politique de confidentialité : articles numérotés, bientôt disponibles", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("link", { name: "CGU" }).click();
-    await expect(page).toHaveURL(/\/legal\/terms$/);
+    await expect(page).toHaveURL(/\/cgu$/);
     await expect(page.getByRole("heading", { level: 1, name: "Conditions générales d'utilisation" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Bientôt disponible" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "1. Objet" })).toBeVisible();
+    await page.getByRole("link", { name: "14. Contact" }).click();
+    await expect(page).toHaveURL(/#article-14$/);
     await expectAccessible(page);
-    await page.goto("/legal/privacy");
+    await expectTouchTargets(page);
+    await page.goto("/confidentialite");
     await expect(page.getByRole("heading", { level: 1, name: "Politique de confidentialité" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Bientôt disponible" })).toBeVisible();
-    expect((await page.goto("/legal/autre"))?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 2, name: "9. Vos droits" })).toBeVisible();
+    await page.context().addCookies([{ name: "NEXTIN_LOCALE", value: "en", url: page.url() }]);
+    await page.reload();
+    await expect(page.getByRole("heading", { level: 1, name: "Privacy policy" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "9. Your rights" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Coming soon" })).toBeVisible();
   });
 });

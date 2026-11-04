@@ -23,11 +23,11 @@ export function LegalFooter() {
     <footer className="flex flex-col items-center gap-0.5 text-center text-footnote text-label-secondary">
       <p>{t("legalConsent")}</p>
       <nav aria-label={t("legalLinks")} className="flex flex-wrap items-center justify-center">
-        <Link href="/legal/terms" prefetch={false} className={linkClass}>
+        <Link href="/cgu" prefetch={false} className={linkClass}>
           {t("terms")}
         </Link>
         <span aria-hidden>·</span>
-        <Link href="/legal/privacy" prefetch={false} className={linkClass}>
+        <Link href="/confidentialite" prefetch={false} className={linkClass}>
           {t("privacy")}
         </Link>
       </nav>

@@ -26,7 +26,7 @@ export const buttonVariants = cva(
         navy: "bg-navy text-white",
       },
       size: {
-        lg: "h-[3.125rem] min-w-[3.125rem] rounded-[14px] px-5 text-headline",
+        lg: "h-[3.125rem] min-w-[3.125rem] rounded-[12px] px-5 text-headline",
         md: "h-11 min-w-11 rounded-[12px] px-4 text-callout",
         sm: "h-[1.875rem] min-w-[1.875rem] rounded-full px-3 text-subheadline",
       },

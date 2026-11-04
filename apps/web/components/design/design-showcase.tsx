@@ -301,7 +301,7 @@ function ColorsSection() {
             <Swatch name={t("navyDeep")} value="#081D38" bg="var(--navy-deep)" />
             <Swatch name={t("blue")} value="#1A6BB5" bg="var(--accent-fill)" />
             <Swatch name={t("orange")} value="#F58B1F" bg="var(--orange-fill)" />
-            <Swatch name={t("green")} value="#2EC04E" bg="var(--green-fill)" />
+            <Swatch name={t("green")} value="#15A05A" bg="var(--green-fill)" />
             <Swatch name={t("red")} value="#D70015" bg="var(--red-fill)" />
           </div>
         </Card>
@@ -319,11 +319,11 @@ function ColorsSection() {
         <Card>
           <CardTitle className="pb-3">{t("system")}</CardTitle>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Swatch name={t("groupedBg")} value="#F2F2F7 · #000000" bg="var(--bg-grouped)" ring />
+            <Swatch name={t("groupedBg")} value="#F7F9FC · #000000" bg="var(--bg-grouped)" ring />
             <Swatch name={t("card")} value="#FFFFFF · #1C1C1E" bg="var(--bg-grouped-secondary)" ring />
             <Swatch name={t("label")} value="#000000 · #FFFFFF" bg="var(--label)" />
             <Swatch name={t("secondaryLabel")} value="#6C6C70 · 60%" bg="var(--label-secondary)" />
-            <Swatch name={t("separator")} value="0,5 px" bg="var(--separator)" />
+            <Swatch name={t("separator")} value="#E8EDF4 · 0,5 px" bg="var(--separator)" />
             <Swatch name={t("fill")} value="20% · 36%" bg="var(--fill)" />
           </div>
         </Card>
