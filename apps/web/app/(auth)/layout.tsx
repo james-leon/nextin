@@ -32,10 +32,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         >
           {/* Halo décoratif très discret (profondeur, sans détourner du contenu). */}
           <span aria-hidden className="pointer-events-none absolute -top-40 -right-40 size-[28rem] rounded-full bg-white/[0.04]" />
-          <div className="relative flex flex-col gap-1.5">
-            <Logo tone="inverse" className="h-12" />
-            <p className="text-footnote text-white/75">{t("brandBy")}</p>
-          </div>
+          <Logo tone="inverse" className="relative h-12 self-start" />
           <div className="relative flex max-w-lg flex-col">
             <p className="text-footnote font-semibold tracking-[0.14em] text-orange uppercase">{t("panelEyebrow")}</p>
             <h2 className="mt-4 font-display text-[2.75rem] leading-[1.06] font-extrabold tracking-tight whitespace-pre-line xl:text-[3.25rem]">

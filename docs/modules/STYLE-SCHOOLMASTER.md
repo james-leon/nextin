@@ -28,7 +28,7 @@ En sombre, le bleu nuit n'est plus visible sur le noir (1,5:1) : le bouton princ
 | Rayon de base | champs 12 px, grand bouton 14 px | 12 px partout (cartes 24 px, héros 28 px inchangés) |
 
 ## Connexion du personnel
-- Ordinateur (≥ 1024 px) : panneau gauche bleu nuit (`#0D2C54` → `#081D38`, dégradé très léger) : `Logo` inversé + « par Wintek — Winner Technology », sur-titre orange en capitales espacées, grand titre sur 3 lignes, accroche, 3 avantages (tuiles translucides), copyright (année courante, fuseau de Douala). Panneau droit `bg-grouped` avec le formulaire.
+- Ordinateur (≥ 1024 px) : panneau gauche bleu nuit (`#0D2C54` → `#081D38`, dégradé très léger) : logo « NextIn by Wintek » (version sombre), sur-titre orange en capitales espacées, grand titre sur 3 lignes, accroche, 3 avantages (tuiles translucides), copyright (année courante, fuseau de Douala). Panneau droit `bg-grouped` avec le formulaire.
 - Téléphone et tablette : panneau droit seul. Bascule FR / EN en pilule en haut à droite.
 - Formulaire : icône de l'app, « Bon retour », « Connectez-vous à votre espace NextIn », champs avec icône (enveloppe, cadenas) et œil, « Se souvenir de moi » + « Mot de passe oublié ? », « Se connecter → » pleine largeur, « Connexion sécurisée · Données chiffrées » (bouclier vert), connexion par code e-mail conservée, lien d'inscription, pied de page légal.
 - Inscription, invitation et « Nouveau mot de passe » partagent le gabarit (`AuthHeader`, `LegalFooter`).

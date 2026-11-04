@@ -171,7 +171,6 @@ export const en: Messages = {
     payment_failed: "The payment didn't go through. Check your balance and try again.",
   },
   auth: {
-    brandBy: "by Wintek — Winner Technology",
     panelLabel: "About NextIn",
     panelEyebrow: "Smart queue management",
     panelTitle: "Your queues,\nfinally under\ncontrol.",

@@ -169,7 +169,6 @@ export const fr = {
     payment_failed: "Le paiement n'a pas abouti. Vérifiez votre solde et réessayez.",
   },
   auth: {
-    brandBy: "par Wintek — Winner Technology",
     panelLabel: "À propos de NextIn",
     panelEyebrow: "Gestion intelligente des files d'attente",
     panelTitle: "Vos files d'attente,\nenfin sous\ncontrôle.",
