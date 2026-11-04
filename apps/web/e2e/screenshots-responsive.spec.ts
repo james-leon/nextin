@@ -8,13 +8,14 @@ import { supabaseOptions } from "./queue-helpers";
  * Revue responsive (`docs/REVUE-RESPONSIVE.md`) : captures des écrans du personnel, des pages client et de l'écran TV.
  * `RESPONSIVE_PHASE=before` (P1) ou `before-p2` → docs/captures/responsive/<phase>/<écran>-<taille>.png (clair) ;
  * `after` (défaut) → docs/captures/responsive/<écran>-<taille>.png et <écran>-<taille>-dark.png.
+ * `RESPONSIVE_THEMES=both` : clair et sombre aussi pour une phase « avant » (`light` : clair seulement).
  * `RESPONSIVE_ONLY=01-home,30-` : seulement les écrans dont le nom commence par l'un de ces préfixes.
  * À lancer sur une base propre (`pnpm db:reset` puis `pnpm seed:demo:local`) : seules les données de démo apparaissent.
  */
 const PHASE = process.env.RESPONSIVE_PHASE?.startsWith("before") ? process.env.RESPONSIVE_PHASE : "after";
 const OUT = PHASE === "after" ? "../../docs/captures/responsive" : `../../docs/captures/responsive/${PHASE}`;
 const THEMES: ("light" | "dark")[] =
-  PHASE !== "after" || process.env.RESPONSIVE_THEMES === "light" ? ["light"] : ["light", "dark"];
+  process.env.RESPONSIVE_THEMES === "both" || (PHASE === "after" && process.env.RESPONSIVE_THEMES !== "light") ? ["light", "dark"] : ["light"];
 const ONLY = process.env.RESPONSIVE_ONLY?.split(",").filter(Boolean) ?? [];
 const wanted = (name: string) => !ONLY.length || ONLY.some((prefix) => name.startsWith(prefix));
 const SIZES = {
@@ -165,6 +166,7 @@ for (const size of Object.keys(SIZES) as Size[]) {
         .single();
       const token = waiting!.public_token as string;
       const shots: Shot[] = [
+        { name: "00-login", path: "/login", full: false },
         { name: "30-scanner", path: "/", full: false },
         { name: "31-code", path: "/c" },
         { name: "32-service-choice", path: `/q/${ids.entryCode}` },
