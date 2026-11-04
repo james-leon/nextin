@@ -44,7 +44,21 @@ export default async function TicketPage({ params }: Params) {
     // Textes des cartes « Jouer en attendant » et « Sponsorisé » ; ceux des jeux arrivent avec la feuille.
     const cards = { cardTitle: games.cardTitle, cardBody: games.cardBody, open: games.open, sponsored: games.sponsored };
     return (
-      <LiteMessages paths={["client.ticket", "errors", "counterKinds"]}>
+      <LiteMessages
+        // Seules les erreurs possibles sur cette page (note du passage) : le dictionnaire entier alourdirait la page.
+        paths={[
+          "client.ticket",
+          "counterKinds",
+          "errors.generic",
+          "errors.network",
+          "errors.already_rated",
+          "errors.rating_disabled",
+          "errors.not_found",
+          "errors.not_allowed",
+          "errors.rate_limited",
+          "errors.invalid_state",
+        ]}
+      >
         <TicketLive token={token} initial={view} whatsappNumber={whatsappNumber} vapidKey={vapidKey} couponBaseUrl={absoluteUrl("/coupon/")} gameCards={cards} />
       </LiteMessages>
     );

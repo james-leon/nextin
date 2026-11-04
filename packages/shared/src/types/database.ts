@@ -2256,6 +2256,9 @@ isOneToOne: true
 "customer_identity_rules":
 { Args: { "p_branch": string }; Returns: Json
                            },
+"daily_wait_series":
+{ Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
+                           },
 "dashboard_stats":
 { Args: { "p_branch": string,"p_compare_from"?: string,"p_compare_to"?: string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
                            },

@@ -159,9 +159,15 @@ export function AgentDesk({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const row = (tk: DeskTicket) => (
+  // Rang dans la file (1 = prochain), numéro, nom, origine et badges.
+  const row = (tk: DeskTicket, rank: number) => (
     <ListRow
       key={tk.id}
+      icon={
+        <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-tertiary text-footnote font-semibold text-label tabular">
+          {rank}
+        </span>
+      }
       title={
         <span className="flex items-baseline gap-4">
           <span className="w-16 shrink-0 font-semibold">{tk.code}</span>
@@ -406,7 +412,7 @@ export function AgentDesk({
             header={t("nextHeader", { count: view.waiting.length })}
             footer={view.waiting.length > MAX_ROWS ? t("more", { count: view.waiting.length - MAX_ROWS }) : undefined}
           >
-            {view.waiting.length ? view.waiting.slice(0, MAX_ROWS).map(row) : <ListRow title={<span className="text-label-secondary">{t("nobody")}</span>} />}
+            {view.waiting.length ? view.waiting.slice(0, MAX_ROWS).map((tk, i) => row(tk, i + 1)) : <ListRow title={<span className="text-label-secondary">{t("nobody")}</span>} />}
           </ListSection>
 
           <div className="grid grid-cols-2 gap-3">

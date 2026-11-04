@@ -21,6 +21,8 @@ export type DashboardData = {
   previous: StatsTotals | null;
   hourly: number[];
   daily: { day: string; issued: number; wait_avg_seconds: number | null }[];
+  /** Attente moyenne par jour de la période précédente (style A : courbe en pointillés), chargée à part. */
+  previousDaily?: { day: string; wait_avg_seconds: number | null }[];
   services: {
     id: string;
     name: string;

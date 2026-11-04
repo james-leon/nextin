@@ -93,16 +93,6 @@ export default async function BranchPage({ params, searchParams }: Props) {
           />
         </ListSection>
       </div>
-      <BranchPhotoCard
-        orgId={orgId}
-        branchId={branchId}
-        canManage={canManage}
-        photoUrl={
-          branch.photo_updated_at
-            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/branch-photos/${orgId}/${branchId}/cover.webp?v=${new Date(branch.photo_updated_at).getTime()}`
-            : null
-        }
-      />
       {/* Postes de l'agence : carte d'accès à l'accueil (et aux guichets depuis le choix du poste). */}
       <Link
         href={`/desk/reception/${branchId}`}
@@ -117,6 +107,16 @@ export default async function BranchPage({ params, searchParams }: Props) {
         </span>
         <ChevronRight aria-hidden className="size-5 shrink-0 stroke-[2.25] text-label-tertiary" />
       </Link>
+      <BranchPhotoCard
+        orgId={orgId}
+        branchId={branchId}
+        canManage={canManage}
+        photoUrl={
+          branch.photo_updated_at
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/branch-photos/${orgId}/${branchId}/cover.webp?v=${new Date(branch.photo_updated_at).getTime()}`
+            : null
+        }
+      />
     </AdminPage>
   );
 }

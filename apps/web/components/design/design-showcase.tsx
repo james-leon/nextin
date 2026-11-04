@@ -58,6 +58,8 @@ import { StatCard } from "@/components/ui/stat-card";
 import { TabBar } from "@/components/ui/tab-bar";
 import { SearchField, TextField } from "@/components/ui/text-field";
 import { TicketHero } from "@/components/ui/ticket-hero";
+import { QueuePosition } from "@/components/client/queue-position";
+import { LineChart } from "@/components/dashboard/line-chart";
 import { useToast } from "@/components/ui/toast";
 
 const SECTIONS = [
@@ -526,6 +528,9 @@ function CardsSection() {
         </CalloutCard>
         <AdRow />
       </div>
+      <div className="mt-5">
+        <StyleADemos />
+      </div>
     </Section>
   );
 }
@@ -704,6 +709,7 @@ function NavigationSection() {
 
 function TabBarSection() {
   const t = useTranslations("design.nav");
+  const ts = useTranslations("design.styleA");
   const [tab, setTab] = useState("scan");
   const tabs = useTabItems();
   return (
@@ -723,6 +729,11 @@ function TabBarSection() {
             position="static"
             className="bg-scanner-surface/90"
           />
+        </div>
+        {/* Style A : pilule flottante des pages client sur téléphone (onglet actif en pilule bleue). */}
+        <p className="px-4 text-footnote text-label-secondary uppercase">{ts("floating")}</p>
+        <div className="squircle relative h-28 overflow-hidden rounded-[var(--radius-xl)] bg-grouped lg:hidden">
+          <TabBar label={t("tabbar")} items={tabs} active={tab} onSelect={setTab} floating className="absolute" />
         </div>
       </div>
     </Section>
@@ -854,6 +865,7 @@ function BadgesSection() {
 
 function DemoTicketHero({ called = false }: { called?: boolean }) {
   const t = useTranslations("design.ticket");
+  const ts = useTranslations("design.styleA");
   return (
     <TicketHero
       code={formatTicketCode("C", 47)}
@@ -869,7 +881,48 @@ function DemoTicketHero({ called = false }: { called?: boolean }) {
       state={called ? "called" : "waiting"}
       calledTitle={t("calledTitle")}
       calledBody={t("calledBody")}
+      live={ts("live")}
     />
+  );
+}
+
+/** Style A : carte « Votre position » et courbe d'attente avec la période précédente. */
+function StyleADemos() {
+  const ts = useTranslations("design.styleA");
+  const days = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."];
+  const current = [14, 18, 12, 21, 16, null, 9];
+  const previous = [17, 19, 15, 20, 22, 11, 10];
+  return (
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <QueuePosition
+        title={ts("positionTitle")}
+        current={{ code: formatTicketCode("C", 43), counter: "Cabinet 2" }}
+        ahead={[formatTicketCode("C", 44), formatTicketCode("C", 45), formatTicketCode("C", 46), formatTicketCode("C", 47), formatTicketCode("C", 48)]}
+        me={formatTicketCode("C", 49)}
+        labels={{
+          now: (counter) => ts("positionNow", { counter }),
+          idle: ts("positionIdle"),
+          more: (count) => ts("positionMore", { count }),
+          you: ts("positionYou"),
+        }}
+      />
+      <Card>
+        <h3 className="pb-3 text-headline">{ts("waitDaily")}</h3>
+        <LineChart
+          caption={ts("waitDaily")}
+          columns={[ts("day"), ts("current"), ts("previous")]}
+          legend={{ current: ts("current"), previous: ts("previous") }}
+          format={(v) => String(Math.round(v / 60))}
+          points={days.map((day, i) => ({
+            key: day,
+            label: day,
+            value: current[i] == null ? null : current[i]! * 60,
+            previous: previous[i]! * 60,
+            tooltip: ts("tooltip", { day, value: String(current[i] ?? "—"), previous: String(previous[i]) }),
+          }))}
+        />
+      </Card>
+    </div>
   );
 }
 

@@ -42,3 +42,29 @@ export function LazyMount({ children }: { children: ReactNode }) {
   }, [mounted]);
   return <div ref={ref}>{mounted ? children : null}</div>;
 }
+
+/**
+ * Vrai 3 s après le chargement de la page, quand le navigateur est inactif : même règle que `LazyMount`, pour un
+ * contenu décoratif qui a déjà un remplaçant léger (photos d'établissement : icône du secteur d'abord).
+ */
+export function useAfterFirstLoad(): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let idle = 0;
+    let delay = 0;
+    const done = () => setReady(true);
+    const afterLoad = () => {
+      idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(done, { timeout: 2000 }) : window.setTimeout(done, 1500);
+    };
+    const start = () => (delay = window.setTimeout(afterLoad, 3000));
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+    return () => {
+      window.removeEventListener("load", start);
+      window.clearTimeout(delay);
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
+      window.clearTimeout(idle);
+    };
+  }, []);
+  return ready;
+}

@@ -29,6 +29,7 @@ import type { DashboardData, DashboardQuery } from "@/lib/stats/dashboard";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
 import { BarChart } from "./bar-chart";
+import { LineChart } from "./line-chart";
 
 /** Une file est signalée chargée (orange) au-delà de 20 minutes d'attente estimée. */
 const BUSY_WAIT_SECONDS = 20 * 60;
@@ -92,19 +93,25 @@ export function DashboardView({
     let alive = true;
     const key = JSON.stringify(query);
     const load = () =>
-      supabase
-        .rpc("dashboard_stats", {
+      Promise.all([
+        supabase.rpc("dashboard_stats", {
           p_org: org.id,
           p_branch: (query.branchId ?? null) as string,
           p_from: range.from,
           p_to: range.to,
           p_compare_from: compare.from,
           p_compare_to: compare.to,
-        })
-        .then(({ data: next }) => {
-          refreshing.current = false;
-          if (alive && next) setResult({ key, data: next as unknown as DashboardData });
-        });
+        }),
+        // Période précédente jour par jour (courbe en pointillés).
+        compare.from && compare.to
+          ? supabase.rpc("daily_wait_series", { p_org: org.id, p_branch: (query.branchId ?? null) as string, p_from: compare.from, p_to: compare.to })
+          : Promise.resolve({ data: null }),
+      ]).then(([{ data: next }, { data: previous }]) => {
+        refreshing.current = false;
+        if (alive && next) {
+          setResult({ key, data: { ...(next as unknown as DashboardData), previousDaily: (previous as DashboardData["previousDaily"]) ?? [] } });
+        }
+      });
     void load();
     if (!live) {
       return () => {
@@ -186,6 +193,25 @@ export function DashboardView({
   const hours = data.hourly.slice(firstHour, lastHour + 1);
   const hourPeak = peakIndex(hours);
   const dayPeak = peakIndex(data.daily.map((d) => d.issued));
+  const hourlyPanel = (
+    <Panel title={t("hourly")} aside={hourPeak >= 0 ? t("peak", { hour: firstHour + hourPeak }) : t("hourlyUnit")}>
+      {data.totals.issued ? (
+        <BarChart
+          caption={t("hourly")}
+          columns={[t("hourly"), t("hourlyUnit")]}
+          highlight={hourPeak}
+          bars={hours.map((v, i) => ({
+            key: String(firstHour + i),
+            label: t("hourLabel", { hour: firstHour + i }),
+            value: v,
+            tooltip: t("hourTooltip", { hour: firstHour + i, count: v }),
+          }))}
+        />
+      ) : (
+        <p className="py-16 text-center text-body text-label-secondary">{t("empty")}</p>
+      )}
+    </Panel>
+  );
   const maxWait = Math.max(BUSY_WAIT_SECONDS, ...data.live.map((s) => s.wait_seconds));
   const counterLabel = (c: { kind: string; number: number; label: string | null }) => counterName(c, (k) => tk(k as "cabinet"));
   const statusTone = { open: "green", paused: "orange", closed: "neutral" } as const;
@@ -258,28 +284,37 @@ export function DashboardView({
 
         <div className={cn("grid grid-cols-2 gap-3 transition-opacity lg:grid-cols-4 lg:gap-5", loading && "opacity-60")}>
           {kpis.map((k) => (
-            <StatCard key={k.label} label={k.label} value={k.value} trend={trend(k.d)} trendTone={k.d?.tone ?? "neutral"} className="shadow-card lg:px-5 lg:py-5" />
+            <StatCard key={k.label} label={k.label} value={k.value} trend={trend(k.d)} trendTone={k.d?.tone ?? "neutral"} className="lg:px-6 lg:py-5" />
           ))}
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-          <Panel title={t("hourly")} aside={hourPeak >= 0 ? t("peak", { hour: firstHour + hourPeak }) : t("hourlyUnit")}>
-            {data.totals.issued ? (
-              <BarChart
-                caption={t("hourly")}
-                columns={[t("hourly"), t("hourlyUnit")]}
-                highlight={hourPeak}
-                bars={hours.map((v, i) => ({
-                  key: String(firstHour + i),
-                  label: t("hourLabel", { hour: firstHour + i }),
-                  value: v,
-                  tooltip: t("hourTooltip", { hour: firstHour + i, count: v }),
-                }))}
+          {query.period === "day" ? (
+            hourlyPanel
+          ) : (
+            <Panel title={t("waitDaily")} aside={t("minutesUnit")}>
+              <LineChart
+                caption={t("waitDaily")}
+                columns={[t("day"), t("waitDailyCurrent"), t("waitDailyPrevious")]}
+                legend={{ current: t("waitDailyCurrent"), previous: t("waitDailyPrevious") }}
+                format={(v) => String(toMinutes(v))}
+                points={data.daily.map((d, i) => {
+                  const previous = data.previousDaily?.[i]?.wait_avg_seconds ?? null;
+                  return {
+                    key: d.day,
+                    label: query.period === "week" ? longDate(d.day, { weekday: "short" }) : longDate(d.day, { day: "numeric" }),
+                    value: d.wait_avg_seconds,
+                    previous,
+                    tooltip: t("waitTooltip", {
+                      date: longDate(d.day, { weekday: "short", day: "numeric", month: "short" }),
+                      value: d.wait_avg_seconds != null ? String(toMinutes(d.wait_avg_seconds)) : "—",
+                      previous: previous != null ? String(toMinutes(previous)) : "—",
+                    }),
+                  };
+                })}
               />
-            ) : (
-              <p className="py-16 text-center text-body text-label-secondary">{t("empty")}</p>
-            )}
-          </Panel>
+            </Panel>
+          )}
 
           <Panel
             title={t("live")}
@@ -314,6 +349,8 @@ export function DashboardView({
         </div>
 
         {query.period !== "day" ? (
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {hourlyPanel}
           <Panel title={t("daily")} aside={t("hourlyUnit")}>
             <BarChart
               caption={t("daily")}
@@ -327,6 +364,7 @@ export function DashboardView({
               }))}
             />
           </Panel>
+          </div>
         ) : null}
 
         {canAdvanced ? (

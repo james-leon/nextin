@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(9);
+select plan(12);
 
 create schema tests;
 create function tests.create_user(p_id uuid, p_email text, p_anonymous boolean default false) returns uuid language sql as $$
@@ -97,6 +97,17 @@ select is(public.branch_public((select id from ids where name = 'akwa')) -> 'pho
 select tests.login_as('a8000000-0000-0000-0000-00000000000a');
 select public.set_branch_photo((select id from ids where name = 'akwa'), false);
 select ok(public.branch_public((select id from ids where name = 'akwa')) -> 'photo' = 'null'::jsonb, 'photo retirée : icône du secteur');
+
+-- ─── Tableau de bord : attente moyenne par jour (période précédente) ─────────
+select tests.login_as('a8000000-0000-0000-0000-00000000000a');
+select is(jsonb_array_length(public.daily_wait_series((select id from ids where name = 'clinic'), null, current_date - 6, current_date)), 7,
+  'une valeur par jour de la période');
+select tests.login_as('b8000000-0000-0000-0000-00000000000b');
+select throws_ok($$ select public.daily_wait_series((select id from ids where name = 'clinic'), null, current_date - 6, current_date) $$, '42501', null,
+  'série refusée à un autre établissement');
+select tests.login_as('d8000000-0000-0000-0000-00000000000d');
+select throws_ok($$ select public.daily_wait_series((select id from ids where name = 'clinic'), null, current_date - 6, current_date) $$, '42501', null,
+  'un agent n''a pas accès aux statistiques');
 
 select * from finish();
 rollback;

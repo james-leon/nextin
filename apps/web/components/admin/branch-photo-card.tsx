@@ -20,7 +20,8 @@ async function cropToWebp(image: ImageBitmap, width: number, height: number): Pr
   canvas.width = width;
   canvas.height = height;
   canvas.getContext("2d")!.drawImage(image, (image.width - sw) / 2, (image.height - sh) / 2, sw, sh, 0, 0, width, height);
-  for (const quality of [0.82, 0.7, 0.55]) {
+  // Photo légère pour la 3G : qualité modérée d'abord.
+  for (const quality of [0.75, 0.62, 0.5]) {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
     if (blob && blob.size <= MAX_BYTES) return blob;
   }
@@ -54,7 +55,7 @@ export function BranchPhotoCard({
     setPending("upload");
     try {
       const image = await createImageBitmap(file);
-      const [cover, thumb] = await Promise.all([cropToWebp(image, 1280, 720), cropToWebp(image, 320, 320)]);
+      const [cover, thumb] = await Promise.all([cropToWebp(image, 960, 540), cropToWebp(image, 320, 320)]);
       const supabase = getSupabaseBrowserClient();
       const bucket = supabase.storage.from("branch-photos");
       for (const [name, blob] of [["cover.webp", cover], ["thumb.webp", thumb]] as const) {
@@ -105,7 +106,7 @@ export function BranchPhotoCard({
             ref={input}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
+            className="hidden"
             aria-label={t("photoChoose")}
             onChange={(e) => {
               const file = e.target.files?.[0];

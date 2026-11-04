@@ -17,6 +17,7 @@ import type { NearbyBranch } from "@/lib/client/types";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { OrgTypeIcon } from "@/components/ui/org-type-icon";
+import { useAfterFirstLoad } from "./lazy-mount";
 import { cn } from "@/lib/cn";
 
 // Carte chargée seulement quand elle s'affiche (onglet Carte sur téléphone, colonne de droite sur ordinateur).
@@ -39,14 +40,15 @@ function categoryOf(type: string): Category | null {
 }
 
 /** Photo de l'établissement (16:9 ou carrée), sinon icône du secteur sur fond teinté. */
-function BranchVisual({ branch, variant }: { branch: NearbyBranch; variant: "cover" | "thumb" }) {
-  if (branch.photo) {
+function BranchVisual({ branch, variant, photos }: { branch: NearbyBranch; variant: "cover" | "thumb"; photos: boolean }) {
+  // Photos chargées après le premier affichage (comme les publicités) : l'icône du secteur s'affiche d'abord.
+  if (branch.photo && photos) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={branchPhotoUrl(variant === "cover" ? branch.photo.cover : branch.photo.thumb, branch.photo.version)}
         alt=""
-        loading={variant === "cover" ? "eager" : "lazy"}
+        loading="lazy"
         decoding="async"
         className="absolute inset-0 size-full object-cover"
       />
@@ -64,8 +66,8 @@ function BranchVisual({ branch, variant }: { branch: NearbyBranch; variant: "cov
     </span>
   );
 }
-/** Agences rechargées autour du client ou pour une recherche : 20 au plus (réponse légère en 3G). */
-const LIMIT = 20;
+/** Agences rechargées autour du client ou pour une recherche : 10 au plus (grande carte + 9 lignes, réponse légère en 3G). */
+const LIMIT = 10;
 type Locate = "idle" | "locating" | "located" | "denied" | "unavailable";
 
 /**
@@ -94,6 +96,7 @@ export function NearbyExplorer({
   const [selected, setSelected] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState(() => new Date());
   const [category, setCategory] = useState<Category>("all");
+  const photos = useAfterFirstLoad();
   const rows = useRef<Map<string, HTMLLIElement>>(new Map());
 
   async function locateMe() {
@@ -162,10 +165,6 @@ export function NearbyExplorer({
     return minutes == null ? "—" : minutes === 0 ? t("noWait") : t("wait", { minutes });
   };
   const distanceText = (b: NearbyBranch) => (b.distance_m != null ? formatDistance(b.distance_m, locale) : null);
-  const rowRef = (id: string) => (el: HTMLLIElement | null) => {
-    if (el) rows.current.set(id, el);
-    else rows.current.delete(id);
-  };
   const linkProps = (b: NearbyBranch) => ({
     href: `/b/${b.id}`,
     // Pas de préchargement des pages d'agence : premier chargement léger (3G, < 200 Ko).
@@ -201,7 +200,10 @@ export function NearbyExplorer({
       ) : (
         <ul role="list" className={cn("flex flex-col gap-4", !mapOnDesktop && "lg:grid lg:grid-cols-2 lg:items-start xl:grid-cols-3")}>
           {/* L'établissement le plus proche (ou le premier) en grande carte avec sa photo. */}
-          <li ref={rowRef(featured.id)} className={cn(!mapOnDesktop && "lg:row-span-2")}>
+          <li ref={(el) => {
+            if (el) rows.current.set(featured.id, el);
+            else rows.current.delete(featured.id);
+          }} className={cn(!mapOnDesktop && "lg:row-span-2")}>
             <Link
               {...linkProps(featured)}
               className={cn(
@@ -210,7 +212,7 @@ export function NearbyExplorer({
               )}
             >
               <span className="relative block aspect-[16/9]">
-                <BranchVisual branch={featured} variant="cover" />
+                <BranchVisual branch={featured} variant="cover" photos={photos} />
                 <span className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
                   <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-grouped-secondary/95 px-3 text-footnote font-semibold text-label shadow-card">
                     <span aria-hidden className={cn("size-2 rounded-full", featured.is_open ? "bg-green" : "bg-label-tertiary")} />
@@ -250,7 +252,10 @@ export function NearbyExplorer({
             <li className={cn(!mapOnDesktop && "lg:col-span-1 xl:col-span-2")}>
               <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
                 {others.map((b) => (
-                  <li key={b.id} ref={rowRef(b.id)} className="group/row">
+                  <li key={b.id} ref={(el) => {
+                      if (el) rows.current.set(b.id, el);
+                      else rows.current.delete(b.id);
+                    }} className="group/row">
                     <Link
                       {...linkProps(b)}
                       className={cn(
@@ -259,7 +264,7 @@ export function NearbyExplorer({
                       )}
                     >
                       <span className="relative my-3 block size-14 shrink-0 overflow-hidden rounded-[14px]">
-                        <BranchVisual branch={b} variant="thumb" />
+                        <BranchVisual branch={b} variant="thumb" photos={photos} />
                       </span>
                       <span className="relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator">
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
