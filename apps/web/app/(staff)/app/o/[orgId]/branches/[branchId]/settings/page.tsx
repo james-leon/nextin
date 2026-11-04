@@ -47,6 +47,8 @@ export default async function BranchSettingsPage({ params }: { params: Promise<{
           requests: s.appointment_requests_enabled,
           requestDays: s.appointment_request_days,
           requestMaxPending: s.appointment_request_max_pending,
+          nameMode: s.customer_name_mode as "off" | "optional" | "required",
+          nameExtra: s.customer_name_extra as "none" | "age" | "file_number",
         }}
       />
     </AdminPage>

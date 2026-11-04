@@ -16,6 +16,8 @@ export const QUEUE_ERROR_CODES = [
   "quota_reached",
   "priority_not_allowed",
   "priority_staff_only",
+  "name_required",
+  "identity_invalid",
   "remote_not_allowed",
   "active_ticket_exists",
   "counter_busy",

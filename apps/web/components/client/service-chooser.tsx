@@ -5,6 +5,7 @@ import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { useRouter } from "next/navigation";
 import { Accessibility, Check, Clock } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
+import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import type { BranchBoard, BoardService } from "@nextin/shared/queue/live";
 import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
@@ -17,6 +18,7 @@ import { remoteTicketsFor, saveTicket } from "@/lib/client/my-tickets";
 import { callRpc } from "@/lib/client/supabase-public";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { takeTicket } from "@/lib/client/take-ticket";
+import { CustomerIdentityFields, EMPTY_IDENTITY, loadSavedIdentity, saveIdentity, type IdentityValue } from "./customer-identity-fields";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import type { EntryInfo, TicketView } from "@/lib/client/types";
 
@@ -29,8 +31,11 @@ export function ServiceChooser({
   entry,
   presenceCode = null,
   captchaSiteKey,
+  identityRules = { mode: "off", extra: "none" },
 }: {
   entry: EntryInfo;
+  /** Nom du client demandé par l'agence (non demandé, facultatif ou obligatoire). */
+  identityRules?: IdentityRules;
   /** Code de présence tournant du QR code de l'écran TV (`?p=`), sinon le code d'entrée imprimé. */
   presenceCode?: string | null;
   captchaSiteKey: string | null;
@@ -48,6 +53,13 @@ export function ServiceChooser({
   const [selected, setSelected] = useState<string | null>(entry.service_id ?? services[0]?.id ?? null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [identity, setIdentity] = useState<IdentityValue>(EMPTY_IDENTITY);
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  // Nom gardé sur cet appareil la fois précédente (après le premier rendu : pas de décalage d'hydratation).
+  useEffect(() => {
+    if (identityRules.mode !== "off") setIdentity(loadSavedIdentity());
+  }, [identityRules.mode]);
 
   // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
   useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
@@ -81,6 +93,14 @@ export function ServiceChooser({
 
   async function submit() {
     if (!current) return;
+    const parsed = parseIdentity(identityRules, identity);
+    if (!parsed.ok) {
+      // Message sous le champ (annoncé par le lecteur d'écran) et focus dessus, plutôt qu'un doublon dans la barre.
+      setNameError(te(parsed.error));
+      document.querySelector<HTMLInputElement>('input[name="customerName"]')?.focus();
+      return;
+    }
+    setNameError(null);
     setPending(true);
     setError(null);
     const outcome = await takeTicket(
@@ -88,10 +108,12 @@ export function ServiceChooser({
         serviceId: current.id,
         source: entry.source,
         entryCode: entry.entry_code,
+        identity: parsed.identity,
       },
       { siteKey: captchaSiteKey, container: captchaRef.current },
     );
     if (outcome.ok) {
+      if (identityRules.mode !== "off") saveIdentity(identity);
       saveTicket({ token: outcome.token, code: outcome.code, entry: entry.entry_code });
       router.push(`/t/${outcome.token}`);
       return;
@@ -150,6 +172,15 @@ export function ServiceChooser({
         )}
 
         {priorityOffered ? <CalloutCard icon={<Accessibility />} tone="accent">{t("priorityInfo")}</CalloutCard> : null}
+        <CustomerIdentityFields
+          rules={identityRules}
+          value={identity}
+          onChange={(v) => {
+            setIdentity(v);
+            if (nameError) setNameError(null);
+          }}
+          nameError={nameError ?? undefined}
+        />
         <div ref={captchaRef} className="flex justify-center empty:hidden" />
       </div>
 

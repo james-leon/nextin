@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, ShieldCheck } from "lucide-react";
 import { BottomBar } from "@/components/ui/bottom-bar";
@@ -9,6 +9,8 @@ import { CalloutCard } from "@/components/ui/callout-card";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ServiceTile } from "@/components/ui/service-tile";
+import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
+import { CustomerIdentityFields, EMPTY_IDENTITY, loadSavedIdentity, saveIdentity, type IdentityValue } from "./customer-identity-fields";
 import { TextField } from "@/components/ui/text-field";
 import { sendAppointmentRequest } from "@/lib/client/appointment-request";
 import type { RequestOptions } from "@/lib/client/types";
@@ -31,7 +33,18 @@ const addDays = (day: string, n: number) => {
  * journée si le patient est flexible), numéro WhatsApp. Téléphone : une colonne et envoi en bas ; ordinateur :
  * choix à gauche, récapitulatif et coordonnées à droite.
  */
-export function RequestForm({ options, branchId, captchaSiteKey }: { options: RequestOptions; branchId: string; captchaSiteKey: string | null }) {
+export function RequestForm({
+  options,
+  branchId,
+  captchaSiteKey,
+  identityRules = { mode: "off", extra: "none" },
+}: {
+  options: RequestOptions;
+  branchId: string;
+  captchaSiteKey: string | null;
+  /** Nom du patient demandé par l'agence (remplace les initiales). */
+  identityRules?: IdentityRules;
+}) {
   const t = useLiteT("client.request");
   const te = useLiteT("errors");
   const locale = useLiteLocale();
@@ -66,7 +79,11 @@ export function RequestForm({ options, branchId, captchaSiteKey }: { options: Re
   const [slot, setSlot] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
   const [phone, setPhone] = useState("");
-  const [label, setLabel] = useState("");
+  const [identity, setIdentity] = useState<IdentityValue>(EMPTY_IDENTITY);
+  const [nameError, setNameError] = useState<string | null>(null);
+  useEffect(() => {
+    if (identityRules.mode !== "off") setIdentity(loadSavedIdentity());
+  }, [identityRules.mode]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -91,6 +108,13 @@ export function RequestForm({ options, branchId, captchaSiteKey }: { options: Re
 
   async function submit() {
     if (!service || !when) return;
+    const parsed = parseIdentity(identityRules, identity);
+    if (!parsed.ok) {
+      setNameError(te(parsed.error));
+      document.querySelector<HTMLInputElement>('input[name="customerName"]')?.focus();
+      return;
+    }
+    setNameError(null);
     setPending(true);
     setError(null);
     setPhoneError(null);
@@ -103,12 +127,15 @@ export function RequestForm({ options, branchId, captchaSiteKey }: { options: Re
         day: slot ? null : day,
         period: slot ? null : period,
         phone,
-        label: label || undefined,
+        label: parsed.identity.name ?? undefined,
+        age: parsed.identity.age,
+        fileNumber: parsed.identity.fileNumber ?? undefined,
         locale: locale === "en" ? "en" : "fr",
       },
       { siteKey: captchaSiteKey, container: captchaRef.current },
     );
     if (outcome.ok) {
+      if (identityRules.mode !== "off") saveIdentity(identity);
       router.push(`/r/${outcome.token}`);
       return;
     }
@@ -158,13 +185,14 @@ export function RequestForm({ options, branchId, captchaSiteKey }: { options: Re
         error={phoneError ?? undefined}
         hint={t("contactFooter")}
       />
-      <TextField
-        label={t("label")}
-        autoComplete="off"
-        maxLength={40}
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-        hint={t("labelHint")}
+      <CustomerIdentityFields
+        rules={identityRules}
+        value={identity}
+        onChange={(v) => {
+          setIdentity(v);
+          if (nameError) setNameError(null);
+        }}
+        nameError={nameError ?? undefined}
       />
       <CalloutCard icon={<ShieldCheck />} tone="green">
         {t("privacy")}

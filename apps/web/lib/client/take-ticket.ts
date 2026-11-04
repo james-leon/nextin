@@ -1,3 +1,4 @@
+import type { Identity } from "@nextin/shared/identity";
 import { clearAnonSession, getAnonAccessToken, hasAnonSession } from "./anon-session";
 import { requestTurnstileToken } from "./turnstile";
 
@@ -11,8 +12,8 @@ export type TakeTicketOutcome =
  */
 export async function takeTicket(
   input:
-    | { serviceId: string; source: "qr" | "short_code"; entryCode: string }
-    | { serviceId: string; source: "remote"; position: { lat: number; lng: number } | null },
+    | { serviceId: string; source: "qr" | "short_code"; entryCode: string; identity?: Identity }
+    | { serviceId: string; source: "remote"; position: { lat: number; lng: number } | null; identity?: Identity },
   captcha: { siteKey: string | null; container: HTMLElement | null },
 ): Promise<TakeTicketOutcome> {
   const token = async (action: string) =>
@@ -41,12 +42,14 @@ export async function takeTicket(
                 source: "remote",
                 latitude: input.position?.lat,
                 longitude: input.position?.lng,
+                ...identityBody(input.identity),
                 captchaToken,
               }
             : {
                 serviceId: input.serviceId,
                 source: input.source,
                 entryCode: input.entryCode,
+                ...identityBody(input.identity),
                 captchaToken,
               },
         ),
@@ -73,4 +76,14 @@ export async function takeTicket(
     };
   }
   return { ok: false, error: "generic" };
+}
+
+/** Champs d'identité de la requête (absents s'ils sont vides). */
+function identityBody(identity: Identity | undefined) {
+  if (!identity) return {};
+  return {
+    customerName: identity.name ?? undefined,
+    customerAge: identity.age ?? undefined,
+    customerFileNumber: identity.fileNumber ?? undefined,
+  };
 }

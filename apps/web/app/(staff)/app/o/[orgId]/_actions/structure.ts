@@ -267,6 +267,8 @@ export async function saveBranchSettings(orgId: string, branchId: string, _prev:
       appointment_requests_enabled: v.appointmentRequestsEnabled,
       appointment_request_days: v.appointmentRequestDays,
       appointment_request_max_pending: v.appointmentRequestMaxPending,
+      customer_name_mode: v.customerNameMode,
+      customer_name_extra: v.customerNameExtra,
     })
     .eq("branch_id", branchId)
     .select("branch_id");

@@ -227,6 +227,9 @@ export const branchSettingsFormSchema = z.object({
   appointmentRequestsEnabled: formBoolean,
   appointmentRequestDays: z.coerce.number().int().min(1).max(60),
   appointmentRequestMaxPending: z.coerce.number().int().min(1).max(10),
+  // Nom du client (visible du seul personnel de l'agence).
+  customerNameMode: z.enum(["off", "optional", "required"]),
+  customerNameExtra: z.enum(["none", "age", "file_number"]),
 });
 
 /** Invitation depuis l'écran Personnel : un rôle d'agence exige une agence, sauf réception/agent « toutes agences ». */
@@ -253,6 +256,10 @@ export const takeTicketSchema = z
     source: z.enum(["qr", "short_code", "remote"]),
     entryCode: z.string().trim().min(6).max(64).regex(/^[A-Za-z0-9]+$/, "invalid_entry").optional(),
     captchaToken: z.string().max(2048).optional(),
+    // Nom du client (selon les règles de l'agence, vérifiées par la base) : jamais affiché ni diffusé hors du personnel.
+    customerName: z.string().trim().max(80, "identity_invalid").optional(),
+    customerAge: z.number().int().min(0).max(130).optional(),
+    customerFileNumber: z.string().trim().max(40, "identity_invalid").optional(),
     // M9 — ticket à distance : position du client (calcul du trajet, jamais enregistrée).
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
@@ -291,7 +298,10 @@ export const appointmentRequestSchema = z
         }
         return e164;
       }),
-    label: z.string().trim().max(40).optional().transform((v) => v || null),
+    // Nom du patient (remplace le repère en initiales), et âge ou numéro de dossier si l'agence les demande.
+    label: z.string().trim().max(80, "identity_invalid").optional().transform((v) => v || null),
+    age: z.number().int().min(0).max(130).nullable().optional(),
+    fileNumber: z.string().trim().max(40, "identity_invalid").optional().transform((v) => v || null),
     locale: z.enum(["fr", "en"]).default("fr"),
     captchaToken: z.string().max(2048).optional(),
   })

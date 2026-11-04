@@ -46,6 +46,8 @@ export async function POST(request: NextRequest) {
         p_label: (input.label ?? null) as string,
         p_locale: input.locale,
         p_customer: userId,
+        p_customer_age: input.age ?? undefined,
+        p_customer_file_number: input.fileNumber ?? undefined,
       }),
   });
   return NextResponse.json(result.body, { status: result.status, headers: { "Cache-Control": "no-store" } });

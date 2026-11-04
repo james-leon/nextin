@@ -9,6 +9,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { BranchPublic } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
+import { fetchIdentityRules } from "@/lib/client/identity-rules";
 import { LiteMessages } from "@/lib/i18n/lite-server";
 
 type Params = { params: Promise<{ branchId: string }> };
@@ -31,8 +32,8 @@ export default async function BranchPage({ params }: Params) {
   const branch = await load((await params).branchId);
   if (branch)
     return (
-      <LiteMessages paths={["client.branch", "client.service", "errors", "orgTypes", "weekdays"]}>
-        <BranchView branch={branch} captchaSiteKey={captchaConfig().siteKey} />
+      <LiteMessages paths={["client.branch", "client.service", "errors", "orgTypes", "weekdays", "identity"]}>
+        <BranchView branch={branch} captchaSiteKey={captchaConfig().siteKey} identityRules={await fetchIdentityRules(branch.id)} />
       </LiteMessages>
     );
   const t = await getTranslations("client.branch");

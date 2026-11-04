@@ -7,7 +7,8 @@ import type { ActionResult } from "@/lib/auth/errors";
 import { FormError } from "@/components/auth/form-error";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button, IconButton } from "@/components/ui/button";
-import { ListSection } from "@/components/ui/list";
+import { CUSTOMER_NAME_EXTRAS, CUSTOMER_NAME_MODES, type CustomerNameExtra, type CustomerNameMode } from "@nextin/shared/identity";
+import { ListRow, ListSection } from "@/components/ui/list";
 import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useFormErrors } from "./use-form-errors";
@@ -35,6 +36,9 @@ type Settings = {
   requests: boolean;
   requestDays: number;
   requestMaxPending: number;
+  /** Nom du client : non demandé, facultatif ou obligatoire, et âge ou numéro de dossier. */
+  nameMode: CustomerNameMode;
+  nameExtra: CustomerNameExtra;
 };
 
 /** Distances maximales proposées (km) ; null = sans limite. */
@@ -118,6 +122,34 @@ export function BranchSettingsForm({
               </span>
             </li>
           </ListSection>
+          <ListSection header={t("nameHeader")} footer={v.nameMode === "off" ? undefined : t("nameFooter")} radioGroupLabel={t("nameMode")}>
+            {CUSTOMER_NAME_MODES.map((mode) => (
+              <ListRow
+                key={mode}
+                role="radio"
+                selected={v.nameMode === mode}
+                disabled={disabled}
+                onClick={() => setV({ ...v, nameMode: mode })}
+                title={t(`nameModes.${mode}`)}
+                accessory="check"
+              />
+            ))}
+          </ListSection>
+          {v.nameMode !== "off" ? (
+            <ListSection header={t("nameExtra")} radioGroupLabel={t("nameExtra")}>
+              {CUSTOMER_NAME_EXTRAS.map((extra) => (
+                <ListRow
+                  key={extra}
+                  role="radio"
+                  selected={v.nameExtra === extra}
+                  disabled={disabled}
+                  onClick={() => setV({ ...v, nameExtra: extra })}
+                  title={t(`nameExtras.${extra}`)}
+                  accessory="check"
+                />
+              ))}
+            </ListSection>
+          ) : null}
           <ListSection
             header={t("appointmentsHeader")}
             footer={v.appointmentMode === "ratio" ? t("modeRatioFooter", { count: v.walkinRatio }) : t("modeStrictFooter")}
@@ -283,6 +315,8 @@ export function BranchSettingsForm({
       <input type="hidden" name="prioritiesEnabled" value={String(v.priorities)} />
       <input type="hidden" name="ratingEnabled" value={String(v.rating)} />
       <input type="hidden" name="almostTurnThreshold" value={v.almostTurn} />
+      <input type="hidden" name="customerNameMode" value={v.nameMode} />
+      <input type="hidden" name="customerNameExtra" value={v.nameExtra} />
       {disabled ? null : (
         <BottomBar>
           <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>

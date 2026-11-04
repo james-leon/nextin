@@ -9,6 +9,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { EntryInfo } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
+import { fetchIdentityRules } from "@/lib/client/identity-rules";
 import { LiteMessages } from "@/lib/i18n/lite-server";
 
 type Params = { params: Promise<{ code: string }> };
@@ -55,8 +56,13 @@ export default async function EntryPage({ params, searchParams }: Params & { sea
   }
 
   return (
-    <LiteMessages paths={["client.service", "errors"]}>
-      <ServiceChooser entry={entry} presenceCode={presenceCode} captchaSiteKey={captchaConfig().siteKey} />
+    <LiteMessages paths={["client.service", "errors", "identity"]}>
+      <ServiceChooser
+        entry={entry}
+        presenceCode={presenceCode}
+        captchaSiteKey={captchaConfig().siteKey}
+        identityRules={await fetchIdentityRules(entry.branch.id)}
+      />
     </LiteMessages>
   );
 }

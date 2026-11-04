@@ -45,8 +45,14 @@ export async function POST(request: NextRequest) {
       const { data, error } = await admin.rpc("throttle_ticket_request", { p_customer: userId, p_ip_hash: hash as string });
       return !error && data === true;
     },
-    take: async (userId, input) =>
-      input.source === "remote"
+    take: async (userId, input) => {
+      // Nom (selon les règles de l'agence, vérifiées par la base) : enregistré pour le seul personnel de l'agence.
+      const identityArgs = {
+        p_customer_name: input.customerName ?? undefined,
+        p_customer_age: input.customerAge ?? undefined,
+        p_customer_file_number: input.customerFileNumber ?? undefined,
+      };
+      return input.source === "remote"
         ? // Ticket à distance (M9) : la position sert au calcul du trajet, elle n'est jamais enregistrée.
           admin.rpc("take_remote_ticket", {
             p_service: input.serviceId,
@@ -54,6 +60,7 @@ export async function POST(request: NextRequest) {
             p_lng: (input.longitude ?? null) as number,
             p_priority_reason: null as unknown as PriorityReason,
             p_customer: userId,
+            ...identityArgs,
           })
         : admin.rpc("take_ticket", {
             p_service: input.serviceId,
@@ -61,7 +68,9 @@ export async function POST(request: NextRequest) {
             p_entry_code: (input.entryCode ?? null) as string,
             p_priority_reason: null as unknown as PriorityReason,
             p_customer: userId,
-          }),
+            ...identityArgs,
+          });
+    },
   });
   return NextResponse.json(result.body, { status: result.status, headers: { "Cache-Control": "no-store" } });
 }

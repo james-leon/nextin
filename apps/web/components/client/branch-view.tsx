@@ -16,7 +16,9 @@ import { ServiceTile } from "@/components/ui/service-tile";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { getPosition } from "@/lib/client/geolocation";
 import { saveTicket } from "@/lib/client/my-tickets";
+import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import { takeTicket } from "@/lib/client/take-ticket";
+import { CustomerIdentityFields, EMPTY_IDENTITY, loadSavedIdentity, saveIdentity, type IdentityValue } from "./customer-identity-fields";
 import type { BranchPublic } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { branchHoursStatus } from "@/lib/client/branch-hours";
@@ -28,7 +30,16 @@ import { OrgTypeIcon } from "@/components/ui/org-type-icon";
  * le propose (une seule action principale), sinon demande de rendez-vous. Téléphone : une colonne, action en bas ;
  * ordinateur : files à gauche, carte d'action à droite.
  */
-export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; captchaSiteKey: string | null }) {
+export function BranchView({
+  branch,
+  captchaSiteKey,
+  identityRules = { mode: "off", extra: "none" },
+}: {
+  branch: BranchPublic;
+  captchaSiteKey: string | null;
+  /** Nom du client demandé par l'agence pour un ticket à distance. */
+  identityRules?: IdentityRules;
+}) {
   const t = useLiteT("client.branch");
   const to = useLiteT("orgTypes");
   const ts = useLiteT("client.service");
@@ -44,6 +55,11 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
   );
   const [pending, setPending] = useState<"locating" | "taking" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [identity, setIdentity] = useState<IdentityValue>(EMPTY_IDENTITY);
+  const [nameError, setNameError] = useState<string | null>(null);
+  useEffect(() => {
+    if (identityRules.mode !== "off") setIdentity(loadSavedIdentity());
+  }, [identityRules.mode]);
 
   useEffect(() => subscribeBoard(branch.id, setBoard), [branch.id]);
 
@@ -69,6 +85,13 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
 
   async function takeRemote() {
     if (!current) return;
+    const parsed = parseIdentity(identityRules, identity);
+    if (!parsed.ok) {
+      setNameError(te(parsed.error));
+      document.querySelector<HTMLInputElement>('input[name="customerName"]')?.focus();
+      return;
+    }
+    setNameError(null);
     setError(null);
     setPending("locating");
     // Position facultative (trajet estimé), sauf si l'agence fixe une distance maximale.
@@ -80,10 +103,11 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
     }
     setPending("taking");
     const outcome = await takeTicket(
-      { serviceId: current.id, source: "remote", position: geo.ok ? geo.position : null },
+      { serviceId: current.id, source: "remote", position: geo.ok ? geo.position : null, identity: parsed.identity },
       { siteKey: captchaSiteKey, container: captchaRef.current },
     );
     if (outcome.ok) {
+      if (identityRules.mode !== "off") saveIdentity(identity);
       saveTicket({ token: outcome.token, code: outcome.code, entry: null, branchId: branch.id, remote: true });
       router.push(`/t/${outcome.token}`);
       return;
@@ -259,6 +283,17 @@ export function BranchView({ branch, captchaSiteKey }: { branch: BranchPublic; c
                 );
               })}
             </ListSection>
+          ) : null}
+          {remoteOn ? (
+            <CustomerIdentityFields
+              rules={identityRules}
+              value={identity}
+              onChange={(v) => {
+                setIdentity(v);
+                if (nameError) setNameError(null);
+              }}
+              nameError={nameError ?? undefined}
+            />
           ) : null}
           <div ref={captchaRef} className="flex justify-center empty:hidden" />
         </div>

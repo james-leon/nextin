@@ -10,6 +10,7 @@ import { callRpc } from "@/lib/client/supabase-public";
 import type { RequestOptions } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
 import { LiteMessages } from "@/lib/i18n/lite-server";
+import { fetchIdentityRules } from "@/lib/client/identity-rules";
 
 type Params = { params: Promise<{ branchId: string }> };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,8 +28,8 @@ export default async function RequestPage({ params }: Params) {
     : { data: null };
   if (data)
     return (
-      <LiteMessages paths={["client.request", "errors"]}>
-        <RequestForm options={data} branchId={branchId} captchaSiteKey={captchaConfig().siteKey} />
+      <LiteMessages paths={["client.request", "errors", "identity"]}>
+        <RequestForm options={data} branchId={branchId} captchaSiteKey={captchaConfig().siteKey} identityRules={await fetchIdentityRules(branchId)} />
       </LiteMessages>
     );
   const t = await getTranslations("client.request");
