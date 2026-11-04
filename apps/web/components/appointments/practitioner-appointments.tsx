@@ -6,7 +6,7 @@ import { CalendarDays } from "lucide-react";
 import { localDate } from "@nextin/shared/appointments";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { Sheet } from "@/components/ui/sheet";
-import { listAppointments, type Appointment } from "@/lib/desk/appointments";
+import { personLine, listAppointments, type Appointment } from "@/lib/desk/appointments";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { timeOf } from "./format";
 import { AppointmentStatusBadge } from "./status-badge";
@@ -17,6 +17,7 @@ import { AppointmentStatusBadge } from "./status-badge";
  */
 export function PractitionerAppointments({ branchId, practitionerId, timeZone }: { branchId: string; practitionerId: string; timeZone: string }) {
   const t = useTranslations("appointments");
+  const ti = useTranslations("identity");
   const tc = useTranslations("common");
   const locale = useLocale();
   const supabase = getSupabaseBrowserClient();
@@ -60,7 +61,7 @@ export function PractitionerAppointments({ branchId, practitionerId, timeZone }:
               <ListRow
                 key={a.id}
                 icon={<span className="w-12 shrink-0 py-2.5 text-right text-callout font-semibold tabular">{timeOf(a.starts_at, locale, timeZone)}</span>}
-                title={a.customer_label ?? t("noLabel")}
+                title={personLine(a, ti) ?? t("noLabel")}
                 subtitle={a.ticket ? t("ticket", { code: a.ticket.display_code }) : undefined}
                 detail={<AppointmentStatusBadge status={a.display_status} />}
               />

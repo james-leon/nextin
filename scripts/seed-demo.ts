@@ -196,9 +196,14 @@ async function ensureBranch(client: Db, orgId: string, seed: BranchSeed) {
 
 /**
  * File du jour (M3) : quelques tickets en attente créés par l'accueil, seulement si la file du jour est vide
- * (la numérotation repart chaque jour). Aucun nom de client : les tickets d'accueil n'en portent pas.
+ * (la numérotation repart chaque jour). Clinique : nom et âge du patient (visibles du seul personnel de l'agence).
  */
-async function ensureDemoQueue(staffEmail: string, branch: { branchId: string; serviceIds: Map<string, string> }, perService: Record<string, number>) {
+async function ensureDemoQueue(
+  staffEmail: string,
+  branch: { branchId: string; serviceIds: Map<string, string> },
+  perService: Record<string, number>,
+  patients: { name: string; age: number }[] = [],
+) {
   const staff = createClient(url!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey!, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await staff.auth.signInWithPassword({ email: staffEmail, password: password! });
   if (error) throw error;
@@ -206,10 +211,18 @@ async function ensureDemoQueue(staffEmail: string, branch: { branchId: string; s
     db.from("tickets").select("id").eq("branch_id", branch.branchId).in("status", ["waiting", "called", "serving"]).limit(1),
   );
   if (active.length) return;
+  let k = 0;
   for (const [prefix, count] of Object.entries(perService)) {
     for (let i = 0; i < count; i++) {
       const reason = prefix === "C" && i === 2 ? "pregnancy" : null;
-      await must(staff.rpc("reception_create_ticket", { p_service: branch.serviceIds.get(prefix)!, p_priority_reason: reason as never }));
+      const patient = patients.length ? patients[k++ % patients.length]! : null;
+      await must(
+        staff.rpc("reception_create_ticket", {
+          p_service: branch.serviceIds.get(prefix)!,
+          p_priority_reason: reason as never,
+          ...(patient ? { p_customer_name: patient.name, p_customer_age: patient.age } : {}),
+        }),
+      );
     }
   }
   await staff.auth.signOut();
@@ -257,7 +270,9 @@ async function ensureDemoAppointments(staffEmail: string, orgId: string, branch:
   const staff = createClient(url!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey!, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await staff.auth.signInWithPassword({ email: staffEmail, password: password! });
   if (error) throw error;
-  const labels = ["M.N.", "A.T.", "J.K.", "B.E.", "C.F.", "R.M.", "S.O.", "L.D."];
+  // Noms et âges réalistes (visibles du seul personnel de l'agence ; jamais affichés sur l'écran TV ni envoyés).
+  const labels = ["Martine Nguimbous", "Alain Tchatchoua", "Joséphine Kamga", "Bertrand Essomba", "Christelle Fotso", "Roger Mballa", "Sandrine Ondoa", "Luc Djomo"];
+  const ages = [34, 52, 27, 61, 45, 70, 38, 19];
   let n = 0;
   const today = new Date().toISOString().slice(0, 10);
   for (const d of doctors.filter((x) => plan[x.display_name])) {
@@ -272,6 +287,7 @@ async function ensureDemoAppointments(staffEmail: string, orgId: string, branch:
           p_practitioner: d.id,
           p_starts_at: slot.starts_at,
           p_customer_label: labels[n % labels.length]!,
+          p_customer_age: ages[n % ages.length]!,
           p_phone_e164: (n % 4 === 0 ? `+23769900${String(100 + n).padStart(4, "0")}` : null) as string,
           p_consent: n % 4 === 0,
           p_locale: "fr",
@@ -295,7 +311,7 @@ async function ensureDemoRemote(
   await must(
     db
       .from("branch_settings")
-      .update({ remote_tickets_enabled: true, remote_max_distance_km: 15, appointment_requests_enabled: true })
+      .update({ remote_tickets_enabled: true, remote_max_distance_km: 15, appointment_requests_enabled: true, customer_name_extra: "age" })
       .eq("branch_id", akwa.branchId)
       .select("branch_id"),
   );
@@ -311,8 +327,8 @@ async function ensureDemoRemote(
   }[];
   const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
   const requests = [
-    { practitioner: mbarga.id, startsAt: slots[3]?.starts_at ?? null, day: null, period: null, phone: "+237699001201", label: "E.M." },
-    { practitioner: null, startsAt: null, day: day(2), period: "morning", phone: "+237699001202", label: null },
+    { practitioner: mbarga.id, startsAt: slots[3]?.starts_at ?? null, day: null, period: null, phone: "+237699001201", label: "Estelle Manga", age: 29 },
+    { practitioner: null, startsAt: null, day: day(2), period: "morning", phone: "+237699001202", label: "Daniel Nkoa", age: 47 },
   ];
   for (const r of requests) {
     const created = (await must(
@@ -327,6 +343,7 @@ async function ensureDemoRemote(
         p_label: r.label as string,
         p_locale: "fr",
         p_customer: requester,
+        p_customer_age: r.age,
       }),
     )) as unknown as { id: string };
     // Démo : numéro considéré comme vérifié, aucun code envoyé.
@@ -680,7 +697,21 @@ async function main() {
   await ensureDemoSubscription(clinic, "paid", "+237677000101", USERS.clinicAdmin.email);
   await ensureDemoSubscription(eneo, "trial", "+237699000202", USERS.eneoAdmin.email);
 
-  await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 });
+  // Nom du patient et âge demandés à Akwa (clinique : nom obligatoire par défaut).
+  await must(db.from("branch_settings").update({ customer_name_extra: "age" }).eq("branch_id", akwa.branchId).select("branch_id"));
+  await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 }, [
+    { name: "Aminatou Bello", age: 31 },
+    { name: "Jean-Paul Mbida", age: 58 },
+    { name: "Odile Fouda", age: 26 },
+    { name: "Samuel Ekotto", age: 44 },
+    { name: "Brigitte Ngo Ndjock", age: 67 },
+    { name: "Paul Atangana", age: 72 },
+    { name: "Hortense Mvondo", age: 8 },
+    { name: "Rodrigue Tchakounté", age: 12 },
+    { name: "Clarisse Nkoulou", age: 39 },
+    { name: "Yannick Essomba", age: 23 },
+    { name: "Félicité Abena", age: 50 },
+  ]);
   await ensureDemoAppointments(USERS.clinicReception.email, clinic, akwa);
   await ensureDemoHistory(clinic, akwa, { C: 38, P: 22, L: 30, K: 45 }, 2026);
   await ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237);

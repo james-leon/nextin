@@ -10,7 +10,7 @@ import { CalloutCard } from "@/components/ui/callout-card";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { useToast } from "@/components/ui/toast";
-import type { Appointment, AppointmentsContext } from "@/lib/desk/appointments";
+import { personLine, type Appointment, type AppointmentsContext } from "@/lib/desk/appointments";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { longDay, timeOf } from "./format";
 import { AppointmentStatusBadge } from "./status-badge";
@@ -33,6 +33,7 @@ export function AppointmentDetail({
   onReschedule: () => void;
 }) {
   const t = useTranslations("appointments");
+  const ti = useTranslations("identity");
   const te = useTranslations("errors");
   const locale = useLocale();
   const toast = useToast();
@@ -114,7 +115,7 @@ export function AppointmentDetail({
               <UserRound className="text-label" />
             </ListIcon>
           }
-          title={a.customer_label ?? t("noLabel")}
+          title={personLine(a, ti) ?? t("noLabel")}
           subtitle={t("with", { name: a.practitioner.name })}
         />
         <ListRow icon={<ServiceTile letter={a.service.prefix} color={a.service.color} className="size-[1.875rem] rounded-[7px] text-subheadline" />} title={serviceName} />

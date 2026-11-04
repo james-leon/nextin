@@ -1,3 +1,4 @@
+import { identityLine, type IdentityRules } from "@nextin/shared/identity";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@nextin/shared/database";
 import { localDate } from "@nextin/shared/appointments";
@@ -16,7 +17,10 @@ export type Appointment = {
   ends_at: string;
   status: AppointmentStatus;
   display_status: AppointmentDisplayStatus;
+  /** Nom du patient (personnel de l'agence uniquement), et âge ou numéro de dossier selon l'agence. */
   customer_label: string | null;
+  customer_age?: number | null;
+  customer_file_number?: string | null;
   phone_e164: string | null;
   locale: "fr" | "en";
   practitioner: { id: string; name: string };
@@ -30,17 +34,36 @@ export type Appointment = {
 
 export type AppointmentPractitioner = { id: string; name: string; hasSchedule: boolean };
 
+type NameSettings = { customer_name_mode: string; customer_name_extra: string };
+function identityRulesOf(raw: NameSettings | NameSettings[] | null | undefined): IdentityRules {
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  return { mode: (s?.customer_name_mode ?? "off") as IdentityRules["mode"], extra: (s?.customer_name_extra ?? "none") as IdentityRules["extra"] };
+}
+
 export type AppointmentsContext = {
   branch: { id: string; name: string; organizationName: string; timeZone: string };
   practitioners: AppointmentPractitioner[];
   today: string;
+  /** Nom du patient demandé par l'agence (remplace le repère en initiales). */
+  identityRules: IdentityRules;
 };
+
+/** « Nom · 42 ans » d'un rendez-vous ou d'une demande ; null si rien n'est renseigné. */
+export function personLine(
+  a: { customer_label: string | null; customer_age?: number | null; customer_file_number?: string | null },
+  ti: (key: "ageValue" | "fileValue", values: Record<string, string | number>) => string,
+): string | null {
+  return identityLine(
+    { name: a.customer_label, age: a.customer_age ?? null, fileNumber: a.customer_file_number ?? null },
+    { age: (age) => ti("ageValue", { age }), file: (value) => ti("fileValue", { value }) },
+  );
+}
 
 /** Agence, praticiens (avec ou sans horaires de consultation) et jour local de l'agence ; null si inaccessible. */
 export async function loadAppointmentsContext(supabase: Db, branchId: string): Promise<AppointmentsContext | null> {
   const { data: branch } = await supabase
     .from("branches")
-    .select("id, name, timezone, organization:organizations(name)")
+    .select("id, name, timezone, organization:organizations(name), branch_settings(customer_name_mode, customer_name_extra)")
     .eq("id", branchId)
     .maybeSingle();
   if (!branch) return null;
@@ -53,6 +76,7 @@ export async function loadAppointmentsContext(supabase: Db, branchId: string): P
     branch: { id: branch.id, name: branch.name, organizationName: branch.organization?.name ?? "", timeZone: branch.timezone },
     practitioners: (practitioners ?? []).map((p) => ({ id: p.id, name: practitionerName(p), hasSchedule: withSchedule.has(p.id) })),
     today: localDate(new Date(), branch.timezone),
+    identityRules: identityRulesOf(branch.branch_settings),
   };
 }
 
@@ -81,6 +105,8 @@ export type AppointmentRequest = {
   preferred_day: string | null;
   preferred_period: "morning" | "afternoon" | "any" | null;
   customer_label: string | null;
+  customer_age?: number | null;
+  customer_file_number?: string | null;
   phone_e164: string | null;
   created_at: string;
   verified_at: string | null;

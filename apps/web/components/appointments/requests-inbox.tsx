@@ -14,7 +14,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
-import { listRequests, type AppointmentRequest, type AppointmentsContext, type Slot } from "@/lib/desk/appointments";
+import { listRequests, personLine, type AppointmentRequest, type AppointmentsContext, type Slot } from "@/lib/desk/appointments";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
 import { longDay, shortDay, timeOf } from "./format";
@@ -160,6 +160,7 @@ function RequestRow({
   chevron: boolean;
 }) {
   const t = useTranslations("appointments.requests");
+  const ti = useTranslations("identity");
   const locale = useLocale();
   const when = useWhen(ctx);
   return (
@@ -171,7 +172,7 @@ function RequestRow({
       }
       title={<span className="first-letter:uppercase">{when(r)}</span>}
       subtitle={`${locale === "en" && r.service.name_en ? r.service.name_en : r.service.name} · ${r.practitioner ?? t("anyPractitioner")}${
-        r.customer_label ? ` · ${r.customer_label}` : ""
+        personLine(r, ti) ? ` · ${personLine(r, ti)}` : ""
       }`}
       accessory={chevron ? "chevron" : undefined}
       onClick={onSelect}
@@ -191,6 +192,7 @@ function RequestDetail({
   onHandled: (date: string | null, message: string) => string;
 }) {
   const t = useTranslations("appointments.requests");
+  const ti = useTranslations("identity");
   const ta = useTranslations("appointments");
   const te = useTranslations("errors");
   const locale = useLocale();
@@ -287,7 +289,7 @@ function RequestDetail({
       </div>
 
       <ListSection>
-        {r.customer_label ? <ListRow title={t("label")} detail={r.customer_label} /> : null}
+        {personLine(r, ti) ? <ListRow title={t("label")} detail={personLine(r, ti)} /> : null}
         {r.phone_e164 ? (
           <ListRow
             title={t("phone")}

@@ -112,6 +112,8 @@ export function useDesk(counter: DeskCounter, initial: DeskSnapshot) {
     const channel = supabase
       .channel(staffTopic(counter.branchId), { config: { private: true } })
       .on("broadcast", { event: "board" }, debounced)
+      // Nom saisi ou corrigé à l'accueil (l'événement ne contient jamais le nom).
+      .on("broadcast", { event: "identity" }, debounced)
       .subscribe();
     const poll = setInterval(() => (pendingRef.current.length ? void flush() : void refresh()), POLL_MS);
     const retry = setInterval(() => pendingRef.current.length && void flush(), RETRY_MS);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { IDENTITY_STORAGE_KEY, NAME_MAX, FILE_NUMBER_MAX, type IdentityRules } from "@nextin/shared/identity";
 import { TextField } from "@/components/ui/text-field";
 import { useLiteT } from "@/lib/i18n/lite";
@@ -8,10 +9,9 @@ export type IdentityValue = { name: string; age: string; fileNumber: string };
 export const EMPTY_IDENTITY: IdentityValue = { name: "", age: "", fileNumber: "" };
 
 /** Identité gardée sur cet appareil (jamais envoyée ailleurs qu'à la prise de ticket) ; vide si le stockage est indisponible. */
-export function loadSavedIdentity(): IdentityValue {
+function parseSaved(raw: string | null): IdentityValue {
+  if (!raw) return EMPTY_IDENTITY;
   try {
-    const raw = window.localStorage.getItem(IDENTITY_STORAGE_KEY);
-    if (!raw) return EMPTY_IDENTITY;
     const v = JSON.parse(raw) as Partial<IdentityValue>;
     return {
       name: typeof v.name === "string" ? v.name.slice(0, NAME_MAX) : "",
@@ -21,6 +21,30 @@ export function loadSavedIdentity(): IdentityValue {
   } catch {
     return EMPTY_IDENTITY;
   }
+}
+
+function readSaved(): string | null {
+  try {
+    return window.localStorage.getItem(IDENTITY_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function subscribeSaved(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+/**
+ * Valeur des champs : saisie en cours, sinon l'identité gardée sur l'appareil (lue après l'hydratation, sans
+ * décalage avec le rendu serveur). Vide si l'agence ne demande pas le nom.
+ */
+export function useIdentityValue(enabled: boolean): [IdentityValue, (value: IdentityValue) => void] {
+  const raw = useSyncExternalStore(subscribeSaved, readSaved, () => null);
+  const saved = useMemo(() => parseSaved(raw), [raw]);
+  const [edited, setEdited] = useState<IdentityValue | null>(null);
+  return [enabled ? (edited ?? saved) : EMPTY_IDENTITY, setEdited];
 }
 
 export function saveIdentity(value: IdentityValue) {

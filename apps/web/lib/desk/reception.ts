@@ -2,7 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@nextin/shared/database";
 import type { BranchBoard, PriorityReason } from "@nextin/shared/queue/live";
 import { practitionerName } from "./counter-name";
-import { serviceDay } from "./snapshot";
+import type { DeskTicket } from "@nextin/shared/desk";
+import type { IdentityRules } from "@nextin/shared/identity";
+import { serviceDay, toIdentity } from "./snapshot";
 
 type Db = SupabaseClient<Database>;
 
@@ -17,6 +19,8 @@ export type ReceptionTicket = {
   source: "qr" | "short_code" | "remote" | "reception";
   /** Ticket à distance (M9) : présence confirmée, « en route », nombre de reculs. */
   remote: { confirmed: boolean; onMyWay: boolean; delays: number } | null;
+  /** Nom du client (personnel de l'agence uniquement). */
+  identity: DeskTicket["identity"];
 };
 export type ReceptionPractitioner = {
   id: string;
@@ -27,7 +31,7 @@ export type ReceptionPractitioner = {
 };
 export type ReceptionCounter = { id: string; kind: string; number: number; label: string | null; status: string; practitionerId: string | null };
 export type ReceptionData = {
-  branch: { id: string; name: string; organizationName: string; timeZone: string; prioritiesEnabled: boolean };
+  branch: { id: string; name: string; organizationName: string; timeZone: string; prioritiesEnabled: boolean; identityRules: IdentityRules };
   services: ReceptionService[];
   board: BranchBoard | null;
   waiting: ReceptionTicket[];
@@ -45,7 +49,7 @@ export type ReceptionData = {
 export async function loadReception(supabase: Db, branchId: string): Promise<ReceptionData | null> {
   const { data: branch } = await supabase
     .from("branches")
-    .select("id, name, timezone, organization:organizations(name), branch_settings(priorities_enabled)")
+    .select("id, name, timezone, organization:organizations(name), branch_settings(priorities_enabled, customer_name_mode, customer_name_extra)")
     .eq("id", branchId)
     .maybeSingle();
   if (!branch) return null;
@@ -56,7 +60,7 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
     supabase
       .from("tickets")
       .select(
-        "id, display_code, service_id, priority_reason, priority_level, sort_key, number, created_at, preferred_counter_id, source, is_remote, presence_confirmed_at, on_my_way_at, delay_count",
+        "id, display_code, service_id, priority_reason, priority_level, sort_key, number, created_at, preferred_counter_id, source, is_remote, presence_confirmed_at, on_my_way_at, delay_count, identity:ticket_identities(full_name, age, file_number)",
       )
       .eq("branch_id", branchId)
       .eq("status", "waiting")
@@ -95,8 +99,14 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
   const active = (absences.data ?? [])
     .filter((a) => !a.until || a.until > now)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const settings = branch.branch_settings as { priorities_enabled: boolean } | { priorities_enabled: boolean }[] | null;
-  const prioritiesEnabled = Array.isArray(settings) ? (settings[0]?.priorities_enabled ?? true) : (settings?.priorities_enabled ?? true);
+  type SettingsRow = { priorities_enabled: boolean; customer_name_mode: string; customer_name_extra: string };
+  const raw = branch.branch_settings as SettingsRow | SettingsRow[] | null;
+  const settings = Array.isArray(raw) ? raw[0] : raw;
+  const prioritiesEnabled = settings?.priorities_enabled ?? true;
+  const identityRules = {
+    mode: (settings?.customer_name_mode ?? "off") as IdentityRules["mode"],
+    extra: (settings?.customer_name_extra ?? "none") as IdentityRules["extra"],
+  };
 
   return {
     branch: {
@@ -105,6 +115,7 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       organizationName: (branch.organization as { name: string } | null)?.name ?? "",
       timeZone: branch.timezone,
       prioritiesEnabled,
+      identityRules,
     },
     services: (services.data ?? []).map((s) => ({ id: s.id, name: s.name, prefix: s.prefix, color: s.color, allowPriority: s.allow_priority })),
     board: (board.data as BranchBoard | null) ?? null,
@@ -117,6 +128,7 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
       preferredCounterId: t.preferred_counter_id,
       source: t.source,
       remote: t.is_remote ? { confirmed: !!t.presence_confirmed_at, onMyWay: !!t.on_my_way_at, delays: t.delay_count } : null,
+      identity: toIdentity(t.identity as Parameters<typeof toIdentity>[0]),
     })),
     practitioners: (practitioners.data ?? []).map((p) => {
       const own = (counters.data ?? []).filter((c) => c.default_practitioner_id === p.id);

@@ -20,6 +20,8 @@ export type DeskTicket = {
   calledAt: string | null;
   servingStartedAt: string | null;
   recallCount: number;
+  /** Nom du client (personnel de l'agence uniquement, sous RLS) ; absent si non demandé ou non renseigné. */
+  identity?: { name: string | null; age: number | null; fileNumber: string | null } | null;
 };
 
 export type CounterStatus = "open" | "paused" | "closed";

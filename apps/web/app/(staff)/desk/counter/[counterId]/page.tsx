@@ -43,7 +43,7 @@ export default async function CounterDeskPage({ params }: Props) {
     .map((cs) => cs.service as { id: string; name: string; active: boolean } | null)
     .filter((s): s is { id: string; name: string; active: boolean } => !!s && s.active);
 
-  const [services, practitioner, absence] = await Promise.all([
+  const [services, practitioner, absence, settings] = await Promise.all([
     supabase.from("services").select("id, name, prefix, color").eq("branch_id", branch.id).eq("active", true).order("sort_order"),
     counter.default_practitioner_id
       ? supabase.from("practitioners").select("id, title, display_name").eq("id", counter.default_practitioner_id).maybeSingle()
@@ -58,6 +58,7 @@ export default async function CounterDeskPage({ params }: Props) {
           .limit(1)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    supabase.from("branch_settings").select("customer_name_mode, customer_name_extra").eq("branch_id", branch.id).maybeSingle(),
   ]);
 
   const deskCounter = { id: counter.id, branchId: branch.id, serviceIds: ownServices.map((s) => s.id), timeZone: branch.timezone };
@@ -77,6 +78,10 @@ export default async function CounterDeskPage({ params }: Props) {
       services={services.data ?? []}
       practitioner={doctor}
       absence={activeAbsence}
+      identityRules={{
+        mode: (settings.data?.customer_name_mode ?? "off") as "off" | "optional" | "required",
+        extra: (settings.data?.customer_name_extra ?? "none") as "none" | "age" | "file_number",
+      }}
     />
   );
 }

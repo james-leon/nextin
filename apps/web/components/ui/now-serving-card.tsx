@@ -1,3 +1,4 @@
+import type React from "react";
 import { formatElapsed, spellTicketCode } from "@nextin/shared";
 import { cn } from "@/lib/cn";
 
@@ -8,10 +9,13 @@ export function NowServingCard({
   elapsedSeconds,
   elapsedLabel,
   actions,
+  subtitle,
   className,
 }: {
   label: string;
   code: string;
+  /** Nom du client (personnel uniquement), ou « Nom masqué ». */
+  subtitle?: React.ReactNode;
   elapsedSeconds: number;
   elapsedLabel: string;
   actions: { label: string; onClick?: () => void }[];
@@ -30,6 +34,7 @@ export function NowServingCard({
           <time dateTime={`PT${Math.floor(elapsedSeconds)}S`}>{formatElapsed(elapsedSeconds)}</time>
         </p>
       </div>
+      {subtitle ? <p className="mt-1 truncate text-headline text-white/90">{subtitle}</p> : null}
       <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))` }}>
         {actions.map((a) => (
           <button

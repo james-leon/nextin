@@ -1,5 +1,6 @@
 "use client";
 
+import { FILE_NUMBER_MAX, NAME_MAX, parseIdentity } from "@nextin/shared/identity";
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { CalendarCheck2, CalendarX2 } from "lucide-react";
@@ -68,6 +69,11 @@ export function BookingForm({
   const [slotData, setSlotData] = useState<{ key: string; slots: Slot[] } | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [label, setLabel] = useState("");
+  const [age, setAge] = useState("");
+  const [fileNumber, setFileNumber] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const ti = useTranslations("identity");
+  const rules = ctx.identityRules;
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
   const [messagesLocale, setMessagesLocale] = useState<"fr" | "en">(locale === "en" ? "en" : "fr");
@@ -100,6 +106,10 @@ export function BookingForm({
 
   async function submit() {
     if (!practitionerId || !slot) return;
+    // Nom du patient selon les règles de l'agence (même champ que la page client et l'accueil).
+    const parsed = reschedule ? null : parseIdentity(rules, { name: label, age, fileNumber });
+    if (parsed && !parsed.ok) return setNameError(te(parsed.error));
+    setNameError(null);
     if (!reschedule && phone.trim() && !phoneE164) return setError(te("phone_invalid"));
     if (!reschedule && phoneE164 && !consent) return setError(te("consent_required"));
     setPending(true);
@@ -109,7 +119,9 @@ export function BookingForm({
       : await supabase.rpc("book_appointment", {
           p_practitioner: practitionerId,
           p_starts_at: slot,
-          p_customer_label: label.trim() || (null as unknown as string),
+          p_customer_label: (parsed?.ok ? parsed.identity.name : null) as string,
+          p_customer_age: parsed?.ok ? (parsed.identity.age ?? undefined) : undefined,
+          p_customer_file_number: parsed?.ok ? (parsed.identity.fileNumber ?? undefined) : undefined,
           p_phone_e164: phoneE164 as string,
           p_consent: !!phoneE164 && consent,
           p_locale: messagesLocale,
@@ -207,15 +219,30 @@ export function BookingForm({
 
       {reschedule ? null : (
         <>
-          <TextField
-            label={t("label")}
-            hint={t("labelHint")}
-            placeholder={t("labelPlaceholder")}
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            maxLength={40}
-            autoComplete="off"
-          />
+          {rules.mode !== "off" ? (
+            <>
+              <TextField
+                label={rules.mode === "required" ? t("label") : t("labelOptional")}
+                hint={t("labelHint")}
+                placeholder={t("labelPlaceholder")}
+                value={label}
+                error={nameError ?? undefined}
+                onChange={(e) => {
+                  setLabel(e.target.value);
+                  setNameError(null);
+                }}
+                maxLength={NAME_MAX}
+                autoComplete="off"
+                autoCapitalize="words"
+              />
+              {rules.extra === "age" ? (
+                <TextField label={ti("staffAge")} inputMode="numeric" pattern="[0-9]*" maxLength={3} value={age} onChange={(e) => setAge(e.target.value.replace(/\D/g, ""))} />
+              ) : null}
+              {rules.extra === "file_number" ? (
+                <TextField label={ti("staffFileNumber")} autoComplete="off" maxLength={FILE_NUMBER_MAX} value={fileNumber} onChange={(e) => setFileNumber(e.target.value)} />
+              ) : null}
+            </>
+          ) : null}
           <div className="flex flex-col gap-3">
             <TextField
               label={tr("phone")}

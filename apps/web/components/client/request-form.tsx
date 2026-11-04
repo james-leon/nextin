@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, ShieldCheck } from "lucide-react";
 import { BottomBar } from "@/components/ui/bottom-bar";
@@ -10,7 +10,7 @@ import { ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
-import { CustomerIdentityFields, EMPTY_IDENTITY, loadSavedIdentity, saveIdentity, type IdentityValue } from "./customer-identity-fields";
+import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
 import { TextField } from "@/components/ui/text-field";
 import { sendAppointmentRequest } from "@/lib/client/appointment-request";
 import type { RequestOptions } from "@/lib/client/types";
@@ -79,11 +79,8 @@ export function RequestForm({
   const [slot, setSlot] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
   const [phone, setPhone] = useState("");
-  const [identity, setIdentity] = useState<IdentityValue>(EMPTY_IDENTITY);
+  const [identity, setIdentity] = useIdentityValue(identityRules.mode !== "off");
   const [nameError, setNameError] = useState<string | null>(null);
-  useEffect(() => {
-    if (identityRules.mode !== "off") setIdentity(loadSavedIdentity());
-  }, [identityRules.mode]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);

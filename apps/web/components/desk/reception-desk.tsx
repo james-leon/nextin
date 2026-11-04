@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, Ban, CalendarDays, Inbox, Plus, Printer, ScanLine, Shuffle, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { ArrowDown, Ban, CalendarDays, Eye, EyeOff, Inbox, PenLine, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { identityLine } from "@nextin/shared/identity";
+import { useNameMask } from "@/lib/desk/name-mask";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { isActiveCall } from "@nextin/shared/queue/live";
 import { staffTopic } from "@nextin/shared/queue/realtime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { PageFrame } from "@/components/ui/page-frame";
@@ -20,7 +22,8 @@ import { loadReception, type ReceptionData, type ReceptionPractitioner, type Rec
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AbsenceSheet } from "./absence-sheet";
 import { CreateTicketSheet } from "./create-ticket-sheet";
-import { PriorityButton } from "./priority-button";
+import { IdentitySheet } from "./identity-sheet";
+import { PrioritySheet } from "./priority-sheet";
 import { TransferSheet } from "./transfer-sheet";
 
 /** Poste d'accueil : créer des tickets, priorités, réorientations, absences des praticiens, vue en direct. */
@@ -41,6 +44,17 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   const [selected, setSelected] = useState<ReceptionTicket | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
+  const [identityOpen, setIdentityOpen] = useState(false);
+  const ti = useTranslations("identity");
+  const identityRules = data.branch.identityRules;
+  const nameMask = useNameMask();
+  // Nom du client (personnel uniquement) ; masqué d'un geste ou après 2 min sans activité.
+  const nameOf = (tk: ReceptionTicket) => {
+    if (identityRules.mode === "off" || !tk.identity) return null;
+    if (nameMask.hidden) return ti("hidden");
+    return identityLine(tk.identity, { age: (age) => ti("ageValue", { age }), file: (value) => ti("fileValue", { value }) });
+  };
   const [absenceFor, setAbsenceFor] = useState<ReceptionPractitioner | null>(null);
 
   const branchId = initial.branch.id;
@@ -57,6 +71,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => void refresh(), 250);
       })
+      .on("broadcast", { event: "identity" }, () => void refresh())
       .subscribe();
     const poll = setInterval(() => void refresh(), 15_000);
     return () => {
@@ -97,10 +112,21 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
           eyebrow={`${data.branch.organizationName} · ${data.branch.name}`}
           back={{ href: "/desk", label: td("title") }}
           trailing={
-            <Badge shape="pill" tone="green">
-              <span aria-hidden className="size-2 rounded-full bg-green" />
-              {t("live")}
-            </Badge>
+            <>
+              {identityRules.mode !== "off" ? (
+                <IconButton
+                  label={nameMask.hidden ? ti("show") : ti("hide")}
+                  icon={nameMask.hidden ? <Eye /> : <EyeOff />}
+                  variant="plain"
+                  aria-pressed={nameMask.hidden}
+                  onClick={nameMask.toggle}
+                />
+              ) : null}
+              <Badge shape="pill" tone="green">
+                <span aria-hidden className="size-2 rounded-full bg-green" />
+                {t("live")}
+              </Badge>
+            </>
           }
           contentClassName="max-w-7xl md:px-8 lg:px-10"
         />
@@ -230,8 +256,14 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   key={tk2.id}
                   onClick={() => setSelected(tk2)}
                   icon={service ? <ServiceTile letter={service.prefix} color={service.color} /> : undefined}
-                  // Titre : le numéro ; sous-titre : origine et heure, puis présence ou praticien (la ligne garde la place du bouton « Prioritaire »).
-                  title={<span className="font-semibold">{tk2.code}</span>}
+                  // Titre : le numéro et le nom (masquable) ; sous-titre : origine et heure, puis présence ou praticien.
+                  // Actions secondaires (priorité, nom…) dans la feuille du ticket sélectionné : une seule action principale.
+                  title={
+                    <>
+                      <span className="font-semibold">{tk2.code}</span>
+                      {nameOf(tk2) ? <span className="text-label-secondary"> · {nameOf(tk2)}</span> : null}
+                    </>
+                  }
                   subtitle={
                     <>
                       {td(`source.${tk2.source}`)} · {time(tk2.createdAt)}
@@ -249,11 +281,6 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   accessory={
                     tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
                   }
-                  trailing={
-                    tk2.priorityReason ? undefined : (
-                      <PriorityButton code={tk2.code} onGrant={(r) => void command("set_ticket_priority", { p_ticket: tk2.id, p_reason: r })} />
-                    )
-                  }
                 />
               );
             })}
@@ -270,7 +297,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
 
         {selected ? (
           <Sheet
-            open={!!selected && !transferOpen && !cancelOpen}
+            open={!!selected && !transferOpen && !cancelOpen && !priorityOpen && !identityOpen}
             onOpenChange={(o) => !o && setSelected(null)}
             title={t("ticketActions", { code: selected.code })}
             closeLabel={tc("close")}
@@ -291,6 +318,21 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                     onClick={() => command("set_ticket_priority", { p_ticket: selected.id, p_reason: null })}
                     icon={<ListIcon color="var(--orange-fill)"><StarOff /></ListIcon>}
                     title={t("removePriority")}
+                  />
+                ) : (
+                  <ListRow
+                    onClick={() => setPriorityOpen(true)}
+                    icon={<ListIcon color="var(--orange-fill)"><Star /></ListIcon>}
+                    title={t("setPriority")}
+                    accessory="chevron"
+                  />
+                )}
+                {identityRules.mode !== "off" ? (
+                  <ListRow
+                    onClick={() => setIdentityOpen(true)}
+                    icon={<ListIcon color="var(--accent-fill)"><PenLine /></ListIcon>}
+                    title={selected.identity?.name ? ti("edit") : ti("enter")}
+                    accessory="chevron"
                   />
                 ) : null}
                 <ListRow
@@ -316,6 +358,30 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
               </ListSection>
             </div>
           </Sheet>
+        ) : null}
+
+        {selected && priorityOpen ? (
+          <PrioritySheet
+            code={selected.code}
+            open
+            onOpenChange={setPriorityOpen}
+            onGrant={(r) => void command("set_ticket_priority", { p_ticket: selected.id, p_reason: r })}
+          />
+        ) : null}
+
+        {selected && identityOpen ? (
+          <IdentitySheet
+            open
+            onOpenChange={(o) => {
+              setIdentityOpen(o);
+              if (!o) setSelected(null);
+            }}
+            ticketId={selected.id}
+            code={selected.code}
+            rules={identityRules}
+            initial={selected.identity}
+            onSaved={() => void refresh()}
+          />
         ) : null}
 
         {selected ? (

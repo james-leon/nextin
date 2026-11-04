@@ -5,7 +5,14 @@ import type { Database } from "@nextin/shared/database";
 type Db = SupabaseClient<Database>;
 
 const TICKET_COLUMNS =
-  "id, display_code, status, service_id, priority_level, priority_reason, sort_key, number, preferred_counter_id, source, created_at, called_at, serving_started_at, recall_count";
+  "id, display_code, status, service_id, priority_level, priority_reason, sort_key, number, preferred_counter_id, source, created_at, called_at, serving_started_at, recall_count, identity:ticket_identities(full_name, age, file_number)";
+
+type IdentityRow = { full_name: string | null; age: number | null; file_number: string | null };
+/** Identité embarquée (relation un-à-un ; tableau selon la version de PostgREST). */
+export function toIdentity(row: IdentityRow | IdentityRow[] | null | undefined): DeskTicket["identity"] {
+  const r = Array.isArray(row) ? row[0] : row;
+  return r ? { name: r.full_name, age: r.age, fileNumber: r.file_number } : null;
+}
 
 type Row = {
   id: string;
@@ -22,6 +29,7 @@ type Row = {
   called_at: string | null;
   serving_started_at: string | null;
   recall_count: number;
+  identity?: IdentityRow | IdentityRow[] | null;
 };
 
 const toTicket = (r: Row): DeskTicket => ({
@@ -39,6 +47,7 @@ const toTicket = (r: Row): DeskTicket => ({
   calledAt: r.called_at,
   servingStartedAt: r.serving_started_at,
   recallCount: r.recall_count,
+  identity: toIdentity(r.identity),
 });
 
 /** Jour de service local de l'agence (AAAA-MM-JJ). */

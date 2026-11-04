@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Printer, UserRoundCheck } from "lucide-react";
 import { normalizeCameroonPhone } from "@nextin/shared";
 import { PRIORITY_REASONS, type PriorityReason } from "@nextin/shared/queue/live";
+import { FILE_NUMBER_MAX, NAME_MAX, parseIdentity } from "@nextin/shared/identity";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListRow, ListSection } from "@/components/ui/list";
@@ -45,6 +46,12 @@ export function CreateTicketSheet({
   const [priority, setPriority] = useState(false);
   const [reason, setReason] = useState<PriorityReason>("appointment");
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
+  const [fileNumber, setFileNumber] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const ti = useTranslations("identity");
+  const rules = data.branch.identityRules;
   const [consent, setConsent] = useState(false);
   const [messagesLocale, setMessagesLocale] = useState(locale === "en" ? "en" : "fr");
   const [pending, setPending] = useState(false);
@@ -63,6 +70,10 @@ export function CreateTicketSheet({
     setPractitionerId(null);
     setPriority(false);
     setPhone("");
+    setName("");
+    setAge("");
+    setFileNumber("");
+    setNameError(null);
     setConsent(false);
     setError(null);
     setOpId(uuidV4());
@@ -70,6 +81,10 @@ export function CreateTicketSheet({
 
   async function submit() {
     if (!serviceId) return;
+    // Nom demandé par l'agence : exigé ici comme sur la page client (la base l'accepte vide pour ne pas bloquer l'accueil).
+    const parsed = parseIdentity(rules, { name, age, fileNumber });
+    if (!parsed.ok) return setNameError(te(parsed.error));
+    setNameError(null);
     if (phone.trim() && !phoneE164) return setError(te("phone_invalid"));
     if (phoneE164 && !consent) return setError(te("consent_required"));
     setPending(true);
@@ -82,6 +97,9 @@ export function CreateTicketSheet({
       p_phone_e164: phoneE164 as string,
       p_consent: !!phoneE164 && consent,
       p_locale: messagesLocale,
+      p_customer_name: parsed.identity.name ?? undefined,
+      p_customer_age: parsed.identity.age ?? undefined,
+      p_customer_file_number: parsed.identity.fileNumber ?? undefined,
     });
     setPending(false);
     if (e) return setError(te.has(e.message as never) ? te(e.message as never) : te("generic"));
@@ -186,6 +204,31 @@ export function CreateTicketSheet({
                 </ListSection>
               ) : null}
             </>
+          ) : null}
+
+          {rules.mode !== "off" ? (
+            <div className="flex flex-col gap-3">
+              <TextField
+                label={rules.mode === "required" ? ti("staffName") : ti("staffNameOptional")}
+                placeholder={ti("staffNamePlaceholder")}
+                autoComplete="off"
+                autoCapitalize="words"
+                maxLength={NAME_MAX}
+                value={name}
+                error={nameError ?? undefined}
+                hint={ti("staffFooter")}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameError(null);
+                }}
+              />
+              {rules.extra === "age" ? (
+                <TextField label={ti("staffAge")} inputMode="numeric" pattern="[0-9]*" maxLength={3} value={age} onChange={(e) => setAge(e.target.value.replace(/\D/g, ""))} />
+              ) : null}
+              {rules.extra === "file_number" ? (
+                <TextField label={ti("staffFileNumber")} autoComplete="off" maxLength={FILE_NUMBER_MAX} value={fileNumber} onChange={(e) => setFileNumber(e.target.value)} />
+              ) : null}
+            </div>
           ) : null}
 
           <TextField

@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, ArrowRight, CloudOff, Keyboard, Maximize2, Minimize2, RefreshCw, UserRoundX } from "lucide-react";
+import { AlertTriangle, ArrowRight, CloudOff, Eye, EyeOff, Keyboard, Maximize2, Minimize2, RefreshCw, UserRoundX } from "lucide-react";
 import { formatElapsed } from "@nextin/shared";
 import type { PriorityReason } from "@nextin/shared/queue/live";
+import { identityLine, type IdentityRules } from "@nextin/shared/identity";
+import { useNameMask } from "@/lib/desk/name-mask";
 import {
   averageServiceSeconds,
   DESK_SHORTCUTS,
@@ -29,7 +31,7 @@ import { useToast } from "@/components/ui/toast";
 import { PractitionerAppointments } from "@/components/appointments/practitioner-appointments";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AbsenceSheet, type ActiveAbsence } from "./absence-sheet";
-import { PriorityButton } from "./priority-button";
+import { TicketMenu } from "./ticket-menu";
 import { TransferSheet, type BranchService } from "./transfer-sheet";
 import { setDeskCompact, useDeskCompact } from "@/lib/desk/compact";
 import { useDesk, type DeskCounter } from "./use-desk";
@@ -49,8 +51,11 @@ export function AgentDesk({
   services,
   practitioner,
   absence,
+  identityRules = { mode: "off", extra: "none" },
 }: {
   counter: DeskCounter;
+  /** Nom du client demandé par l'agence : affiché au personnel, masquable (l'écran peut être vu du public). */
+  identityRules?: IdentityRules;
   title: string;
   subtitle: string;
   initial: DeskSnapshot;
@@ -64,6 +69,15 @@ export function AgentDesk({
   const te = useTranslations("errors");
   const tr = useTranslations("priorityReasons");
   const tc = useTranslations("common");
+  const ti = useTranslations("identity");
+  const nameMask = useNameMask();
+  const namesOn = identityRules.mode !== "off";
+  // Nom (et âge ou numéro de dossier) du client, ou « Nom masqué » ; rien si l'agence ne demande pas le nom.
+  const nameOf = (tk: DeskTicket) => {
+    if (!namesOn || !tk.identity) return null;
+    if (nameMask.hidden) return ti("hidden");
+    return identityLine(tk.identity, { age: (age) => ti("ageValue", { age }), file: (value) => ti("fileValue", { value }) });
+  };
   const locale = useLocale();
   const toast = useToast();
   const router = useRouter();
@@ -164,7 +178,16 @@ export function AgentDesk({
           </span>
         ) : undefined
       }
-      trailing={tk.priorityReason ? undefined : <PriorityButton code={tk.code} disabled={!online} onGrant={(r) => void grantPriority(tk.id, r)} />}
+      subtitle={nameOf(tk) ?? undefined}
+      trailing={
+        <TicketMenu
+          ticket={tk}
+          rules={identityRules}
+          canPrioritize={online}
+          onGrantPriority={(r) => void grantPriority(tk.id, r)}
+          onIdentitySaved={() => void refresh()}
+        />
+      }
     />
   );
 
@@ -254,6 +277,7 @@ export function AgentDesk({
               {current ? (current.status === "called" ? t("alerted") : t("current")) : title}
             </p>
             <p className="text-title1 font-extrabold whitespace-nowrap">{current ? current.code : "—"}</p>
+            {current && nameOf(current) ? <p className="truncate text-subheadline text-white/90">{nameOf(current)}</p> : null}
           </div>
           {current ? (
             <p className="pb-1 text-title3 font-semibold tabular">
@@ -341,6 +365,7 @@ export function AgentDesk({
                 code={current.code}
                 elapsedSeconds={since(current.status === "serving" ? current.servingStartedAt : current.calledAt)}
                 elapsedLabel={current.status === "serving" ? t("elapsed") : t("sinceAlert")}
+                subtitle={nameOf(current)}
                 actions={
                   current.status === "called"
                     ? [
@@ -365,6 +390,18 @@ export function AgentDesk({
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
+          {namesOn ? (
+            <Button
+              variant="gray"
+              size="md"
+              className="self-end"
+              leadingIcon={nameMask.hidden ? <Eye aria-hidden className="size-5" /> : <EyeOff aria-hidden className="size-5" />}
+              onClick={nameMask.toggle}
+              aria-pressed={nameMask.hidden}
+            >
+              {nameMask.hidden ? ti("show") : ti("hide")}
+            </Button>
+          ) : null}
           <ListSection
             header={t("nextHeader", { count: view.waiting.length })}
             footer={view.waiting.length > MAX_ROWS ? t("more", { count: view.waiting.length - MAX_ROWS }) : undefined}

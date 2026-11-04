@@ -18,7 +18,7 @@ import { remoteTicketsFor, saveTicket } from "@/lib/client/my-tickets";
 import { callRpc } from "@/lib/client/supabase-public";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { takeTicket } from "@/lib/client/take-ticket";
-import { CustomerIdentityFields, EMPTY_IDENTITY, loadSavedIdentity, saveIdentity, type IdentityValue } from "./customer-identity-fields";
+import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import type { EntryInfo, TicketView } from "@/lib/client/types";
 
@@ -53,13 +53,9 @@ export function ServiceChooser({
   const [selected, setSelected] = useState<string | null>(entry.service_id ?? services[0]?.id ?? null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [identity, setIdentity] = useState<IdentityValue>(EMPTY_IDENTITY);
+  const [identity, setIdentity] = useIdentityValue(identityRules.mode !== "off");
   const [nameError, setNameError] = useState<string | null>(null);
 
-  // Nom gardé sur cet appareil la fois précédente (après le premier rendu : pas de décalage d'hydratation).
-  useEffect(() => {
-    if (identityRules.mode !== "off") setIdentity(loadSavedIdentity());
-  }, [identityRules.mode]);
 
   // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
   useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
