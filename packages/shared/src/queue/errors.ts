@@ -43,6 +43,9 @@ export const QUEUE_ERROR_CODES = [
   "too_many_organizations",
   "invoice_paid",
   "link_expired",
+  // Grille v2 : quota mensuel de tickets (bloqué à partir du lendemain), formule sur devis.
+  "monthly_quota_reached",
+  "plan_quote_only",
   // M10b — publicité.
   "surface_not_in_package",
   "creative_required",
@@ -75,6 +78,7 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "feature_unavailable":
       return 403;
     case "subscription_read_only":
+    case "monthly_quota_reached":
       return 402;
     case "rate_limited":
       return 429;
@@ -94,6 +98,7 @@ export function queueErrorStatus(code: QueueErrorCode): number {
     case "request_limit":
     case "code_expired":
     case "invoice_paid":
+    case "plan_quote_only":
     case "coupon_redeemed":
       return 409;
     case "too_many_organizations":

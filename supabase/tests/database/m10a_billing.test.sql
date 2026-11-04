@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(112);
+select plan(114);
 -- Nom du client non demandé ici (sujet testé dans customer_names.test.sql).
 alter table public.branch_settings alter column customer_name_mode set default 'off';
 
@@ -78,33 +78,35 @@ select throws_ok($$ select public.create_organization('Sans abonnement', 'pgtap-
 select tests.logout();
 
 -- ─── Formules et prix ───────────────────────────────────────────────────────
-select is((select string_agg(code, ',' order by sort_order) from public.plans), 'essentiel,pro,entreprise', 'trois formules initiales');
+select is((select string_agg(code, ',' order by sort_order) from public.plans), 'starter,business,premium,enterprise', 'quatre formules (grille v2)');
 select tests.as_anon();
-select is((select count(*)::integer from public.plans), 3, 'formules lisibles par tous (page de prix)');
+select is((select count(*)::integer from public.plans), 4, 'formules lisibles par tous (page de prix)');
 select throws_ok($$ update public.plans set base_price_xaf = 1 $$, '42501', null, 'formules non modifiables directement');
 select tests.logout();
-select is(public.subscription_price(25000, 1, 25000, 2, 1, 'monthly', null, null),
-  '{"monthly": 25000, "months": 1, "extra_branches": 0, "subtotal": 25000, "discount": 0, "total": 25000}'::jsonb, 'prix : Essentiel, 1 agence, mensuel');
-select is(public.subscription_price(25000, 1, 25000, 2, 3, 'monthly', null, null),
-  '{"monthly": 75000, "months": 1, "extra_branches": 2, "subtotal": 75000, "discount": 0, "total": 75000}'::jsonb, 'prix : Essentiel, 3 agences, mensuel');
-select is(public.subscription_price(45000, 1, 45000, 2, 1, 'annual', null, null),
-  '{"monthly": 45000, "months": 10, "extra_branches": 0, "subtotal": 450000, "discount": 0, "total": 450000}'::jsonb, 'prix : Pro, 1 agence, annuel (2 mois offerts)');
-select is(public.subscription_price(120000, 3, 35000, 2, 5, 'annual', null, null),
-  '{"monthly": 190000, "months": 10, "extra_branches": 2, "subtotal": 1900000, "discount": 0, "total": 1900000}'::jsonb, 'prix : Entreprise, 5 agences, annuel');
-select is(public.subscription_price(120000, 3, 35000, 2, 2, 'monthly', null, null),
-  '{"monthly": 120000, "months": 1, "extra_branches": 0, "subtotal": 120000, "discount": 0, "total": 120000}'::jsonb, 'prix : Entreprise, 2 agences (sous les incluses)');
-select is(public.subscription_price(45000, 1, 45000, 2, 2, 'monthly', 'percent', 15),
-  '{"monthly": 90000, "months": 1, "extra_branches": 1, "subtotal": 90000, "discount": 13500, "total": 76500}'::jsonb, 'prix : Pro, 2 agences, remise 15 %');
+select is(public.subscription_price(29900, 1, null, 2, 1, 'monthly', null, null),
+  '{"monthly": 29900, "months": 1, "extra_branches": 0, "subtotal": 29900, "discount": 0, "total": 29900}'::jsonb, 'prix : Starter, 1 agence, mensuel');
+select is(public.subscription_price(29900, 1, null, 2, 1, 'annual', null, null),
+  '{"monthly": 29900, "months": 10, "extra_branches": 0, "subtotal": 299000, "discount": 0, "total": 299000}'::jsonb, 'prix : Starter, annuel (2 mois offerts)');
+select is(public.subscription_price(59900, 1, null, 2, 1, 'monthly', null, null),
+  '{"monthly": 59900, "months": 1, "extra_branches": 0, "subtotal": 59900, "discount": 0, "total": 59900}'::jsonb, 'prix : Business, 1 agence, mensuel');
+select is(public.subscription_price(59900, 1, null, 2, 1, 'annual', null, null),
+  '{"monthly": 59900, "months": 10, "extra_branches": 0, "subtotal": 599000, "discount": 0, "total": 599000}'::jsonb, 'prix : Business, annuel (2 mois offerts)');
+select is(public.subscription_price(124900, 3, null, 2, 3, 'annual', null, null),
+  '{"monthly": 124900, "months": 10, "extra_branches": 0, "subtotal": 1249000, "discount": 0, "total": 1249000}'::jsonb, 'prix : Premium, 3 agences, annuel');
+select is(public.subscription_price(124900, 3, null, 2, 2, 'monthly', null, null),
+  '{"monthly": 124900, "months": 1, "extra_branches": 0, "subtotal": 124900, "discount": 0, "total": 124900}'::jsonb, 'prix : Premium, 2 agences (sous les incluses)');
+select is(public.subscription_price(59900, 1, 40000, 2, 2, 'monthly', 'percent', 15),
+  '{"monthly": 99900, "months": 1, "extra_branches": 1, "subtotal": 99900, "discount": 14985, "total": 84915}'::jsonb, 'prix : Agence supplémentaire facturable (formule réglée par le super admin)');
 select is(public.subscription_price(12345, 1, null, 0, 1, 'monthly', 'percent', 10),
   '{"monthly": 12345, "months": 1, "extra_branches": 0, "subtotal": 12345, "discount": 1235, "total": 11110}'::jsonb, 'prix : Remise en pourcentage arrondie à l''entier');
-select is(public.subscription_price(25000, 1, 25000, 2, 1, 'monthly', 'fixed_xaf', 50000),
-  '{"monthly": 25000, "months": 1, "extra_branches": 0, "subtotal": 25000, "discount": 25000, "total": 0}'::jsonb, 'prix : Remise fixe plafonnée au prix');
+select is(public.subscription_price(29900, 1, null, 2, 1, 'monthly', 'fixed_xaf', 50000),
+  '{"monthly": 29900, "months": 1, "extra_branches": 0, "subtotal": 29900, "discount": 29900, "total": 0}'::jsonb, 'prix : Remise fixe plafonnée au prix');
 select is(public.subscription_price(30000, 1, null, 1, 3, 'annual', 'fixed_xaf', 10000),
   '{"monthly": 30000, "months": 11, "extra_branches": 2, "subtotal": 330000, "discount": 10000, "total": 320000}'::jsonb, 'prix : Formule sans agence supplémentaire facturable');
 
 select is((public.org_entitlements(tests.id('pilot')) ->> 'pilot')::boolean, true, 'établissement pilote : sans abonnement');
 select is((public.org_entitlements(tests.id('pilot')) ->> 'can_issue')::boolean, true, 'établissement pilote : émission permise');
-select is(public.org_entitlements(tests.id('pilot')) ->> 'plan_code', 'entreprise', 'établissement pilote : limites Entreprise');
+select is(public.org_entitlements(tests.id('pilot')) ->> 'plan_code', 'enterprise', 'établissement pilote : Enterprise, sans limite');
 
 -- ─── Inscription : téléphone vérifié, essai Pro une seule fois par numéro ──────
 select tests.login_as('aa000000-0000-0000-0000-0000000000d1');
@@ -136,8 +138,8 @@ insert into ids select 'd1', (tests.v('signup1') ->> 'organization_id')::uuid;
 select is(tests.v('signup1') ->> 'trial', 'true', 'premier établissement du numéro : essai');
 select is((select (s.status, p.code, s.trial_ends_at between now() + interval '13 days 23 hours' and now() + interval '14 days 1 hour')::text
            from public.subscriptions s join public.plans p on p.id = s.plan_id where s.organization_id = tests.id('d1')),
-  '(trialing,pro,t)', 'essai Pro de 14 jours (réglage de la plateforme)');
-select is(public.staff_entitlements(tests.id('d1')) ->> 'plan_code', 'pro', 'droits du personnel : limites Pro pendant l''essai');
+  '(trialing,business,t)', 'essai Business de 14 jours (réglage de la plateforme)');
+select is(public.staff_entitlements(tests.id('d1')) ->> 'plan_code', 'business', 'droits du personnel : limites Business pendant l''essai');
 select throws_ok(format($$ select public.self_service_signup('Clinique Bis', 'pgtap-m10a-d1b', 'clinic', 'fr', %L) $$, tests.id('v1')),
   'P0422', 'phone_not_verified', 'vérification à usage unique');
 select throws_ok(format($$ select public.staff_entitlements(%L) $$, tests.id('pilot')), '42501', 'not_allowed',
@@ -181,9 +183,9 @@ select tests.logout();
 -- ─── Factures et paiement (faux fournisseur) ─────────────────────────────────
 insert into public.memberships (organization_id, user_id, role, branch_id)
 values (tests.id('d1'), 'aa000000-0000-0000-0000-0000000000a9', 'agent', tests.id('d1_branch'));
-insert into ids select 'essentiel', id from public.plans where code = 'essentiel';
-insert into ids select 'pro', id from public.plans where code = 'pro';
-insert into ids select 'entreprise', id from public.plans where code = 'entreprise';
+insert into ids select 'essentiel', id from public.plans where code = 'starter';
+insert into ids select 'pro', id from public.plans where code = 'business';
+insert into ids select 'entreprise', id from public.plans where code = 'premium';
 
 select tests.login_as('aa000000-0000-0000-0000-0000000000a9');
 select throws_ok(format($$ select public.billing_checkout(%L, %L, 'monthly') $$, tests.id('d1'), tests.id('essentiel')), '42501',
@@ -192,7 +194,7 @@ select is((select status::text from public.subscriptions where organization_id =
   'agent : statut de l''abonnement visible (bandeaux)');
 select tests.login_as('aa000000-0000-0000-0000-0000000000d1');
 insert into vals select 'checkout1', public.billing_checkout(tests.id('d1'), tests.id('essentiel'), 'monthly');
-select is((tests.v('checkout1') ->> 'total_xaf')::integer, 25000, 'Essentiel mensuel, une agence : 25 000 FCFA');
+select is((tests.v('checkout1') ->> 'total_xaf')::integer, 29900, 'Starter mensuel, une agence : 29 900 FCFA');
 select ok(tests.v('checkout1') ->> 'invoice' ~ '^FAC-[0-9]{4}-[0-9]{6}$', 'facture numérotée FAC-AAAA-NNNNNN');
 select is(public.billing_checkout(tests.id('d1'), tests.id('essentiel'), 'monthly') ->> 'invoice', tests.v('checkout1') ->> 'invoice',
   'même formule et période : la facture ouverte est réutilisée');
@@ -204,7 +206,7 @@ select is((select count(*)::integer from public.invoices where organization_id =
 select tests.logout();
 
 select tests.as_anon();
-select is(public.pay_invoice_view(tests.v('checkout1') ->> 'pay_token') ->> 'total_xaf', '25000', 'lien de paiement : facture lisible sans compte');
+select is(public.pay_invoice_view(tests.v('checkout1') ->> 'pay_token') ->> 'total_xaf', '29900', 'lien de paiement : facture lisible sans compte');
 select is(public.pay_invoice_view('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), null, 'jeton inconnu : rien');
 select throws_ok(format($$ select public.start_payment(%L, 'fake', 'mtn_momo', '+237677100001') $$, tests.v('checkout1') ->> 'pay_token'),
   '42501', null, 'début du paiement : serveur uniquement');
@@ -226,7 +228,7 @@ select throws_ok(format($$ select public.start_payment(%L, 'fake', 'mtn_momo', '
 select tests.logout();
 select is((select (s.status, p.code, s.current_period_end = s.trial_ends_at + interval '1 month')::text
            from public.subscriptions s join public.plans p on p.id = s.plan_id where s.organization_id = tests.id('d1')),
-  '(active,essentiel,t)', 'abonnement actif tout de suite, jours d''essai restants conservés');
+  '(active,starter,t)', 'abonnement actif tout de suite, jours d''essai restants conservés');
 select is((select status::text from public.invoices where number = tests.v('checkout1') ->> 'invoice'), 'paid', 'facture payée');
 select is((select count(*)::integer from public.account_messages where organization_id = tests.id('d1') and kind = 'payment_confirmed'), 2,
   '« paiement confirmé » sur WhatsApp et par e-mail');
@@ -245,7 +247,7 @@ select is(right(tests.v('checkout2') ->> 'invoice', 6)::integer, right(tests.v('
   'numéros consécutifs, sans trou');
 select is((select (kind, lines @> '[{"kind": "credit"}]')::text from public.invoices where number = tests.v('checkout2') ->> 'invoice'),
   '(upgrade,t)', 'montée de formule : facture immédiate avec avoir de la période en cours');
-select ok((select total_xaf < 450000 from public.invoices where number = tests.v('checkout2') ->> 'invoice'),
+select ok((select total_xaf < 599000 from public.invoices where number = tests.v('checkout2') ->> 'invoice'),
   'avoir déduit du prix annuel Pro');
 select tests.login_as('aa000000-0000-0000-0000-0000000000d1');
 select is(public.billing_checkout(tests.id('d1'), tests.id('essentiel'), 'monthly') ->> 'invoice' = tests.v('checkout2') ->> 'invoice', false,
@@ -280,7 +282,7 @@ select is((public.tv_session('inconnu') is null), true, 'écran inconnu : pas de
 -- Descente de formule : refusée si les limites ne sont pas respectées.
 select tests.login_as('aa000000-0000-0000-0000-0000000000d1');
 select ok((select (x ->> 'fits')::boolean from jsonb_array_elements(public.billing_overview(tests.id('d1')) -> 'plans') x
-           where x ->> 'code' = 'entreprise'), 'devis : formule supérieure compatible');
+           where x ->> 'code' = 'premium'), 'devis : formule supérieure compatible');
 select tests.logout();
 
 -- ─── Cycle de vie : dégradations différées, jamais en pleine journée ──────────
@@ -330,18 +332,21 @@ select is((select (s.status, o.status, s.deletion_due_at is null, s.current_peri
            from public.subscriptions s join public.organizations o on o.id = s.organization_id where s.organization_id = tests.id('d1')),
   '(active,active,t,t)', 'paiement : établissement réactivé immédiatement, nouvelle période');
 
--- ─── Quotas WhatsApp ─────────────────────────────────────────────────────────
-insert into public.messaging_usage (organization_id, month, whatsapp_sent)
-values (tests.id('d1'), date_trunc('month', now() at time zone 'Africa/Douala')::date, 1199);
+-- ─── Quotas WhatsApp (grille v2 : Starter, 500 messages ; journée de grâce) ──────
+insert into public.messaging_usage as u (organization_id, month, whatsapp_sent)
+values (tests.id('d1'), date_trunc('month', now() at time zone 'Africa/Douala')::date, 399)
+on conflict (organization_id, month) do update set whatsapp_sent = 399;
 select public.count_messaging_usage(tests.id('d1'), 'whatsapp');
 select is((select count(*)::integer from public.account_messages where organization_id = tests.id('d1') and kind = 'quota_alert'), 2,
-  'alerte au seuil de 80 % du quota (1 500 messages)');
+  'alerte au seuil de 80 % du quota (500 messages)');
 select public.count_messaging_usage(tests.id('d1'), 'whatsapp');
 select is((select count(*)::integer from public.account_messages where organization_id = tests.id('d1') and kind = 'quota_alert'), 2,
   'alerte une seule fois par mois');
 select is(public.whatsapp_quota_exceeded(tests.id('d1')), false, 'quota pas encore atteint');
-update public.messaging_usage set whatsapp_sent = 1500 where organization_id = tests.id('d1');
-select is(public.whatsapp_quota_exceeded(tests.id('d1')), true, 'quota atteint');
+update public.messaging_usage set whatsapp_sent = 500, whatsapp_reached_on = (now() at time zone 'Africa/Douala')::date where organization_id = tests.id('d1');
+select is(public.whatsapp_quota_exceeded(tests.id('d1')), false, 'quota atteint aujourd''hui : les messages continuent jusqu''au soir');
+update public.messaging_usage set whatsapp_reached_on = (now() at time zone 'Africa/Douala')::date - 1 where organization_id = tests.id('d1');
+select is(public.whatsapp_quota_exceeded(tests.id('d1')), true, 'quota atteint la veille : épuisé');
 
 -- ─── Messages du compte : secours SMS ─────────────────────────────────────────
 select tests.as_service();
@@ -358,7 +363,7 @@ select throws_ok($$ select public.admin_subscriptions() $$, '42501', 'not_allowe
 select throws_ok($$ select public.admin_update_settings('{"trial_days": 90}') $$, '42501', 'not_allowed', 'réglages : super admin uniquement');
 select tests.login_as('aa000000-0000-0000-0000-0000000000ff');
 select ok(jsonb_array_length(public.admin_subscriptions('all', 'Clinique')) >= 2, 'super admin : tous les abonnements');
-select ok((public.admin_revenue() ->> 'collected_month_xaf')::integer >= 25000, 'super admin : encaissements du mois');
+select ok((public.admin_revenue() ->> 'collected_month_xaf')::integer >= 29900, 'super admin : encaissements du mois');
 select lives_ok(format($$ select public.admin_grant_days(%L, 10, 'Geste commercial') $$, (tests.sub(tests.id('d2'))).id),
   'offrir des jours');
 select is((tests.sub(tests.id('d2'))).status::text, 'trialing', 'jours offerts : lecture seule levée immédiatement');

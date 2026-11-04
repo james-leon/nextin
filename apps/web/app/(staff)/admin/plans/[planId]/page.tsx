@@ -30,7 +30,7 @@ export default async function PlanEditPage({
   const { data: plan } = await supabase
     .from("plans")
     .select(
-      "id, name, name_en, description, base_price_xaf, included_branches, extra_branch_price_xaf, max_counters_per_branch, max_displays_per_branch, whatsapp_quota_per_branch, annual_free_months, features, active",
+      "id, name, name_en, description, base_price_xaf, included_branches, extra_branch_price_xaf, max_services, max_counters, max_displays, max_users, tickets_per_month, whatsapp_quota, history_months, annual_free_months, features, quote_only, trial_eligible, active",
     )
     .eq("id", planId)
     .maybeSingle();

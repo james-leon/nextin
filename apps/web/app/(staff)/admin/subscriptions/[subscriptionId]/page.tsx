@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { formatXaf } from "@nextin/shared";
 import { isLocale, type Locale } from "@nextin/shared/i18n";
 import { AdminPage } from "@/components/admin/admin-page";
+import { LimitsForm } from "@/components/platform/limits-form";
 import { SubscriptionActions } from "@/components/platform/subscription-actions";
 import { Badge } from "@/components/ui/badge";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -39,7 +40,10 @@ export default async function SubscriptionDetail({
   const supabase = await getSupabaseServerClient();
   const [{ data }, { data: plans }] = await Promise.all([
     supabase.rpc("admin_subscription_detail", { p_subscription: subscriptionId }),
-    supabase.from("plans").select("id, name").order("sort_order"),
+    supabase
+      .from("plans")
+      .select("id, name, included_branches, max_services, max_counters, max_displays, max_users, tickets_per_month, whatsapp_quota, history_months")
+      .order("sort_order"),
   ]);
   if (!data) notFound();
   const d = data as unknown as AdminSubscriptionDetail;
@@ -81,8 +85,14 @@ export default async function SubscriptionDetail({
         subscriptionId={s.id}
         organizationId={d.organization.id}
         planId={s.plan_id}
-        plans={plans ?? []}
+        plans={(plans ?? []).map((p) => ({ id: p.id, name: p.name }))}
         suspendedForModeration={d.organization.status === "suspended" && !!d.organization.suspended_reason?.startsWith("moderation")}
+      />
+
+      <LimitsForm
+        subscriptionId={s.id}
+        overrides={(s as unknown as { limit_overrides?: Record<string, number | null> }).limit_overrides ?? {}}
+        plan={plans?.find((p) => p.id === s.plan_id) ?? {}}
       />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

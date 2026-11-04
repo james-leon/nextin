@@ -32,3 +32,16 @@ export async function checkout(orgId: string, _prev: ActionResult | null, data: 
   if (r.scheduled) redirect(`/app/o/${orgId}/billing?scheduled=1`);
   redirect(`/pay/${r.pay_token}`);
 }
+
+/** Acheter une extension de quota (pack de tickets ou de messages WhatsApp) : facture puis `/pay/<jeton>`. */
+export async function buyExtension(orgId: string, _prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  if (!z.uuid().safeParse(orgId).success) redirect("/app");
+  await requireStaffSession(`/app/o/${orgId}/billing`);
+  const pack = z.uuid().safeParse(data.get("packId"));
+  if (!pack.success) return { ok: false, error: "generic" };
+  const supabase = await getSupabaseServerClient();
+  const { data: result, error } = await supabase.rpc("extension_checkout", { p_org: orgId, p_pack: pack.data });
+  if (error) return { ok: false, error: mapDbError(error) };
+  revalidatePath(`/app/o/${orgId}/billing`);
+  redirect(`/pay/${(result as { pay_token: string }).pay_token}`);
+}

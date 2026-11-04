@@ -4,7 +4,10 @@
  */
 import { addDays, weekStart, type IsoDate } from "../appointments/calendar";
 
-export const STATS_PERIODS = ["day", "week", "month"] as const;
+/** « 30 derniers jours » (glissants, période par défaut), puis jour, semaine, mois. */
+export const STATS_PERIODS = ["last30", "day", "week", "month"] as const;
+/** Durée de la période glissante par défaut. */
+export const ROLLING_DAYS = 30;
 export type StatsPeriod = (typeof STATS_PERIODS)[number];
 export type DateRange = { from: IsoDate; to: IsoDate };
 
@@ -16,8 +19,9 @@ function monthEnd(date: IsoDate): IsoDate {
   return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
 }
 
-/** Période contenant le jour de référence : le jour, la semaine (lundi → dimanche) ou le mois. */
+/** Période contenant le jour de référence : les 30 jours qui s'y terminent, le jour, la semaine (lundi → dimanche) ou le mois. */
 export function periodRange(period: StatsPeriod, anchor: IsoDate): DateRange {
+  if (period === "last30") return { from: addDays(anchor, -(ROLLING_DAYS - 1)), to: anchor };
   if (period === "day") return { from: anchor, to: anchor };
   if (period === "week") return { from: weekStart(anchor), to: addDays(weekStart(anchor), 6) };
   return { from: monthStart(anchor), to: monthEnd(anchor) };
@@ -29,6 +33,7 @@ export function periodRange(period: StatsPeriod, anchor: IsoDate): DateRange {
  */
 export function comparisonRange(period: StatsPeriod, range: DateRange, today: IsoDate): DateRange {
   const end = range.to > today ? today : range.to;
+  if (period === "last30") return { from: addDays(range.from, -ROLLING_DAYS), to: addDays(range.from, -1) };
   if (period === "day") return { from: addDays(range.from, -7), to: addDays(range.from, -7) };
   if (period === "week") return { from: addDays(range.from, -7), to: addDays(end, -7) };
   const previousStart = monthStart(addDays(range.from, -1));
@@ -40,9 +45,18 @@ export function comparisonRange(period: StatsPeriod, range: DateRange, today: Is
 
 /** Période suivante ou précédente (navigation). */
 export function shiftPeriod(period: StatsPeriod, anchor: IsoDate, step: -1 | 1): IsoDate {
+  if (period === "last30") return addDays(anchor, ROLLING_DAYS * step);
   if (period === "day") return addDays(anchor, step);
   if (period === "week") return addDays(anchor, 7 * step);
   return step === 1 ? addDays(monthEnd(anchor), 1) : monthStart(addDays(monthStart(anchor), -1));
+}
+
+/** En dessous de ce nombre de jours renseignés, une courbe n'est pas tracée (état vide « pas encore assez de données »). */
+export const MIN_CHART_POINTS = 7;
+
+/** Assez de points pour tracer une courbe ? (valeurs non nulles) */
+export function hasEnoughPoints(values: readonly (number | null | undefined)[], min = MIN_CHART_POINTS): boolean {
+  return values.filter((v) => v != null).length >= min;
 }
 
 export type DeltaKind = "percent" | "minutes" | "points";

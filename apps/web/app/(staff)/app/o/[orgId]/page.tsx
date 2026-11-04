@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ChevronRight, ListChecks } from "lucide-react";
 import { localDate } from "@nextin/shared/appointments";
+import { historyStart } from "@nextin/shared/billing";
 import { comparisonRange, periodRange } from "@nextin/shared/stats";
 import { AdminPage } from "@/components/admin/admin-page";
 import { MobileOrgNav, SetupOverview, setupSteps } from "@/components/admin/setup-overview";
@@ -48,7 +49,8 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
   }
 
   const today = localDate(new Date(), branches[0]!.timezone);
-  const query: DashboardQuery = { branchId: ctx.canManageOrg ? null : branches[0]!.id, period: "day", anchor: today };
+  // Période par défaut : les 30 derniers jours (glissants) ; jour, semaine et mois au choix.
+  const query: DashboardQuery = { branchId: ctx.canManageOrg ? null : branches[0]!.id, period: "last30", anchor: today };
   const range = periodRange(query.period, today);
   const compare = comparisonRange(query.period, range, today);
   const [{ data }, setup, { data: entitlements }] = await Promise.all([
@@ -63,7 +65,14 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
     ctx.canManageOrg ? setupSteps(orgId) : Promise.resolve(null),
     supabase.rpc("staff_entitlements", { p_org: orgId }),
   ]);
-  const features = (entitlements as { features?: { export?: boolean; advanced_stats?: boolean } } | null)?.features;
+  const ent = entitlements as {
+    features?: { export?: boolean; advanced_stats?: boolean };
+    history_months?: number | null;
+    plan_name?: string;
+    plan_name_en?: string | null;
+  } | null;
+  const features = ent?.features;
+  const historyMonths = ent?.history_months ?? null;
   const canExport = !!features?.export;
   if (!data) {
     return (
@@ -82,6 +91,7 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
         canViewAll={ctx.canManageOrg}
         canExport={canExport}
         canAdvanced={!!features?.advanced_stats}
+        history={{ from: historyStart(today, historyMonths), months: historyMonths, plan: ent?.plan_name ?? "" }}
         today={today}
         initialQuery={query}
         initialData={data as unknown as DashboardData}

@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { comparisonRange, delta, peakIndex, periodRange, shiftPeriod, toCsv, toMinutes } from "./index";
+import { comparisonRange, delta, hasEnoughPoints, peakIndex, periodRange, shiftPeriod, STATS_PERIODS, toCsv, toMinutes } from "./index";
+
+describe("période par défaut : 30 derniers jours glissants", () => {
+  it("se termine le jour de référence, comparée aux 30 jours d'avant", () => {
+    expect(STATS_PERIODS[0]).toBe("last30");
+    const range = periodRange("last30", "2026-11-04");
+    expect(range).toEqual({ from: "2026-10-06", to: "2026-11-04" });
+    expect(comparisonRange("last30", range, "2026-11-04")).toEqual({ from: "2026-09-06", to: "2026-10-05" });
+    expect(shiftPeriod("last30", "2026-11-04", -1)).toBe("2026-10-05");
+  });
+  it("courbe tracée à partir de 7 jours renseignés", () => {
+    expect(hasEnoughPoints([1, 2, null, 3, 4, 5, 6])).toBe(false);
+    expect(hasEnoughPoints([1, 2, 0, 3, 4, 5, 6])).toBe(true);
+  });
+});
 
 describe("périodes du tableau de bord", () => {
   it("jour, semaine (lundi → dimanche), mois", () => {

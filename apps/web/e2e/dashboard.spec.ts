@@ -21,7 +21,8 @@ async function open(page: Page, b: Awaited<ReturnType<typeof prepare>>) {
   await page.goto(`/login?next=${encodeURIComponent(path)}`);
   await signInViaUi(page, b.email);
   await page.waitForURL((u) => u.pathname === path);
-  await expect(page.getByRole("heading", { name: "Aujourd'hui", level: 1 })).toBeVisible();
+  // Période par défaut : les 30 derniers jours (glissants).
+  await expect(page.getByRole("heading", { name: "30 derniers jours", level: 1 })).toBeVisible();
 }
 
 const kpi = (page: Page, label: string) => page.getByText(label, { exact: true }).locator("..");
@@ -33,6 +34,10 @@ test.describe("M8 — tableau de bord", () => {
     await open(page, b);
 
     await expect(kpi(page, "Tickets émis")).toContainText("3");
+    // Moins de 7 jours de données : état vide clair au lieu d'une courbe presque vide.
+    await expect(page.getByText("Pas encore assez de données : revenez dans quelques jours.")).toBeVisible();
+    await page.getByRole("radio", { name: "Jour", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Aujourd'hui", level: 1 })).toBeVisible();
     await expect(page.getByRole("region", { name: "Files en direct" })).toContainText("Consultation");
     await expect(page.getByRole("region", { name: "Files en direct" })).toContainText("2 en attente");
     const counters = page.getByRole("region", { name: "Postes" });

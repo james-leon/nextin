@@ -1000,14 +1000,14 @@ isOneToOne: false
                   ]
                 },"invoices": {
                   Row: {
-                    "advertiser_id": string | null,"billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"campaign_id": string | null,"discount_xaf": number,"due_at": string,"id": string,"issued_at": string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id": string | null,"paid_at": string | null,"paid_channel": Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id": string | null,"seller_snapshot": NonNullable<Json>,"status": Database["public"]['Enums']["invoice_status"],"subscription_id": string | null,"subtotal_xaf": number,"tax_xaf": number,"total_xaf": number,"vat_rate": number
+                    "advertiser_id": string | null,"billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"campaign_id": string | null,"discount_xaf": number,"due_at": string,"id": string,"issued_at": string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id": string | null,"paid_at": string | null,"paid_channel": Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id": string | null,"quota_pack_id": string | null,"seller_snapshot": NonNullable<Json>,"status": Database["public"]['Enums']["invoice_status"],"subscription_id": string | null,"subtotal_xaf": number,"tax_xaf": number,"total_xaf": number,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "advertiser_id"?: string | null,"billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"campaign_id"?: string | null,"discount_xaf"?: number,"due_at": string,"id"?: string,"issued_at"?: string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id"?: string | null,"seller_snapshot": NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf": number,"tax_xaf"?: number,"total_xaf": number,"vat_rate"?: number
+                    "advertiser_id"?: string | null,"billing_period": Database["public"]['Enums']["billing_period"],"buyer_snapshot": NonNullable<Json>,"campaign_id"?: string | null,"discount_xaf"?: number,"due_at": string,"id"?: string,"issued_at"?: string,"kind": string,"lines": NonNullable<Json>,"number": string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end": string,"period_start": string,"plan_id"?: string | null,"quota_pack_id"?: string | null,"seller_snapshot": NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf": number,"tax_xaf"?: number,"total_xaf": number,"vat_rate"?: number
                   }
                   Update: {
-                    "advertiser_id"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"buyer_snapshot"?: NonNullable<Json>,"campaign_id"?: string | null,"discount_xaf"?: number,"due_at"?: string,"id"?: string,"issued_at"?: string,"kind"?: string,"lines"?: NonNullable<Json>,"number"?: string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end"?: string,"period_start"?: string,"plan_id"?: string | null,"seller_snapshot"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf"?: number,"tax_xaf"?: number,"total_xaf"?: number,"vat_rate"?: number
+                    "advertiser_id"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"buyer_snapshot"?: NonNullable<Json>,"campaign_id"?: string | null,"discount_xaf"?: number,"due_at"?: string,"id"?: string,"issued_at"?: string,"kind"?: string,"lines"?: NonNullable<Json>,"number"?: string,"organization_id"?: string | null,"paid_at"?: string | null,"paid_channel"?: Database["public"]['Enums']["payment_channel"] | null,"period_end"?: string,"period_start"?: string,"plan_id"?: string | null,"quota_pack_id"?: string | null,"seller_snapshot"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["invoice_status"],"subscription_id"?: string | null,"subtotal_xaf"?: number,"tax_xaf"?: number,"total_xaf"?: number,"vat_rate"?: number
                   }
                   Relationships: [
                     {
@@ -1033,6 +1033,12 @@ isOneToOne: false
       columns: ["plan_id"]
 isOneToOne: false
       referencedRelation: "plans"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invoices_quota_pack_id_fkey"
+      columns: ["quota_pack_id"]
+isOneToOne: false
+      referencedRelation: "quota_packs"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "invoices_subscription_id_fkey"
@@ -1070,14 +1076,14 @@ isOneToOne: false
                   ]
                 },"messaging_usage": {
                   Row: {
-                    "alerted_at": string | null,"month": string,"organization_id": string,"sms_sent": number,"whatsapp_sent": number
+                    "alerted_at": string | null,"alerts": (string)[],"month": string,"organization_id": string,"sms_sent": number,"tickets_created": number,"tickets_reached_on": string | null,"whatsapp_reached_on": string | null,"whatsapp_sent": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "alerted_at"?: string | null,"month": string,"organization_id": string,"sms_sent"?: number,"whatsapp_sent"?: number
+                    "alerted_at"?: string | null,"alerts"?: (string)[],"month": string,"organization_id": string,"sms_sent"?: number,"tickets_created"?: number,"tickets_reached_on"?: string | null,"whatsapp_reached_on"?: string | null,"whatsapp_sent"?: number
                   }
                   Update: {
-                    "alerted_at"?: string | null,"month"?: string,"organization_id"?: string,"sms_sent"?: number,"whatsapp_sent"?: number
+                    "alerted_at"?: string | null,"alerts"?: (string)[],"month"?: string,"organization_id"?: string,"sms_sent"?: number,"tickets_created"?: number,"tickets_reached_on"?: string | null,"whatsapp_reached_on"?: string | null,"whatsapp_sent"?: number
                   }
                   Relationships: [
                     {
@@ -1286,14 +1292,14 @@ isOneToOne: false
                   ]
                 },"plans": {
                   Row: {
-                    "active": boolean,"annual_free_months": number,"base_price_xaf": number,"code": string,"description": string | null,"description_en": string | null,"extra_branch_price_xaf": number | null,"features": NonNullable<Json>,"id": string,"included_branches": number,"max_counters_per_branch": number | null,"max_displays_per_branch": number | null,"name": string,"name_en": string | null,"sort_order": number,"trial_eligible": boolean,"updated_at": string,"whatsapp_quota_per_branch": number
+                    "active": boolean,"annual_free_months": number,"base_price_xaf": number,"code": string,"description": string | null,"description_en": string | null,"extra_branch_price_xaf": number | null,"features": NonNullable<Json>,"history_months": number | null,"id": string,"included_branches": number,"max_counters": number | null,"max_displays": number | null,"max_services": number | null,"max_users": number | null,"name": string,"name_en": string | null,"quote_only": boolean,"sort_order": number,"tickets_per_month": number | null,"trial_eligible": boolean,"updated_at": string,"whatsapp_quota": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"annual_free_months"?: number,"base_price_xaf": number,"code": string,"description"?: string | null,"description_en"?: string | null,"extra_branch_price_xaf"?: number | null,"features"?: NonNullable<Json>,"id"?: string,"included_branches": number,"max_counters_per_branch"?: number | null,"max_displays_per_branch"?: number | null,"name": string,"name_en"?: string | null,"sort_order"?: number,"trial_eligible"?: boolean,"updated_at"?: string,"whatsapp_quota_per_branch"?: number
+                    "active"?: boolean,"annual_free_months"?: number,"base_price_xaf": number,"code": string,"description"?: string | null,"description_en"?: string | null,"extra_branch_price_xaf"?: number | null,"features"?: NonNullable<Json>,"history_months"?: number | null,"id"?: string,"included_branches": number,"max_counters"?: number | null,"max_displays"?: number | null,"max_services"?: number | null,"max_users"?: number | null,"name": string,"name_en"?: string | null,"quote_only"?: boolean,"sort_order"?: number,"tickets_per_month"?: number | null,"trial_eligible"?: boolean,"updated_at"?: string,"whatsapp_quota"?: number | null
                   }
                   Update: {
-                    "active"?: boolean,"annual_free_months"?: number,"base_price_xaf"?: number,"code"?: string,"description"?: string | null,"description_en"?: string | null,"extra_branch_price_xaf"?: number | null,"features"?: NonNullable<Json>,"id"?: string,"included_branches"?: number,"max_counters_per_branch"?: number | null,"max_displays_per_branch"?: number | null,"name"?: string,"name_en"?: string | null,"sort_order"?: number,"trial_eligible"?: boolean,"updated_at"?: string,"whatsapp_quota_per_branch"?: number
+                    "active"?: boolean,"annual_free_months"?: number,"base_price_xaf"?: number,"code"?: string,"description"?: string | null,"description_en"?: string | null,"extra_branch_price_xaf"?: number | null,"features"?: NonNullable<Json>,"history_months"?: number | null,"id"?: string,"included_branches"?: number,"max_counters"?: number | null,"max_displays"?: number | null,"max_services"?: number | null,"max_users"?: number | null,"name"?: string,"name_en"?: string | null,"quote_only"?: boolean,"sort_order"?: number,"tickets_per_month"?: number | null,"trial_eligible"?: boolean,"updated_at"?: string,"whatsapp_quota"?: number | null
                   }
                   Relationships: [
                     
@@ -1490,6 +1496,52 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     }
                   ]
+                },"quota_extensions": {
+                  Row: {
+                    "created_at": string,"id": string,"invoice_id": string | null,"kind": string,"month": string,"organization_id": string,"pack_id": string | null,"quantity": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"invoice_id"?: string | null,"kind": string,"month": string,"organization_id": string,"pack_id"?: string | null,"quantity": number
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"invoice_id"?: string | null,"kind"?: string,"month"?: string,"organization_id"?: string,"pack_id"?: string | null,"quantity"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "quota_extensions_invoice_fk"
+      columns: ["invoice_id"]
+isOneToOne: true
+      referencedRelation: "invoices"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "quota_extensions_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "quota_extensions_pack_id_fkey"
+      columns: ["pack_id"]
+isOneToOne: false
+      referencedRelation: "quota_packs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"quota_packs": {
+                  Row: {
+                    "active": boolean,"code": string,"id": string,"kind": string,"name": string,"name_en": string | null,"price_xaf": number,"quantity": number,"sort_order": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"code": string,"id"?: string,"kind": string,"name": string,"name_en"?: string | null,"price_xaf": number,"quantity": number,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"code"?: string,"id"?: string,"kind"?: string,"name"?: string,"name_en"?: string | null,"price_xaf"?: number,"quantity"?: number,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"rate_limits": {
                   Row: {
                     "count": number,"key": string,"window_start": string
@@ -1604,14 +1656,14 @@ isOneToOne: false
                   ]
                 },"subscriptions": {
                   Row: {
-                    "billing_email": string | null,"billing_period": Database["public"]['Enums']["billing_period"],"billing_phone_e164": string | null,"created_at": string,"current_period_end": string | null,"current_period_start": string | null,"deletion_due_at": string | null,"discount_id": string | null,"grace_ends_at": string | null,"id": string,"locale": string,"next_plan_id": string | null,"organization_id": string,"pending_status": Database["public"]['Enums']["subscription_status"] | null,"pending_status_after": string | null,"plan_id": string,"read_only_since": string | null,"status": Database["public"]['Enums']["subscription_status"],"suspended_since": string | null,"trial_ends_at": string | null,"updated_at": string
+                    "billing_email": string | null,"billing_period": Database["public"]['Enums']["billing_period"],"billing_phone_e164": string | null,"created_at": string,"current_period_end": string | null,"current_period_start": string | null,"deletion_due_at": string | null,"discount_id": string | null,"grace_ends_at": string | null,"id": string,"limit_overrides": NonNullable<Json>,"locale": string,"next_plan_id": string | null,"organization_id": string,"pending_status": Database["public"]['Enums']["subscription_status"] | null,"pending_status_after": string | null,"plan_id": string,"read_only_since": string | null,"status": Database["public"]['Enums']["subscription_status"],"suspended_since": string | null,"trial_ends_at": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "billing_email"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"billing_phone_e164"?: string | null,"created_at"?: string,"current_period_end"?: string | null,"current_period_start"?: string | null,"deletion_due_at"?: string | null,"discount_id"?: string | null,"grace_ends_at"?: string | null,"id"?: string,"locale"?: string,"next_plan_id"?: string | null,"organization_id": string,"pending_status"?: Database["public"]['Enums']["subscription_status"] | null,"pending_status_after"?: string | null,"plan_id": string,"read_only_since"?: string | null,"status": Database["public"]['Enums']["subscription_status"],"suspended_since"?: string | null,"trial_ends_at"?: string | null,"updated_at"?: string
+                    "billing_email"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"billing_phone_e164"?: string | null,"created_at"?: string,"current_period_end"?: string | null,"current_period_start"?: string | null,"deletion_due_at"?: string | null,"discount_id"?: string | null,"grace_ends_at"?: string | null,"id"?: string,"limit_overrides"?: NonNullable<Json>,"locale"?: string,"next_plan_id"?: string | null,"organization_id": string,"pending_status"?: Database["public"]['Enums']["subscription_status"] | null,"pending_status_after"?: string | null,"plan_id": string,"read_only_since"?: string | null,"status": Database["public"]['Enums']["subscription_status"],"suspended_since"?: string | null,"trial_ends_at"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "billing_email"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"billing_phone_e164"?: string | null,"created_at"?: string,"current_period_end"?: string | null,"current_period_start"?: string | null,"deletion_due_at"?: string | null,"discount_id"?: string | null,"grace_ends_at"?: string | null,"id"?: string,"locale"?: string,"next_plan_id"?: string | null,"organization_id"?: string,"pending_status"?: Database["public"]['Enums']["subscription_status"] | null,"pending_status_after"?: string | null,"plan_id"?: string,"read_only_since"?: string | null,"status"?: Database["public"]['Enums']["subscription_status"],"suspended_since"?: string | null,"trial_ends_at"?: string | null,"updated_at"?: string
+                    "billing_email"?: string | null,"billing_period"?: Database["public"]['Enums']["billing_period"],"billing_phone_e164"?: string | null,"created_at"?: string,"current_period_end"?: string | null,"current_period_start"?: string | null,"deletion_due_at"?: string | null,"discount_id"?: string | null,"grace_ends_at"?: string | null,"id"?: string,"limit_overrides"?: NonNullable<Json>,"locale"?: string,"next_plan_id"?: string | null,"organization_id"?: string,"pending_status"?: Database["public"]['Enums']["subscription_status"] | null,"pending_status_after"?: string | null,"plan_id"?: string,"read_only_since"?: string | null,"status"?: Database["public"]['Enums']["subscription_status"],"suspended_since"?: string | null,"trial_ends_at"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1871,8 +1923,14 @@ isOneToOne: true
 "admin_revenue":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"admin_save_quota_pack":
+{ Args: { "p_fields": Json,"p_pack": string }; Returns: string
+                           },
 "admin_set_campaign_paused":
 { Args: { "p_campaign": string,"p_paused": boolean,"p_reason": string }; Returns: undefined
+                           },
+"admin_set_limits":
+{ Args: { "p_limits": Json,"p_reason": string,"p_subscription": string }; Returns: undefined
                            },
 "admin_set_suspension":
 { Args: { "p_org": string,"p_reason": string,"p_suspended": boolean }; Returns: undefined
@@ -1906,6 +1964,9 @@ isOneToOne: true
                            },
 "apply_pending_transitions":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"apply_quota_extension":
+{ Args: { "p_invoice": string }; Returns: undefined
                            },
 "apply_subscription_status":
 { Args: { "p_status": Database["public"]['Enums']["subscription_status"],"p_sub": string }; Returns: undefined
@@ -2316,6 +2377,9 @@ isOneToOne: true
 "expire_stale_tickets":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"extension_checkout":
+{ Args: { "p_org": string,"p_pack": string }; Returns: Json
+                           },
 "fair_pick":
 { Args: { "p_candidates": Json,"p_early": number,"p_mode": string,"p_now": string,"p_ratio": number,"p_since": number }; Returns: string
                            },
@@ -2471,6 +2535,7 @@ isOneToOne: true
 "period_end": string,
 "period_start": string,
 "plan_id": string | null,
+"quota_pack_id": string | null,
 "seller_snapshot": NonNullable<Json>,
 "status": Database["public"]['Enums']["invoice_status"],
 "subscription_id": string | null,
@@ -2507,6 +2572,7 @@ isOneToOne: true
 "period_end": string,
 "period_start": string,
 "plan_id": string | null,
+"quota_pack_id": string | null,
 "seller_snapshot": NonNullable<Json>,
 "status": Database["public"]['Enums']["invoice_status"],
 "subscription_id": string | null,
@@ -2844,6 +2910,9 @@ isOneToOne: true
 "org_has_open_branch":
 { Args: { "p_org": string }; Returns: boolean
                            },
+"org_user_count":
+{ Args: { "p_org": string }; Returns: number
+                           },
 "pair_display":
 { Args: { "p_branch": string,"p_code": string,"p_name": string,"p_service_ids"?: (string)[],"p_show_ads"?: boolean }; Returns: string
                            },
@@ -2977,6 +3046,15 @@ isOneToOne: true
                            },
 "purge_rate_limits":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"quota_item":
+{ Args: { "p_base": number,"p_extra": number,"p_reached_on": string,"p_today": string,"p_used": number }; Returns: Json
+                           },
+"quota_progress":
+{ Args: { "p_kind": string,"p_org": string }; Returns: undefined
+                           },
+"quota_status":
+{ Args: { "p_org": string }; Returns: Json
                            },
 "random_string":
 { Args: { "p_alphabet": string,"p_length": number }; Returns: string
@@ -3198,6 +3276,9 @@ isOneToOne: true
 "staff_entitlements":
 { Args: { "p_org": string }; Returns: Json
                            },
+"staff_quota_status":
+{ Args: { "p_org": string }; Returns: Json
+                           },
 "staff_ticket_command":
 { Args: { "p_client_op_id"?: string,"p_command": string,"p_ticket": string }; Returns: Json
                            },
@@ -3268,6 +3349,9 @@ isOneToOne: true
       } },
 "stats_export":
 { Args: { "p_branch": string,"p_from": string,"p_kind": string,"p_org": string,"p_to": string }; Returns: Json
+                           },
+"stats_history_start":
+{ Args: { "p_org": string }; Returns: string
                            },
 "stats_totals":
 { Args: { "p_branch": string,"p_from": string,"p_org": string,"p_to": string }; Returns: Json
@@ -3371,6 +3455,9 @@ isOneToOne: true
                            },
 "transfer_ticket":
 { Args: { "p_client_op_id"?: string,"p_target_service": string,"p_ticket": string }; Returns: Json
+                           },
+"trial_plan":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "tv_ad_rotation":
 { Args: { "p_device_token": string }; Returns: Json

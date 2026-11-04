@@ -6,6 +6,10 @@ import {
   accountTemplateParams,
   accountWhatsappText,
   ACCOUNT_TEMPLATES,
+  ENTITLEMENT_LIMITS,
+  historyStart,
+  PLAN_FEATURES,
+  quotaState,
   annualSavings,
   billingBanner,
   canIssue,
@@ -129,5 +133,43 @@ describe("messages du compte", () => {
     const mail = accountEmail("payment_confirmed", "fr", { invoice: "FAC-2026-000001", amount_xaf: 25000, organization: "X", period_end: "2026-12-01", link: "l" });
     expect(mail.subject).toContain("FAC-2026-000001");
     expect(mail.text).toContain("NextIn par Wintek");
+  });
+});
+
+describe("quotas mensuels (grille v2)", () => {
+  const item = (used: number, limit: number | null, blocked = false) => ({
+    used, base: limit, extra: 0, limit, percent: limit ? Math.floor((used * 100) / limit) : null, reached_on: null, blocked,
+  });
+  it("alerte à 80 %, limite atteinte (grâce du jour), bloqué le lendemain", () => {
+    expect(quotaState(item(10, 1500))).toBe("ok");
+    expect(quotaState(item(1200, 1500))).toBe("warning");
+    expect(quotaState(item(1500, 1500))).toBe("reached");
+    expect(quotaState(item(1530, 1500, true))).toBe("blocked");
+    expect(quotaState(item(99999, null))).toBe("ok");
+    expect(quotaState(item(70, 100), 70)).toBe("warning");
+  });
+  it("historique : même calcul que stats_history_start", () => {
+    expect(historyStart("2026-11-04", 3)).toBe("2026-08-05");
+    expect(historyStart("2026-05-31", 3)).toBe("2026-03-01");
+    expect(historyStart("2026-03-31", 1)).toBe("2026-03-01");
+    expect(historyStart("2026-11-04", 12)).toBe("2025-11-05");
+    expect(historyStart("2026-11-04", null)).toBeNull();
+  });
+  it("limites dans l'ordre des droits", () => {
+    expect(ENTITLEMENT_LIMITS).toContain("tickets_per_month");
+    expect(PLAN_FEATURES).toContain("multisite");
+  });
+  it("alertes : modèle selon la ressource et le seuil", () => {
+    const base = { organization: "Douala Clinic", used: 1200, quota: 1500, link: "https://exemple.invalid/b" };
+    expect(accountWhatsappText("quota_alert", "fr", { ...base, resource: "tickets", level: 80 })).toContain("1200 des 1500 tickets");
+    expect(accountWhatsappText("quota_alert", "fr", { ...base, resource: "tickets", level: 100 })).toContain("à partir de demain");
+    expect(accountWhatsappText("quota_alert", "en", { ...base, resource: "whatsapp", level: 100 })).toContain("from tomorrow");
+    // WhatsApp à 80 % : modèle d'origine, inchangé.
+    expect(accountWhatsappText("quota_alert", "fr", { ...base, resource: "whatsapp", level: 80 })).toContain("messages WhatsApp inclus");
+    for (const level of [80, 100]) {
+      for (const resource of ["tickets", "whatsapp"] as const) {
+        expect(accountSmsText("quota_alert", "fr", { ...base, resource, level }).length).toBeLessThanOrEqual(160);
+      }
+    }
   });
 });

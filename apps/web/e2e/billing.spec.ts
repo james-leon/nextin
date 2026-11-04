@@ -35,15 +35,18 @@ test.describe("M10a — abonnements et paiements", () => {
     await expectAccessible(page);
     await expectTouchTargets(page);
 
-    // Essentiel, mensuel : 25 000 FCFA pour une agence.
-    await page.getByRole("radio", { name: /Essentiel/ }).first().click();
+    // Grille v2 — Starter, mensuel : 29 900 FCFA. Enterprise : sur devis (pas de paiement en ligne).
+    await expect(
+      page.getByText("Sur devis", { exact: true }).or(page.getByRole("radio", { name: "Enterprise" })).filter({ visible: true }).first(),
+    ).toBeVisible();
+    await page.getByRole("radio", { name: /Starter/ }).first().click();
     // Téléphone : sélecteur de formule en haut et carte de la formule ; ordinateur : cartes seules.
-    await expect(page.getByRole("radio", { name: /Essentiel/ }).first()).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("button", { name: /^Payer 25\s000\sFCFA$/ }).click();
+    await expect(page.getByRole("radio", { name: /Starter/ }).first()).toHaveAttribute("aria-checked", "true");
+    await page.getByRole("button", { name: /^Payer 29\s900\sFCFA$/ }).click();
     await page.waitForURL(/\/pay\/[A-Za-z0-9]{32}$/);
 
     // Page de paiement publique : montant en héros, opérateur deviné depuis le numéro.
-    await expect(page.getByText(/^25\s000\sFCFA$/).first()).toBeVisible();
+    await expect(page.getByText(/^29\s900\sFCFA$/).first()).toBeVisible();
     await expectAccessible(page);
     await expectTouchTargets(page);
     await page.getByLabel("Numéro à débiter").fill("6 77 10 20 30");
@@ -74,7 +77,8 @@ test.describe("M10a — abonnements et paiements", () => {
     ]) {
       await page.setViewportSize(viewport);
       await page.evaluate(() => window.scrollTo(0, 0));
-      const pay = page.locator("button[type=submit]").filter({ visible: true });
+      // Bouton principal de la page (les extensions de quota ont leurs propres boutons « Acheter »).
+      const pay = page.locator("button[type=submit]").filter({ hasText: /^Payer/ }).filter({ visible: true });
       await expect(pay, `${viewport.width}×${viewport.height}`).toHaveCount(1);
       // La barre de titre se réorganise au changement de taille : attendre que le bouton ait sa place.
       await expect.poll(async () => (await pay.boundingBox())?.y ?? -1).toBeGreaterThanOrEqual(0);
@@ -94,7 +98,7 @@ test.describe("M10a — abonnements et paiements", () => {
 
   test("paiement refusé (numéro en 99999) : message clair, nouvel essai possible", async ({ page }) => {
     await trialOrg(page, "Clinique Refus");
-    await page.getByRole("radio", { name: /^Pro\b/ }).first().click();
+    await page.getByRole("radio", { name: /^Business\b/ }).first().click();
     await page.getByRole("button", { name: /^Payer/ }).click();
     await page.waitForURL(/\/pay\//);
     await page.getByRole("radio", { name: "Orange Money" }).click();
@@ -127,7 +131,7 @@ test.describe("M10a — abonnements et paiements", () => {
   test("lecture seule : bandeau pour le personnel, aucun ticket émis", async ({ page, request }, info) => {
     test.skip(info.project.name !== "desktop", "règle serveur, indépendante de l'appareil");
     const b = await setUpBranch("Clinique Lecture seule");
-    const { data: plan } = await admin.from("plans").select("id").eq("code", "essentiel").single();
+    const { data: plan } = await admin.from("plans").select("id").eq("code", "starter").single();
     await admin.from("subscriptions").insert({ organization_id: b.orgId, plan_id: plan!.id, status: "read_only", read_only_since: new Date().toISOString() });
 
     const visitor = anonClient();
@@ -147,10 +151,10 @@ test.describe("M10a — abonnements et paiements", () => {
     await expectAccessible(page);
   });
 
-  test("limites de la formule vérifiées par la base (Essentiel : 3 guichets)", async ({}, info) => {
+  test("limites de la formule vérifiées par la base (Starter : 3 guichets)", async ({}, info) => {
     test.skip(info.project.name !== "desktop", "règle serveur");
     const b = await setUpBranch("Clinique Limites");
-    const { data: plan } = await admin.from("plans").select("id").eq("code", "essentiel").single();
+    const { data: plan } = await admin.from("plans").select("id").eq("code", "starter").single();
     await admin.from("subscriptions").insert({
       organization_id: b.orgId,
       plan_id: plan!.id,
@@ -169,12 +173,78 @@ test.describe("M10a — abonnements et paiements", () => {
     expect(feature.features.remote_tickets).toBe(false);
   });
 
+  test("quota de tickets : alerte à 80 %, file jamais bloquée le jour même, blocage le lendemain, extension", async ({ page, request }, info) => {
+    test.skip(info.project.name !== "desktop", "règle serveur et bandeau");
+    const b = await setUpBranch("Clinique Quota");
+    const { data: plan } = await admin.from("plans").select("id").eq("code", "starter").single();
+    await admin.from("subscriptions").insert({
+      organization_id: b.orgId,
+      plan_id: plan!.id,
+      status: "active",
+      current_period_start: new Date().toISOString(),
+      current_period_end: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      limit_overrides: { tickets_per_month: 5 },
+    });
+    // Mois et jour à Douala (UTC+1).
+    const douala = new Date(Date.now() + 3_600_000).toISOString().slice(0, 10);
+    const month = `${douala.slice(0, 7)}-01`;
+    const yesterday = new Date(Date.now() + 3_600_000 - 86_400_000).toISOString().slice(0, 10);
+    const usage = (fields: Record<string, unknown>) =>
+      admin.from("messaging_usage").upsert({ organization_id: b.orgId, month, ...fields }, { onConflict: "organization_id,month" });
+    const takeTicket = async () => {
+      const visitor = anonClient();
+      const { data: anon } = await visitor.auth.signInAnonymously();
+      const res = await request.post("/api/tickets", {
+        headers: { Authorization: `Bearer ${anon.session!.access_token}` },
+        data: { serviceId: b.serviceId, source: "qr", entryCode: b.entryCode },
+      });
+      return (await res.json()) as { ok: boolean; error?: string };
+    };
+
+    await usage({ tickets_created: 4 });
+    await page.goto("/login");
+    await signInViaUi(page, b.email, PASSWORD);
+    await page.waitForURL(/\/app$/);
+    await page.goto(`/app/o/${b.orgId}`);
+    const banner = page.locator("[data-quota]");
+    await expect(banner).toContainText("Tickets : 4 sur 5 utilisés ce mois-ci.");
+    await expect(banner.getByRole("link", { name: "Changer de formule" })).toBeVisible();
+    await expect(banner.getByRole("link", { name: "Acheter une extension" })).toBeVisible();
+    await expectAccessible(page);
+
+    // Limite atteinte aujourd'hui : la file continue jusqu'au soir.
+    await usage({ tickets_created: 5, tickets_reached_on: douala });
+    expect(await takeTicket()).toMatchObject({ ok: true });
+    await page.reload();
+    await expect(banner).toContainText("vos files continuent jusqu'à ce soir");
+
+    // Le lendemain : prise de ticket suspendue, message clair.
+    await usage({ tickets_reached_on: yesterday });
+    expect(await takeTicket()).toMatchObject({ ok: false, error: "monthly_quota_reached" });
+    await page.reload();
+    await expect(banner).toContainText("Prise de ticket suspendue");
+
+    // Extension : achat depuis la page Abonnement, paiement (faux fournisseur), tickets à nouveau émis.
+    await banner.getByRole("link", { name: "Acheter une extension" }).click();
+    await expect(page.getByText(/Limite atteinte le/)).toBeVisible();
+    await expectAccessible(page);
+    await page.getByRole("button", { name: /Acheter Pack 1\s000 tickets/ }).click();
+    await page.waitForURL(/\/pay\/[A-Za-z0-9]{32}$/);
+    await expect(page.getByText("Pack 1 000 tickets", { exact: false }).first()).toBeVisible();
+    await page.getByLabel("Numéro à débiter").fill("6 77 10 20 31");
+    await page.getByRole("button", { name: /^Payer/ }).click();
+    await expect(page.getByRole("heading", { name: "Paiement reçu" })).toBeVisible({ timeout: 20_000 });
+    expect(await takeTicket()).toMatchObject({ ok: true });
+    await page.goto(`/app/o/${b.orgId}/billing`);
+    await expect(page.getByText(/dont 1\s000 en extension/)).toBeVisible();
+  });
+
   test("console Wintek : abonnements, revenus, jours offerts (journalisés)", async ({ page }) => {
     const email = uniqueEmail("wintek");
     const created = await admin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
     await admin.from("platform_admins").insert({ user_id: created.data.user!.id });
     const b = await setUpBranch("Clinique Console");
-    const { data: plan } = await admin.from("plans").select("id").eq("code", "pro").single();
+    const { data: plan } = await admin.from("plans").select("id").eq("code", "business").single();
     const { data: sub } = await admin
       .from("subscriptions")
       .insert({ organization_id: b.orgId, plan_id: plan!.id, status: "trialing", trial_ends_at: new Date(Date.now() + 3 * 86_400_000).toISOString() })
@@ -198,6 +268,17 @@ test.describe("M10a — abonnements et paiements", () => {
     await grant.getByRole("button", { name: "Offrir" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Action enregistrée et journalisée." })).toBeVisible();
     await expect(page.getByText("Jours offerts")).toBeVisible();
+
+    // Limites sur mesure (client sur devis) : journalisées, appliquées par la base.
+    const limits = page.locator("form").filter({ has: page.getByRole("heading", { name: "Limites sur mesure" }) });
+    await limits.getByLabel("Tickets par mois").fill("20000");
+    await limits.getByLabel("Utilisateurs").fill("illimité");
+    await limits.getByLabel("Motif").fill("Client sur devis");
+    await limits.getByRole("button", { name: "Enregistrer les limites" }).click();
+    await expect(page.getByText("Limites sur mesure modifiées")).toBeVisible();
+    const ent = await rpc<{ tickets_per_month: number; max_users: number | null }>(b.staff, "staff_entitlements", { p_org: b.orgId });
+    expect(ent.tickets_per_month).toBe(20000);
+    expect(ent.max_users).toBeNull();
     await expectAccessible(page);
 
     // Un établissement n'a pas accès à la console.

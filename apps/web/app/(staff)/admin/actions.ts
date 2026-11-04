@@ -7,7 +7,9 @@ import {
   adminChangePlanSchema,
   adminDiscountSchema,
   adminGrantDaysSchema,
+  adminLimitsSchema,
   adminPlanFormSchema,
+  adminQuotaPackSchema,
   adminSuspensionSchema,
   adPackageFormSchema,
   adSectorFormSchema,
@@ -106,10 +108,16 @@ export async function updatePlan(_prev: ActionResult | null, data: FormData): Pr
     base_price_xaf: v.basePriceXaf,
     included_branches: v.includedBranches,
     extra_branch_price_xaf: v.extraBranchPriceXaf,
-    max_counters_per_branch: v.maxCountersPerBranch,
-    max_displays_per_branch: v.maxDisplaysPerBranch,
-    whatsapp_quota_per_branch: v.whatsappQuotaPerBranch,
+    max_services: v.maxServices,
+    max_counters: v.maxCounters,
+    max_displays: v.maxDisplays,
+    max_users: v.maxUsers,
+    tickets_per_month: v.ticketsPerMonth,
+    whatsapp_quota: v.whatsappQuota,
+    history_months: v.historyMonths,
     annual_free_months: v.annualFreeMonths,
+    quote_only: v.quoteOnly,
+    trial_eligible: v.trialEligible,
     active: v.active,
     features: {
       voice_announcements: v.voiceAnnouncements,
@@ -117,12 +125,45 @@ export async function updatePlan(_prev: ActionResult | null, data: FormData): Pr
       remote_tickets: v.remoteTickets,
       advanced_stats: v.advancedStats,
       export: v.export,
+      multisite: v.multisite,
+      priority_support: v.prioritySupport,
       dedicated_support: v.dedicatedSupport,
     },
   };
   const { error } = await supabase.rpc("admin_update_plan", { p_plan: v.planId, p_fields: fields as unknown as Json });
   if (error) return { ok: false, error: mapDbError(error) };
   done(`/admin/plans/${v.planId}`);
+}
+
+/** Limites sur mesure d'un client (formule sur devis) : vide = valeur de la formule, « illimité » = sans limite. */
+export async function setLimits(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = adminLimitsSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const { subscriptionId, reason, ...limits } = parsed.data;
+  const overrides = Object.fromEntries(Object.entries(limits).filter(([, v]) => v !== undefined));
+  const { error } = await supabase.rpc("admin_set_limits", {
+    p_subscription: subscriptionId,
+    p_limits: overrides as unknown as Json,
+    p_reason: reason,
+  });
+  if (error) return { ok: false, error: mapDbError(error) };
+  done(sub(subscriptionId));
+}
+
+/** Extension de quota vendue à l'unité (création ou édition). */
+export async function saveQuotaPack(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = adminQuotaPackSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  if (!v.packId && (!v.code || !v.kind)) return { ok: false, error: "generic", fieldErrors: { code: "pack_code_invalid" } };
+  const { error } = await supabase.rpc("admin_save_quota_pack", {
+    p_pack: (v.packId ?? null) as string,
+    p_fields: { code: v.code, kind: v.kind, quantity: v.quantity, price_xaf: v.priceXaf, name: v.name, name_en: v.nameEn, active: v.active } as unknown as Json,
+  });
+  if (error) return { ok: false, error: mapDbError(error, "pack_code_invalid") };
+  done("/admin/plans");
 }
 
 export async function updateSettings(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {

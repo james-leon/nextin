@@ -57,14 +57,8 @@ function screens(ids: Awaited<ReturnType<typeof demoIds>>): Record<string, Shot[
   return {
     "directeur@doualaclinic.demo": [
       { name: "01-home", path: "/app" },
-      {
-        name: "02-dashboard",
-        path: root,
-        prepare: async (page) => {
-          const month = page.getByRole("radio", { name: "Mois" });
-          if (await month.count()) await month.first().click();
-        },
-      },
+      // Période par défaut : les 30 derniers jours (courbe d'attente et tickets par jour).
+      { name: "02-dashboard", path: root },
       { name: "03-branches", path: `${root}/branches` },
       { name: "04-branch", path: b },
       { name: "05-services", path: `${b}/services` },

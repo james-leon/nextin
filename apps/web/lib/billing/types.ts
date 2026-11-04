@@ -1,4 +1,4 @@
-import type { BillingPeriod, PaymentChannel, PlanFeature, SubscriptionStatus } from "@nextin/shared/billing";
+import type { BillingPeriod, PaymentChannel, PlanFeature, QuotaItem, SubscriptionStatus } from "@nextin/shared/billing";
 
 /** Devis renvoyé par `subscription_price` (FCFA hors taxe). */
 export type PriceQuote = { monthly: number; months: number; extra_branches: number; subtotal: number; discount: number; total: number };
@@ -13,10 +13,17 @@ export type PlanOffer = {
   base_price_xaf: number;
   included_branches: number;
   extra_branch_price_xaf: number | null;
-  max_counters_per_branch: number | null;
-  max_displays_per_branch: number | null;
+  /** Limites par établissement ; null : illimité. */
+  max_services: number | null;
+  max_counters: number | null;
+  max_displays: number | null;
+  max_users: number | null;
+  tickets_per_month: number | null;
+  whatsapp_quota: number | null;
+  history_months: number | null;
+  /** Sur devis : « Nous contacter », pas de paiement en ligne. */
+  quote_only: boolean;
   features: Partial<Record<PlanFeature, boolean>>;
-  whatsapp_quota_per_branch: number;
   annual_free_months: number;
   monthly: PriceQuote;
   annual: PriceQuote;
@@ -26,16 +33,29 @@ export type PlanOffer = {
 export type Entitlements = {
   pilot: boolean;
   plan_code: string;
+  plan_name: string;
+  plan_name_en: string | null;
   subscribed_plan_code: string | null;
   status: SubscriptionStatus;
   can_issue: boolean;
+  quote_only: boolean;
   included_branches: number;
   extra_branch_price_xaf: number | null;
-  max_counters_per_branch: number | null;
-  max_displays_per_branch: number | null;
-  whatsapp_quota: number;
+  max_services: number | null;
+  max_counters: number | null;
+  max_displays: number | null;
+  max_users: number | null;
+  tickets_per_month: number | null;
+  whatsapp_quota: number | null;
+  history_months: number | null;
   features: Partial<Record<PlanFeature, boolean>>;
 };
+
+/** Consommation du mois (`quota_status`). */
+export type QuotaStatus = { month: string; tickets: QuotaItem; whatsapp: QuotaItem };
+
+/** Extension de quota en vente (`quota_packs`). */
+export type QuotaPack = { id: string; code: string; kind: "tickets" | "whatsapp"; quantity: number; price_xaf: number; name: string; name_en: string | null };
 
 export type InvoiceSummary = {
   id: string;
@@ -47,7 +67,7 @@ export type InvoiceSummary = {
   period_start: string;
   period_end: string;
   billing_period: BillingPeriod;
-  kind: "renewal" | "upgrade";
+  kind: "renewal" | "upgrade" | "campaign" | "extension";
   paid_channel: PaymentChannel | null;
   plan_id: string | null;
 };
@@ -72,15 +92,23 @@ export type BillingOverview = {
     billing_email: string | null;
   } | null;
   entitlements: Entitlements;
-  usage: { branches: number; counters_max: number | null; displays_max: number | null; whatsapp_sent: number };
+  usage: { branches: number; services: number; counters: number; displays: number; users: number; quota: QuotaStatus };
   discount: { kind: "percent" | "fixed_xaf"; value: number; remaining: number; reason: string | null } | null;
   plans: PlanOffer[];
+  packs: QuotaPack[];
   invoices: InvoiceSummary[];
-  settings: { trial_days: number; grace_days: number; vat_rate: number };
+  settings: {
+    trial_days: number;
+    grace_days: number;
+    vat_rate: number;
+    quota_alert_percent: number;
+    contact_email: string | null;
+    contact_phone: string | null;
+  };
 };
 
 export type InvoiceLineData = {
-  kind: "plan" | "extra_branches" | "annual_note" | "discount" | "credit" | "campaign";
+  kind: "plan" | "extra_branches" | "annual_note" | "discount" | "credit" | "campaign" | "extension";
   label: string;
   label_en: string;
   quantity?: number;

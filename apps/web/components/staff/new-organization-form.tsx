@@ -25,7 +25,7 @@ const STEPS: Step[] = ["phone", "code", "org"];
  * Inscription d'un établissement (M10a) : téléphone du directeur, code reçu sur WhatsApp, puis établissement.
  * Une seule action principale par étape, dans la barre du bas.
  */
-export function NewOrganizationForm({ siteKey, defaultLocale }: { siteKey: string | null; defaultLocale: "fr" | "en" }) {
+export function NewOrganizationForm({ siteKey, defaultLocale, trialPlan }: { siteKey: string | null; defaultLocale: "fr" | "en"; trialPlan: string }) {
   const t = useTranslations("orgNew");
   const te = useTranslations("errors");
   const [step, setStep] = useState<Step>("phone");
@@ -69,7 +69,7 @@ export function NewOrganizationForm({ siteKey, defaultLocale }: { siteKey: strin
             />
             <input type="hidden" name="locale" value={defaultLocale} />
             <CalloutCard icon={<Sparkles />} tone="accent">
-              {t("trialNote")}
+              {t("trialNote", { plan: trialPlan })}
             </CalloutCard>
             <Turnstile key={String(phonePending)} siteKey={siteKey} action="signup_phone" />
           </form>

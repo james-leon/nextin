@@ -7,6 +7,7 @@ import { staffTopic } from "@nextin/shared/queue/realtime";
 import {
   comparisonRange,
   delta,
+  hasEnoughPoints,
   peakIndex,
   periodRange,
   shiftPeriod,
@@ -57,6 +58,7 @@ export function DashboardView({
   canViewAll,
   canExport,
   canAdvanced,
+  history,
   today,
   initialQuery,
   initialData,
@@ -68,6 +70,8 @@ export function DashboardView({
   canExport: boolean;
   /** Statistiques avancées (postes, praticiens) comprises dans la formule (M10a). */
   canAdvanced: boolean;
+  /** Historique de la formule : premier jour visible (null : tout) et nom de la formule. */
+  history: { from: string | null; months: number | null; plan: string };
   today: string;
   initialQuery: DashboardQuery;
   initialData: DashboardData;
@@ -146,7 +150,9 @@ export function DashboardView({
   const minutes = (s: number | null | undefined) => (s == null ? t("none") : t("minutes", { value: toMinutes(s)! }));
   const longDate = (d: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { ...opts, timeZone: "UTC" }).format(new Date(`${d}T00:00:00Z`));
   const reference =
-    query.period === "day"
+    query.period === "last30"
+      ? t("vsLast30")
+      : query.period === "day"
       ? t("vsDay", { weekday: longDate(compare.from, { weekday: "long" }) })
       : query.period === "week"
         ? t("vsWeek")
@@ -174,7 +180,11 @@ export function DashboardView({
   ];
 
   const title =
-    query.period === "day"
+    query.period === "last30"
+      ? live
+        ? t("last30Title")
+        : t("rangeOf", { from: longDate(range.from, { day: "numeric", month: "short" }), to: longDate(range.to, { day: "numeric", month: "short" }) })
+      : query.period === "day"
       ? query.anchor === today
         ? t("today")
         : longDate(query.anchor, { weekday: "long", day: "numeric", month: "long" })
@@ -251,11 +261,12 @@ export function DashboardView({
               value={query.period}
               onValueChange={(period: StatsPeriod) => setQuery((q) => ({ ...q, period }))}
               options={[
+                { value: "last30", label: t("last30") },
                 { value: "day", label: t("day") },
                 { value: "week", label: t("week") },
                 { value: "month", label: t("month") },
               ]}
-              className="sm:w-72"
+              className="sm:w-96"
             />
             <div className="flex items-center gap-1">
               <IconButton label={t("previous")} icon={<ChevronLeft />} variant="plain" onClick={() => setQuery((q) => ({ ...q, anchor: shiftPeriod(q.period, q.anchor, -1) }))} />
@@ -282,6 +293,12 @@ export function DashboardView({
           ) : null}
         </div>
 
+        {history.from && history.months != null && range.from < history.from ? (
+          <p role="note" className="text-footnote text-label-secondary">
+            {t("historyLimited", { months: history.months, plan: history.plan })}
+          </p>
+        ) : null}
+
         <div className={cn("grid grid-cols-2 gap-3 transition-opacity lg:grid-cols-4 lg:gap-5", loading && "opacity-60")}>
           {kpis.map((k) => (
             <StatCard key={k.label} label={k.label} value={k.value} trend={trend(k.d)} trendTone={k.d?.tone ?? "neutral"} className="lg:px-6 lg:py-5" />
@@ -293,6 +310,12 @@ export function DashboardView({
             hourlyPanel
           ) : (
             <Panel title={t("waitDaily")} aside={t("minutesUnit")}>
+              {/* Moins de 7 jours renseignés : pas de courbe presque vide, un état clair à la place. */}
+              {!hasEnoughPoints(data.daily.map((d) => d.wait_avg_seconds)) ? (
+                <p className="flex min-h-40 items-center justify-center rounded-[var(--radius-lg)] bg-fill-tertiary px-6 text-center text-subheadline text-label-secondary">
+                  {t("notEnoughData")}
+                </p>
+              ) : (
               <LineChart
                 caption={t("waitDaily")}
                 columns={[t("day"), t("waitDailyCurrent"), t("waitDailyPrevious")]}
@@ -313,6 +336,7 @@ export function DashboardView({
                   };
                 })}
               />
+              )}
             </Panel>
           )}
 

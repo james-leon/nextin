@@ -6,11 +6,12 @@ import { formatXaf } from "@nextin/shared";
 import { daysUntil } from "@nextin/shared/billing";
 import { isLocale, type Locale } from "@nextin/shared/i18n";
 import { AdminPage } from "@/components/admin/admin-page";
+import { ExtensionList } from "@/components/billing/extension-list";
 import { PlanPicker } from "@/components/billing/plan-picker";
+import { QuotaPanel } from "@/components/billing/quota-panel";
 import { Badge } from "@/components/ui/badge";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { getOrgContext } from "@/lib/admin/context";
 import { formatDay, formatShortDay } from "@/lib/billing/format";
 import type { BillingOverview } from "@/lib/billing/types";
@@ -48,7 +49,6 @@ export default async function BillingPage({
   const e = o.entitlements;
   const now = new Date();
   const xaf = (n: number) => formatXaf(n, locale);
-  const num = (n: number) => new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US").format(n);
   const nextPlan = s?.next_plan_id ? o.plans.find((p) => p.id === s.next_plan_id) : null;
   const paidPeriodRunning = !!s?.current_period_end && new Date(s.current_period_end) > now;
 
@@ -67,8 +67,7 @@ export default async function BillingPage({
     const p = o.plans.find((x) => x.code === code);
     return p ? (locale === "en" ? (p.name_en ?? p.name) : p.name) : code;
   };
-  const limit = (used: number | null, max: number | null) =>
-    max == null ? `${used ?? 0} · ${t("unlimited")}` : t("ofLimit", { used: used ?? 0, limit: max });
+  const limit = (used: number, max: number | null) => (max == null ? `${used} · ${t("unlimited")}` : t("ofLimit", { used, limit: max }));
 
   return (
     <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: to("title") }}>
@@ -124,29 +123,23 @@ export default async function BillingPage({
               paidPeriodRunning={paidPeriodRunning}
               initialPeriod={s.billing_period}
               branches={o.usage.branches}
+              preferredCode={e.plan_code}
+              organizationName={ctx.org.name}
+              contact={{ email: o.settings.contact_email, phone: o.settings.contact_phone }}
             />
           ) : null}
         </div>
 
         <div className="flex min-w-0 flex-col gap-7">
+          <QuotaPanel quota={o.usage.quota} alertPercent={o.settings.quota_alert_percent} />
+          {s ? <ExtensionList orgId={orgId} packs={o.packs} /> : null}
           <ListSection header={t("usageTitle")}>
-            <ListRow title={t("usageBranches")} detail={<span className="tabular">{o.usage.branches}</span>} />
-            <ListRow title={t("usageCounters")} detail={<span className="tabular">{limit(o.usage.counters_max, e.max_counters_per_branch)}</span>} />
-            <ListRow title={t("usageDisplays")} detail={<span className="tabular">{limit(o.usage.displays_max, e.max_displays_per_branch)}</span>} />
+            <ListRow title={t("usageBranches")} detail={<span className="tabular">{limit(o.usage.branches, e.extra_branch_price_xaf != null ? null : e.included_branches)}</span>} />
+            <ListRow title={t("usageServices")} detail={<span className="tabular">{limit(o.usage.services, e.max_services)}</span>} />
+            <ListRow title={t("usageCounters")} detail={<span className="tabular">{limit(o.usage.counters, e.max_counters)}</span>} />
+            <ListRow title={t("usageDisplays")} detail={<span className="tabular">{limit(o.usage.displays, e.max_displays)}</span>} />
+            <ListRow title={t("usageUsers")} detail={<span className="tabular">{limit(o.usage.users, e.max_users)}</span>} />
           </ListSection>
-          {e.whatsapp_quota > 0 ? (
-            <div className="flex flex-col gap-2 px-4">
-              <div className="flex items-baseline justify-between gap-3 text-subheadline">
-                <span>{t("usageWhatsapp")}</span>
-                <span className="tabular text-label-secondary">{t("ofLimit", { used: num(o.usage.whatsapp_sent), limit: num(e.whatsapp_quota) })}</span>
-              </div>
-              <ProgressBar
-                value={Math.min(1, o.usage.whatsapp_sent / e.whatsapp_quota)}
-                label={t("usageWhatsapp")}
-                tone={o.usage.whatsapp_sent >= e.whatsapp_quota * 0.8 ? "orange" : "accent"}
-              />
-            </div>
-          ) : null}
 
           <ListSection header={t("invoicesTitle")} footer={o.invoices.length ? undefined : t("invoicesEmpty")}>
             {o.invoices.map((i) => (

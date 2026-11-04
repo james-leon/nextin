@@ -121,7 +121,11 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
     ? locale === "en"
       ? view.campaign.package_en
       : view.campaign.package
-    : view.plan
+    : view.extension
+      ? locale === "en"
+        ? (view.extension.name_en ?? view.extension.name)
+        : view.extension.name
+      : view.plan
       ? locale === "en"
         ? (view.plan.name_en ?? view.plan.name)
         : view.plan.name

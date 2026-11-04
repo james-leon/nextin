@@ -20,11 +20,17 @@ export type PlanFormValues = {
   base_price_xaf: number;
   included_branches: number;
   extra_branch_price_xaf: number | null;
-  max_counters_per_branch: number | null;
-  max_displays_per_branch: number | null;
-  whatsapp_quota_per_branch: number;
+  max_services: number | null;
+  max_counters: number | null;
+  max_displays: number | null;
+  max_users: number | null;
+  tickets_per_month: number | null;
+  whatsapp_quota: number | null;
+  history_months: number | null;
   annual_free_months: number;
   features: Partial<Record<PlanFeature, boolean>>;
+  quote_only: boolean;
+  trial_eligible: boolean;
   active: boolean;
 };
 
@@ -34,6 +40,8 @@ const FEATURE_FIELDS: Record<PlanFeature, string> = {
   remote_tickets: "remoteTickets",
   advanced_stats: "advancedStats",
   export: "export",
+  multisite: "multisite",
+  priority_support: "prioritySupport",
   dedicated_support: "dedicatedSupport",
 };
 
@@ -46,6 +54,8 @@ export function PlanForm({ plan }: { plan: PlanFormValues }) {
   const { field, top } = useFormErrors(state);
   const [features, setFeatures] = useState(plan.features);
   const [active, setActive] = useState(plan.active);
+  const [quoteOnly, setQuoteOnly] = useState(plan.quote_only);
+  const [trialEligible, setTrialEligible] = useState(plan.trial_eligible);
 
   return (
     <form action={action} noValidate className="flex flex-col gap-6">
@@ -60,10 +70,17 @@ export function PlanForm({ plan }: { plan: PlanFormValues }) {
         <Num name="basePriceXaf" label={t("planFields.basePrice")} value={plan.base_price_xaf} error={field("basePriceXaf")} />
         <Num name="includedBranches" label={t("planFields.includedBranches")} value={plan.included_branches} error={field("includedBranches")} />
         <Num name="extraBranchPriceXaf" label={t("planFields.extraBranchPrice")} value={plan.extra_branch_price_xaf} error={field("extraBranchPriceXaf")} />
-        <Num name="maxCountersPerBranch" label={t("planFields.maxCounters")} value={plan.max_counters_per_branch} error={field("maxCountersPerBranch")} />
-        <Num name="maxDisplaysPerBranch" label={t("planFields.maxDisplays")} value={plan.max_displays_per_branch} error={field("maxDisplaysPerBranch")} />
-        <Num name="whatsappQuotaPerBranch" label={t("planFields.whatsappQuota")} value={plan.whatsapp_quota_per_branch} error={field("whatsappQuotaPerBranch")} />
         <Num name="annualFreeMonths" label={t("planFields.annualFreeMonths")} value={plan.annual_free_months} error={field("annualFreeMonths")} />
+      </div>
+      <h2 className="px-4 text-footnote text-label-secondary uppercase">{t("planFields.limits")}</h2>
+      <div className="-mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Num name="maxServices" label={t("planFields.maxServices")} value={plan.max_services} error={field("maxServices")} />
+        <Num name="maxCounters" label={t("planFields.maxCounters")} value={plan.max_counters} error={field("maxCounters")} />
+        <Num name="maxDisplays" label={t("planFields.maxDisplays")} value={plan.max_displays} error={field("maxDisplays")} />
+        <Num name="maxUsers" label={t("planFields.maxUsers")} value={plan.max_users} error={field("maxUsers")} />
+        <Num name="ticketsPerMonth" label={t("planFields.ticketsPerMonth")} value={plan.tickets_per_month} error={field("ticketsPerMonth")} />
+        <Num name="whatsappQuota" label={t("planFields.whatsappQuota")} value={plan.whatsapp_quota} error={field("whatsappQuota")} />
+        <Num name="historyMonths" label={t("planFields.historyMonths")} value={plan.history_months} error={field("historyMonths")} />
       </div>
       <ListSection header={t("planFields.features")}>
         {PLAN_FEATURES.map((k) => (
@@ -74,8 +91,12 @@ export function PlanForm({ plan }: { plan: PlanFormValues }) {
         <input key={k} type="hidden" name={FEATURE_FIELDS[k]} value={features[k] ? "true" : "false"} />
       ))}
       <ListSection footer={t("planNote")}>
+        <ListSwitchRow title={t("planFields.quoteOnly")} checked={quoteOnly} onCheckedChange={setQuoteOnly} />
+        <ListSwitchRow title={t("planFields.trialEligible")} checked={trialEligible} onCheckedChange={setTrialEligible} />
         <ListSwitchRow title={t("planFields.active")} checked={active} onCheckedChange={setActive} />
       </ListSection>
+      <input type="hidden" name="quoteOnly" value={quoteOnly ? "true" : "false"} />
+      <input type="hidden" name="trialEligible" value={trialEligible ? "true" : "false"} />
       <input type="hidden" name="active" value={active ? "true" : "false"} />
       <BottomBar>
         <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>

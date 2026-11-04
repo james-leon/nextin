@@ -19,9 +19,62 @@ export const PLAN_FEATURES = [
   "remote_tickets",
   "advanced_stats",
   "export",
+  "multisite",
+  "priority_support",
   "dedicated_support",
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
+
+/**
+ * Limites d'une formule, toutes par établissement (null : illimité), dans l'ordre d'affichage ; mêmes clés que
+ * `org_entitlements` et que les limites sur mesure (`subscriptions.limit_overrides`).
+ */
+export const ENTITLEMENT_LIMITS = [
+  "included_branches",
+  "max_services",
+  "max_counters",
+  "max_displays",
+  "max_users",
+  "tickets_per_month",
+  "whatsapp_quota",
+  "history_months",
+] as const;
+export type EntitlementLimit = (typeof ENTITLEMENT_LIMITS)[number];
+
+/** Un quota du mois (`quota_status`) : consommation, limite (formule + extensions), jour où elle a été atteinte. */
+export type QuotaItem = {
+  used: number;
+  base: number | null;
+  extra: number;
+  limit: number | null;
+  percent: number | null;
+  reached_on: string | null;
+  blocked: boolean;
+};
+export type QuotaState = "ok" | "warning" | "reached" | "blocked";
+
+/**
+ * État d'un quota pour l'affichage : alerte à `alertPercent` (80 %), limite atteinte (la file continue jusqu'à la
+ * fermeture du jour), bloqué à partir du lendemain. Même règle que `quota_item` / `quota_progress` (SQL).
+ */
+export function quotaState(item: QuotaItem | null | undefined, alertPercent = 80): QuotaState {
+  if (!item || item.limit == null || item.limit <= 0) return "ok";
+  if (item.blocked) return "blocked";
+  if (item.used >= item.limit) return "reached";
+  if (item.used * 100 >= item.limit * alertPercent) return "warning";
+  return "ok";
+}
+
+/** Premier jour visible des statistiques (AAAA-MM-JJ) pour un historique de `months` mois ; null : tout l'historique. */
+export function historyStart(today: string, months: number | null | undefined): string | null {
+  if (months == null) return null;
+  const [y = 1970, m = 1, d = 1] = today.slice(0, 10).split("-").map(Number);
+  // Même calcul que `stats_history_start` : aujourd'hui − N mois (jour borné à la fin du mois), + 1 jour.
+  const targetMonth = m - 1 - months;
+  const lastDay = new Date(Date.UTC(y, targetMonth + 1, 0)).getUTCDate();
+  const start = new Date(Date.UTC(y, targetMonth, Math.min(d, lastDay) + 1));
+  return start.toISOString().slice(0, 10);
+}
 
 export type DiscountKind = "percent" | "fixed_xaf";
 

@@ -25,6 +25,9 @@ export type AccountMessageData = {
   period_end?: string;
   used?: number;
   quota?: number;
+  /** Alerte de quota : ressource et seuil (80 ou 100 %). */
+  resource?: "tickets" | "whatsapp";
+  level?: number;
   /** `absoluteUrl('/pay/<jeton>')` ou la page Abonnement. */
   link?: string;
 };
@@ -50,7 +53,11 @@ const org = (d: AccountMessageData) => d.organization ?? "";
 const link = (d: AccountMessageData) => d.link ?? "";
 
 /** Modèles WhatsApp à faire approuver par Meta (texte exact ; même texte en message libre dans la fenêtre de 24 h). */
-export const ACCOUNT_TEMPLATES: Record<Exclude<AccountMessageKind, "billing_reminder" | "deletion_notice"> | BillingReminder, AccountTemplate> = {
+/** Alertes de quota (grille v2) : tickets à 80 % et 100 %, WhatsApp à 100 % (80 % : modèle `alerte_quota` d'origine). */
+type QuotaTemplateKey = "quota_tickets_warning" | "quota_tickets_reached" | "quota_whatsapp_reached";
+type AccountTemplateKey = Exclude<AccountMessageKind, "billing_reminder" | "deletion_notice"> | BillingReminder | QuotaTemplateKey;
+
+export const ACCOUNT_TEMPLATES: Record<AccountTemplateKey, AccountTemplate> = {
   // Même modèle d'authentification que la vérification des demandes de rendez-vous (M9).
   phone_code: {
     name: WHATSAPP_TEMPLATES.request_code.name,
@@ -113,11 +120,43 @@ export const ACCOUNT_TEMPLATES: Record<Exclude<AccountMessageKind, "billing_remi
     },
     params: (d) => [org(d), String(d.used ?? 0), String(d.quota ?? 0), link(d)],
   },
+  // Nouveaux modèles (grille v2) : à faire approuver par Meta avant la mise en production.
+  quota_tickets_warning: {
+    name: "alerte_quota_tickets",
+    category: "utility",
+    body: {
+      fr: "{{1}} a utilisé {{2}} des {{3}} tickets inclus ce mois-ci. Vos files continuent normalement. Pour ne pas être limité, changez de formule ou ajoutez une extension : {{4}}",
+      en: "{{1}} has used {{2}} of the {{3}} tickets included this month. Your queues keep running normally. To avoid being limited, change plan or add an extension: {{4}}",
+    },
+    params: (d) => [org(d), String(d.used ?? 0), String(d.quota ?? 0), link(d)],
+  },
+  quota_tickets_reached: {
+    name: "quota_tickets_atteint",
+    category: "utility",
+    body: {
+      fr: "{{1}} a atteint les {{2}} tickets inclus ce mois-ci. Vos files continuent jusqu'à la fermeture d'aujourd'hui ; à partir de demain, la prise de ticket sera suspendue jusqu'au mois prochain. Changez de formule ou achetez une extension : {{3}}",
+      en: "{{1}} has reached the {{2}} tickets included this month. Your queues keep running until closing time today; from tomorrow, ticket taking will be paused until next month. Change plan or buy an extension: {{3}}",
+    },
+    params: (d) => [org(d), String(d.quota ?? 0), link(d)],
+  },
+  quota_whatsapp_reached: {
+    name: "quota_whatsapp_atteint",
+    category: "utility",
+    body: {
+      fr: "{{1}} a envoyé les {{2}} messages WhatsApp inclus ce mois-ci. Ils continuent jusqu'à ce soir ; à partir de demain, seuls les messages « C'est votre tour » partiront sur WhatsApp. Changez de formule ou achetez une extension : {{3}}",
+      en: "{{1}} has sent the {{2}} WhatsApp messages included this month. They keep going until tonight; from tomorrow, only “It's your turn” messages will go out on WhatsApp. Change plan or buy an extension: {{3}}",
+    },
+    params: (d) => [org(d), String(d.quota ?? 0), link(d)],
+  },
 };
 
 export function accountTemplateKey(kind: AccountMessageKind, data: AccountMessageData): keyof typeof ACCOUNT_TEMPLATES {
   if (kind === "billing_reminder") return data.reminder && data.reminder !== "deletion" ? data.reminder : "period_end";
   if (kind === "deletion_notice") return "deletion";
+  if (kind === "quota_alert") {
+    if (data.resource === "tickets") return (data.level ?? 0) >= 100 ? "quota_tickets_reached" : "quota_tickets_warning";
+    if ((data.level ?? 0) >= 100) return "quota_whatsapp_reached";
+  }
   return kind;
 }
 
@@ -141,6 +180,9 @@ const SMS: Record<NotifLocale, Record<keyof typeof ACCOUNT_TEMPLATES, (d: Accoun
     deletion: (d) => `NextIn : compte suspendu, donnees supprimees le ${formatBillingDate(d.until ?? d.date, "fr")}. Payez : ${link(d)}`,
     payment_confirmed: (d) => `NextIn : paiement recu, facture ${d.invoice ?? ""}. Actif jusqu'au ${formatBillingDate(d.period_end, "fr")}. Merci !`,
     quota_alert: (d) => `NextIn : ${d.used ?? 0}/${d.quota ?? 0} messages WhatsApp utilises ce mois-ci. ${link(d)}`,
+    quota_tickets_warning: (d) => `NextIn : ${d.used ?? 0}/${d.quota ?? 0} tickets utilises ce mois-ci. Changez de formule ou ajoutez une extension : ${link(d)}`,
+    quota_tickets_reached: (d) => `NextIn : limite de ${d.quota ?? 0} tickets atteinte. Files ouvertes jusqu'a ce soir, prise de ticket suspendue des demain. ${link(d)}`,
+    quota_whatsapp_reached: (d) => `NextIn : ${d.quota ?? 0} messages WhatsApp envoyes. Des demain, seul "C'est votre tour" part sur WhatsApp. ${link(d)}`,
   },
   en: {
     phone_code: (d) => `NextIn: your verification code is ${d.code ?? ""}. It expires in 10 minutes. Do not share it.`,
@@ -150,6 +192,9 @@ const SMS: Record<NotifLocale, Record<keyof typeof ACCOUNT_TEMPLATES, (d: Accoun
     deletion: (d) => `NextIn: account suspended, data deleted on ${formatBillingDate(d.until ?? d.date, "en")}. Pay: ${link(d)}`,
     payment_confirmed: (d) => `NextIn: payment received, invoice ${d.invoice ?? ""}. Active until ${formatBillingDate(d.period_end, "en")}. Thank you!`,
     quota_alert: (d) => `NextIn: ${d.used ?? 0}/${d.quota ?? 0} WhatsApp messages used this month. ${link(d)}`,
+    quota_tickets_warning: (d) => `NextIn: ${d.used ?? 0}/${d.quota ?? 0} tickets used this month. Change plan or add an extension: ${link(d)}`,
+    quota_tickets_reached: (d) => `NextIn: ${d.quota ?? 0} ticket limit reached. Queues open until tonight, ticket taking paused from tomorrow. ${link(d)}`,
+    quota_whatsapp_reached: (d) => `NextIn: ${d.quota ?? 0} WhatsApp messages sent. From tomorrow, only "It's your turn" goes out on WhatsApp. ${link(d)}`,
   },
 };
 
@@ -166,6 +211,9 @@ const SUBJECTS: Record<NotifLocale, Record<keyof typeof ACCOUNT_TEMPLATES, (d: A
     deletion: (d) => `Compte NextIn suspendu : suppression le ${formatBillingDate(d.until ?? d.date, "fr")}`,
     payment_confirmed: (d) => `Paiement reçu · facture ${d.invoice ?? ""}`,
     quota_alert: () => "Quota de messages WhatsApp bientôt atteint",
+    quota_tickets_warning: () => "Quota de tickets bientôt atteint",
+    quota_tickets_reached: () => "Quota de tickets atteint : prise de ticket suspendue dès demain",
+    quota_whatsapp_reached: () => "Quota de messages WhatsApp atteint",
   },
   en: {
     phone_code: () => "Your NextIn verification code",
@@ -175,6 +223,9 @@ const SUBJECTS: Record<NotifLocale, Record<keyof typeof ACCOUNT_TEMPLATES, (d: A
     deletion: (d) => `NextIn account suspended: deletion on ${formatBillingDate(d.until ?? d.date, "en")}`,
     payment_confirmed: (d) => `Payment received · invoice ${d.invoice ?? ""}`,
     quota_alert: () => "WhatsApp message quota almost reached",
+    quota_tickets_warning: () => "Ticket quota almost reached",
+    quota_tickets_reached: () => "Ticket quota reached: ticket taking paused from tomorrow",
+    quota_whatsapp_reached: () => "WhatsApp message quota reached",
   },
 };
 

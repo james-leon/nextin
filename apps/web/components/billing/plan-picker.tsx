@@ -23,15 +23,21 @@ type Props = {
   paidPeriodRunning: boolean;
   initialPeriod: BillingPeriod;
   branches: number;
+  /** Formule mise en avant (formule d'essai pendant l'essai). */
+  preferredCode: string | null;
+  organizationName: string;
+  /** Contact Wintek pour les formules sur devis (réglages de la plateforme). */
+  contact: { email: string | null; phone: string | null };
 };
 
 /** Choix de la formule et de la période ; une seule action principale (payer, monter ou programmer). */
-export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunning, initialPeriod, branches }: Props) {
+export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunning, initialPeriod, branches, preferredCode, organizationName, contact }: Props) {
   const t = useTranslations("billing");
   const te = useTranslations("errors");
   const locale = useLocale() as "fr" | "en";
   const [period, setPeriod] = useState<BillingPeriod>(initialPeriod);
-  const firstFit = plans.find((p) => p.id === currentPlanId && p.fits) ?? plans.find((p) => p.code === "pro" && p.fits) ?? plans.find((p) => p.fits);
+  const payable = (p: PlanOffer) => p.fits && !p.quote_only;
+  const firstFit = plans.find((p) => p.id === currentPlanId && payable(p)) ?? plans.find((p) => p.code === preferredCode && payable(p)) ?? plans.find(payable);
   const [selectedId, setSelectedId] = useState<string | null>(firstFit?.id ?? null);
   // Téléphone : une formule affichée à la fois, choisie dans le sélecteur du haut (pas de défilement interminable).
   const [viewId, setViewId] = useState<string | null>(firstFit?.id ?? plans[0]?.id ?? null);
@@ -43,6 +49,23 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
   const name = (p: PlanOffer) => (locale === "en" ? (p.name_en ?? p.name) : p.name);
   const description = (p: PlanOffer) => (locale === "en" ? (p.description_en ?? p.description) : p.description);
   const xaf = (n: number) => formatXaf(n, locale);
+  const num = (n: number) => n.toLocaleString(locale === "fr" ? "fr-FR" : "en-US");
+  const limitLines = (p: PlanOffer) => [
+    t("includedBranches", { count: p.included_branches }),
+    ...(p.extra_branch_price_xaf != null ? [t("extraBranch", { price: xaf(p.extra_branch_price_xaf) })] : []),
+    p.max_services != null ? t("servicesLimit", { count: p.max_services }) : t("servicesUnlimited"),
+    p.max_counters != null ? t("countersLimit", { count: p.max_counters }) : t("countersUnlimited"),
+    p.max_displays != null ? t("displaysLimit", { count: p.max_displays }) : t("displaysUnlimited"),
+    p.max_users != null ? t("usersLimit", { count: p.max_users }) : t("usersUnlimited"),
+    p.tickets_per_month != null ? t("ticketsQuota", { count: num(p.tickets_per_month) }) : t("ticketsUnlimited"),
+    p.whatsapp_quota != null ? t("whatsappQuota", { count: num(p.whatsapp_quota) }) : t("whatsappUnlimited"),
+    p.history_months != null ? t("historyMonths", { count: p.history_months }) : t("historyUnlimited"),
+  ];
+  const contactHref = contact.email
+    ? `mailto:${contact.email}?subject=${encodeURIComponent(t("contactSubject", { organization: organizationName }))}`
+    : contact.phone
+      ? `tel:${contact.phone.replace(/\s+/g, "")}`
+      : null;
 
   let label = t("choose");
   if (selected && quote) {
@@ -79,16 +102,49 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
           value={viewId ?? ""}
           onValueChange={(id) => {
             setViewId(id);
-            if (plans.find((p) => p.id === id)?.fits) setSelectedId(id);
+            const p = plans.find((x) => x.id === id);
+            if (p && payable(p)) setSelectedId(id);
           }}
           options={plans.map((p) => ({ value: p.id, label: name(p) }))}
           className="md:hidden"
         />
       ) : null}
 
-      <div role="radiogroup" aria-labelledby="plans-title" className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div role="radiogroup" aria-labelledby="plans-title" className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {plans.map((p) => {
           const q = p[period];
+          // Sur devis : pas de prix ni de paiement en ligne, un contact.
+          if (p.quote_only) {
+            return (
+              <div
+                key={p.id}
+                className={cn(
+                  "squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card",
+                  plans.length > 1 && p.id !== viewId && "hidden md:flex",
+                )}
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-headline">{name(p)}</span>
+                  {p.id === currentPlanId ? <Badge tone="accent">{t("current")}</Badge> : null}
+                </span>
+                <span className="text-subheadline text-label-secondary">{description(p) ?? t("quoteBody")}</span>
+                <span className="text-title1 font-bold">{t("quoteOnly")}</span>
+                <ul className="flex flex-col gap-1.5 text-subheadline">
+                  {[t("quoteBody"), ...PLAN_FEATURES.filter((f) => p.features[f]).map((f) => t(`features.${f}`))].map((line) => (
+                    <li key={line} className="flex items-start gap-2">
+                      <Check aria-hidden className="mt-0.5 size-4 shrink-0 stroke-[2.5] text-accent-text" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+                {contactHref ? (
+                  <Button asChild variant="tinted" block className="mt-auto">
+                    <a href={contactHref}>{t("contactUs")}</a>
+                  </Button>
+                ) : null}
+              </div>
+            );
+          }
           const isSelected = p.id === selectedId;
           return (
             <button
@@ -124,14 +180,7 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
                 ) : null}
               </span>
               <ul className="flex flex-col gap-1.5 text-subheadline">
-                {[
-                  t("includedBranches", { count: p.included_branches }),
-                  p.extra_branch_price_xaf != null ? t("extraBranch", { price: xaf(p.extra_branch_price_xaf) }) : t("noExtraBranch"),
-                  p.max_counters_per_branch != null ? t("countersLimit", { count: p.max_counters_per_branch }) : t("countersUnlimited"),
-                  p.max_displays_per_branch != null ? t("displaysLimit", { count: p.max_displays_per_branch }) : t("displaysUnlimited"),
-                  t("whatsappQuota", { count: p.whatsapp_quota_per_branch.toLocaleString(locale === "fr" ? "fr-FR" : "en-US") }),
-                  ...PLAN_FEATURES.filter((f) => p.features[f]).map((f) => t(`features.${f}`)),
-                ].map((line) => (
+                {[...limitLines(p), ...PLAN_FEATURES.filter((f) => p.features[f]).map((f) => t(`features.${f}`))].map((line) => (
                   <li key={line} className="flex items-start gap-2">
                     <Check aria-hidden className="mt-0.5 size-4 shrink-0 stroke-[2.5] text-accent-text" />
                     <span>{line}</span>

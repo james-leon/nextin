@@ -513,16 +513,69 @@ export const adminPlanFormSchema = z.object({
   basePriceXaf: z.coerce.number().int().min(0).max(100_000_000),
   includedBranches: z.coerce.number().int().min(1).max(999),
   extraBranchPriceXaf: optionalInt(0, 100_000_000),
-  maxCountersPerBranch: optionalInt(1, 999),
-  maxDisplaysPerBranch: optionalInt(0, 999),
-  whatsappQuotaPerBranch: z.coerce.number().int().min(0).max(1_000_000),
+  // Limites par établissement (grille v2) ; vide : illimité.
+  maxServices: optionalInt(1, 999),
+  maxCounters: optionalInt(1, 9999),
+  maxDisplays: optionalInt(0, 999),
+  maxUsers: optionalInt(1, 9999),
+  ticketsPerMonth: optionalInt(0, 10_000_000),
+  whatsappQuota: optionalInt(0, 10_000_000),
+  historyMonths: optionalInt(1, 120),
   annualFreeMonths: z.coerce.number().int().min(0).max(11),
   voiceAnnouncements: formBoolean,
   appointments: formBoolean,
   remoteTickets: formBoolean,
   advancedStats: formBoolean,
   export: formBoolean,
+  multisite: formBoolean,
+  prioritySupport: formBoolean,
   dedicatedSupport: formBoolean,
+  quoteOnly: formBoolean,
+  trialEligible: formBoolean,
+  active: formBoolean,
+});
+
+/**
+ * Limite sur mesure (formule sur devis) : vide = valeur de la formule (clé absente), « illimité » / « unlimited » / « ∞ »
+ * = sans limite (null), sinon un entier positif.
+ */
+const overrideLimit = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v, ctx) => {
+    if (!v) return undefined;
+    if (/^(illimit[ée]|unlimited|∞)$/i.test(v)) return null;
+    const n = Number(v.replace(/\s/g, ""));
+    if (!Number.isInteger(n) || n < 0 || n > 10_000_000) {
+      ctx.addIssue({ code: "custom", message: "limit_invalid" });
+      return z.NEVER;
+    }
+    return n;
+  });
+
+export const adminLimitsSchema = z.object({
+  subscriptionId: z.uuid(),
+  included_branches: overrideLimit,
+  max_services: overrideLimit,
+  max_counters: overrideLimit,
+  max_displays: overrideLimit,
+  max_users: overrideLimit,
+  tickets_per_month: overrideLimit,
+  whatsapp_quota: overrideLimit,
+  history_months: overrideLimit,
+  reason: adminReason,
+});
+
+/** Extension de quota (console Wintek) : création (code, type) ou édition (prix, quantité, libellés). */
+export const adminQuotaPackSchema = z.object({
+  packId: z.uuid().optional().or(z.literal("").transform(() => undefined)),
+  code: z.string().trim().regex(/^[a-z][a-z0-9_]{1,30}$/, "pack_code_invalid").optional().or(z.literal("").transform(() => undefined)),
+  kind: z.enum(["tickets", "whatsapp"]).optional(),
+  quantity: z.coerce.number().int().min(1).max(10_000_000),
+  priceXaf: z.coerce.number().int().min(0).max(100_000_000),
+  name: z.string().trim().min(2, "name_too_short").max(60),
+  nameEn: z.string().trim().max(60).optional().transform((v) => v || null),
   active: formBoolean,
 });
 

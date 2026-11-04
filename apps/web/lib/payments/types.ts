@@ -14,6 +14,8 @@ export type PayInvoiceView = {
   plan: { name: string; name_en: string | null } | null;
   /** Facture d'une campagne publicitaire (M10b) ; `organization` est alors le nom de l'annonceur. */
   campaign?: { name: string; package: string; package_en: string } | null;
+  /** Extension de quota (pack de tickets ou de messages WhatsApp). */
+  extension?: { name: string; name_en: string | null; kind: "tickets" | "whatsapp"; quantity: number } | null;
   lines: { kind: string; label: string; label_en: string; amount_xaf: number }[];
   expired: boolean;
   payment: { status: "pending" | "succeeded" | "failed" | "expired"; channel: PaymentChannel; external_id: string; failure_reason: string | null } | null;

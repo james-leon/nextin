@@ -451,13 +451,13 @@ async function ensureDemoHistory(orgId: string, branch: { branchId: string; serv
 }
 
 /**
- * M10a — abonnement de démo (idempotent) : `paid` = formule Pro payée par le faux fournisseur (facture réglée par
- * MTN MoMo, abonnement actif) ; `trial` = essai Pro qui se termine dans 5 jours (bandeau visible).
+ * M10a — abonnement de démo (idempotent) : `paid` = formule Business payée par le faux fournisseur (facture réglée par
+ * MTN MoMo, abonnement actif) ; `trial` = essai Business qui se termine dans 5 jours (bandeau visible).
  */
 async function ensureDemoSubscription(orgId: string, mode: "paid" | "trial", phone: string, email: string) {
   const existing = await must(db.from("subscriptions").select("id").eq("organization_id", orgId).maybeSingle());
   if (existing) return;
-  const pro = await must(db.from("plans").select("id").eq("code", "pro").single());
+  const pro = await must(db.from("plans").select("id").eq("code", "business").single());
   const sub = await must(
     db
       .from("subscriptions")
