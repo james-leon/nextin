@@ -68,6 +68,43 @@ export function bannerPng(from: string, to: string, width = 640, height = 360): 
   });
 }
 
+/**
+ * Photo d'établissement de démo (« À proximité ») : façade stylisée — ciel en dégradé, bâtiment clair aux fenêtres
+ * bleutées, auvent et trottoir. `width × height` (16:9 pour la carte, carré pour la vignette).
+ */
+export function facadePng(width: number, height: number): Buffer {
+  const skyTop = hex("#7fb6e6");
+  const skyBottom = hex("#dcecf8");
+  const wall = hex("#f4efe6");
+  const wallShade = hex("#e6ded0");
+  const glass = hex("#2f6ea8");
+  const glassLight = hex("#8fc0e6");
+  const awning = hex("#1a6bb5");
+  const ground = hex("#c9c4bb");
+  const left = width * 0.12;
+  const right = width * 0.88;
+  const top = height * 0.18;
+  const base = height * 0.86;
+  const cols = 6;
+  const rows = 3;
+  return encodePng(width, height, (x, y) => {
+    if (y >= base) return mix(ground, wallShade, ((y - base) / (height - base)) * 0.4);
+    if (x < left || x > right || y < top) return mix(skyTop, skyBottom, y / height);
+    // Auvent bleu au-dessus de l'entrée, porte vitrée au centre.
+    const awningTop = base - (base - top) * 0.34;
+    if (y > awningTop && y < awningTop + height * 0.035) return awning;
+    const cx = (left + right) / 2;
+    if (y > awningTop + height * 0.035 && Math.abs(x - cx) < width * 0.07) return mix(glass, glassLight, (y - awningTop) / (base - awningTop));
+    // Fenêtres sur trois étages.
+    const cw = (right - left) / cols;
+    const rh = (awningTop - top) / rows;
+    const fx = ((x - left) % cw) / cw;
+    const fy = ((y - top) % rh) / rh;
+    if (y < awningTop && fx > 0.18 && fx < 0.82 && fy > 0.22 && fy < 0.78) return mix(glass, glassLight, fy * 0.8);
+    return (x - left) / (right - left) > 0.92 ? wallShade : wall;
+  });
+}
+
 /** Logo rond des pièces (habillage Or) : disque de couleur sur fond doré, 64 × 64. */
 export function coinLogoPng(color: string, size = 64): Buffer {
   const c = hex(color);

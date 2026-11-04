@@ -7,7 +7,7 @@
  * Usage : NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… SEED_DEMO_PASSWORD=… pnpm seed:demo
  */
 import { createClient } from "@supabase/supabase-js";
-import { bannerPng, coinLogoPng, demoVisaPdf } from "./demo-images";
+import { bannerPng, coinLogoPng, demoVisaPdf, facadePng } from "./demo-images";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -490,7 +490,7 @@ async function signedIn(email: string) {
   return client;
 }
 
-async function upload(bucket: "ad-creatives" | "ad-documents", path: string, body: Buffer, contentType: string) {
+async function upload(bucket: "ad-creatives" | "ad-documents" | "branch-photos", path: string, body: Buffer, contentType: string) {
   const { error } = await db.storage.from(bucket).upload(path, body, { contentType, upsert: true });
   if (error) throw new Error(`${bucket}/${path} : ${error.message}`);
 }
@@ -717,6 +717,11 @@ async function main() {
   await ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237);
   await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
   await ensureDemoRemote(akwa, bonanjo, ids.clinicAdmin);
+  // Photo de l'agence d'Akwa (« À proximité ») ; Eneo garde l'icône du secteur. PNG de démo sous les noms fixes
+  // du bucket (le type MIME envoyé est le bon ; l'application, elle, téléverse du WebP).
+  await upload("branch-photos", `${clinic}/${akwa.branchId}/cover.webp`, facadePng(640, 360), "image/png");
+  await upload("branch-photos", `${clinic}/${akwa.branchId}/thumb.webp`, facadePng(160, 160), "image/png");
+  await must(db.from("branches").update({ photo_updated_at: new Date().toISOString() }).eq("id", akwa.branchId).select("id"));
   await ensureDemoAds(clinic);
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa, Pro payé) et Eneo — Douala (agence Bonanjo, essai Pro)");

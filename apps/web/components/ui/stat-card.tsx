@@ -16,7 +16,7 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <div className={cn("squircle rounded-[var(--radius-xl)] bg-grouped-secondary px-4 py-3.5", className)}>
+    <div className={cn("squircle rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-4 shadow-card", className)}>
       <p className="text-subheadline text-label-secondary">{label}</p>
       <p className="mt-0.5 text-title1 font-bold tabular">{value}</p>
       {trend ? (

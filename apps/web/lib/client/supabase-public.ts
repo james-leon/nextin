@@ -31,3 +31,8 @@ export async function callRpc<T>(fn: string, args: Record<string, unknown>, opti
     return { data: null, error: { message: "network", status: 0 } };
   }
 }
+
+/** Adresse publique d'une photo d'établissement (bucket `branch-photos`), versionnée pour le cache. */
+export function branchPhotoUrl(path: string, version: number): string {
+  return `${SUPABASE_URL}/storage/v1/object/public/branch-photos/${path}?v=${version}`;
+}

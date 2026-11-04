@@ -672,14 +672,14 @@ isOneToOne: false
                   ]
                 },"branches": {
                   Row: {
-                    "active": boolean,"address": string | null,"city": string | null,"created_at": string,"id": string,"latitude": number | null,"location": unknown,"longitude": number | null,"name": string,"organization_id": string,"phone_e164": string | null,"sort_order": number,"timezone": string,"updated_at": string
+                    "active": boolean,"address": string | null,"city": string | null,"created_at": string,"id": string,"latitude": number | null,"location": unknown,"longitude": number | null,"name": string,"organization_id": string,"phone_e164": string | null,"photo_updated_at": string | null,"sort_order": number,"timezone": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"created_at"?: string,"id"?: string,"latitude"?: never,"location"?: unknown,"longitude"?: never,"name": string,"organization_id": string,"phone_e164"?: string | null,"sort_order"?: number,"timezone"?: string,"updated_at"?: string
+                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"created_at"?: string,"id"?: string,"latitude"?: never,"location"?: unknown,"longitude"?: never,"name": string,"organization_id": string,"phone_e164"?: string | null,"photo_updated_at"?: string | null,"sort_order"?: number,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"created_at"?: string,"id"?: string,"latitude"?: never,"location"?: unknown,"longitude"?: never,"name"?: string,"organization_id"?: string,"phone_e164"?: string | null,"sort_order"?: number,"timezone"?: string,"updated_at"?: string
+                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"created_at"?: string,"id"?: string,"latitude"?: never,"location"?: unknown,"longitude"?: never,"name"?: string,"organization_id"?: string,"phone_e164"?: string | null,"photo_updated_at"?: string | null,"sort_order"?: number,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -2088,6 +2088,9 @@ isOneToOne: true
 "can_write_ad_file":
 { Args: { "p_name": string }; Returns: boolean
                            },
+"can_write_branch_photo":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
 "cancel_appointment":
 { Args: { "p_appointment": string,"p_reason"?: string }; Returns: Json
                            },
@@ -3112,6 +3115,9 @@ isOneToOne: true
                            },
 "set_branch_location":
 { Args: { "p_branch": string,"p_lat": number,"p_lng": number }; Returns: undefined
+                           },
+"set_branch_photo":
+{ Args: { "p_branch": string,"p_present": boolean }; Returns: string
                            },
 "set_campaign_branches":
 { Args: { "p_branches": (string)[],"p_campaign": string }; Returns: number

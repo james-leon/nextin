@@ -13,10 +13,10 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  /* Fonds */
-  --bg-grouped: #f2f2f7;
+  /* Fonds (style A : fond plus clair, cartes blanches) */
+  --bg-grouped: #f5f5f7;
   --bg-grouped-secondary: #ffffff;
-  --bg-grouped-tertiary: #f2f2f7;
+  --bg-grouped-tertiary: #f5f5f7;
   --bg-elevated: #ffffff;
 
   /* Libellés */
@@ -80,8 +80,11 @@
   --game-storm: #4b5563;
   --game-bolt: #f58b1f;
 
-  --elev-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
-  --elev-floating: 0 8px 32px rgb(0 0 0 / 0.12), 0 2px 6px rgb(0 0 0 / 0.06);
+  /* Ombre de carte très douce, teintée Navy (style A). */
+  --elev-card: 0 8px 30px rgb(13 44 84 / 0.06);
+  --elev-floating: 0 12px 36px rgb(13 44 84 / 0.14), 0 2px 8px rgb(13 44 84 / 0.06);
+  /* Barre d'onglets flottante (pilule) : blanc translucide. */
+  --material-pill: rgb(255 255 255 / 0.82);
 }
 
 [data-theme="dark"] {
@@ -122,6 +125,7 @@
   --game-storm: #8b95a5;
   --elev-card: none;
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
+  --material-pill: rgb(44 44 46 / 0.82);
 }
 
 /* Repli sans JavaScript */
@@ -158,6 +162,7 @@
   --color-fill-tertiary: var(--fill-tertiary);
   --color-bar: var(--material-bar);
   --color-sheet: var(--material-sheet);
+  --color-pill: var(--material-pill);
   --color-overlay: var(--overlay);
   --color-navy: var(--navy);
   --color-ticket-number: var(--ticket-number);
@@ -215,7 +220,8 @@
   --text-caption: 0.75rem;
   --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 0;
-  --text-hero: 5.5rem;
+  /* Numéro de ticket (style A : 76 px). */
+  --text-hero: 4.75rem;
   --text-hero--line-height: 1;
   --text-hero--letter-spacing: -0.03em;
   --text-display: 3.75rem;
@@ -226,7 +232,9 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 22px;
+  --radius-xl: 24px;
+  /* Cartes héros (ticket, établissement à la une, client en cours). */
+  --radius-2xl: 28px;
 
   --shadow-card: var(--elev-card);
   --shadow-floating: var(--elev-floating);

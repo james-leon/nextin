@@ -24,6 +24,7 @@ import type { CounterRef, TicketView } from "@/lib/client/types";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import { PlayCard } from "./games/play-card";
 import { LazyMount } from "./lazy-mount";
+import { QueuePosition } from "./queue-position";
 import { RemoteTicketCard } from "./remote-ticket-card";
 
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
@@ -147,6 +148,10 @@ export function TicketLive({
       ? { href: `/b/${view.branch.id}`, label: t("back"), prefetch: false }
       : { href: "/", label: t("home"), prefetch: false };
   const nowServing = board?.calls.find((c) => isActiveCall(c) && c.service_id === view.service.id && c.code !== view.display_code);
+  // Numéros devant le client dans sa file (publics, comme sur l'écran TV) ; null si le tableau n'est pas encore là.
+  const queueWaiting = board?.services.find((s) => s.id === view.service.id)?.waiting ?? null;
+  const myIndex = queueWaiting ? queueWaiting.indexOf(view.display_code) : -1;
+  const queueAhead = queueWaiting && myIndex >= 0 ? queueWaiting.slice(0, myIndex) : null;
 
   async function share() {
     const url = window.location.href;
@@ -209,6 +214,7 @@ export function TicketLive({
             wait={progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes })}
             progress={progress.progress}
             nowServing={nowServing ? t("nowServing", { code: nowServing.code, counter: counterName(nowServing) }) : undefined}
+            live={status === "offline" ? undefined : t("live")}
           />
         ) : view.status === "called" || view.status === "serving" ? (
           <TicketHero
@@ -255,6 +261,21 @@ export function TicketLive({
             <BadgeCheck aria-hidden />
             {t("priority")}
           </Badge>
+        ) : null}
+
+        {view.status === "waiting" && queueAhead ? (
+          <QueuePosition
+            title={t("positionTitle")}
+            current={nowServing ? { code: nowServing.code, counter: counterName(nowServing) } : null}
+            ahead={queueAhead}
+            me={view.display_code}
+            labels={{
+              now: (counter) => t("positionNow", { counter }),
+              idle: t("positionIdle"),
+              more: (count) => t("positionMore", { count }),
+              you: t("positionYou"),
+            }}
+          />
         ) : null}
 
         {view.status === "called" && call && call.recall_count > 0 ? (

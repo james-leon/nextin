@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, Clock, ConciergeBell, DoorOpen, Info, QrCode, SlidersHorizontal, Stethoscope, Tv } from "lucide-react";
 import { SERVICE_COLORS, summarizeOpeningHours } from "@nextin/shared";
 import { AdminPage } from "@/components/admin/admin-page";
+import { BranchPhotoCard } from "@/components/admin/branch-photo-card";
 import { SavedNotice } from "@/components/admin/saved-notice";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { getBranch } from "@/lib/admin/branch";
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BranchPage({ params, searchParams }: Props) {
   const { orgId, branchId } = await params;
   const { saved } = await searchParams;
-  const { ctx, branch } = await getBranch(orgId, branchId);
+  const { ctx, branch, canManage } = await getBranch(orgId, branchId);
   const t = await getTranslations("branches");
   const th = await getTranslations("hours");
   const td = await getTranslations("desk");
@@ -92,6 +93,16 @@ export default async function BranchPage({ params, searchParams }: Props) {
           />
         </ListSection>
       </div>
+      <BranchPhotoCard
+        orgId={orgId}
+        branchId={branchId}
+        canManage={canManage}
+        photoUrl={
+          branch.photo_updated_at
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/branch-photos/${orgId}/${branchId}/cover.webp?v=${new Date(branch.photo_updated_at).getTime()}`
+            : null
+        }
+      />
       {/* Postes de l'agence : carte d'accès à l'accueil (et aux guichets depuis le choix du poste). */}
       <Link
         href={`/desk/reception/${branchId}`}

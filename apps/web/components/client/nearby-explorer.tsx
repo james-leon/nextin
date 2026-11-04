@@ -12,7 +12,7 @@ import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { SearchField } from "@/components/ui/text-field";
 import { getPosition, positionGranted, type GeoPosition } from "@/lib/client/geolocation";
-import { callRpc } from "@/lib/client/supabase-public";
+import { branchPhotoUrl, callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
@@ -26,6 +26,44 @@ const NearbyMap = dynamic(() => import("./nearby-map").then((m) => m.NearbyMap),
 });
 
 const RADIUS_KM = 25;
+
+/** Catégories de la liste (secteur de l'établissement) ; les autres secteurs restent sous « Tous ». */
+const CATEGORIES = ["all", "clinics", "banks", "energy", "telecom"] as const;
+type Category = (typeof CATEGORIES)[number];
+function categoryOf(type: string): Category | null {
+  if (type === "clinic" || type === "hospital") return "clinics";
+  if (type === "bank") return "banks";
+  if (type === "utility") return "energy";
+  if (type === "telecom") return "telecom";
+  return null;
+}
+
+/** Photo de l'établissement (16:9 ou carrée), sinon icône du secteur sur fond teinté. */
+function BranchVisual({ branch, variant }: { branch: NearbyBranch; variant: "cover" | "thumb" }) {
+  if (branch.photo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={branchPhotoUrl(variant === "cover" ? branch.photo.cover : branch.photo.thumb, branch.photo.version)}
+        alt=""
+        loading={variant === "cover" ? "eager" : "lazy"}
+        decoding="async"
+        className="absolute inset-0 size-full object-cover"
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute inset-0 flex items-center justify-center bg-accent-tint text-accent-on-tint",
+        variant === "cover" ? "[&_svg]:size-14 [&_svg]:stroke-[1.25]" : "[&_svg]:size-7 [&_svg]:stroke-[1.5]",
+      )}
+    >
+      <OrgTypeIcon type={branch.organization.type} />
+    </span>
+  );
+}
 /** Agences rechargées autour du client ou pour une recherche : 20 au plus (réponse légère en 3G). */
 const LIMIT = 20;
 type Locate = "idle" | "locating" | "located" | "denied" | "unavailable";
@@ -55,6 +93,7 @@ export function NearbyExplorer({
   const [view, setView] = useState<"list" | "map">("list");
   const [selected, setSelected] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState(() => new Date());
+  const [category, setCategory] = useState<Category>("all");
   const rows = useRef<Map<string, HTMLLIElement>>(new Map());
 
   async function locateMe() {
@@ -115,78 +154,139 @@ export function NearbyExplorer({
   const showMap = wide ? mapOnDesktop : view === "map";
   const chosen = branches.find((b) => b.id === selected) ?? null;
 
+  // Catégories (style A) déduites du secteur de l'établissement ; « Tous » par défaut.
+  const shownBranches = category === "all" ? branches : branches.filter((b) => categoryOf(b.organization.type) === category);
+  const [featured, ...others] = shownBranches;
+  const waitText = (b: NearbyBranch) => {
+    const minutes = b.min_wait_seconds != null ? waitMinutes(b.min_wait_seconds) : null;
+    return minutes == null ? "—" : minutes === 0 ? t("noWait") : t("wait", { minutes });
+  };
+  const distanceText = (b: NearbyBranch) => (b.distance_m != null ? formatDistance(b.distance_m, locale) : null);
+  const rowRef = (id: string) => (el: HTMLLIElement | null) => {
+    if (el) rows.current.set(id, el);
+    else rows.current.delete(id);
+  };
+  const linkProps = (b: NearbyBranch) => ({
+    href: `/b/${b.id}`,
+    // Pas de préchargement des pages d'agence : premier chargement léger (3G, < 200 Ko).
+    prefetch: false,
+    onFocus: () => setSelected(b.id),
+    onMouseEnter: () => wide && setSelected(b.id),
+  });
+
   const list = (
-    <section aria-label={t("results", { count: branches.length })} className="flex flex-col gap-2">
-      <p className="px-4 text-footnote text-label-secondary uppercase" aria-live="polite">
-        {position ? t("located") : t("results", { count: branches.length })}
+    <section aria-label={t("results", { count: shownBranches.length })} className="flex flex-col gap-4">
+      <div role="radiogroup" aria-label={t("categoriesLabel")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            role="radio"
+            aria-checked={category === c}
+            onClick={() => setCategory(c)}
+            className={cn(
+              "pressable h-11 shrink-0 rounded-full px-4 text-subheadline font-semibold whitespace-nowrap transition-colors",
+              category === c ? "bg-accent text-on-accent" : "bg-grouped-secondary text-label shadow-card",
+            )}
+          >
+            {t(`categories.${c}`)}
+          </button>
+        ))}
+      </div>
+      <p className="sr-only" aria-live="polite">
+        {position ? t("located") : t("results", { count: shownBranches.length })}
       </p>
-      {branches.length === 0 ? (
+      {!featured ? (
         <CalloutCard icon={<MapPin />}>{position && !query ? t("emptyNear", { km: RADIUS_KM }) : t("empty")}</CalloutCard>
       ) : (
-        <ul
-          role="list"
-          className={cn(
-            "squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary",
-            !mapOnDesktop && "lg:grid lg:grid-cols-2 lg:gap-3 lg:overflow-visible lg:rounded-none lg:bg-transparent xl:grid-cols-3",
-          )}
-        >
-          {branches.map((b) => {
-            const minutes = b.min_wait_seconds != null ? waitMinutes(b.min_wait_seconds) : null;
-            return (
-              <li
-                key={b.id}
-                ref={(el) => {
-                  if (el) rows.current.set(b.id, el);
-                  else rows.current.delete(b.id);
-                }}
-                className={cn("group/row", !mapOnDesktop && "lg:squircle lg:overflow-hidden lg:rounded-[var(--radius-md)] lg:bg-grouped-secondary lg:shadow-card")}
-              >
-                <Link
-                  href={`/b/${b.id}`}
-                  // Pas de préchargement des pages d'agence : premier chargement léger (3G, < 200 Ko).
-                  prefetch={false}
-                  onFocus={() => setSelected(b.id)}
-                  onMouseEnter={() => wide && setSelected(b.id)}
-                  className={cn(
-                    "flex w-full items-start gap-3 pl-4 text-left transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary",
-                    selected === b.id && wide && "bg-accent-tint/60",
-                  )}
-                >
-                  <span
-                    aria-hidden
-                    className="squircle mt-3 flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-navy text-white [&_svg]:size-5 [&_svg]:stroke-[1.75]"
-                  >
-                    <OrgTypeIcon type={b.organization.type} />
+        <ul role="list" className={cn("flex flex-col gap-4", !mapOnDesktop && "lg:grid lg:grid-cols-2 lg:items-start xl:grid-cols-3")}>
+          {/* L'établissement le plus proche (ou le premier) en grande carte avec sa photo. */}
+          <li ref={rowRef(featured.id)} className={cn(!mapOnDesktop && "lg:row-span-2")}>
+            <Link
+              {...linkProps(featured)}
+              className={cn(
+                "pressable squircle block overflow-hidden rounded-[var(--radius-2xl)] bg-grouped-secondary shadow-card",
+                selected === featured.id && wide && "ring-2 ring-accent",
+              )}
+            >
+              <span className="relative block aspect-[16/9]">
+                <BranchVisual branch={featured} variant="cover" />
+                <span className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+                  <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-grouped-secondary/95 px-3 text-footnote font-semibold text-label shadow-card">
+                    <span aria-hidden className={cn("size-2 rounded-full", featured.is_open ? "bg-green" : "bg-label-tertiary")} />
+                    {featured.is_open ? t("open") : t("closed")}
                   </span>
-                  <span className={cn("relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator", !mapOnDesktop && "lg:after:hidden")}>
-                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="truncate text-headline">
-                        {b.organization.name}
-                        <span className="sr-only"> · {to(b.organization.type)}</span>
-                      </span>
-                      <span className="truncate text-subheadline text-label-secondary">
-                        {[b.name, b.city, b.distance_m != null ? t("distance", { distance: formatDistance(b.distance_m, locale) }) : null]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <Badge tone={b.is_open ? "green" : "neutral"}>{b.is_open ? t("open") : t("closed")}</Badge>
-                        {b.is_open ? (
-                          <span className="text-footnote text-label-secondary tabular">
-                            {t("waiting", { count: b.waiting })}
-                            {minutes != null ? ` · ${minutes === 0 ? t("noWait") : t("wait", { minutes })}` : ""}
-                          </span>
-                        ) : null}
-                        {b.remote_enabled ? <Badge tone="accent">{t("remote")}</Badge> : null}
-                        {b.requests_enabled ? <Badge tone="accent">{t("requests")}</Badge> : null}
-                      </span>
+                  {distanceText(featured) ? (
+                    <span className="inline-flex h-7 items-center rounded-full bg-grouped-secondary/95 px-3 text-footnote font-semibold text-label tabular shadow-card">
+                      {distanceText(featured)}
                     </span>
-                    <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
+                  ) : null}
+                </span>
+              </span>
+              <span className="block p-5">
+                {position ? <span className="block text-footnote font-semibold text-accent-text uppercase">{t("nearest")}</span> : null}
+                <span className="block truncate text-title3 font-semibold">
+                  {featured.organization.name}
+                  <span className="sr-only"> · {to(featured.organization.type)}</span>
+                </span>
+                <span className="block truncate text-subheadline text-label-secondary">{[featured.name, featured.city].filter(Boolean).join(" · ")}</span>
+                <span className="mt-4 grid grid-cols-3 gap-2">
+                  {[
+                    { label: t("tileWaiting"), value: featured.is_open ? String(featured.waiting) : "—" },
+                    { label: t("tileWait"), value: featured.is_open ? waitText(featured) : "—" },
+                    { label: t("tileRemote"), value: featured.remote_enabled ? t("remoteYes") : t("remoteNo") },
+                  ].map((tile) => (
+                    <span key={tile.label} className="squircle flex min-w-0 flex-col rounded-[var(--radius-lg)] bg-fill-tertiary px-3 py-2.5">
+                      <span className="truncate text-footnote text-label-secondary">{tile.label}</span>
+                      <span className="truncate text-headline tabular">{tile.value}</span>
+                    </span>
+                  ))}
+                </span>
+              </span>
+            </Link>
+          </li>
+          {/* Les suivants en lignes compactes avec vignette. */}
+          {others.length ? (
+            <li className={cn(!mapOnDesktop && "lg:col-span-1 xl:col-span-2")}>
+              <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
+                {others.map((b) => (
+                  <li key={b.id} ref={rowRef(b.id)} className="group/row">
+                    <Link
+                      {...linkProps(b)}
+                      className={cn(
+                        "flex w-full items-center gap-3 pl-4 text-left transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary",
+                        selected === b.id && wide && "bg-accent-tint/60",
+                      )}
+                    >
+                      <span className="relative my-3 block size-14 shrink-0 overflow-hidden rounded-[14px]">
+                        <BranchVisual branch={b} variant="thumb" />
+                      </span>
+                      <span className="relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator">
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span className="truncate text-headline">
+                            {b.organization.name}
+                            <span className="sr-only"> · {to(b.organization.type)}</span>
+                          </span>
+                          <span className="truncate text-subheadline text-label-secondary">
+                            {[b.name, distanceText(b) ? t("distance", { distance: distanceText(b)! }) : b.city].filter(Boolean).join(" · ")}
+                          </span>
+                          <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                            <Badge tone={b.is_open ? "green" : "neutral"}>{b.is_open ? t("open") : t("closed")}</Badge>
+                            {b.is_open ? (
+                              <span className="text-footnote text-label-secondary tabular">
+                                {t("waiting", { count: b.waiting })} · {waitText(b)}
+                              </span>
+                            ) : null}
+                          </span>
+                        </span>
+                        <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ) : null}
         </ul>
       )}
       <p className="px-4 text-footnote text-label-secondary tabular">{t("refreshed", { time })}</p>

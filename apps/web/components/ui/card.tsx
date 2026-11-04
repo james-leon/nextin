@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("squircle rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card", className)}
+      className={cn("squircle rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card", className)}
       {...props}
     />
   );

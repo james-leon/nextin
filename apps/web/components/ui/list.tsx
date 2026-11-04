@@ -31,7 +31,7 @@ export function ListSection({
       <ul
         role={radioGroupLabel ? "radiogroup" : checkboxGroupLabel ? "group" : "list"}
         aria-label={radioGroupLabel ?? checkboxGroupLabel}
-        className={cn("squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary", listClassName)}
+        className={cn("squircle overflow-hidden rounded-[var(--radius-lg)] bg-grouped-secondary", listClassName)}
       >
         {children}
       </ul>

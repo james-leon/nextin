@@ -21,6 +21,7 @@ export function TicketHero({
   state = "waiting",
   calledTitle,
   calledBody,
+  live,
   className,
 }: {
   code: string;
@@ -37,6 +38,8 @@ export function TicketHero({
   state?: "waiting" | "called";
   calledTitle?: string;
   calledBody?: string;
+  /** Badge « En direct » (vert) quand le ticket est suivi en temps réel. */
+  live?: string;
   className?: string;
 }) {
   const called = state === "called";
@@ -44,19 +47,27 @@ export function TicketHero({
     <section
       aria-live="polite"
       className={cn(
-        "squircle relative overflow-hidden rounded-[var(--radius-xl)] px-5 pt-7 pb-5 text-center transition-colors duration-500",
-        called ? "bg-called text-white" : "bg-grouped-secondary shadow-floating",
+        "squircle relative overflow-hidden rounded-[var(--radius-2xl)] px-5 pt-6 pb-5 text-center transition-colors duration-500",
+        called ? "bg-called text-white" : "bg-grouped-secondary shadow-card",
         className,
       )}
     >
-      <p
-        className={cn(
-          "text-footnote font-semibold tracking-[0.08em] uppercase",
-          called ? "text-white" : "text-label-secondary",
-        )}
-      >
-        {service}
-      </p>
+      <div className="flex items-center justify-center gap-2">
+        <p
+          className={cn(
+            "text-footnote font-semibold tracking-[0.08em] uppercase",
+            called ? "text-white" : "text-label-secondary",
+          )}
+        >
+          {service}
+        </p>
+        {live && !called ? (
+          <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-green-tint px-2.5 text-footnote font-semibold text-green-text">
+            <span aria-hidden className="size-1.5 rounded-full bg-green motion-safe:animate-pulse" />
+            {live}
+          </span>
+        ) : null}
+      </div>
       <p className={cn("mt-1 text-hero font-extrabold whitespace-nowrap animate-pop-in", called ? "text-white" : "text-ticket-number")}>
         <span aria-hidden>{code}</span>
         <span className="sr-only">{spellTicketCode(code)}</span>
@@ -71,11 +82,11 @@ export function TicketHero({
       ) : (
         <>
           <dl className="mt-6 grid grid-cols-2 gap-3 text-left">
-            <div className="rounded-[var(--radius-lg)] bg-grouped-tertiary px-3.5 py-3">
+            <div className="squircle rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3.5">
               <dt className="text-subheadline text-label-secondary">{aheadLabel}</dt>
               <dd className="mt-0.5 text-title1 font-bold tabular">{ahead}</dd>
             </div>
-            <div className="rounded-[var(--radius-lg)] bg-grouped-tertiary px-3.5 py-3">
+            <div className="squircle rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3.5">
               <dt className="text-subheadline text-label-secondary">{waitLabel}</dt>
               <dd className="mt-0.5 text-title1 font-bold whitespace-nowrap tabular">{wait}</dd>
             </div>

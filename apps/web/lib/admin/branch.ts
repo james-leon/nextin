@@ -11,7 +11,7 @@ export const getBranch = cache(async (orgId: string, branchId: string) => {
   const supabase = await getSupabaseServerClient();
   const { data: branch } = await supabase
     .from("branches")
-    .select("id, name, address, city, phone_e164, latitude, longitude, active, timezone")
+    .select("id, name, address, city, phone_e164, latitude, longitude, active, timezone, photo_updated_at")
     .eq("id", branchId)
     .eq("organization_id", orgId)
     .maybeSingle();

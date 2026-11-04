@@ -84,6 +84,8 @@ export type NearbyBranch = {
   requests_enabled: boolean;
   waiting: number;
   min_wait_seconds: number | null;
+  /** Photo de l'établissement (chemins du bucket public `branch-photos`), sinon null. */
+  photo?: { cover: string; thumb: string; version: number } | null;
   /** Détail par service : seulement dans `branch_public`. */
   services?: NearbyService[];
 };

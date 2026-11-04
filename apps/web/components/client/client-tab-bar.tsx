@@ -15,6 +15,7 @@ export function ClientTabBar({ active, className }: { active: "scan" | "nearby" 
       className={className}
       prefetch={false}
       sidebar={<Logo />}
+      floating
       items={[
         { key: "scan", label: t("scan"), icon: <ScanLine aria-hidden />, href: "/" },
         { key: "nearby", label: t("nearby"), icon: <MapPin aria-hidden />, href: "/nearby" },
