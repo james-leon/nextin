@@ -248,6 +248,14 @@ function TypographySection() {
           </span>
           <span className="text-hero font-extrabold text-ticket-number">C-047</span>
         </li>
+        <li className="flex flex-col gap-0.5 px-4 py-3 hairline-b">
+          <span className="flex items-baseline justify-between gap-3">
+            <span className="text-footnote font-semibold text-label-secondary">{t("typography.display")}</span>
+            <span className="text-caption text-label-secondary tabular">font-display</span>
+          </span>
+          <span className="font-display text-large-title font-bold tracking-tight">{t("typography.sample")}</span>
+          <span className="text-footnote text-label-secondary">{t("typography.displayNote")}</span>
+        </li>
         {styles.map((s) => (
           <li key={s.key} className="flex flex-col gap-0.5 px-4 py-3 hairline-b last:shadow-none">
             <span className="flex items-baseline justify-between gap-3">
@@ -288,8 +296,9 @@ function ColorsSection() {
       <div className="flex flex-col gap-4">
         <Card>
           <CardTitle className="pb-3">{t("brand")}</CardTitle>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-            <Swatch name={t("navy")} value="#0D2C54" bg="var(--navy)" />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <Swatch name={t("navy")} value="#0D2C54 · #2A6FB5" bg="var(--primary-fill)" />
+            <Swatch name={t("navyDeep")} value="#081D38" bg="var(--navy-deep)" />
             <Swatch name={t("blue")} value="#1A6BB5" bg="var(--accent-fill)" />
             <Swatch name={t("orange")} value="#F58B1F" bg="var(--orange-fill)" />
             <Swatch name={t("green")} value="#2EC04E" bg="var(--green-fill)" />
@@ -330,6 +339,7 @@ function ButtonsSection() {
   return (
     <Section id="buttons" title={tn("buttons")}>
       <Card className="flex flex-col gap-6">
+        <p className="text-subheadline text-label-secondary">{t("roles")}</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Button block>{tm("service.take")}</Button>
           <Button block trailingIcon={<ArrowRight aria-hidden className="size-5 stroke-[2.25]" />}>
@@ -347,6 +357,9 @@ function ButtonsSection() {
           <Button block variant="plain">
             {t("plain")}
           </Button>
+          <a href="#buttons" className="pressable inline-flex min-h-11 items-center justify-center text-subheadline font-semibold text-accent-text">
+            {t("link")}
+          </a>
           <Button block variant="destructive-plain">
             {tm("ticket.cancel")}
           </Button>

@@ -21,6 +21,7 @@ const AUTH_CODES: Record<string, ErrorCode> = {
   email_address_invalid: "email_invalid",
   validation_failed: "email_invalid",
   user_not_found: "code_invalid",
+  same_password: "same_password",
 };
 
 /** Traduit une erreur Supabase Auth (champ `code`) en clé du dictionnaire `errors`. */

@@ -11,6 +11,8 @@ export function PasswordField({
   hint,
   error,
   autoComplete,
+  leading,
+  name = "password",
 }: {
   label: string;
   showLabel: string;
@@ -18,12 +20,16 @@ export function PasswordField({
   hint?: string;
   error?: string;
   autoComplete: "current-password" | "new-password";
+  /** Icône à gauche (cadenas sur l'écran de connexion). */
+  leading?: React.ReactNode;
+  name?: string;
 }) {
   const [visible, setVisible] = useState(false);
   return (
     <TextField
-      name="password"
+      name={name}
       type={visible ? "text" : "password"}
+      leading={leading}
       label={label}
       hint={hint}
       error={error}

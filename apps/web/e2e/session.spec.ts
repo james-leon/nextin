@@ -16,7 +16,7 @@ async function expectLoginWithoutLoop(page: Page) {
   });
   await page.goto("/app");
   await expect(page).toHaveURL(/\/login\?next=%2Fapp$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Connexion" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
   expect(redirects.length).toBeLessThanOrEqual(2);
   // La page de connexion reste stable (aucune redirection vers /app).
   await page.reload();

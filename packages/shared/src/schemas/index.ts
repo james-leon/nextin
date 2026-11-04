@@ -73,6 +73,15 @@ export const loginCodeVerifySchema = z.object({
   next: z.string().optional(),
 });
 
+/** Nouveau mot de passe (après connexion par code, « Mot de passe oublié ? »). */
+export const resetPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    confirm: z.string().max(72),
+    next: z.string().optional(),
+  })
+  .refine((v) => v.password === v.confirm, { message: "password_mismatch", path: ["confirm"] });
+
 export const signupSchema = z.object({
   fullName: z.string().trim().min(2, "name_too_short").max(120),
   email: emailSchema,

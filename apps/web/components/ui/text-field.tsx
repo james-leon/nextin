@@ -10,11 +10,13 @@ type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   error?: string;
   /** Élément à droite dans le champ (ex. bouton afficher le mot de passe). */
   trailing?: ReactNode;
+  /** Icône décorative à gauche dans le champ (enveloppe, cadenas…). */
+  leading?: ReactNode;
 };
 
 /** Champ de saisie iOS : libellé au-dessus, aide ou erreur en dessous, reliés par aria-describedby. */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, hint, error, trailing, className, id: idProp, ...props },
+  { label, hint, error, trailing, leading, className, id: idProp, ...props },
   ref,
 ) {
   const autoId = useId();
@@ -37,9 +39,15 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           "focus-visible:shadow-[0_0_0_3px_var(--accent-tint)] focus-visible:outline-none",
           error && "shadow-[0_0_0_1.5px_var(--red-text)]",
           trailing ? "pr-12" : undefined,
+          leading ? "pl-11" : undefined,
         )}
         {...props}
       />
+      {leading ? (
+        <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-label-secondary [&_svg]:size-[1.125rem] [&_svg]:stroke-[1.75]">
+          {leading}
+        </span>
+      ) : null}
       {trailing ? <div className="absolute inset-y-0 right-0 flex items-center">{trailing}</div> : null}
       </div>
       {error ? (

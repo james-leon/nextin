@@ -15,7 +15,8 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        filled: "bg-accent text-on-accent hover:bg-accent-pressed",
+        // Action principale : bleu nuit (bleu plus clair en sombre) ; les liens et actions secondaires restent bleus.
+        filled: "bg-primary text-on-accent hover:bg-primary-pressed",
         tinted: "bg-accent-tint text-accent-on-tint",
         gray: "bg-fill-tertiary text-accent-on-tint",
         plain: "bg-transparent text-accent-text",
@@ -99,7 +100,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
         variant === "gray" && "bg-fill-tertiary text-accent-on-tint",
         variant === "plain" && "text-accent-text",
         variant === "tinted" && "bg-accent-tint text-accent-on-tint",
-        variant === "filled" && "bg-accent text-on-accent",
+        variant === "filled" && "bg-primary text-on-accent",
         variant === "scanner" && "bg-scanner-control text-white",
         className,
       )}

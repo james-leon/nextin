@@ -185,11 +185,11 @@ export function NavigationBar({
           {/* Un mot très long (nom, numéro) passe à la ligne plutôt que de déborder de l'écran. */}
           {trailingInHeader ? (
             <div className="flex items-end justify-between gap-4">
-              <h1 className="min-w-0 text-large-title font-bold [overflow-wrap:anywhere]">{title}</h1>
+              <h1 className="min-w-0 font-display text-large-title font-bold [overflow-wrap:anywhere]">{title}</h1>
               <div className="flex shrink-0 items-center gap-2 pb-0.5">{actions}</div>
             </div>
           ) : (
-            <h1 className="text-large-title font-bold [overflow-wrap:anywhere]">{title}</h1>
+            <h1 className="font-display text-large-title font-bold [overflow-wrap:anywhere]">{title}</h1>
           )}
           {children}
           <div ref={sentinel} aria-hidden className="h-px" />

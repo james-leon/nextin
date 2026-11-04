@@ -1,11 +1,13 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { absoluteUrl, safeNextPath } from "@nextin/shared";
 import { messages } from "@nextin/shared/i18n";
-import { loginCodeRequestSchema, loginCodeVerifySchema, loginSchema, signupSchema } from "@nextin/shared/schemas";
+import { loginCodeRequestSchema, loginCodeVerifySchema, loginSchema, resetPasswordSchema, signupSchema } from "@nextin/shared/schemas";
 import { fieldErrorsFrom, mapAuthError, type ActionResult } from "@/lib/auth/errors";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { SESSION_ONLY_COOKIE } from "@/lib/auth/session-cookies";
 
 const KNOWN = Object.keys(messages.fr.errors);
 
@@ -23,7 +25,12 @@ export async function signInWithPassword(_prev: ActionResult | null, data: FormD
   const parsed = loginSchema.safeParse(form(data));
   if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
   const { email, password, next, captchaToken } = parsed.data;
-  const supabase = await getSupabaseServerClient();
+  // « Se souvenir de moi » décoché : cookies de session (déconnexion à la fermeture du navigateur).
+  const remember = data.get("remember") === "on";
+  const cookieStore = await cookies();
+  if (remember) cookieStore.delete(SESSION_ONLY_COOKIE);
+  else cookieStore.set(SESSION_ONLY_COOKIE, "1", { path: "/", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  const supabase = await getSupabaseServerClient({ sessionOnly: !remember });
   const { error } = await supabase.auth.signInWithPassword({ email, password, options: captcha(captchaToken) });
   if (error) return { ok: false, error: mapAuthError(error) };
   redirect(safeNextPath(next));
@@ -82,8 +89,22 @@ export async function signUp(
   redirect(target);
 }
 
+/** Nouveau mot de passe d'un compte connecté (parcours « Mot de passe oublié ? » : connexion par code, puis ici). */
+export async function resetPassword(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const parsed = resetPasswordSchema.safeParse(form(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const supabase = await getSupabaseServerClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user || auth.user.is_anonymous) redirect("/login?next=%2Freset-password");
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  // Même mot de passe qu'avant : Supabase refuse (same_password), message dédié du dictionnaire si connu.
+  if (error) return { ok: false, error: mapAuthError(error) };
+  redirect(safeNextPath(parsed.data.next));
+}
+
 export async function signOut(): Promise<void> {
   const supabase = await getSupabaseServerClient();
   await supabase.auth.signOut();
+  (await cookies()).delete(SESSION_ONLY_COOKIE);
   redirect("/login");
 }

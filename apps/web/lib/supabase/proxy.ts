@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@nextin/shared/database";
 import { publicEnv } from "@/lib/env";
+import { SESSION_ONLY_COOKIE, sessionOnly } from "@/lib/auth/session-cookies";
 
 /**
  * Client Supabase du proxy : rafraîchit la session et reporte les cookies mis à jour sur la réponse.
@@ -10,13 +11,14 @@ import { publicEnv } from "@/lib/env";
 export function proxyClient(request: NextRequest) {
   let response = NextResponse.next({ request });
   const env = publicEnv();
+  const browserSession = request.cookies.has(SESSION_ONLY_COOKIE);
   const supabase = createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (toSet) => {
         for (const { name, value } of toSet) request.cookies.set(name, value);
         response = NextResponse.next({ request });
-        for (const { name, value, options } of toSet) response.cookies.set(name, value, options);
+        for (const { name, value, options } of toSet) response.cookies.set(name, value, sessionOnly(options, browserSession));
       },
     },
   });

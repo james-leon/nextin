@@ -3,12 +3,14 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { MailCheck } from "lucide-react";
+import { Lock, Mail, MailCheck, User } from "lucide-react";
 import { signUp } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { Turnstile } from "@/components/security/turnstile";
+import { AuthHeader } from "./auth-header";
 import { FormError } from "./form-error";
+import { LegalFooter } from "./legal-footer";
 import { PasswordField } from "./password-field";
 
 export function SignupForm({ next, siteKey }: { next: string; siteKey: string | null }) {
@@ -37,10 +39,7 @@ export function SignupForm({ next, siteKey }: { next: string; siteKey: string | 
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-large-title font-bold">{t("signupTitle")}</h1>
-        <p className="text-body text-label-secondary">{t("signupSubtitle")}</p>
-      </header>
+      <AuthHeader title={t("signupTitle")} subtitle={t("signupSubtitle")} />
       <form action={action} className="flex flex-col gap-5" noValidate>
         <FormError message={topError} />
         <input type="hidden" name="next" value={next} />
@@ -50,6 +49,7 @@ export function SignupForm({ next, siteKey }: { next: string; siteKey: string | 
           label={t("fullName")}
           placeholder={t("fullNamePlaceholder")}
           autoComplete="name"
+          leading={<User />}
           required
           error={field("fullName")}
         />
@@ -60,6 +60,7 @@ export function SignupForm({ next, siteKey }: { next: string; siteKey: string | 
           placeholder={t("emailPlaceholder")}
           autoComplete="email"
           inputMode="email"
+          leading={<Mail />}
           required
           error={field("email")}
         />
@@ -68,6 +69,7 @@ export function SignupForm({ next, siteKey }: { next: string; siteKey: string | 
           showLabel={t("showPassword")}
           hideLabel={t("hidePassword")}
           hint={t("passwordHint")}
+          leading={<Lock />}
           autoComplete="new-password"
           error={field("password")}
         />
@@ -85,6 +87,7 @@ export function SignupForm({ next, siteKey }: { next: string; siteKey: string | 
           {t("signIn")}
         </Link>
       </p>
+      <LegalFooter />
     </div>
   );
 }

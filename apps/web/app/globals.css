@@ -41,6 +41,10 @@
 
   /* Accents Wintek. *-fill = fond (texte blanc AA), *-text = texte/icône sur fond neutre (AA). */
   --navy: #0d2c54;
+  /* Action principale (alignement SchoolMaster) : bleu nuit en clair ; liens et éléments secondaires en bleu (--accent-*). */
+  --primary-fill: #0d2c54;
+  --primary-fill-pressed: #0a2443;
+  --navy-deep: #081d38;
   --accent-fill: #1a6bb5;
   --accent-fill-pressed: #155894;
   --accent-text: #1a6bb5;
@@ -106,6 +110,9 @@
   --overlay: rgb(0 0 0 / 0.6);
   --accent-fill: #1a6bb5;
   --accent-fill-pressed: #155894;
+  /* En sombre, le bleu nuit disparaît sur le noir : bleu plus clair (texte blanc 5,2:1, bord 3,3:1 sur les cartes). */
+  --primary-fill: #2a6fb5;
+  --primary-fill-pressed: #245f9c;
   --accent-text: #5ea8f0;
   --accent-tint: rgb(94 168 240 / 0.18);
   --accent-on-tint: #6fb2f2;
@@ -145,6 +152,10 @@
 @theme inline {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Segoe UI", Roboto,
     system-ui, sans-serif;
+  /* Police d'affichage des grands titres (alignement SchoolMaster) : police système en attendant le nom confirmé ;
+     `--font-display-brand` sera fourni par next/font une fois la police choisie. */
+  --font-display: var(--font-display-brand, -apple-system), BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", Roboto,
+    system-ui, sans-serif;
   --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
 
   --color-grouped: var(--bg-grouped);
@@ -165,6 +176,9 @@
   --color-pill: var(--material-pill);
   --color-overlay: var(--overlay);
   --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-primary: var(--primary-fill);
+  --color-primary-pressed: var(--primary-fill-pressed);
   --color-ticket-number: var(--ticket-number);
   --color-scanner: var(--scanner-bg);
   --color-scanner-surface: var(--scanner-surface);

@@ -6,7 +6,7 @@ test.describe("M1 — authentification et établissements", () => {
   test("un espace du personnel exige une connexion et revient à la page demandée", async ({ page }) => {
     await page.goto("/app/new");
     await expect(page).toHaveURL(/\/login\?next=%2Fapp%2Fnew$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Connexion" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
   });
 
   test("inscription → création d'établissement → liste, puis déconnexion et reconnexion", async ({ page }) => {
@@ -167,8 +167,75 @@ test.describe("M1 — authentification et établissements", () => {
     await page.getByRole("button", { name: "Recevoir un code par e-mail" }).click();
     await expect(page.getByRole("button", { name: "Envoyer le code" })).toBeVisible();
     await page.getByRole("button", { name: "English" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
     await page.getByRole("button", { name: "Français" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Connexion" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
+  });
+
+  test("se souvenir de moi : décoché, cookies de session seulement", async ({ page, context }) => {
+    const email = uniqueEmail("session");
+    await signUpViaUi(page, { name: "Agent Session", email });
+    await expect(page).toHaveURL(/\/app$/);
+    await context.clearCookies();
+    await page.goto("/login");
+    // Cochée par défaut (comportement précédent : session persistante).
+    const remember = page.getByRole("checkbox", { name: "Se souvenir de moi" });
+    await expect(remember).toBeChecked();
+    await remember.uncheck();
+    await signInViaUi(page, email);
+    await expect(page).toHaveURL(/\/app$/);
+    const auth = (await context.cookies()).filter((c) => c.name.startsWith("sb-"));
+    expect(auth.length).toBeGreaterThan(0);
+    // Cookies de session : aucune date d'expiration (-1), effacés à la fermeture du navigateur.
+    for (const c of auth) expect(c.expires).toBe(-1);
+    // Rafraîchissement par le proxy : toujours sans expiration.
+    await page.goto("/app");
+    for (const c of (await context.cookies()).filter((c) => c.name.startsWith("sb-"))) expect(c.expires).toBe(-1);
+  });
+
+  test("mot de passe oublié : code par e-mail puis nouveau mot de passe", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Mot de passe oublié ?" }).click();
+    await expect(page.getByText("Recevez un code par e-mail pour vous connecter, puis choisissez un nouveau mot de passe.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Envoyer le code" })).toBeVisible();
+
+    // Page « Nouveau mot de passe » : réservée à un compte connecté.
+    await page.goto("/reset-password");
+    await expect(page).toHaveURL(/\/login\?next=%2Freset-password/);
+
+    const email = uniqueEmail("oubli");
+    await signUpViaUi(page, { name: "Agent Oubli", email });
+    await expect(page).toHaveURL(/\/app$/);
+    await page.goto("/reset-password");
+    await expect(page.getByRole("heading", { level: 1, name: "Nouveau mot de passe" })).toBeVisible();
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("Bonaberi2026neuf");
+    await page.getByLabel("Confirmer le mot de passe", { exact: true }).fill("Bonaberi2026autre");
+    await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
+    await expect(page.getByText("Les deux mots de passe ne correspondent pas.")).toBeVisible();
+    // Les champs de mot de passe sont vidés après un refus (formulaire réinitialisé par React).
+    await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("Bonaberi2026neuf");
+    await page.getByLabel("Confirmer le mot de passe", { exact: true }).fill("Bonaberi2026neuf");
+    await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
+    await expect(page).toHaveURL(/\/app$/);
+
+    await page.context().clearCookies();
+    await page.goto("/login");
+    await signInViaUi(page, email, "Bonaberi2026neuf");
+    await expect(page).toHaveURL(/\/app$/);
+  });
+
+  test("CGU et politique de confidentialité : bientôt disponibles", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("link", { name: "CGU" }).click();
+    await expect(page).toHaveURL(/\/legal\/terms$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Conditions générales d'utilisation" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bientôt disponible" })).toBeVisible();
+    await expectAccessible(page);
+    await page.goto("/legal/privacy");
+    await expect(page.getByRole("heading", { level: 1, name: "Politique de confidentialité" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bientôt disponible" })).toBeVisible();
+    expect((await page.goto("/legal/autre"))?.status()).toBe(404);
   });
 });
