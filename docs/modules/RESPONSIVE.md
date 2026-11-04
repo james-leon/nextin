@@ -87,7 +87,7 @@ Captures avant : `docs/captures/responsive/before-p3/` (clair) ; après : `docs/
 - « Choisir un service » : l'interrupteur « Accès prioritaire » est remplacé par une ligne d'information « Enceinte, âgée ou en situation de handicap ? Signalez-vous à l'accueil. » (si l'agence accorde des priorités).
 - Base : `take_ticket` et `take_remote_ticket` refusent tout motif envoyé par un client (`priority_staff_only`, P0422) ; leur corps d'origine devient `take_ticket_core` / `take_remote_ticket_core` (aucun droit d'exécution). Migration `20261111090000_responsive_staff_priority.sql`, test pgTAP dans `m3_queue.test.sql`. L'API `/api/tickets` ne transmet plus de motif.
 - Priorité accordée uniquement par `set_ticket_priority` (journalisé, motif), par l'accueil à la création d'un ticket ou à l'arrivée d'un rendez-vous.
-- Bouton « Prioritaire » en un geste sur chaque ticket en attente, à l'accueil et au poste (« À suivre ») : il ouvre le choix du motif (Grossesse, Personne âgée, Handicap). Composant `PriorityButton`, emplacement `trailing` de `ListRow` (jamais imbriqué dans la ligne cliquable).
+- « Rendre prioritaire » : choix du motif (Grossesse, Personne âgée, Handicap, `PrioritySheet`). Remplacé après le P3 (étape « nom du client ») : plus de bouton sur chaque ligne ; à l'accueil dans la feuille du ticket sélectionné, au poste dans le menu « … » de la ligne (`TicketMenu`, emplacement `trailing` de `ListRow`).
 - « Mon ticket » affiche « Accès prioritaire » dès que la priorité est accordée (mise à jour en direct).
 - Motifs : dictionnaire `priorityReasons` (personnel).
 

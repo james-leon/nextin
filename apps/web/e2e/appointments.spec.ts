@@ -79,7 +79,7 @@ test.describe("M5b — rendez-vous", () => {
     const slots = panel.getByRole("radiogroup", { name: "Créneaux libres" }).getByRole("radio");
     await expect(slots.first()).toBeVisible();
     await slots.first().click();
-    await panel.getByLabel("Repère du patient (facultatif)").fill("M.N.");
+    await panel.getByLabel("Nom du patient (facultatif)").fill("M.N.");
     await panel.getByLabel("WhatsApp du patient (facultatif)").fill("6 77 12 34 56");
     await panel.getByRole("button", { name: "Confirmer le rendez-vous" }).click();
     await expect(panel.getByText("Cochez l'accord du patient pour enregistrer son numéro WhatsApp.")).toBeVisible();
@@ -110,7 +110,7 @@ test.describe("M5b — rendez-vous", () => {
     await page.getByRole("button", { name: "Nouveau rendez-vous" }).click();
     await panel.getByRole("radiogroup", { name: /^Jour · / }).getByRole("radio").nth(1).click();
     await slots.nth(1).click();
-    await panel.getByLabel("Repère du patient (facultatif)").fill("A.T.");
+    await panel.getByLabel("Nom du patient (facultatif)").fill("A.T.");
     await panel.getByRole("button", { name: "Confirmer le rendez-vous" }).click();
     await panel.getByRole("button", { name: "Fait" }).click();
     await detail.getByRole("button", { name: "Reprogrammer" }).click();

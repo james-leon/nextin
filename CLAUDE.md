@@ -9,7 +9,7 @@ Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`.
 - **Un module à la fois** (M1 → M11), arrêt et validation à la fin de chaque module.
 - **Migrations progressives** : un module ne crée que les tables dont il a besoin.
 - Code complet uniquement, pas de TODO non signalé. Messages de commit clairs, en anglais, à l'impératif.
-- Ne jamais annoncer, afficher sur TV ni envoyer le nom d'un client.
+- Nom du client : visible **du seul personnel de l'agence** (RLS). Jamais annoncé, affiché sur l'écran TV, envoyé (WhatsApp / SMS), diffusé en temps réel public, mis dans les statistiques ni dans le journal d'audit.
 
 ## Monorepo
 - `apps/web` — Next.js 16 (App Router, Turbopack), Tailwind v4, composants maison façon shadcn (Radix + cva), next-intl.
@@ -84,7 +84,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Un seul ticket `called`/`serving` par poste (index unique) ; `call_next` refuse `counter_busy` tant que le patient alerté n'est pas traité ; `FOR UPDATE SKIP LOCKED`.
 - Commandes des postes idempotentes via `p_client_op_id` (rejeu hors ligne) ; toute écriture sur `tickets` passe par une RPC.
 - Prise de ticket client : `POST /api/tickets` uniquement (Zod → session cookie ou Bearer → `throttle_ticket_request` → Turnstile → `take_ticket` en service role). Ne jamais exposer `take_ticket` au client.
-- **Priorité accordée par le personnel uniquement** : `set_ticket_priority` (bouton « Prioritaire » `PriorityButton` à l'accueil et au poste), création à l'accueil, arrivée d'un rendez-vous. `take_ticket` / `take_remote_ticket` refusent tout motif (`priority_staff_only`) ; motifs dans `priorityReasons`.
+- **Priorité accordée par le personnel uniquement** : `set_ticket_priority` (« Rendre prioritaire » dans la feuille du ticket à l'accueil, menu « … » au poste, `PrioritySheet`), création à l'accueil, arrivée d'un rendez-vous. `take_ticket` / `take_remote_ticket` refusent tout motif (`priority_staff_only`) ; motifs dans `priorityReasons`.
 - Erreurs métier : message = code (`counter_busy`, `branch_closed`…), SQLSTATE `P04xx` ; `queueErrorCode` / `mapDbError` → dictionnaire `errors`.
 - Estimation : `packages/shared/src/queue/estimate.ts` et `public.estimate_wait_seconds` doivent rester identiques (fixtures partagées, test de parité).
 - Temps réel : topics de `@nextin/shared/queue` (`boardTopic`, `ticketTopic`, `staffTopic`), alimentés par les déclencheurs SQL ; jamais de nom ni d'identifiant client dans une diffusion.
@@ -106,7 +106,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 
 ## Rendez-vous (M5b, `docs/modules/M5b.md`)
 - Créneaux calculés à la volée (`practitioner_free_slots` : horaires − congés − fermetures − rendez-vous actifs − absence − passé), jamais stockés. Chevauchements exclus par la base (`appointments_no_overlap`).
-- Écritures uniquement par RPC (`book_appointment`, `reschedule_appointment`, `cancel_appointment`, `check_in_appointment`, `mark_appointment_no_show`). Repère du patient (`customer_label`, initiales) : jamais annoncé, affiché sur TV ni envoyé.
+- Écritures uniquement par RPC (`book_appointment`, `reschedule_appointment`, `cancel_appointment`, `check_in_appointment`, `mark_appointment_no_show`). Nom du patient (`customer_label`, + `customer_age` / `customer_file_number`) : mêmes règles que le nom du client ci-dessous.
 - Règle d'équité : `pickNextTicket` (`@nextin/shared/appointments`) et `public.fair_pick` doivent rester identiques (`fairness.fixtures.json`, recopié dans `m5b_appointments.test.sql` et vérifié par Vitest).
 - Messages de rendez-vous : contacts et jobs rattachés au rendez-vous (`ticket_id` nul) ; à l'arrivée, le numéro est recopié sur le ticket.
 - **Responsive obligatoire** pour tout nouvel écran : téléphone (360 px+), tablette portrait et paysage, ordinateur (1440 et 1920 px) avec une vraie mise en page (maître-détail, grilles, `useMediaQuery`). Captures dans les cinq tailles (390, 820, 1180, 1440, 1920), critères de `docs/REVUE-RESPONSIVE.md` §4 vérifiés par `e2e/responsive.spec.ts` (ajouter chaque nouvel écran à sa liste).
@@ -164,6 +164,13 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Poste : raccourcis `deskShortcut` / `shortcutTargetAllowed` (`@nextin/shared/desk`, mêmes règles que les boutons), mode compact `useDeskCompact` (`lib/desk/compact.ts`).
 - Présence à distance : code tournant de l'écran TV (`presence_code`, `presence_url`), réglage `remote_presence_tv_only` ; secret par agence jamais lisible (`branch_presence_secrets`).
 - Publicité : agences choisies (`set_campaign_branches`, plafond de la formule), rôle `cashier` (`/ads/redeem` seulement) ; scanner partagé `useQrCamera` (`lib/client/qr-camera.ts`). `ListRow disabled` pour une ligne non cochable. Icône de secteur : `OrgTypeIcon` (`components/ui`).
+
+## Nom du client (`docs/modules/NOM-CLIENT.md`)
+- Réglage par agence (`branch_settings.customer_name_mode` = `off` / `optional` / `required`, `customer_name_extra` = `none` / `age` / `file_number`) ; défaut : obligatoire pour `clinic` / `hospital`, non demandé ailleurs (déclencheur). Règles publiques : `customer_identity_rules(branch)`.
+- Tickets : table à part `ticket_identities` (lecture : personnel de l'agence seulement, ni clients ni console Wintek ; écriture par RPC). `take_ticket` / `take_remote_ticket` / `create_appointment_request` exigent le nom si l'agence le demande (`name_required`) ; l'accueil peut le compléter ensuite (`set_ticket_identity`). L'identité suit la réorientation et l'arrivée d'un rendez-vous ; purgée par `purge_personal_data()`.
+- Validation identique côté navigateur : `parseIdentity` (`@nextin/shared/identity`). Pages client : `CustomerIdentityFields` + `useIdentityValue` (mémorisé sur l'appareil, lecture via `useSyncExternalStore`).
+- Postes : nom sous le numéro et dans « À suivre », « Masquer le nom » et masquage après 2 min sans activité (`useNameMask`). Changement de nom → événement `identity` sur `staffTopic` (sans le nom).
+- Actions secondaires d'un ticket (priorité, nom) : feuille du ticket sélectionné (accueil) ou menu « … » de la ligne (poste, `TicketMenu`) — jamais un bouton par ligne.
 
 ## Revue responsive (`docs/REVUE-RESPONSIVE.md`, notes `docs/modules/RESPONSIVE.md`)
 - Retour de la barre de navigation : libellé entier ou chevron seul (libellé gardé pour les lecteurs d'écran), jamais coupé. Sous-titres de `ListRow` : deux lignes au plus. `SegmentedControl` : une ligne. Rangées de pastilles : `scroll-fade-x`.

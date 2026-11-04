@@ -192,7 +192,7 @@ test.describe("M9 — demande de rendez-vous", () => {
       await page.getByLabel("Numéro WhatsApp", { exact: true }).fill(phone);
     };
     await fillRequest();
-    await page.getByLabel("Initiales (facultatif)").fill("A.B.");
+    await page.getByLabel("Votre nom (facultatif)").fill("A.B.");
     await expectAccessible(page);
     await page.getByRole("button", { name: "Envoyer la demande" }).click();
     await page.waitForURL(/\/r\/[A-Za-z0-9]{22}$/);

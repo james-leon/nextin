@@ -52,7 +52,10 @@ export async function rpc<T>(client: SupabaseClient, fn: string, args: Record<st
  * Établissement de test : agence ouverte en permanence, services « Consultation » (C) et « Pédiatrie » (P),
  * cabinet 3 ouvert pour la consultation. Renvoie le compte du personnel et les codes d'entrée.
  */
-export async function setUpBranch(name = "Clinique E2E") {
+export async function setUpBranch(
+  name = "Clinique E2E",
+  options: { nameMode?: "off" | "optional" | "required"; nameExtra?: "none" | "age" | "file_number" } = {},
+) {
   const staff = anonClient();
   const email = uniqueEmail("queue");
   const { error } = await staff.auth.signUp({ email, password: PASSWORD });
@@ -75,6 +78,13 @@ export async function setUpBranch(name = "Clinique E2E") {
   const counter = await staff.from("counters").insert({ organization_id: orgId, branch_id: branchId, kind: "cabinet", number: 3 }).select("id").single();
   await staff.from("counter_services").insert({ organization_id: orgId, counter_id: counter.data!.id, service_id: consultation });
   await rpc(staff, "open_counter", { p_counter: counter.data!.id });
+  // Nom du client : facultatif par défaut dans les tests (obligatoire pour une clinique en vrai, testé dans names.spec.ts).
+  const settings = await staff
+    .from("branch_settings")
+    .update({ customer_name_mode: options.nameMode ?? "optional", customer_name_extra: options.nameExtra ?? "none" })
+    .eq("branch_id", branchId)
+    .select("branch_id");
+  expect(settings.error).toBeNull();
   const qr = await staff.from("qr_codes").select("token, short_code").eq("branch_id", branchId).eq("active", true).single();
   return {
     staff,
