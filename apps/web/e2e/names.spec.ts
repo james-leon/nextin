@@ -38,6 +38,9 @@ test.describe("Nom du client", () => {
     await expect(page.getByText(`${NAME} · 42 ans`)).toBeVisible();
     await page.getByRole("button", { name: "Alerter le suivant" }).click();
     await expect(page.locator("section").filter({ hasText: "C-001" }).getByText(`${NAME} · 42 ans`).first()).toBeVisible();
+    // Bouton principal stabilisé (« Admettre ») avant l'analyse des contrastes (pas pendant sa transition).
+    await expect(page.getByRole("button", { name: "Admettre" }).first()).toBeEnabled();
+    await page.waitForTimeout(500);
     await expectAccessible(page);
     await expectTouchTargets(page);
 
