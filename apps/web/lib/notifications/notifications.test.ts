@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { sendJob, type ClaimedJob } from "./send";
 import { signMetaPayload, verifyMetaSignature } from "./signature";
 import { cloudWhatsApp, fakeWhatsApp } from "./providers/whatsapp";
-import { consoleEmail } from "./providers/email";
+import { consoleEmail, smtpConfigFromEnv } from "./providers/email";
 import { consoleSms } from "./providers/sms";
 import { fakePush } from "./providers/push";
 import type { TicketView } from "@/lib/client/types";
@@ -221,5 +221,79 @@ describe("demandes de rendez-vous (M9)", () => {
     );
     const params = (p.whatsapp.sendTemplate as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]![3];
     expect(params).toEqual(["DOUALA CLINIC – Akwa", "Praticien en congé", "http://localhost:3000/r/Rq3QpL9vR2mT8wYz4b7K3Q"]);
+  });
+});
+
+describe("demandes vérifiées par e-mail", () => {
+  const request = {
+    id: "r1",
+    status: "unverified" as const,
+    token: "Rq3QpL9vR2mT8wYz4b7K3Q",
+    service: "Consultation",
+    branch: "Akwa",
+    organization: "DOUALA CLINIC",
+    timezone: "Africa/Douala",
+    preferred_starts_at: null,
+    preferred_day: "2026-10-30",
+    decline_reason: null,
+  };
+  const emailContact = { id: "c2", phone_e164: null, email: "awa@exemple.cm", locale: "fr" as const, push_subscription: null, window_expires_at: null, opted_out: false };
+
+  it("code par e-mail : texte et HTML envoyés à l'adresse, texte enregistré sans le code", async () => {
+    const p = providers();
+    const send = vi.spyOn(p.email, "send");
+    const out = await sendJob(
+      job({ event: "request_code", channel: "email", contact: emailContact, payload: { code: "481516" }, token: null, ticket: null, request }),
+      p,
+    );
+    expect(out.status).toBe("sent");
+    const [to, subject, text, html] = send.mock.calls[0]!;
+    expect([to, subject]).toEqual(["awa@exemple.cm", "Votre code de vérification NextIn"]);
+    expect(text).toContain("481516");
+    expect(html).toContain("http://localhost:3000/r/Rq3QpL9vR2mT8wYz4b7K3Q");
+    expect(out.text).not.toContain("481516");
+    expect(out.text).not.toContain("awa@exemple.cm");
+  });
+  it("rappel d'un rendez-vous issu d'une demande : lien vers la page de la demande", async () => {
+    const p = providers();
+    const send = vi.spyOn(p.email, "send");
+    await sendJob(
+      job({
+        event: "appointment_reminder_2h",
+        channel: "email",
+        contact: emailContact,
+        token: null,
+        ticket: null,
+        appointment: {
+          id: "a1",
+          status: "confirmed",
+          starts_at: "2026-11-12T08:30:00Z",
+          timezone: "Africa/Douala",
+          practitioner: "Dr Mbarga",
+          service: "Consultation",
+          branch: "Akwa",
+          organization: "DOUALA CLINIC",
+          request_token: "Rq3QpL9vR2mT8wYz4b7K3Q",
+        },
+      }),
+      p,
+    );
+    const [, subject, text] = send.mock.calls[0]!;
+    expect(subject).toBe("Rappel : rendez-vous aujourd'hui à 09:30");
+    expect(text).toContain("http://localhost:3000/r/Rq3QpL9vR2mT8wYz4b7K3Q");
+  });
+  it("contact sans adresse : rien n'est envoyé", async () => {
+    const out = await sendJob(
+      job({ event: "request_code", channel: "email", contact: { ...emailContact, email: null }, payload: { code: "1" }, token: null, ticket: null, request }),
+      providers(),
+    );
+    expect(out).toMatchObject({ status: "skipped", error: "opted_out" });
+  });
+  it("configuration SMTP : variables manquantes nommées, TLS selon le port", () => {
+    expect(smtpConfigFromEnv({}).missing).toEqual(["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "EMAIL_FROM"]);
+    const brevo = smtpConfigFromEnv({ SMTP_HOST: "smtp-relay.brevo.com", SMTP_USER: "u", SMTP_PASSWORD: "p", EMAIL_FROM: "NextIn <no-reply@x.cm>" });
+    expect(brevo.config).toMatchObject({ port: 587, secure: false });
+    const resend = smtpConfigFromEnv({ SMTP_HOST: "smtp.resend.com", SMTP_PORT: "465", SMTP_USER: "resend", SMTP_PASSWORD: "p", EMAIL_FROM: "a@x.cm" });
+    expect(resend.config).toMatchObject({ port: 465, secure: true });
   });
 });

@@ -42,12 +42,14 @@ export async function POST(request: NextRequest) {
         p_starts_at: (input.startsAt ?? null) as string,
         p_day: (input.day ?? null) as string,
         p_period: (input.period ?? null) as string,
-        p_phone_e164: input.phone,
+        p_phone_e164: (input.phone ?? null) as string,
         p_label: (input.label ?? null) as string,
         p_locale: input.locale,
         p_customer: userId,
         p_customer_age: input.age ?? undefined,
         p_customer_file_number: input.fileNumber ?? undefined,
+        p_email: input.email ?? undefined,
+        p_channel: input.channel,
       }),
   });
   return NextResponse.json(result.body, { status: result.status, headers: { "Cache-Control": "no-store" } });

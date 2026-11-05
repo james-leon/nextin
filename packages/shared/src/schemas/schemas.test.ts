@@ -116,14 +116,29 @@ describe("M9 — ticket à distance et demandes de rendez-vous", () => {
     expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 4.05 }).success).toBe(false);
     expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 95, longitude: 9.7 }).success).toBe(false);
   });
-  it("demande : créneau précis, ou jour + moment ; numéro normalisé", () => {
-    const precise = appointmentRequestSchema.safeParse({ ...ids, startsAt: "2026-10-29T09:00:00+01:00", phone: "6 77 00 09 01" });
+  it("demande WhatsApp : créneau précis, ou jour + moment ; numéro normalisé", () => {
+    const wa = { ...ids, channel: "whatsapp" };
+    const precise = appointmentRequestSchema.safeParse({ ...wa, startsAt: "2026-10-29T09:00:00+01:00", phone: "6 77 00 09 01" });
     expect(precise.success && precise.data.phone).toBe("+237677000901");
-    expect(appointmentRequestSchema.safeParse({ ...ids, day: "2026-10-30", period: "morning", phone: "677000901" }).success).toBe(true);
-    const none = appointmentRequestSchema.safeParse({ ...ids, phone: "677000901" });
+    expect(appointmentRequestSchema.safeParse({ ...wa, day: "2026-10-30", period: "morning", phone: "677000901" }).success).toBe(true);
+    const none = appointmentRequestSchema.safeParse({ ...wa, phone: "677000901" });
     expect(none.success ? null : none.error.issues[0]?.message).toBe("slot_required");
-    const bad = appointmentRequestSchema.safeParse({ ...ids, day: "2026-10-30", period: "morning", phone: "12" });
+    const bad = appointmentRequestSchema.safeParse({ ...wa, day: "2026-10-30", period: "morning", phone: "12" });
     expect(bad.success ? null : bad.error.issues[0]?.message).toBe("phone_invalid");
+    const noPhone = appointmentRequestSchema.safeParse({ ...wa, day: "2026-10-30", period: "morning" });
+    expect(noPhone.success ? null : noPhone.error.issues[0]?.message).toBe("phone_invalid");
+  });
+  it("demande par e-mail (défaut) : adresse exigée et normalisée, téléphone facultatif", () => {
+    const slot = { ...ids, day: "2026-10-30", period: "morning" };
+    const ok = appointmentRequestSchema.safeParse({ ...slot, email: "  Awa.Ngo@Exemple.CM " });
+    expect(ok.success && [ok.data.channel, ok.data.email, ok.data.phone]).toEqual(["email", "awa.ngo@exemple.cm", null]);
+    const withPhone = appointmentRequestSchema.safeParse({ ...slot, email: "awa@exemple.cm", phone: "677000901" });
+    expect(withPhone.success && withPhone.data.phone).toBe("+237677000901");
+    const missing = appointmentRequestSchema.safeParse({ ...slot, phone: "677000901" });
+    expect(missing.success ? null : missing.error.issues[0]?.message).toBe("email_invalid");
+    const bad = appointmentRequestSchema.safeParse({ ...slot, email: "awa@" });
+    expect(bad.success ? null : bad.error.issues[0]?.message).toBe("email_invalid");
+    expect(appointmentRequestSchema.safeParse({ ...slot, email: "a@b.cm", channel: "fax" }).success).toBe(false);
   });
   it("code : six chiffres, espaces tolérés", () => {
     expect(requestCodeSchema.parse("481 516")).toBe("481516");

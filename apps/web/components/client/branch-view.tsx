@@ -251,6 +251,7 @@ export function BranchView({
             <ListSection header={t("requestHeader")} className="lg:hidden">
               <ListRow
                 href={`/b/${branch.id}/rdv`}
+                prefetch={false}
                 icon={
                   <ListIcon>
                     <CalendarPlus />

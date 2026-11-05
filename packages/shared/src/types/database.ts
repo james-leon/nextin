@@ -490,14 +490,14 @@ isOneToOne: false
                   ]
                 },"appointment_requests": {
                   Row: {
-                    "appointment_id": string | null,"branch_id": string,"code_attempts": number,"code_expires_at": string | null,"code_hash": string | null,"codes_sent": number,"created_at": string,"customer_age": number | null,"customer_file_number": string | null,"customer_label": string | null,"customer_user_id": string | null,"decline_reason": string | null,"handled_at": string | null,"handled_by": string | null,"id": string,"locale": string,"organization_id": string,"phone_e164": string | null,"practitioner_id": string | null,"preferred_day": string | null,"preferred_period": string | null,"preferred_starts_at": string | null,"public_token": string,"service_id": string,"status": Database["public"]['Enums']["appointment_request_status"],"updated_at": string,"verified_at": string | null
+                    "appointment_id": string | null,"branch_id": string,"code_attempts": number,"code_expires_at": string | null,"code_hash": string | null,"codes_sent": number,"created_at": string,"customer_age": number | null,"customer_file_number": string | null,"customer_label": string | null,"customer_user_id": string | null,"decline_reason": string | null,"email": string | null,"handled_at": string | null,"handled_by": string | null,"id": string,"locale": string,"organization_id": string,"phone_e164": string | null,"practitioner_id": string | null,"preferred_day": string | null,"preferred_period": string | null,"preferred_starts_at": string | null,"public_token": string,"requester_key": string | null,"service_id": string,"status": Database["public"]['Enums']["appointment_request_status"],"updated_at": string,"verified_at": string | null,"verify_channel": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"branch_id": string,"code_attempts"?: number,"code_expires_at"?: string | null,"code_hash"?: string | null,"codes_sent"?: number,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"customer_user_id"?: string | null,"decline_reason"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"locale"?: string,"organization_id": string,"phone_e164"?: string | null,"practitioner_id"?: string | null,"preferred_day"?: string | null,"preferred_period"?: string | null,"preferred_starts_at"?: string | null,"public_token": string,"service_id": string,"status"?: Database["public"]['Enums']["appointment_request_status"],"updated_at"?: string,"verified_at"?: string | null
+                    "appointment_id"?: string | null,"branch_id": string,"code_attempts"?: number,"code_expires_at"?: string | null,"code_hash"?: string | null,"codes_sent"?: number,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"customer_user_id"?: string | null,"decline_reason"?: string | null,"email"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"locale"?: string,"organization_id": string,"phone_e164"?: string | null,"practitioner_id"?: string | null,"preferred_day"?: string | null,"preferred_period"?: string | null,"preferred_starts_at"?: string | null,"public_token": string,"requester_key"?: never,"service_id": string,"status"?: Database["public"]['Enums']["appointment_request_status"],"updated_at"?: string,"verified_at"?: string | null,"verify_channel"?: string
                   }
                   Update: {
-                    "appointment_id"?: string | null,"branch_id"?: string,"code_attempts"?: number,"code_expires_at"?: string | null,"code_hash"?: string | null,"codes_sent"?: number,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"customer_user_id"?: string | null,"decline_reason"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"locale"?: string,"organization_id"?: string,"phone_e164"?: string | null,"practitioner_id"?: string | null,"preferred_day"?: string | null,"preferred_period"?: string | null,"preferred_starts_at"?: string | null,"public_token"?: string,"service_id"?: string,"status"?: Database["public"]['Enums']["appointment_request_status"],"updated_at"?: string,"verified_at"?: string | null
+                    "appointment_id"?: string | null,"branch_id"?: string,"code_attempts"?: number,"code_expires_at"?: string | null,"code_hash"?: string | null,"codes_sent"?: number,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"customer_user_id"?: string | null,"decline_reason"?: string | null,"email"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"locale"?: string,"organization_id"?: string,"phone_e164"?: string | null,"practitioner_id"?: string | null,"preferred_day"?: string | null,"preferred_period"?: string | null,"preferred_starts_at"?: string | null,"public_token"?: string,"requester_key"?: never,"service_id"?: string,"status"?: Database["public"]['Enums']["appointment_request_status"],"updated_at"?: string,"verified_at"?: string | null,"verify_channel"?: string
                   }
                   Relationships: [
                     {
@@ -528,14 +528,14 @@ isOneToOne: false
                   ]
                 },"appointments": {
                   Row: {
-                    "booked_by": string | null,"branch_id": string,"cancel_reason": string | null,"checked_in_at": string | null,"created_at": string,"customer_age": number | null,"customer_file_number": string | null,"customer_label": string | null,"ends_at": string,"id": string,"locale": string,"organization_id": string,"phone_e164": string | null,"practitioner_id": string,"rescheduled_from_id": string | null,"service_id": string,"starts_at": string,"status": Database["public"]['Enums']["appointment_status"],"ticket_id": string | null,"updated_at": string
+                    "booked_by": string | null,"branch_id": string,"cancel_reason": string | null,"checked_in_at": string | null,"created_at": string,"customer_age": number | null,"customer_file_number": string | null,"customer_label": string | null,"email": string | null,"ends_at": string,"id": string,"locale": string,"organization_id": string,"phone_e164": string | null,"practitioner_id": string,"rescheduled_from_id": string | null,"service_id": string,"starts_at": string,"status": Database["public"]['Enums']["appointment_status"],"ticket_id": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "booked_by"?: string | null,"branch_id": string,"cancel_reason"?: string | null,"checked_in_at"?: string | null,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"ends_at": string,"id"?: string,"locale"?: string,"organization_id": string,"phone_e164"?: string | null,"practitioner_id": string,"rescheduled_from_id"?: string | null,"service_id": string,"starts_at": string,"status"?: Database["public"]['Enums']["appointment_status"],"ticket_id"?: string | null,"updated_at"?: string
+                    "booked_by"?: string | null,"branch_id": string,"cancel_reason"?: string | null,"checked_in_at"?: string | null,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"email"?: string | null,"ends_at": string,"id"?: string,"locale"?: string,"organization_id": string,"phone_e164"?: string | null,"practitioner_id": string,"rescheduled_from_id"?: string | null,"service_id": string,"starts_at": string,"status"?: Database["public"]['Enums']["appointment_status"],"ticket_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "booked_by"?: string | null,"branch_id"?: string,"cancel_reason"?: string | null,"checked_in_at"?: string | null,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"ends_at"?: string,"id"?: string,"locale"?: string,"organization_id"?: string,"phone_e164"?: string | null,"practitioner_id"?: string,"rescheduled_from_id"?: string | null,"service_id"?: string,"starts_at"?: string,"status"?: Database["public"]['Enums']["appointment_status"],"ticket_id"?: string | null,"updated_at"?: string
+                    "booked_by"?: string | null,"branch_id"?: string,"cancel_reason"?: string | null,"checked_in_at"?: string | null,"created_at"?: string,"customer_age"?: number | null,"customer_file_number"?: string | null,"customer_label"?: string | null,"email"?: string | null,"ends_at"?: string,"id"?: string,"locale"?: string,"organization_id"?: string,"phone_e164"?: string | null,"practitioner_id"?: string,"rescheduled_from_id"?: string | null,"service_id"?: string,"starts_at"?: string,"status"?: Database["public"]['Enums']["appointment_status"],"ticket_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1096,14 +1096,14 @@ isOneToOne: false
                   ]
                 },"notification_contacts": {
                   Row: {
-                    "appointment_id": string | null,"appointment_request_id": string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"push_subscription": Json | null,"ticket_id": string | null,"wa_id": string | null,"window_expires_at": string | null
+                    "appointment_id": string | null,"appointment_request_id": string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by": string | null,"consent_source": string,"created_at": string,"email": string | null,"id": string,"locale": string,"opted_out_at": string | null,"organization_id": string,"phone_e164": string | null,"push_subscription": Json | null,"ticket_id": string | null,"wa_id": string | null,"window_expires_at": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
+                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"branch_id": string,"channel": string,"consent_at": string,"consent_by"?: string | null,"consent_source": string,"created_at"?: string,"email"?: string | null,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id": string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
                   }
                   Update: {
-                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
+                    "appointment_id"?: string | null,"appointment_request_id"?: string | null,"branch_id"?: string,"channel"?: string,"consent_at"?: string,"consent_by"?: string | null,"consent_source"?: string,"created_at"?: string,"email"?: string | null,"id"?: string,"locale"?: string,"opted_out_at"?: string | null,"organization_id"?: string,"phone_e164"?: string | null,"push_subscription"?: Json | null,"ticket_id"?: string | null,"wa_id"?: string | null,"window_expires_at"?: string | null
                   }
                   Relationships: [
                     {
@@ -1320,14 +1320,14 @@ isOneToOne: false
                   ]
                 },"platform_settings": {
                   Row: {
-                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"retention_after_suspension_days": number,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
+                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Update: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Relationships: [
                     
@@ -2020,7 +2020,7 @@ isOneToOne: true
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "assert_request_allowed":
-{ Args: { "p_branch": string,"p_exclude": string,"p_phone": string,"p_slot": string }; Returns: undefined
+{ Args: { "p_branch": string,"p_exclude": string,"p_key": string,"p_slot": string }; Returns: undefined
                            },
 "assert_requests_open":
 { Args: { "p_branch": string }; Returns: {
@@ -2301,10 +2301,7 @@ isOneToOne: true
 { Args: { "p_city": string,"p_name": string,"p_phone": string,"p_sector": string }; Returns: string
                            },
 "create_appointment_request":
-{ Args: { "p_branch": string,"p_customer": string,"p_customer_age"?: number,"p_customer_file_number"?: string,"p_day": string,"p_label": string,"p_locale": string,"p_period": string,"p_phone_e164": string,"p_practitioner": string,"p_service": string,"p_starts_at": string }; Returns: Json
-                           },
-"create_appointment_request_core":
-{ Args: { "p_branch": string,"p_customer": string,"p_day": string,"p_label": string,"p_locale": string,"p_period": string,"p_phone_e164": string,"p_practitioner": string,"p_service": string,"p_starts_at": string }; Returns: Json
+{ Args: { "p_branch": string,"p_channel"?: string,"p_customer": string,"p_customer_age"?: number,"p_customer_file_number"?: string,"p_day": string,"p_email"?: string,"p_label": string,"p_locale": string,"p_period": string,"p_phone_e164": string,"p_practitioner": string,"p_service": string,"p_starts_at": string }; Returns: Json
                            },
 "create_branch":
 { Args: { "p_address"?: string,"p_city"?: string,"p_lat"?: number,"p_lng"?: number,"p_name": string,"p_org": string,"p_phone_e164"?: string }; Returns: string
@@ -2645,6 +2642,7 @@ isOneToOne: true
 "customer_age": number | null,
 "customer_file_number": string | null,
 "customer_label": string | null,
+"email": string | null,
 "ends_at": string,
 "id": string,
 "locale": string,
@@ -2736,6 +2734,7 @@ isOneToOne: true
 "customer_label": string | null,
 "customer_user_id": string | null,
 "decline_reason": string | null,
+"email": string | null,
 "handled_at": string | null,
 "handled_by": string | null,
 "id": string,
@@ -2747,10 +2746,12 @@ isOneToOne: true
 "preferred_period": string | null,
 "preferred_starts_at": string | null,
 "public_token": string,
+"requester_key": string | null,
 "service_id": string,
 "status": Database["public"]['Enums']["appointment_request_status"],
 "updated_at": string,
-"verified_at": string | null
+"verified_at": string | null,
+"verify_channel": string
             }
                           SetofOptions: {
         from: "*"
@@ -2816,6 +2817,7 @@ isOneToOne: true
 "customer_label": string | null,
 "customer_user_id": string | null,
 "decline_reason": string | null,
+"email": string | null,
 "handled_at": string | null,
 "handled_by": string | null,
 "id": string,
@@ -2827,10 +2829,12 @@ isOneToOne: true
 "preferred_period": string | null,
 "preferred_starts_at": string | null,
 "public_token": string,
+"requester_key": string | null,
 "service_id": string,
 "status": Database["public"]['Enums']["appointment_request_status"],
 "updated_at": string,
-"verified_at": string | null
+"verified_at": string | null,
+"verify_channel": string
             }
                           SetofOptions: {
         from: "*"
@@ -2890,6 +2894,9 @@ isOneToOne: true
                            },
 "mark_no_show":
 { Args: { "p_client_op_id"?: string,"p_ticket": string }; Returns: Json
+                           },
+"mask_email":
+{ Args: { "p_email": string }; Returns: string
                            },
 "mask_phone":
 { Args: { "p_phone": string }; Returns: string
@@ -3121,6 +3128,9 @@ isOneToOne: true
         isSetofReturn: false
       } },
 "register_push_contact":
+{ Args: { "p_locale"?: string,"p_subscription": Json,"p_token": string }; Returns: Json
+                           },
+"register_request_push_contact":
 { Args: { "p_locale"?: string,"p_subscription": Json,"p_token": string }; Returns: Json
                            },
 "remote_travel_seconds":
@@ -3520,7 +3530,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","ad_creative_kind": "image"|"video","ad_event_type": "impression"|"click"|"skip"|"visit","ad_surface": "tv"|"app"|"game","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","campaign_status": "draft"|"pending_review"|"rejected"|"awaiting_payment"|"active"|"paused"|"ended","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined"|"missed_call"|"missed_call_cancelled","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","ad_creative_kind": "image"|"video","ad_event_type": "impression"|"click"|"skip"|"visit","ad_surface": "tv"|"app"|"game","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","campaign_status": "draft"|"pending_review"|"rejected"|"awaiting_payment"|"active"|"paused"|"ended","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms"|"email","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined"|"missed_call"|"missed_call_cancelled","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -3636,7 +3646,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"ad_creative_kind": ["image", "video"],"ad_event_type": ["impression", "click", "skip", "visit"],"ad_surface": ["tv", "app", "game"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"campaign_status": ["draft", "pending_review", "rejected", "awaiting_payment", "active", "paused", "ended"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined", "missed_call", "missed_call_cancelled"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"ad_creative_kind": ["image", "video"],"ad_event_type": ["impression", "click", "skip", "visit"],"ad_surface": ["tv", "app", "game"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"campaign_status": ["draft", "pending_review", "rejected", "awaiting_payment", "active", "paused", "ended"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms", "email"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined", "missed_call", "missed_call_cancelled"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const

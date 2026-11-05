@@ -14,20 +14,30 @@ import { LiteMessages } from "@/lib/i18n/lite-server";
 type Params = { params: Promise<{ token: string }> };
 const TOKEN = /^[A-Za-z0-9]{22}$/;
 
+/** Valeur `NEXT_PUBLIC_*` lue à l'exécution (accès calculé : jamais figée au build). */
+function runtimeEnv(name: string): string | undefined {
+  return process.env[name];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("client.requestStatus");
   // Lien personnel : jamais indexé, jamais transmis comme référent.
   return { title: t("title"), robots: { index: false }, referrer: "no-referrer" };
 }
 
-/** Suivi d'une demande de rendez-vous (M9) : code de vérification, puis réponse de l'accueil. */
+/** Suivi d'une demande de rendez-vous (M9) : code de vérification (e-mail, WhatsApp ou SMS), puis réponse de l'accueil. */
 export default async function RequestStatusPage({ params }: Params) {
   const { token } = await params;
   const { data } = TOKEN.test(token) ? await callRpc<RequestView | null>("get_appointment_request", { p_token: token }) : { data: null };
   if (data)
     return (
       <LiteMessages paths={["client.request", "client.requestStatus", "errors"]}>
-        <RequestStatusView token={token} initial={data} captchaSiteKey={captchaConfig().siteKey} />
+        <RequestStatusView
+          token={token}
+          initial={data}
+          captchaSiteKey={captchaConfig().siteKey}
+          vapidKey={runtimeEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY") || null}
+        />
       </LiteMessages>
     );
   const t = await getTranslations("client.requestStatus");

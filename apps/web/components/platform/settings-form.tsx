@@ -1,13 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { updateSettings } from "@/app/(staff)/admin/actions";
 import { FormError } from "@/components/auth/form-error";
 import { useFormErrors } from "@/components/admin/use-form-errors";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
+import { ListRow, ListSection } from "@/components/ui/list";
 import { TextField } from "@/components/ui/text-field";
+import { REQUEST_CHANNELS, type RequestChannel } from "@nextin/shared/schemas";
 
 export type PlatformSettingsValues = {
   company_legal_name: string;
@@ -25,6 +27,8 @@ export type PlatformSettingsValues = {
   vat_rate: number;
   invoice_lead_days: number;
   quota_alert_percent: number;
+  /** Canaux des demandes de rendez-vous en ligne, dans l'ordre de préférence. */
+  request_channels: RequestChannel[];
 };
 
 /** Mentions légales des factures et durées du cycle de vie, modifiables sans déploiement. */
@@ -33,6 +37,10 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
   const ta = useTranslations("admin");
   const [state, action, pending] = useActionState(updateSettings, null);
   const { field, top } = useFormErrors(state);
+  const [channels, setChannels] = useState<RequestChannel[]>(values.request_channels ?? ["email"]);
+  // Ordre fixe (e-mail, WhatsApp, SMS) : le premier canal coché est proposé par défaut au patient.
+  const toggle = (c: RequestChannel) =>
+    setChannels((list) => REQUEST_CHANNELS.filter((x) => (x === c ? !list.includes(c) : list.includes(x))));
   const text = (name: string, key: keyof PlatformSettingsValues, label: string, max: number) => (
     <TextField name={name} label={label} defaultValue={String(values[key] ?? "")} maxLength={max} error={field(name)} />
   );
@@ -71,6 +79,16 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
           {num("quotaAlertPercent", "quota_alert_percent", t("settingsFields.quotaAlert"), 50, 100)}
         </div>
       </section>
+      <ListSection
+        header={t("settingsFields.requestChannels")}
+        footer={field("requestChannels") ?? t("settingsFields.requestChannelsFooter")}
+        checkboxGroupLabel={t("settingsFields.requestChannels")}
+      >
+        {REQUEST_CHANNELS.map((c) => (
+          <ListRow key={c} role="checkbox" selected={channels.includes(c)} onClick={() => toggle(c)} title={t(`channels.${c}`)} accessory="check" />
+        ))}
+      </ListSection>
+      <input type="hidden" name="requestChannels" value={channels.join(",")} />
       <BottomBar>
         <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>
           {ta("save")}

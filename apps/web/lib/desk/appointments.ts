@@ -22,6 +22,8 @@ export type Appointment = {
   customer_age?: number | null;
   customer_file_number?: string | null;
   phone_e164: string | null;
+  /** Adresse e-mail d'une demande en ligne (personnel de l'agence uniquement). */
+  email?: string | null;
   locale: "fr" | "en";
   practitioner: { id: string; name: string };
   service: { id: string; name: string; name_en: string | null; prefix: string; color: string };
@@ -108,6 +110,9 @@ export type AppointmentRequest = {
   customer_age?: number | null;
   customer_file_number?: string | null;
   phone_e164: string | null;
+  email?: string | null;
+  /** Canal du code et des réponses (e-mail, WhatsApp, SMS). */
+  verify_channel?: "email" | "whatsapp" | "sms";
   created_at: string;
   verified_at: string | null;
 };

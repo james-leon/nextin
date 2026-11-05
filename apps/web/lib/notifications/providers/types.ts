@@ -17,8 +17,9 @@ export interface SmsProvider {
 }
 
 export interface EmailProvider {
-  readonly name: "console";
-  send(to: string, subject: string, text: string): Promise<SendResult>;
+  readonly name: "console" | "smtp";
+  /** `html` facultatif : version mise en page (le texte brut reste toujours envoyé). */
+  send(to: string, subject: string, text: string, html?: string): Promise<SendResult>;
 }
 
 export type PushSubscriptionJson = { endpoint: string; keys: { p256dh: string; auth: string } };

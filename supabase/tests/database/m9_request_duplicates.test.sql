@@ -6,6 +6,8 @@ set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
 select plan(12);
+-- Parcours WhatsApp testé ici (l'e-mail est le canal par défaut des demandes : request_email.test.sql).
+update public.platform_settings set request_channels = '{whatsapp}';
 -- Nom du client non demandé ici (sujet testé dans customer_names.test.sql).
 alter table public.branch_settings alter column customer_name_mode set default 'off';
 

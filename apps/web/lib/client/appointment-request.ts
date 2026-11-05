@@ -9,7 +9,7 @@ const captchaToken = (captcha: Captcha, action: string) =>
 
 /**
  * Demande de rendez-vous depuis la page publique (M9) : session anonyme (créée au besoin), jeton captcha,
- * puis POST /api/appointment-requests. Renvoie le jeton du lien /r/<jeton> (saisie du code WhatsApp).
+ * puis POST /api/appointment-requests. Renvoie le jeton du lien /r/<jeton> (saisie du code reçu par e-mail ou WhatsApp).
  */
 export async function sendAppointmentRequest(body: Record<string, unknown>, captcha: Captcha): Promise<RequestOutcome> {
   for (let attempt = 0; attempt < 2; attempt++) {

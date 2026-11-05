@@ -20,11 +20,11 @@ export type RequestResponse =
   | { status: number; body: { ok: false; error: ErrorCode } };
 
 const fail = (status: number, error: ErrorCode): RequestResponse => ({ status, body: { ok: false, error } });
-const FORM_ERRORS = new Set(["phone_invalid", "slot_required"]);
+const FORM_ERRORS = new Set(["phone_invalid", "email_invalid", "slot_required"]);
 
 /**
  * Demande de rendez-vous d'un patient (M9) : Zod → session → limitation → captcha → RPC `create_appointment_request`
- * (service role). Le code de vérification part sur WhatsApp ; la page /r/<jeton> le fait saisir.
+ * (service role). Le code de vérification part par e-mail (ou WhatsApp, SMS selon la console) ; la page /r/<jeton> le fait saisir.
  */
 export async function handleCreateRequest(payload: unknown, deps: RequestDeps): Promise<RequestResponse> {
   const parsed = appointmentRequestSchema.safeParse(payload);

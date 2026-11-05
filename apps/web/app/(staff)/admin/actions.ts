@@ -188,6 +188,7 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
       vat_rate: v.vatRate,
       invoice_lead_days: v.invoiceLeadDays,
       quota_alert_percent: v.quotaAlertPercent,
+      request_channels: v.requestChannels,
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };

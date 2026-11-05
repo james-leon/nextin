@@ -2,6 +2,9 @@ import type { BranchBoard } from "@nextin/shared/queue/live";
 import type { PriorityReason, TicketStatus } from "@nextin/shared/queue/live";
 import type { TicketSource } from "@nextin/shared/ticket";
 
+/** Canal du code et des réponses d'une demande de rendez-vous en ligne. */
+export type RequestChannel = "email" | "whatsapp" | "sms";
+
 /** Réponse de `resolve_entry` (QR code ou code court). */
 export type EntryInfo = {
   entry_code: string;
@@ -84,6 +87,8 @@ export type NearbyBranch = {
   is_open: boolean;
   remote_enabled: boolean;
   requests_enabled: boolean;
+  /** Téléphone de l'agence (« Pas d'e-mail ? Appelez l'établissement »). */
+  phone_e164?: string | null;
   waiting: number;
   min_wait_seconds: number | null;
   /** Photo de l'établissement (chemins du bucket public `branch-photos`), sinon null. */
@@ -116,6 +121,8 @@ export type RequestOptions = {
   branch: Omit<NearbyBranch, "services">;
   timezone: string;
   days: number;
+  /** Canaux du code et des réponses (console Wintek), dans l'ordre de préférence. */
+  channels?: RequestChannel[];
   services: {
     id: string;
     name: string;
@@ -139,6 +146,9 @@ export type RequestView = {
   preferred_day: string | null;
   preferred_period: "morning" | "afternoon" | "any" | null;
   phone_masked: string | null;
+  /** Adresse e-mail masquée (« a•••@exemple.cm »). */
+  email_masked?: string | null;
+  verify_channel?: RequestChannel;
   locale: "fr" | "en";
   code_expires_at: string | null;
   decline_reason: string | null;

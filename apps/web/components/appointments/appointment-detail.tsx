@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, CalendarClock, CheckCircle2, MessageCircle, Printer, Repeat2, Ticket, UserRound } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Mail, MessageCircle, Phone, Printer, Repeat2, Ticket, UserRound } from "lucide-react";
 import { localDate } from "@nextin/shared/appointments";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -119,15 +119,41 @@ export function AppointmentDetail({
           subtitle={t("with", { name: a.practitioner.name })}
         />
         <ListRow icon={<ServiceTile letter={a.service.prefix} color={a.service.color} className="size-[1.875rem] rounded-[7px] text-subheadline" />} title={serviceName} />
-        <ListRow
-          icon={
-            <ListIcon color="var(--green-fill)">
-              <MessageCircle />
-            </ListIcon>
-          }
-          title={t("phone")}
-          detail={<span className="tabular">{a.phone_e164 ?? t("noPhoneValue")}</span>}
-        />
+        {a.email ? (
+          // Demande en ligne vérifiée par e-mail : réponse et rappels par e-mail ; le numéro ne sert qu'à l'accueil.
+          <>
+            <ListRow
+              icon={
+                <ListIcon color="var(--accent-fill)">
+                  <Mail />
+                </ListIcon>
+              }
+              title={t("email")}
+              detail={<span className="break-all">{a.email}</span>}
+            />
+            {a.phone_e164 ? (
+              <ListRow
+                icon={
+                  <ListIcon color="var(--fill-secondary)">
+                    <Phone className="text-label" />
+                  </ListIcon>
+                }
+                title={t("phoneOnly")}
+                detail={<span className="tabular">{a.phone_e164}</span>}
+              />
+            ) : null}
+          </>
+        ) : (
+          <ListRow
+            icon={
+              <ListIcon color="var(--green-fill)">
+                <MessageCircle />
+              </ListIcon>
+            }
+            title={t("phone")}
+            detail={<span className="tabular">{a.phone_e164 ?? t("noPhoneValue")}</span>}
+          />
+        )}
         {a.ticket ? (
           <ListRow
             icon={

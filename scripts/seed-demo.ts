@@ -327,8 +327,9 @@ async function ensureDemoRemote(
   }[];
   const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
   const requests = [
-    { practitioner: mbarga.id, startsAt: slots[3]?.starts_at ?? null, day: null, period: null, phone: "+237699001201", label: "Estelle Manga", age: 29 },
-    { practitioner: null, startsAt: null, day: day(2), period: "morning", phone: "+237699001202", label: "Daniel Nkoa", age: 47 },
+    // Demandes vérifiées par e-mail (canal par défaut) ; téléphone facultatif, pour l'accueil.
+    { practitioner: mbarga.id, startsAt: slots[3]?.starts_at ?? null, day: null, period: null, phone: "+237699001201", email: "estelle.manga@exemple.cm", label: "Estelle Manga", age: 29 },
+    { practitioner: null, startsAt: null, day: day(2), period: "morning", phone: null, email: "daniel.nkoa@exemple.cm", label: "Daniel Nkoa", age: 47 },
   ];
   for (const r of requests) {
     const created = (await must(
@@ -339,14 +340,16 @@ async function ensureDemoRemote(
         p_starts_at: r.startsAt as string,
         p_day: r.day as string,
         p_period: r.period as string,
-        p_phone_e164: r.phone,
+        p_phone_e164: r.phone as string,
+        p_email: r.email,
+        p_channel: "email",
         p_label: r.label as string,
         p_locale: "fr",
         p_customer: requester,
         p_customer_age: r.age,
       }),
     )) as unknown as { id: string };
-    // Démo : numéro considéré comme vérifié, aucun code envoyé.
+    // Démo : adresse considérée comme vérifiée, aucun code envoyé.
     await must(db.from("notification_jobs").update({ status: "cancelled", payload: {} }).eq("appointment_request_id", created.id).select("id"));
     await must(
       db.from("appointment_requests").update({ status: "pending", verified_at: new Date().toISOString(), code_hash: null }).eq("id", created.id).select("id"),

@@ -4,6 +4,7 @@ import {
   WHATSAPP_TEMPLATES,
   guardSatisfied,
   isStillRelevant,
+  notificationEmail,
   optInLink,
   optInText,
   parseInbound,
@@ -131,5 +132,42 @@ describe("règles d'envoi", () => {
     expect(isStillRelevant("missed_call_cancelled", "waiting")).toBe(false);
     expect(guardSatisfied("delivered")).toBe(true);
     expect(guardSatisfied("sent")).toBe(false);
+  });
+});
+
+describe("e-mails des demandes de rendez-vous en ligne", () => {
+  const base = {
+    code: "",
+    place: "DOUALA CLINIC – Akwa",
+    ahead: null,
+    waitMinutes: null,
+    counter: null,
+    link: "https://nextin.example/r/Xk3QpL9vR2mT8wYz4bN7Q",
+    lateUntil: null,
+  };
+  it("code de vérification : objet sans le code, code en grand, lien de la demande, aucune balise injectée", () => {
+    const mail = notificationEmail("request_code", "fr", { ...base, otp: "481516", place: "<b>Clinique</b>" });
+    expect(mail.subject).toBe("Votre code de vérification NextIn");
+    expect(mail.subject).not.toContain("481516");
+    expect(mail.text).toContain("481516");
+    expect(mail.text).toContain("10 minutes");
+    expect(mail.html).toContain(">481516<");
+    expect(mail.html).toContain('href="https://nextin.example/r/Xk3QpL9vR2mT8wYz4bN7Q"');
+    expect(mail.html).toContain("&lt;b&gt;Clinique&lt;/b&gt;");
+    expect(mail.html).not.toContain("<b>Clinique</b>");
+  });
+  it("réponse et rappels : date, heure, praticien ; jamais de nom de patient ; anglais", () => {
+    const appointment = { date: "jeudi 12 novembre", time: "09:30", practitioner: "Dr Mbarga" };
+    const accepted = notificationEmail("request_accepted", "fr", { ...base, appointment });
+    expect(accepted.subject).toContain("Rendez-vous confirmé");
+    expect(accepted.text).toContain("jeudi 12 novembre");
+    expect(accepted.text).toContain("Dr Mbarga");
+    expect(notificationEmail("appointment_reminder_2h", "fr", { ...base, appointment }).subject).toContain("09:30");
+    expect(notificationEmail("appointment_reminder_day_before", "en", { ...base, appointment }).subject).toBe(
+      "Reminder: appointment tomorrow at 09:30",
+    );
+    const declined = notificationEmail("request_declined", "fr", { ...base, reason: "Praticien en congé" });
+    expect(declined.text).toContain("Praticien en congé");
+    for (const mail of [accepted, declined]) expect(mail.text).toContain("NextIn par Wintek");
   });
 });

@@ -60,6 +60,8 @@ type RowProps = {
   icon?: ReactNode;
   accessory?: "chevron" | "check" | ReactNode;
   href?: string;
+  /** Préchargement du lien (désactivé sur les pages client : budget de 200 Ko). */
+  prefetch?: boolean;
   /** Lien de téléchargement (fichier) : balise <a download> plutôt qu'une navigation. */
   download?: boolean;
   onClick?: () => void;
@@ -83,6 +85,7 @@ export function ListRow({
   icon,
   accessory,
   href,
+  prefetch,
   download,
   onClick,
   selected,
@@ -135,7 +138,7 @@ export function ListRow({
   if (href) {
     return (
       <li className={liClass}>
-        <Link href={href} aria-current={current ? "page" : undefined} className={cn(base, current ? "bg-accent-tint" : interactive)}>
+        <Link href={href} prefetch={prefetch} aria-current={current ? "page" : undefined} className={cn(base, current ? "bg-accent-tint" : interactive)}>
           {content}
         </Link>
         {side}

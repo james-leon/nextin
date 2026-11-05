@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { CalendarCheck2, CalendarClock, CalendarX2, Clock, MessageCircle, Navigation } from "lucide-react";
+import { CalendarCheck2, CalendarClock, CalendarX2, Clock, Mail, MessageCircle, MessageSquareText, Navigation } from "lucide-react";
 import { directionsUrl } from "@nextin/shared/remote";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,27 @@ import type { RequestView } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { cn } from "@/lib/cn";
 
+const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
 const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
 
 type VerifyResult = RequestView | { error: "code_invalid"; attempts_left: number };
 
 /**
- * Suivi d'une demande de rendez-vous (M9) : saisie du code reçu sur WhatsApp, puis attente de la réponse de
- * l'accueil (actualisée toutes les 20 s), rendez-vous confirmé ou proposé, refus avec motif.
+ * Suivi d'une demande de rendez-vous (M9) : saisie du code reçu par e-mail (ou WhatsApp, SMS), puis attente de la
+ * réponse de l'accueil (actualisée toutes les 20 s), rendez-vous confirmé ou proposé, refus avec motif. Notification du
+ * navigateur proposée en plus de l'e-mail.
  */
-export function RequestStatusView({ token, initial, captchaSiteKey }: { token: string; initial: RequestView; captchaSiteKey: string | null }) {
+export function RequestStatusView({
+  token,
+  initial,
+  captchaSiteKey,
+  vapidKey = null,
+}: {
+  token: string;
+  initial: RequestView;
+  captchaSiteKey: string | null;
+  vapidKey?: string | null;
+}) {
   const t = useLiteT("client.requestStatus");
   const tr = useLiteT("client.request");
   const te = useLiteT("errors");
@@ -95,6 +107,16 @@ export function RequestStatusView({ token, initial, captchaSiteKey }: { token: s
     if (data) setView(data);
   }
 
+  const channel = view.verify_channel ?? "whatsapp";
+  const verifyIcon = channel === "email" ? <Mail /> : channel === "sms" ? <MessageSquareText /> : <MessageCircle />;
+  const verifyTitle = channel === "email" ? t("verifyTitleEmail") : t("verifyTitle");
+  const verifyBody =
+    channel === "email"
+      ? t("verifyBodyEmail", { email: view.email_masked ?? "" })
+      : channel === "sms"
+        ? t("verifyBodySms", { phone: view.phone_masked ?? "" })
+        : t("verifyBody", { phone: view.phone_masked ?? "" });
+  const pendingBody = channel === "email" ? "pendingBodyEmail" : channel === "sms" ? "pendingBodySms" : "pendingBody";
   const hasLocation = view.branch.latitude != null && view.branch.longitude != null;
   const appointment = view.appointment;
   const hero = (() => {
@@ -102,7 +124,7 @@ export function RequestStatusView({ token, initial, captchaSiteKey }: { token: s
       case "unverified":
         return null;
       case "pending":
-        return { icon: <Clock />, tone: "accent", title: t("pendingTitle"), body: t("pendingBody", { place }) };
+        return { icon: <Clock />, tone: "accent", title: t("pendingTitle"), body: t(pendingBody, { place }) };
       case "accepted":
         return { icon: <CalendarCheck2 />, tone: "green", title: t("acceptedTitle"), body: null };
       case "modified":
@@ -124,8 +146,9 @@ export function RequestStatusView({ token, initial, captchaSiteKey }: { token: s
   const details = (
     <ListSection>
       <ListRow title={t("service")} detail={serviceName} />
-      {requested ? <ListRow title={t("requested")} detail={<span className="first-letter:uppercase">{requested}</span>} /> : null}
+      {requested ? <ListRow title={t("requested")} subtitle={<span className="block first-letter:uppercase">{requested}</span>} /> : null}
       {view.practitioner ? <ListRow title={tr("practitionerHeader")} detail={view.practitioner} /> : null}
+      {view.email_masked ? <ListRow title={t("emailLabel")} detail={view.email_masked} /> : null}
       {view.phone_masked ? <ListRow title={t("phoneLabel")} detail={<span className="tabular">{view.phone_masked}</span>} /> : null}
     </ListSection>
   );
@@ -142,14 +165,21 @@ export function RequestStatusView({ token, initial, captchaSiteKey }: { token: s
         <div className="flex flex-col gap-5">
           {view.status === "unverified" ? (
             <section className="squircle flex flex-col gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card" aria-labelledby="verify-title">
-              <span aria-hidden className="flex size-12 items-center justify-center rounded-full bg-green-tint text-green-text [&_svg]:size-6">
-                <MessageCircle />
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-12 items-center justify-center rounded-full [&_svg]:size-6",
+                  channel === "whatsapp" ? "bg-green-tint text-green-text" : "bg-accent-tint text-accent-on-tint",
+                )}
+              >
+                {verifyIcon}
               </span>
               <div>
                 <h1 id="verify-title" className="text-title2 font-bold">
-                  {t("verifyTitle")}
+                  {verifyTitle}
                 </h1>
-                <p className="mt-1 text-callout text-label-secondary">{t("verifyBody", { phone: view.phone_masked ?? "" })}</p>
+                <p className="mt-1 text-callout text-label-secondary">{verifyBody}</p>
+                {channel === "email" ? <p className="mt-2 text-footnote text-label-secondary">{t("verifyHintEmail")}</p> : null}
               </div>
               <form
                 onSubmit={(e) => {
@@ -167,7 +197,7 @@ export function RequestStatusView({ token, initial, captchaSiteKey }: { token: s
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   error={error ?? undefined}
-                  className="[&_input]:text-title2 [&_input]:tracking-[0.3em] [&_input]:tabular"
+                  className="[&_input]:bg-fill-tertiary [&_input]:text-title2 [&_input]:tracking-[0.3em] [&_input]:tabular"
                 />
                 {notice ? (
                   <p role="status" className="px-4 text-footnote text-green-text">
@@ -229,7 +259,12 @@ export function RequestStatusView({ token, initial, captchaSiteKey }: { token: s
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-5">{details}</div>
+        <div className="flex flex-col gap-5">
+          {details}
+          {vapidKey && (view.status === "pending" || view.status === "accepted" || view.status === "modified") ? (
+            <PushAlerts token={token} vapidKey={vapidKey} subscribed={false} target="request" hint={t("pushHint")} />
+          ) : null}
+        </div>
       </div>
 
       {view.status === "pending" || view.status === "unverified" ? (

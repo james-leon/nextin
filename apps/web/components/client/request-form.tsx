@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { CalendarClock, ShieldCheck } from "lucide-react";
+import { CalendarClock, Phone, ShieldCheck } from "lucide-react";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -13,9 +14,12 @@ import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
 import { TextField } from "@/components/ui/text-field";
 import { sendAppointmentRequest } from "@/lib/client/appointment-request";
-import type { RequestOptions } from "@/lib/client/types";
+import type { RequestChannel, RequestOptions } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { cn } from "@/lib/cn";
+
+// Choix du canal : affiché seulement si la console en active plusieurs (chargé à la demande, budget de la page).
+const SegmentedControl = dynamic(() => import("@/components/ui/segmented-control").then((m) => m.SegmentedControl), { ssr: false }) as typeof import("@/components/ui/segmented-control").SegmentedControl;
 
 type Period = "morning" | "afternoon" | "any";
 const PERIODS: Period[] = ["morning", "afternoon", "any"];
@@ -30,8 +34,9 @@ const addDays = (day: string, n: number) => {
 
 /**
  * Demande de rendez-vous (M9, §12.6) : service, praticien ou « peu importe », jour, créneau libre (ou moment de la
- * journée si le patient est flexible), numéro WhatsApp. Téléphone : une colonne et envoi en bas ; ordinateur :
- * choix à gauche, récapitulatif et coordonnées à droite.
+ * journée si le patient est flexible), adresse e-mail (téléphone facultatif, pour l'accueil) ou numéro WhatsApp / SMS
+ * selon les canaux activés dans la console. Téléphone : une colonne et envoi en bas ; ordinateur : choix à gauche,
+ * récapitulatif et coordonnées à droite.
  */
 export function RequestForm({
   options,
@@ -78,6 +83,10 @@ export function RequestForm({
   const [day, setDay] = useState<string>(() => days.find((d) => perDay.get(d)?.length) ?? days[0]!);
   const [slot, setSlot] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
+  const channels: RequestChannel[] = options.channels?.length ? options.channels : ["email"];
+  const [channel, setChannel] = useState<RequestChannel>(channels[0]!);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [identity, setIdentity] = useIdentityValue(identityRules.mode !== "off");
   const [nameError, setNameError] = useState<string | null>(null);
@@ -95,7 +104,7 @@ export function RequestForm({
     : period
       ? `${dayLabel(day)} · ${t(`periods.${period}`)}`
       : null;
-  const ready = !!service && !!when && phone.trim().length > 0;
+  const ready = !!service && !!when && (channel === "email" ? email.trim().length > 0 : phone.trim().length > 0);
 
   function pickService(id: string) {
     setServiceId(id);
@@ -115,6 +124,7 @@ export function RequestForm({
     setPending(true);
     setError(null);
     setPhoneError(null);
+    setEmailError(null);
     const outcome = await sendAppointmentRequest(
       {
         branchId,
@@ -123,7 +133,9 @@ export function RequestForm({
         startsAt: slot,
         day: slot ? null : day,
         period: slot ? null : period,
-        phone,
+        channel,
+        email: channel === "email" ? email : undefined,
+        phone: phone.trim() || undefined,
         label: parsed.identity.name ?? undefined,
         age: parsed.identity.age,
         fileNumber: parsed.identity.fileNumber ?? undefined,
@@ -139,6 +151,7 @@ export function RequestForm({
     setPending(false);
     const message = te.has(outcome.error) ? te(outcome.error) : te("generic");
     if (outcome.error === "phone_invalid") setPhoneError(message);
+    else if (outcome.error === "email_invalid") setEmailError(message);
     else setError(message);
   }
 
@@ -166,22 +179,77 @@ export function RequestForm({
     <span className="tabular">{service && when ? t("summary", { service: serviceName(service), when }) : t("summaryEmpty")}</span>
   );
 
+  const branchPhone = options.branch.phone_e164 ?? null;
   const contact = (
     <section className="flex flex-col gap-3" aria-labelledby="request-contact">
       <h2 id="request-contact" className="sr-only">
         {t("contactHeader")}
       </h2>
-      <TextField
-        label={t("phone")}
-        type="tel"
-        inputMode="tel"
-        autoComplete="tel-national"
-        placeholder={t("phonePlaceholder")}
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        error={phoneError ?? undefined}
-        hint={t("contactFooter")}
-      />
+      {channels.length > 1 ? (
+        <div className="flex flex-col gap-1.5">
+          <p className="px-4 text-footnote text-label-secondary uppercase" aria-hidden>
+            {t("channelHeader")}
+          </p>
+          <SegmentedControl
+            label={t("channelHeader")}
+            options={channels.map((c) => ({ value: c, label: t(`channels.${c}`) }))}
+            value={channel}
+            onValueChange={(c) => {
+              setChannel(c);
+              setPhoneError(null);
+              setEmailError(null);
+            }}
+          />
+        </div>
+      ) : null}
+      {channel === "email" ? (
+        <>
+          <TextField
+            label={t("email")}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder={t("emailPlaceholder")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={emailError ?? undefined}
+            hint={t("emailFooter")}
+          />
+          {branchPhone ? (
+            <Button asChild variant="plain" className="self-start">
+              <a href={`tel:${branchPhone}`}>
+                <Phone aria-hidden className="size-5" />
+                {t("callBranch")}
+              </a>
+            </Button>
+          ) : null}
+          <TextField
+            label={t("phoneOptional")}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel-national"
+            placeholder={t("phonePlaceholder")}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            error={phoneError ?? undefined}
+            hint={t("phoneOptionalHint")}
+          />
+        </>
+      ) : (
+        <TextField
+          label={channel === "sms" ? t("phoneSms") : t("phone")}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel-national"
+          placeholder={t("phonePlaceholder")}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          error={phoneError ?? undefined}
+          hint={channel === "sms" ? t("smsFooter") : t("contactFooter")}
+        />
+      )}
       <CustomerIdentityFields
         rules={identityRules}
         value={identity}
@@ -192,7 +260,7 @@ export function RequestForm({
         nameError={nameError ?? undefined}
       />
       <CalloutCard icon={<ShieldCheck />} tone="green">
-        {t("privacy")}
+        {channel === "email" ? t("privacyEmail") : t("privacy")}
       </CalloutCard>
     </section>
   );

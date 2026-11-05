@@ -292,6 +292,10 @@ export type RequestPeriod = (typeof REQUEST_PERIODS)[number];
  * Demande de rendez-vous (route POST /api/appointment-requests) : créneau précis libre, ou jour + moment de la
  * journée ; praticien facultatif (« peu importe ») ; numéro WhatsApp camerounais, vérifié ensuite par code.
  */
+/** Canaux du code de vérification et des réponses d'une demande en ligne (activés dans la console Wintek). */
+export const REQUEST_CHANNELS = ["email", "whatsapp", "sms"] as const;
+export type RequestChannel = (typeof REQUEST_CHANNELS)[number];
+
 export const appointmentRequestSchema = z
   .object({
     branchId: z.uuid(),
@@ -300,10 +304,22 @@ export const appointmentRequestSchema = z
     startsAt: z.iso.datetime({ offset: true }).nullable().optional(),
     day: z.iso.date().nullable().optional(),
     period: z.enum(REQUEST_PERIODS).nullable().optional(),
+    // Canal du code et des réponses : e-mail par défaut (adresse exigée, téléphone facultatif pour l'accueil).
+    channel: z.enum(REQUEST_CHANNELS).default("email"),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .max(254, "email_invalid")
+      .optional()
+      .transform((v) => v || null)
+      .pipe(z.email("email_invalid").nullable()),
     phone: z
       .string()
       .trim()
+      .optional()
       .transform((v, ctx) => {
+        if (!v) return null;
         const e164 = normalizeCameroonPhone(v);
         if (!e164) {
           ctx.addIssue({ code: "custom", message: "phone_invalid" });
@@ -320,10 +336,12 @@ export const appointmentRequestSchema = z
   })
   .superRefine((v, ctx) => {
     if (!v.startsAt && !(v.day && v.period)) ctx.addIssue({ code: "custom", message: "slot_required", path: ["startsAt"] });
+    if (v.channel === "email" && !v.email) ctx.addIssue({ code: "custom", message: "email_invalid", path: ["email"] });
+    if (v.channel !== "email" && !v.phone) ctx.addIssue({ code: "custom", message: "phone_invalid", path: ["phone"] });
   });
 export type AppointmentRequestInput = z.infer<typeof appointmentRequestSchema>;
 
-/** Code de vérification reçu sur WhatsApp (6 chiffres, espaces tolérés). */
+/** Code de vérification reçu par e-mail, WhatsApp ou SMS (6 chiffres, espaces tolérés). */
 export const requestCodeSchema = z
   .string()
   .transform((v) => v.replace(/\s/g, ""))
@@ -363,6 +381,8 @@ export const announcementSettingsFormSchema = z
 /** M7 — abonnement web push depuis « Mon ticket » (jeton du lien + abonnement du navigateur). */
 export const pushSubscribeSchema = z.object({
   token: z.string().regex(/^[A-Za-z0-9]{22}$/),
+  // Lien personnel d'un ticket (défaut) ou d'une demande de rendez-vous en ligne.
+  target: z.enum(["ticket", "request"]).default("ticket"),
   locale: z.enum(["fr", "en"]).default("fr"),
   subscription: z.object({
     endpoint: z.url().startsWith("https://").max(1000),
@@ -599,6 +619,11 @@ export const platformSettingsFormSchema = z.object({
   vatRate: z.coerce.number().min(0).max(50),
   invoiceLeadDays: z.coerce.number().int().min(1).max(30),
   quotaAlertPercent: z.coerce.number().int().min(50).max(100),
+  // Canaux des demandes de rendez-vous en ligne (liste séparée par des virgules, dans l'ordre de préférence).
+  requestChannels: z
+    .string()
+    .transform((v) => [...new Set(v.split(",").map((c) => c.trim()).filter(Boolean))])
+    .pipe(z.array(z.enum(REQUEST_CHANNELS)).min(1, "channels_required").max(3)),
 });
 
 /* ─── M10b : publicité ──────────────────────────────────────────────────── */

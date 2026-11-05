@@ -164,7 +164,7 @@ test.describe("M9 — ticket à distance", () => {
 });
 
 test.describe("M9 — demande de rendez-vous", () => {
-  test("patient : demande + code WhatsApp ; accueil : confirmation en un clic ; réponse envoyée", async ({ page }, info) => {
+  test("patient : demande + code par e-mail ; accueil : confirmation en un clic ; réponse et rappels par e-mail", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "accueil sur ordinateur (le patient utilise la même page responsive)");
     test.setTimeout(60_000);
     const b = await remoteBranch(`Demandes ${Date.now()}`);
@@ -184,22 +184,27 @@ test.describe("M9 — demande de rendez-vous", () => {
     expect(error).toBeNull();
 
     // Patient : demain, premier créneau, Dr Abena.
-    const phone = `699${String(Date.now()).slice(-6)}`;
+    const email = `patient.${Date.now()}@exemple.cm`;
     const fillRequest = async () => {
       await page.goto(`/b/${b.branchId}`);
       await page.getByRole("link", { name: "Demander un rendez-vous" }).click();
       await page.getByRole("radio", { name: "Dr Abena" }).click();
       await page.getByRole("radiogroup", { name: "Jour" }).getByRole("radio").nth(1).click();
       await page.getByRole("radiogroup", { name: "Créneau" }).getByRole("radio", { name: "08:30" }).click();
-      await page.getByLabel("Numéro WhatsApp", { exact: true }).fill(phone);
+      await page.getByLabel("Adresse e-mail").fill(email);
     };
     await fillRequest();
+    // E-mail par défaut (WhatsApp désactivé dans la console) : texte clair, téléphone facultatif pour l'accueil.
+    await expect(page.getByText("Vous recevrez un code, puis la réponse de l'accueil par e-mail. Pas d'e-mail ? Appelez l'établissement.")).toBeVisible();
+    await page.getByLabel("Téléphone (facultatif)").fill(`699${String(Date.now()).slice(-6)}`);
     await page.getByLabel("Votre nom (facultatif)").fill("A.B.");
     await expectAccessible(page);
     await page.getByRole("button", { name: "Envoyer la demande" }).click();
     await page.waitForURL(/\/r\/[A-Za-z0-9]{22}$/);
     const token = page.url().split("/r/")[1]!;
-    await expect(page.getByRole("heading", { name: "Vérifiez votre numéro" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Vérifiez votre adresse e-mail" })).toBeVisible();
+    // Adresse masquée sur la page du patient.
+    await expect(page.getByText(`Saisissez le code à 6 chiffres envoyé à ${email[0]}•••@exemple.cm.`)).toBeVisible();
     await expectAccessible(page);
 
     const { data: request } = await admin.from("appointment_requests").select("id").eq("public_token", token).single();
@@ -224,7 +229,8 @@ test.describe("M9 — demande de rendez-vous", () => {
     const { data: jobs } = await admin.from("notification_jobs").select("payload").eq("appointment_request_id", request!.id);
     expect(jobs!.every((j) => !("code" in (j.payload as object)))).toBe(true);
 
-    // Même numéro, même créneau : refusé, message clair, aucune nouvelle demande.
+    await expect(page.getByText("L'accueil de", { exact: false }).filter({ hasText: "vous répond par e-mail" })).toBeVisible();
+    // Même adresse, même créneau : refusé, message clair, aucune nouvelle demande.
     await fillRequest();
     await page.getByRole("button", { name: "Envoyer la demande" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "Vous avez déjà une demande en attente pour ce créneau." }).first()).toBeVisible();
@@ -242,6 +248,8 @@ test.describe("M9 — demande de rendez-vous", () => {
     await signInViaUi(staffPage, b.email);
     await staffPage.getByRole("region", { name: "Demandes de rendez-vous" }).getByRole("button", { name: /08:30/ }).click();
     await expect(staffPage.getByText("A.B.", { exact: true })).toBeVisible();
+    // Accueil : adresse en clair (personnel de l'agence uniquement).
+    await expect(staffPage.getByText(email, { exact: true })).toBeVisible();
     await expectAccessible(staffPage);
     await staffPage.getByRole("button", { name: "Confirmer · 08:30 avec Dr Abena" }).click();
     await expect(staffPage.getByText("Aucune demande en attente.")).toBeVisible();
@@ -254,9 +262,18 @@ test.describe("M9 — demande de rendez-vous", () => {
     expect(accepted!.status).toBe("accepted");
     const { data: answer } = await admin
       .from("notification_jobs")
-      .select("event")
+      .select("event, channel, status")
       .eq("appointment_id", accepted!.appointment_id!)
-      .eq("event", "request_accepted");
-    expect(answer!.length).toBe(1);
+      .in("event", ["request_accepted", "appointment_reminder_2h"]);
+    // Réponse de l'accueil par e-mail (envoyée par le faux fournisseur console) ; rappel programmé par e-mail.
+    expect(answer!.filter((j) => j.event === "request_accepted").map((j) => j.channel)).toEqual(["email"]);
+    expect(answer!.every((j) => j.channel === "email")).toBe(true);
+    // Aucun message WhatsApp pour le numéro donné à l'accueil.
+    const { count: whatsapp } = await admin
+      .from("notification_jobs")
+      .select("id", { count: "exact", head: true })
+      .or(`appointment_request_id.eq.${request!.id},appointment_id.eq.${accepted!.appointment_id!}`)
+      .eq("channel", "whatsapp");
+    expect(whatsapp).toBe(0);
   });
 });

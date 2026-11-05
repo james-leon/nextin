@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarCheck2, CalendarClock, Inbox, Phone } from "lucide-react";
+import { CalendarCheck2, CalendarClock, Inbox, Mail, Phone } from "lucide-react";
 import { formatCameroonPhone } from "@nextin/shared";
 import { addDays, localDate } from "@nextin/shared/appointments";
 import { staffTopic } from "@nextin/shared/queue/realtime";
@@ -31,8 +31,8 @@ function inPeriod(iso: string, period: AppointmentRequest["preferred_period"], t
 
 /**
  * Demandes de rendez-vous des patients (M9, accueil) : confirmer en un clic le créneau demandé (ou le premier
- * créneau libre du moment demandé), proposer un autre créneau, ou refuser avec un motif. La réponse part sur
- * WhatsApp. Ordinateur : liste et détail côte à côte ; téléphone : liste et feuille.
+ * créneau libre du moment demandé), proposer un autre créneau, ou refuser avec un motif. La réponse part
+ * par e-mail ou sur WhatsApp. Ordinateur : liste et détail côte à côte ; téléphone : liste et feuille.
  */
 export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onBooked: (date: string) => void }) {
   const t = useTranslations("appointments.requests");
@@ -290,6 +290,14 @@ function RequestDetail({
 
       <ListSection>
         {personLine(r, ti) ? <ListRow title={t("label")} detail={personLine(r, ti)} /> : null}
+        {r.email ? (
+          <ListRow
+            title={t("email")}
+            detail={<span className="break-all">{r.email}</span>}
+            href={`mailto:${r.email}`}
+            accessory={<Mail aria-hidden className="size-4 text-accent-text" />}
+          />
+        ) : null}
         {r.phone_e164 ? (
           <ListRow
             title={t("phone")}
@@ -317,7 +325,7 @@ function RequestDetail({
           <Button block onClick={() => accept(suggestion.practitioner_id, suggestion.starts_at)} loading={pending === suggestion.starts_at} loadingLabel={t("confirming")}>
             {t("confirm", { time: timeOf(suggestion.starts_at, locale, tz), name: name(suggestion.practitioner_id) })}
           </Button>
-          <p className="px-4 text-center text-footnote text-label-secondary">{t("confirmHint")}</p>
+          <p className="px-4 text-center text-footnote text-label-secondary">{t("confirmHint", { channel: r.verify_channel ?? "whatsapp" })}</p>
         </div>
       ) : (
         <CalloutCard icon={<CalendarClock />} tone="orange" role="status">
@@ -391,7 +399,7 @@ function RequestDetail({
           ) : (
             <p className="px-4 text-subheadline text-label-secondary">{ta("noSlots")}</p>
           )}
-          <p className="px-4 text-footnote text-label-secondary">{t("otherHint")}</p>
+          <p className="px-4 text-footnote text-label-secondary">{t("otherHint", { channel: r.verify_channel ?? "whatsapp" })}</p>
         </section>
       ) : null}
 
@@ -403,7 +411,7 @@ function RequestDetail({
           open
           onOpenChange={setDeclineOpen}
           title={t("declineTitle")}
-          description={t("declineBody")}
+          description={t("declineBody", { channel: r.verify_channel ?? "whatsapp" })}
           cancelLabel={t("keep")}
           actionLabel={t("decline")}
           destructive

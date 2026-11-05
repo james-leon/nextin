@@ -43,7 +43,7 @@ export const APPOINTMENT_EVENTS: readonly NotifEvent[] = [
 /** Messages d'une demande de rendez-vous (contact rattaché à la demande, ni ticket ni rendez-vous). */
 export const REQUEST_EVENTS: readonly NotifEvent[] = ["request_code", "request_declined"];
 export type NotifEvent = (typeof NOTIF_EVENTS)[number];
-export type NotifChannel = "whatsapp" | "push" | "sms";
+export type NotifChannel = "whatsapp" | "push" | "sms" | "email";
 
 /** Données d'un message, calculées au moment de l'envoi. */
 export type NotificationData = {

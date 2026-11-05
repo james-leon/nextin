@@ -2,6 +2,7 @@ import { absoluteUrl } from "@nextin/shared";
 import { messages } from "@nextin/shared/i18n";
 import {
   WHATSAPP_TEMPLATES,
+  notificationEmail,
   guardSatisfied,
   isStillRelevant,
   pushMessage,
@@ -35,6 +36,8 @@ export type ClaimedJob = {
   contact: {
     id: string;
     phone_e164: string | null;
+    /** Adresse e-mail (demande de rendez-vous en ligne vérifiée par e-mail). */
+    email?: string | null;
     locale: NotifLocale;
     push_subscription: PushSubscriptionJson | null;
     window_expires_at: string | null;
@@ -71,6 +74,8 @@ export type AppointmentNotice = {
   service: string;
   branch: string;
   organization: string;
+  /** Rendez-vous issu d'une demande en ligne : jeton de la page de la demande (lien des messages). */
+  request_token?: string | null;
 };
 
 export type Outcome = { status: "sent" | "failed" | "skipped"; retryIn?: number | null; messageId?: string; error?: string; template?: string; text?: string };
@@ -104,7 +109,7 @@ export function notificationData(job: ClaimedJob): NotificationData {
       ahead: null,
       waitMinutes: null,
       counter: null,
-      link: absoluteUrl("/"),
+      link: a.request_token ? absoluteUrl(`/r/${a.request_token}`) : absoluteUrl("/"),
       lateUntil: null,
       appointment: {
         date: new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: a.timezone }).format(at),
@@ -174,6 +179,12 @@ export async function sendJob(
       if (contact.opted_out || !contact.phone_e164) return { status: "skipped", error: "opted_out" };
       const text = smsText(job.event, locale, data);
       return fromResult(await providers.sms.send(contact.phone_e164, text), job.attempt, { text: saved(text) });
+    }
+    case "email": {
+      if (contact.opted_out || !contact.email) return { status: "skipped", error: "opted_out" };
+      const mail = notificationEmail(job.event, locale, data);
+      const r = await providers.email.send(contact.email, mail.subject, mail.text, mail.html);
+      return fromResult(r, job.attempt, { text: saved(`${mail.subject}\n\n${mail.text}`) });
     }
     case "push": {
       if (contact.opted_out || !contact.push_subscription) return { status: "skipped", error: "opted_out" };

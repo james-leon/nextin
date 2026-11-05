@@ -16,11 +16,25 @@ function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
 }
 
 /**
- * Web push en complément de WhatsApp : notification sur ce téléphone même page fermée.
+ * Web push en complément de WhatsApp ou de l'e-mail : notification sur ce téléphone même page fermée.
  * Affiché seulement si le navigateur le permet (HTTPS, service worker actif ; sur iPhone, app installée).
  */
-export function PushAlerts({ token, vapidKey, subscribed }: { token: string; vapidKey: string; subscribed: boolean }) {
-  const t = useLiteT("client.ticket");
+export function PushAlerts({
+  token,
+  vapidKey,
+  subscribed,
+  target = "ticket",
+  hint,
+}: {
+  token: string;
+  vapidKey: string;
+  subscribed: boolean;
+  /** Lien personnel d'un ticket, ou d'une demande de rendez-vous en ligne (textes de `client.requestStatus`). */
+  target?: "ticket" | "request";
+  /** Précision sous le bouton (affichée seulement quand le bouton l'est). */
+  hint?: string;
+}) {
+  const t = useLiteT(target === "request" ? "client.requestStatus" : "client.ticket");
   const locale = useLiteLocale();
   const [state, setState] = useState<State>("unsupported");
 
@@ -47,7 +61,7 @@ export function PushAlerts({ token, vapidKey, subscribed }: { token: string; vap
       const res = await fetch("/api/notifications/push", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, locale, subscription: subscription.toJSON() }),
+        body: JSON.stringify({ token, target, locale, subscription: subscription.toJSON() }),
       });
       setState(res.ok ? "on" : "error");
     } catch {
@@ -70,6 +84,7 @@ export function PushAlerts({ token, vapidKey, subscribed }: { token: string; vap
       <Button block variant="plain" leadingIcon={<BellRing />} onClick={enable} disabled={state === "pending"}>
         {t("push")}
       </Button>
+      {hint ? <p className="px-4 text-center text-footnote text-label-secondary">{hint}</p> : null}
       {state === "error" ? (
         <p role="alert" className="text-footnote text-red-text">
           {t("pushError")}

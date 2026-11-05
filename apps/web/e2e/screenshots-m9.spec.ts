@@ -70,18 +70,18 @@ for (const size of Object.keys(SIZES) as Size[]) {
         await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le ticket" }).click();
         await page.getByText("Ticket annulé").waitFor();
 
-        // Demande de rendez-vous : formulaire, code WhatsApp, demande envoyée.
+        // Demande de rendez-vous : formulaire, code par e-mail, demande envoyée.
         await page.goto(`${branchUrl}/rdv`);
         await page.getByRole("heading", { name: "Demande de rendez-vous" }).waitFor();
         const day = page.getByRole("radiogroup", { name: "Jour" }).getByRole("radio").filter({ hasNotText: "Complet" }).first();
         await day.click();
         await page.getByRole("radiogroup", { name: "Créneau" }).getByRole("radio").nth(2).click();
-        await page.getByLabel("Numéro WhatsApp", { exact: true }).fill(`699${String(Date.now()).slice(-6)}`);
+        await page.getByLabel("Adresse e-mail").fill(`capture.${Date.now()}@exemple.cm`);
         await page.getByLabel("Initiales (facultatif)").fill("M.E.");
         await shot(page, `05-request-form-${size}-${theme}`);
         await page.getByRole("button", { name: "Envoyer la demande" }).last().click();
         await page.waitForURL(/\/r\//);
-        await page.getByRole("heading", { name: "Vérifiez votre numéro" }).waitFor();
+        await page.getByRole("heading", { name: "Vérifiez votre adresse e-mail" }).waitFor();
         await shot(page, `06-request-verify-${size}-${theme}`);
         const token = new URL(page.url()).pathname.split("/").pop()!;
         const { data: request } = await admin().from("appointment_requests").select("id").eq("public_token", token).single();
