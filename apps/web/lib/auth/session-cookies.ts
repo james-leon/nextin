@@ -15,3 +15,14 @@ export function sessionOnly<T extends CookieOptions>(options: T | undefined, ena
   delete rest.expires;
   return rest;
 }
+
+/**
+ * Attributs des cookies de session Supabase : `Secure` dès que l'application est servie en HTTPS (jamais envoyés en
+ * clair), `SameSite=Lax`. En local (http), sans `Secure` pour que le test sur téléphone en Wi-Fi fonctionne.
+ */
+export function sessionCookieOptions(https: boolean) {
+  return { path: "/", sameSite: "lax" as const, secure: https };
+}
+
+/** HTTPS côté serveur : déduit de APP_URL (jamais d'URL en dur). */
+export const serverUsesHttps = () => (process.env.APP_URL ?? "").startsWith("https://");

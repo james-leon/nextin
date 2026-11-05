@@ -12,6 +12,14 @@ import { captchaConfig } from "@/lib/security/captcha";
 import { fetchIdentityRules } from "@/lib/client/identity-rules";
 import { LiteMessages } from "@/lib/i18n/lite-server";
 
+// Erreurs possibles d'un ticket à distance pris depuis cette page (les autres codes affichent « generic ») :
+// le dictionnaire entier pèserait sur le budget de 200 Ko.
+const BRANCH_ERRORS = [
+  "generic", "network", "captcha_failed", "rate_limited", "not_found", "invalid_entry", "branch_closed", "service_closed",
+  "remote_not_allowed", "location_required", "too_far", "active_ticket_exists", "monthly_quota_reached",
+  "subscription_read_only", "feature_unavailable", "name_required", "identity_invalid",
+].map((code) => `errors.${code}`);
+
 type Params = { params: Promise<{ branchId: string }> };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -32,7 +40,7 @@ export default async function BranchPage({ params }: Params) {
   const branch = await load((await params).branchId);
   if (branch)
     return (
-      <LiteMessages paths={["client.branch", "client.service", "errors", "orgTypes", "weekdays", "identity"]}>
+      <LiteMessages paths={["client.branch", "client.service", ...BRANCH_ERRORS, "orgTypes", "weekdays", "identity"]}>
         <BranchView branch={branch} captchaSiteKey={captchaConfig().siteKey} identityRules={await fetchIdentityRules(branch.id)} />
       </LiteMessages>
     );

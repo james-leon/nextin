@@ -19,6 +19,13 @@ export async function POST(request: NextRequest) {
 
   if (view.data.payment?.status === "pending") {
     const admin = getSupabaseAdminClient();
+    // Revérification auprès du fournisseur : 20 par minute et par lien au plus (la page interroge toutes les 3 s).
+    const { data: allowed } = await admin.rpc("check_rate_limit", {
+      p_key: `pay_status:${parsed.data.token}`,
+      p_max: 20,
+      p_window: "1 minute",
+    });
+    if (allowed !== true) return NextResponse.json({ ok: true, view: view.data }, { headers: { "Cache-Control": "no-store" } });
     const { data: payment } = await admin
       .from("payments")
       .select("external_id, provider_ref")

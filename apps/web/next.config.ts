@@ -1,17 +1,14 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { documentSecurityHeaders } from "./lib/security/headers";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
-// nosniff sur toutes les réponses ; les en-têtes propres aux documents (cadres, référent, permissions) ne sont pas
-// renvoyés avec les fichiers statiques versionnés de /_next/static (sans effet sur un script ou une feuille de style,
-// et autant d'octets en moins sur chaque requête des pages client, budget < 200 Ko).
+// nosniff sur toutes les réponses ; les en-têtes propres aux documents (CSP, cadres, référent, permissions, HSTS) ne
+// sont renvoyés ni avec les fichiers statiques versionnés de /_next/static ni avec les réponses JSON de /api (sans effet
+// sur un script, une feuille de style ou du JSON, et autant d'octets en moins par requête : budget < 200 Ko).
 const contentTypeHeaders = [{ key: "X-Content-Type-Options", value: "nosniff" }];
-const documentHeaders = [
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "Permissions-Policy", value: "camera=(self), geolocation=(self), microphone=()" },
-];
+const documentHeaders = documentSecurityHeaders(process.env);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -31,7 +28,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: contentTypeHeaders },
-      { source: "/((?!_next/static/).*)", headers: documentHeaders },
+      { source: "/((?!_next/static/|api/).*)", headers: documentHeaders },
       {
         source: "/sw.js",
         headers: [

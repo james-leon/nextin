@@ -80,6 +80,8 @@ select tests.id('org'), tests.id('branch'), tests.id('doctor'), tests.id('servic
 update public.branch_settings set appointment_requests_enabled = true, appointment_request_max_pending = 5 where branch_id = tests.id('branch');
 
 -- ─── Canal par défaut ────────────────────────────────────────────────────────
+-- Limites d'appels partagées avec les autres données de la base locale : remises à zéro (annulé au rollback).
+select tests.reset_limits();
 select is((select request_channels from public.platform_settings), '{email}'::text[], 'canal par défaut des demandes : e-mail');
 select tests.as_role('anon');
 select is(public.request_options(tests.id('branch')) -> 'channels', '["email"]'::jsonb, 'formulaire : canaux proposés');

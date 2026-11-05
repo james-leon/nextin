@@ -26,8 +26,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ orgI
   const { format, service } = parsed.data;
 
   const supabase = await getSupabaseServerClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims || claims.claims.is_anonymous) return new Response("Unauthorized", { status: 401 });
+  // Session vérifiée auprès de Supabase (une session révoquée est refusée), comme partout ailleurs.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || user.is_anonymous) return new Response("Unauthorized", { status: 401 });
 
   const [{ data: org }, { data: branch }, { count: branchCount }, qrResult, serviceResult] = await Promise.all([
     supabase.from("organizations").select("name, default_locale").eq("id", orgId).maybeSingle(),

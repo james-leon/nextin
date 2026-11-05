@@ -9,8 +9,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ inv
   if (!z.uuid().safeParse(invoiceId).success) return new Response("Bad request", { status: 400 });
 
   const supabase = await getSupabaseServerClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims || claims.claims.is_anonymous) return new Response("Unauthorized", { status: 401 });
+  // Session vérifiée auprès de Supabase (une session révoquée est refusée), comme partout ailleurs.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || user.is_anonymous) return new Response("Unauthorized", { status: 401 });
 
   const { data, error } = await supabase.rpc("invoice_document", { p_invoice: invoiceId });
   if (error || !data) return new Response("Not found", { status: error?.code === "42501" ? 403 : 404 });

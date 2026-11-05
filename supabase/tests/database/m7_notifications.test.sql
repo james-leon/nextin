@@ -72,6 +72,8 @@ create function tests.jobs(p_ticket uuid) returns text[] language sql security d
   select coalesce(array_agg(event::text || '/' || channel::text || '/' || status::text order by created_at, event), '{}')
   from public.notification_jobs where ticket_id = p_ticket;
 $$;
+-- Plus de droit d'exécution par défaut (sécurité, 20261117090000) : accordé explicitement aux fonctions de test.
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- ─── Mise en file ────────────────────────────────────────────────────────────
 select is(tests.jobs(tests.ticket('t1')), array['ticket_confirmed/whatsapp/pending', 'almost_your_turn/whatsapp/skipped'],
