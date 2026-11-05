@@ -27,6 +27,9 @@ export const NOTIF_EVENTS = [
   "request_accepted",
   "request_modified",
   "request_declined",
+  // Absent automatique après l'appel : replacé (1er appel manqué), puis annulé (2e).
+  "missed_call",
+  "missed_call_cancelled",
 ] as const;
 export const APPOINTMENT_EVENTS: readonly NotifEvent[] = [
   "appointment_confirmed",
@@ -197,6 +200,22 @@ export const WHATSAPP_TEMPLATES: Record<NotifEvent, Template> = {
     },
     params: (d) => [d.code, d.place, d.link],
   },
+  missed_call: {
+    name: "appel_manque",
+    body: {
+      fr: `Ticket {{1}} chez {{2}} : vous avez été appelé mais ne vous êtes pas présenté. Vous êtes replacé dans la file.\nPersonnes devant vous : {{3}}. Attente estimée : environ {{4}} min.\nAu prochain appel manqué, votre ticket sera annulé.\n${STOP.fr}`,
+      en: `Ticket {{1}} at {{2}}: you were called but did not come forward. You have been placed back in the queue.\nPeople ahead of you: {{3}}. Estimated wait: about {{4}} min.\nIf you miss the next call, your ticket will be cancelled.\n${STOP.en}`,
+    },
+    params: (d) => [d.code, d.place, num(d.ahead), num(d.waitMinutes)],
+  },
+  missed_call_cancelled: {
+    name: "ticket_annule_appels_manques",
+    body: {
+      fr: `Votre ticket {{1}} chez {{2}} a été annulé : vous ne vous êtes pas présenté après deux appels.\nVous pouvez prendre un nouveau ticket : {{3}}\n${STOP.fr}`,
+      en: `Your ticket {{1}} at {{2}} has been cancelled: you did not come forward after two calls.\nYou can take a new ticket: {{3}}\n${STOP.en}`,
+    },
+    params: (d) => [d.code, d.place, d.link],
+  },
   request_code: {
     name: "code_verification",
     category: "authentication",
@@ -278,6 +297,8 @@ const SMS: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => strin
     request_accepted: (d) => `NextIn : demande de RDV confirmee chez ${d.place}, ${appt(d).date} a ${appt(d).time}, ${appt(d).practitioner}.`,
     request_modified: (d) => `NextIn : RDV propose chez ${d.place} : ${appt(d).date} a ${appt(d).time}, ${appt(d).practitioner}.`,
     request_declined: (d) => `NextIn : demande de RDV chez ${d.place} refusee${d.reason ? ` (${d.reason})` : ""}. ${d.link}`,
+    missed_call: (d) => `NextIn : ticket ${d.code}, appel manque. Vous etes replace : ${num(d.ahead)} devant vous, ~${num(d.waitMinutes)} min. Prochain appel manque = ticket annule.`,
+    missed_call_cancelled: (d) => `NextIn : ticket ${d.code} annule apres deux appels manques. ${d.link}`,
   },
   en: {
     ticket_confirmed: (d) => `NextIn: ticket ${d.code} confirmed at ${d.place}. ${num(d.ahead)} ahead of you, ~${num(d.waitMinutes)} min. ${d.link}`,
@@ -298,6 +319,8 @@ const SMS: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => strin
     request_accepted: (d) => `NextIn: appointment request confirmed at ${d.place}, ${appt(d).date} at ${appt(d).time}, ${appt(d).practitioner}.`,
     request_modified: (d) => `NextIn: appointment offered at ${d.place}: ${appt(d).date} at ${appt(d).time}, ${appt(d).practitioner}.`,
     request_declined: (d) => `NextIn: appointment request at ${d.place} declined${d.reason ? ` (${d.reason})` : ""}. ${d.link}`,
+    missed_call: (d) => `NextIn: ticket ${d.code}, call missed. You are back in the queue: ${num(d.ahead)} ahead of you, ~${num(d.waitMinutes)} min. Next missed call = ticket cancelled.`,
+    missed_call_cancelled: (d) => `NextIn: ticket ${d.code} cancelled after two missed calls. ${d.link}`,
   },
 };
 
@@ -325,6 +348,8 @@ const PUSH: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => { ti
     request_accepted: (d) => ({ title: "Rendez-vous confirmé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
     request_modified: (d) => ({ title: "Rendez-vous proposé", body: `${appt(d).date} à ${appt(d).time} · ${appt(d).practitioner}` }),
     request_declined: (d) => ({ title: "Demande de rendez-vous refusée", body: d.reason ?? d.place }),
+    missed_call: (d) => ({ title: "Vous avez été appelé", body: `Ticket ${d.code} : vous êtes replacé · ${num(d.ahead)} devant vous` }),
+    missed_call_cancelled: (d) => ({ title: "Ticket annulé", body: `${d.code} : absent après deux appels` }),
   },
   en: {
     ticket_confirmed: (d) => ({ title: `Ticket ${d.code} confirmed`, body: `${num(d.ahead)} ahead of you · about ${num(d.waitMinutes)} min` }),
@@ -345,6 +370,8 @@ const PUSH: Record<NotifLocale, Record<NotifEvent, (d: NotificationData) => { ti
     request_accepted: (d) => ({ title: "Appointment confirmed", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
     request_modified: (d) => ({ title: "Appointment offered", body: `${appt(d).date} at ${appt(d).time} · ${appt(d).practitioner}` }),
     request_declined: (d) => ({ title: "Appointment request declined", body: d.reason ?? d.place }),
+    missed_call: (d) => ({ title: "You were called", body: `Ticket ${d.code}: you are back in the queue · ${num(d.ahead)} ahead of you` }),
+    missed_call_cancelled: (d) => ({ title: "Ticket cancelled", body: `${d.code}: absent after two calls` }),
   },
 };
 

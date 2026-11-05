@@ -18,6 +18,10 @@ type Settings = {
   priorities: boolean;
   rating: boolean;
   almostTurn: number;
+  /** Absent automatique après l'appel : délai (s) et recul au premier appel manqué. */
+  autoNoShow: boolean;
+  noShowGrace: number;
+  noShowPlaces: number;
   appointmentMode: "ratio" | "strict";
   walkinRatio: number;
   early: number;
@@ -43,6 +47,9 @@ type Settings = {
 
 /** Distances maximales proposées (km) ; null = sans limite. */
 const DISTANCES: (number | null)[] = [null, 1, 2, 5, 10, 20, 50, 100];
+
+/** Délais proposés pour l'absence automatique : par 30 s jusqu'à 5 min, puis par minute jusqu'à 10, puis 15, 20, 30. */
+const GRACES = [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 360, 420, 480, 540, 600, 900, 1200, 1800];
 
 /** Ligne « valeur − + » d'une liste groupée (pas de saisie au clavier sur téléphone). */
 function StepperRow({
@@ -79,6 +86,14 @@ function StepperRow({
   );
 }
 
+/** Délai suivant ou précédent dans la liste (une valeur hors liste se range sur la plus proche). */
+function stepGrace(current: number, delta: number): number {
+  const index = GRACES.findIndex((g) => g >= current);
+  const at = index < 0 ? GRACES.length - 1 : index;
+  const next = GRACES[current === GRACES[at] || delta < 0 ? Math.max(0, Math.min(GRACES.length - 1, at + delta)) : at];
+  return next ?? current;
+}
+
 export function BranchSettingsForm({
   action,
   initial,
@@ -93,6 +108,12 @@ export function BranchSettingsForm({
   const [state, formAction, pending] = useActionState(action, null);
   const { top } = useFormErrors(state);
   const [v, setV] = useState(initial);
+  const graceLabel = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const rest = seconds % 60;
+    if (!minutes) return t("noShowGraceSeconds", { seconds: rest });
+    return rest ? t("noShowGraceMixed", { minutes, seconds: rest }) : t("noShowGraceMinutes", { minutes });
+  };
 
   return (
     <form action={formAction} noValidate className="flex flex-col gap-6">
@@ -121,6 +142,35 @@ export function BranchSettingsForm({
                 <IconButton label={ta("increase")} icon={<Plus />} onClick={() => setV({ ...v, almostTurn: Math.min(10, v.almostTurn + 1) })} disabled={disabled || v.almostTurn >= 10} />
               </span>
             </li>
+          </ListSection>
+          <ListSection header={t("noShowHeader")} footer={v.autoNoShow ? t("noShowFooter") : undefined}>
+            <ListSwitchRow
+              title={t("autoNoShow")}
+              subtitle={t("autoNoShowHint")}
+              checked={v.autoNoShow}
+              onCheckedChange={(autoNoShow) => setV({ ...v, autoNoShow })}
+              disabled={disabled}
+            />
+            {v.autoNoShow ? (
+              <>
+                <StepperRow
+                  label={t("noShowGrace")}
+                  value={graceLabel(v.noShowGrace)}
+                  min={v.noShowGrace <= GRACES[0]!}
+                  max={v.noShowGrace >= GRACES[GRACES.length - 1]!}
+                  onChange={(d) => setV({ ...v, noShowGrace: stepGrace(v.noShowGrace, d) })}
+                  disabled={disabled}
+                />
+                <StepperRow
+                  label={t("noShowPlaces")}
+                  value={t("penaltyPlacesValue", { count: v.noShowPlaces })}
+                  min={v.noShowPlaces <= 1}
+                  max={v.noShowPlaces >= 20}
+                  onChange={(d) => setV({ ...v, noShowPlaces: v.noShowPlaces + d })}
+                  disabled={disabled}
+                />
+              </>
+            ) : null}
           </ListSection>
           <ListSection header={t("nameHeader")} footer={v.nameMode === "off" ? undefined : t("nameFooter")} radioGroupLabel={t("nameMode")}>
             {CUSTOMER_NAME_MODES.map((mode) => (
@@ -315,6 +365,9 @@ export function BranchSettingsForm({
       <input type="hidden" name="prioritiesEnabled" value={String(v.priorities)} />
       <input type="hidden" name="ratingEnabled" value={String(v.rating)} />
       <input type="hidden" name="almostTurnThreshold" value={v.almostTurn} />
+      <input type="hidden" name="autoNoShowEnabled" value={String(v.autoNoShow)} />
+      <input type="hidden" name="noShowGraceSeconds" value={v.noShowGrace} />
+      <input type="hidden" name="noShowMoveBackPlaces" value={v.noShowPlaces} />
       <input type="hidden" name="customerNameMode" value={v.nameMode} />
       <input type="hidden" name="customerNameExtra" value={v.nameExtra} />
       {disabled ? null : (

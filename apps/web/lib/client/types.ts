@@ -38,6 +38,8 @@ export type TicketView = {
   rating: number | null;
   rating_enabled: boolean;
   created_at: string;
+  /** Appels manqués (absent automatique) : 1 = replacé dans la file, 2 = annulé. */
+  missed_calls?: number;
   /** Canaux d'alerte actifs (M7). */
   alerts?: { whatsapp: boolean; push: boolean };
   /** Ticket à distance (M9) : présence, trajet, reculs ; null pour un ticket pris sur place. */

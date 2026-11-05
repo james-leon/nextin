@@ -251,9 +251,19 @@ export function TicketLive({
             {view.status === "cancelled" ? (
               <p className="text-body text-label-secondary">{view.remote?.cancelled_for_absence ? t("cancelledAbsence") : t("cancelledBody")}</p>
             ) : null}
-            {view.status === "no_show" ? <p className="text-body text-label-secondary">{t("noShowBody")}</p> : null}
+            {view.status === "no_show" ? (
+              <p className="text-body text-label-secondary">{(view.missed_calls ?? 0) >= 2 ? t("noShowMissedBody") : t("noShowBody")}</p>
+            ) : null}
           </section>
         )}
+
+        {/* Appel manqué (absent automatique) : le client est replacé ; au suivant, le ticket est annulé. */}
+        {view.status === "waiting" && (view.missed_calls ?? 0) > 0 ? (
+          <CalloutCard icon={<Bell />} role="status" className="shadow-card" data-testid="missed-call">
+            <span className="block font-semibold">{t("missedCallTitle")}</span>
+            {t("missedCallBody")}
+          </CalloutCard>
+        ) : null}
 
         {/* Accès prioritaire : accordé uniquement par le personnel (accueil, poste ou arrivée d'un rendez-vous). */}
         {active && view.priority_reason ? (

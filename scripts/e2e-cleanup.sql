@@ -14,6 +14,11 @@ declare
     where exists (select 1 from public.advertiser_members m where m.advertiser_id = a.id)
       and not exists (select 1 from public.advertiser_members m where m.advertiser_id = a.id and m.user_id <> all (v_users)));
 begin
+  -- Liens de paiement et paiements de ces factures d'abord (clés étrangères sans suppression en cascade).
+  delete from public.pay_links where invoice_id in (
+    select id from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers));
+  delete from public.payments where invoice_id in (
+    select id from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers));
   alter table public.invoices disable trigger invoices_guard;
   delete from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers);
   alter table public.invoices enable trigger invoices_guard;

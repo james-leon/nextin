@@ -8,6 +8,7 @@ export function CalloutCard({
   children,
   className,
   role,
+  ...rest
 }: {
   icon: ReactNode;
   tone?: "orange" | "accent" | "green" | "red";
@@ -15,9 +16,10 @@ export function CalloutCard({
   role?: "alert" | "status";
   children: ReactNode;
   className?: string;
+  "data-testid"?: string;
 }) {
   return (
-    <div role={role} className={cn("squircle flex items-start gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4", className)}>
+    <div role={role} data-testid={rest["data-testid"]} className={cn("squircle flex items-start gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4", className)}>
       <span
         aria-hidden
         className={cn(

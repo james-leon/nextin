@@ -226,24 +226,32 @@ test.describe("M1 — authentification et établissements", () => {
     await expect(page).toHaveURL(/\/app$/);
   });
 
-  test("CGU et politique de confidentialité : articles numérotés, bientôt disponibles", async ({ page }) => {
+  test("CGU et politique de confidentialité : version, articles numérotés, tableaux, mentions à compléter", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("link", { name: "CGU" }).click();
     await expect(page).toHaveURL(/\/cgu$/);
     await expect(page.getByRole("heading", { level: 1, name: "Conditions générales d'utilisation" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Bientôt disponible" })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "1. Objet" })).toBeVisible();
-    await page.getByRole("link", { name: "14. Contact" }).click();
-    await expect(page).toHaveURL(/#article-14$/);
+    await expect(page.locator("[data-legal-version]")).toHaveText("Version 1.0 — en vigueur le [DATE DE MISE EN LIGNE]");
+    await expect(page.getByText("Projet à faire relire par un juriste avant publication.")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "1. Éditeur" })).toBeVisible();
+    await expect(page.locator("[data-legal-placeholder]", { hasText: "[À COMPLÉTER]" }).first()).toBeVisible();
+    await page.getByRole("link", { name: "17. Contact" }).click();
+    await expect(page).toHaveURL(/#article-17$/);
     await expectAccessible(page);
     await expectTouchTargets(page);
     await page.goto("/confidentialite");
     await expect(page.getByRole("heading", { level: 1, name: "Politique de confidentialité" })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "9. Vos droits" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "7. Vos droits" })).toBeVisible();
+    // Tableau sur tablette et ordinateur, une fiche par ligne sur téléphone.
+    await expect(page.getByText("Gérer votre place dans la file").filter({ visible: true })).toBeVisible();
+    await expect(page.getByText("Numéro WhatsApp ou de téléphone").filter({ visible: true })).toBeVisible();
+    if ((page.viewportSize()?.width ?? 0) >= 640) await expect(page.getByRole("columnheader", { name: "Pourquoi" })).toBeVisible();
+    await expectAccessible(page);
     await page.context().addCookies([{ name: "NEXTIN_LOCALE", value: "en", url: page.url() }]);
     await page.reload();
     await expect(page.getByRole("heading", { level: 1, name: "Privacy policy" })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "9. Your rights" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Coming soon" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "7. Your rights" })).toBeVisible();
+    await expect(page.getByText("Translation for information; the French version prevails.")).toBeVisible();
+    await expect(page.locator("[data-legal-version]")).toContainText("Version 1.0");
   });
 });

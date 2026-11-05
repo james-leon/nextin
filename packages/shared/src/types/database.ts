@@ -652,14 +652,14 @@ isOneToOne: false
                   ]
                 },"branch_settings": {
                   Row: {
-                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_request_max_pending": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"branch_id": string,"customer_name_extra": string,"customer_name_mode": string,"max_active_tickets_per_customer": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_presence_tv_only": boolean,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
+                    "almost_turn_threshold": number,"appointment_early_minutes": number,"appointment_late_grace_minutes": number,"appointment_mode": string,"appointment_no_show_minutes": number,"appointment_request_days": number,"appointment_request_max_pending": number,"appointment_requests_enabled": boolean,"appointment_walkin_ratio": number,"auto_no_show_enabled": boolean,"branch_id": string,"customer_name_extra": string,"customer_name_mode": string,"max_active_tickets_per_customer": number,"no_show_grace_seconds": number,"no_show_move_back_places": number,"organization_id": string,"priorities_enabled": boolean,"public_listing_enabled": boolean,"rating_enabled": boolean,"remote_confirm_threshold": number,"remote_leave_margin_minutes": number,"remote_max_delays": number,"remote_max_distance_km": number | null,"remote_penalty_places": number,"remote_presence_tv_only": boolean,"remote_tickets_enabled": boolean,"remote_travel_kmh": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id": string,"customer_name_extra"?: string,"customer_name_mode": string,"max_active_tickets_per_customer"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_presence_tv_only"?: boolean,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"auto_no_show_enabled"?: boolean,"branch_id": string,"customer_name_extra"?: string,"customer_name_mode": string,"max_active_tickets_per_customer"?: number,"no_show_grace_seconds"?: number,"no_show_move_back_places"?: number,"organization_id": string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_presence_tv_only"?: boolean,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"branch_id"?: string,"customer_name_extra"?: string,"customer_name_mode"?: string,"max_active_tickets_per_customer"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_presence_tv_only"?: boolean,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
+                    "almost_turn_threshold"?: number,"appointment_early_minutes"?: number,"appointment_late_grace_minutes"?: number,"appointment_mode"?: string,"appointment_no_show_minutes"?: number,"appointment_request_days"?: number,"appointment_request_max_pending"?: number,"appointment_requests_enabled"?: boolean,"appointment_walkin_ratio"?: number,"auto_no_show_enabled"?: boolean,"branch_id"?: string,"customer_name_extra"?: string,"customer_name_mode"?: string,"max_active_tickets_per_customer"?: number,"no_show_grace_seconds"?: number,"no_show_move_back_places"?: number,"organization_id"?: string,"priorities_enabled"?: boolean,"public_listing_enabled"?: boolean,"rating_enabled"?: boolean,"remote_confirm_threshold"?: number,"remote_leave_margin_minutes"?: number,"remote_max_delays"?: number,"remote_max_distance_km"?: number | null,"remote_penalty_places"?: number,"remote_presence_tv_only"?: boolean,"remote_tickets_enabled"?: boolean,"remote_travel_kmh"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1740,7 +1740,7 @@ isOneToOne: true
                   ]
                 },"tickets": {
                   Row: {
-                    "appointment_id": string | null,"branch_id": string,"called_at": string | null,"counter_id": string | null,"created_at": string,"created_by": string | null,"customer_user_id": string | null,"delay_count": number,"display_code": string,"finished_at": string | null,"id": string,"is_remote": boolean,"number": number,"on_my_way_at": string | null,"organization_id": string,"preferred_counter_id": string | null,"presence_confirmed_at": string | null,"priority_level": number,"priority_reason": Database["public"]['Enums']["priority_reason"] | null,"public_token": string | null,"rated_at": string | null,"rating": number | null,"rating_comment": string | null,"recall_count": number,"recalled_at": string | null,"remote_travel_seconds": number | null,"service_day": string,"service_id": string,"serving_started_at": string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status": Database["public"]['Enums']["ticket_status"],"transferred_from_id": string | null,"updated_at": string,"finish_ticket_internal": {
+                    "appointment_id": string | null,"branch_id": string,"called_at": string | null,"counter_id": string | null,"created_at": string,"created_by": string | null,"customer_user_id": string | null,"delay_count": number,"display_code": string,"finished_at": string | null,"id": string,"is_remote": boolean,"missed_calls": number,"number": number,"on_my_way_at": string | null,"organization_id": string,"preferred_counter_id": string | null,"presence_confirmed_at": string | null,"priority_level": number,"priority_reason": Database["public"]['Enums']["priority_reason"] | null,"public_token": string | null,"rated_at": string | null,"rating": number | null,"rating_comment": string | null,"recall_count": number,"recalled_at": string | null,"remote_travel_seconds": number | null,"service_day": string,"service_id": string,"serving_started_at": string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status": Database["public"]['Enums']["ticket_status"],"transferred_from_id": string | null,"updated_at": string,"finish_ticket_internal": {
               "appointment_id": string | null,
 "branch_id": string,
 "called_at": string | null,
@@ -1753,6 +1753,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -1779,10 +1780,10 @@ isOneToOne: true
                   }
                   ComputedFields: "finish_ticket_internal" | "penalize_remote_ticket" | "staff_ticket_json"
                   Insert: {
-                    "appointment_id"?: string | null,"branch_id": string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code": string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"number": number,"on_my_way_at"?: string | null,"organization_id": string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"remote_travel_seconds"?: number | null,"service_day": string,"service_id": string,"serving_started_at"?: string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
+                    "appointment_id"?: string | null,"branch_id": string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code": string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"missed_calls"?: number,"number": number,"on_my_way_at"?: string | null,"organization_id": string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"remote_travel_seconds"?: number | null,"service_day": string,"service_id": string,"serving_started_at"?: string | null,"sort_key": number,"source": Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "appointment_id"?: string | null,"branch_id"?: string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code"?: string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"number"?: number,"on_my_way_at"?: string | null,"organization_id"?: string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"remote_travel_seconds"?: number | null,"service_day"?: string,"service_id"?: string,"serving_started_at"?: string | null,"sort_key"?: number,"source"?: Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
+                    "appointment_id"?: string | null,"branch_id"?: string,"called_at"?: string | null,"counter_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_user_id"?: string | null,"delay_count"?: number,"display_code"?: string,"finished_at"?: string | null,"id"?: string,"is_remote"?: boolean,"missed_calls"?: number,"number"?: number,"on_my_way_at"?: string | null,"organization_id"?: string,"preferred_counter_id"?: string | null,"presence_confirmed_at"?: string | null,"priority_level"?: number,"priority_reason"?: Database["public"]['Enums']["priority_reason"] | null,"public_token"?: string | null,"rated_at"?: string | null,"rating"?: number | null,"rating_comment"?: string | null,"recall_count"?: number,"recalled_at"?: string | null,"remote_travel_seconds"?: number | null,"service_day"?: string,"service_id"?: string,"serving_started_at"?: string | null,"sort_key"?: number,"source"?: Database["public"]['Enums']["ticket_source"],"status"?: Database["public"]['Enums']["ticket_status"],"transferred_from_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -2032,10 +2033,13 @@ isOneToOne: true
 "appointment_request_max_pending": number,
 "appointment_requests_enabled": boolean,
 "appointment_walkin_ratio": number,
+"auto_no_show_enabled": boolean,
 "branch_id": string,
 "customer_name_extra": string,
 "customer_name_mode": string,
 "max_active_tickets_per_customer": number,
+"no_show_grace_seconds": number,
+"no_show_move_back_places": number,
 "organization_id": string,
 "priorities_enabled": boolean,
 "public_listing_enabled": boolean,
@@ -2406,6 +2410,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -2455,6 +2460,9 @@ isOneToOne: true
 "get_ticket":
 { Args: { "p_token": string }; Returns: Json
                            },
+"handle_missed_call":
+{ Args: { "p_ticket": string }; Returns: string
+                           },
 "has_org_role":
 { Args: { "p_org": string,"p_roles"?: (Database["public"]['Enums']["member_role"])[] }; Returns: boolean
                            },
@@ -2472,6 +2480,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -2763,6 +2772,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -2842,6 +2852,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -2966,6 +2977,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -3238,6 +3250,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -3371,6 +3384,9 @@ isOneToOne: true
 "sweep_appointments":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"sweep_missed_calls":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "sweep_remote_tickets":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -3409,6 +3425,7 @@ isOneToOne: true
 "finished_at": string | null,
 "id": string,
 "is_remote": boolean,
+"missed_calls": number,
 "number": number,
 "on_my_way_at": string | null,
 "organization_id": string,
@@ -3503,7 +3520,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "absence_kind": "absent"|"late","ad_creative_kind": "image"|"video","ad_event_type": "impression"|"click"|"skip"|"visit","ad_surface": "tv"|"app"|"game","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","campaign_status": "draft"|"pending_review"|"rejected"|"awaiting_payment"|"active"|"paused"|"ended","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
+            "absence_kind": "absent"|"late","ad_creative_kind": "image"|"video","ad_event_type": "impression"|"click"|"skip"|"visit","ad_surface": "tv"|"app"|"game","appointment_request_status": "unverified"|"pending"|"accepted"|"modified"|"declined"|"expired"|"cancelled","appointment_status": "confirmed"|"checked_in"|"completed"|"rescheduled"|"cancelled"|"no_show","billing_period": "monthly"|"annual","campaign_status": "draft"|"pending_review"|"rejected"|"awaiting_payment"|"active"|"paused"|"ended","counter_kind": "cabinet"|"guichet"|"caisse"|"laboratoire"|"accueil","counter_status": "closed"|"open"|"paused","display_status": "pending"|"active"|"revoked","invoice_status": "open"|"paid"|"void","job_status": "pending"|"sending"|"sent"|"delivered"|"read"|"failed"|"skipped"|"cancelled","member_role": "org_admin"|"branch_manager"|"receptionist"|"agent","notif_channel": "whatsapp"|"push"|"sms","notif_event": "ticket_confirmed"|"almost_your_turn"|"your_turn"|"ticket_moved_back"|"practitioner_rerouted"|"practitioner_late"|"appointment_confirmed"|"appointment_reminder_day_before"|"appointment_reminder_2h"|"appointment_rescheduled"|"appointment_cancelled"|"time_to_leave"|"presence_reminder"|"remote_cancelled"|"request_code"|"request_accepted"|"request_modified"|"request_declined"|"missed_call"|"missed_call_cancelled","org_status": "pending"|"active"|"suspended","org_type": "clinic"|"hospital"|"telecom"|"bank"|"utility"|"administration"|"other","payment_channel": "mtn_momo"|"orange_money","payment_provider": "fake"|"notchpay"|"fapshi"|"mesomb"|"cinetpay"|"flutterwave","payment_status": "pending"|"succeeded"|"failed"|"expired","priority_reason": "appointment"|"pregnancy"|"elderly"|"disability"|"other","subscription_status": "trialing"|"active"|"past_due"|"read_only"|"suspended","ticket_source": "qr"|"short_code"|"remote"|"reception","ticket_status": "waiting"|"called"|"serving"|"served"|"no_show"|"cancelled"|"transferred"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -3619,7 +3636,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "absence_kind": ["absent", "late"],"ad_creative_kind": ["image", "video"],"ad_event_type": ["impression", "click", "skip", "visit"],"ad_surface": ["tv", "app", "game"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"campaign_status": ["draft", "pending_review", "rejected", "awaiting_payment", "active", "paused", "ended"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
+            "absence_kind": ["absent", "late"],"ad_creative_kind": ["image", "video"],"ad_event_type": ["impression", "click", "skip", "visit"],"ad_surface": ["tv", "app", "game"],"appointment_request_status": ["unverified", "pending", "accepted", "modified", "declined", "expired", "cancelled"],"appointment_status": ["confirmed", "checked_in", "completed", "rescheduled", "cancelled", "no_show"],"billing_period": ["monthly", "annual"],"campaign_status": ["draft", "pending_review", "rejected", "awaiting_payment", "active", "paused", "ended"],"counter_kind": ["cabinet", "guichet", "caisse", "laboratoire", "accueil"],"counter_status": ["closed", "open", "paused"],"display_status": ["pending", "active", "revoked"],"invoice_status": ["open", "paid", "void"],"job_status": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled"],"member_role": ["org_admin", "branch_manager", "receptionist", "agent"],"notif_channel": ["whatsapp", "push", "sms"],"notif_event": ["ticket_confirmed", "almost_your_turn", "your_turn", "ticket_moved_back", "practitioner_rerouted", "practitioner_late", "appointment_confirmed", "appointment_reminder_day_before", "appointment_reminder_2h", "appointment_rescheduled", "appointment_cancelled", "time_to_leave", "presence_reminder", "remote_cancelled", "request_code", "request_accepted", "request_modified", "request_declined", "missed_call", "missed_call_cancelled"],"org_status": ["pending", "active", "suspended"],"org_type": ["clinic", "hospital", "telecom", "bank", "utility", "administration", "other"],"payment_channel": ["mtn_momo", "orange_money"],"payment_provider": ["fake", "notchpay", "fapshi", "mesomb", "cinetpay", "flutterwave"],"payment_status": ["pending", "succeeded", "failed", "expired"],"priority_reason": ["appointment", "pregnancy", "elderly", "disability", "other"],"subscription_status": ["trialing", "active", "past_due", "read_only", "suspended"],"ticket_source": ["qr", "short_code", "remote", "reception"],"ticket_status": ["waiting", "called", "serving", "served", "no_show", "cancelled", "transferred"]
           }
         }
 } as const

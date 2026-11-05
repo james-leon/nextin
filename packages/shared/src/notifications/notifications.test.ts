@@ -124,6 +124,11 @@ describe("règles d'envoi", () => {
     expect(isStillRelevant("request_code", "pending")).toBe(false);
     expect(isStillRelevant("request_accepted", "confirmed")).toBe(true);
     expect(isStillRelevant("request_declined", "declined")).toBe(true);
+    // Absent automatique : replacé (de nouveau en attente), puis absent après le 2e appel manqué.
+    expect(isStillRelevant("missed_call", "waiting")).toBe(true);
+    expect(isStillRelevant("missed_call", "called")).toBe(false);
+    expect(isStillRelevant("missed_call_cancelled", "no_show")).toBe(true);
+    expect(isStillRelevant("missed_call_cancelled", "waiting")).toBe(false);
     expect(guardSatisfied("delivered")).toBe(true);
     expect(guardSatisfied("sent")).toBe(false);
   });

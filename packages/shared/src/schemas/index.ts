@@ -213,6 +213,10 @@ export const branchSettingsFormSchema = z.object({
   prioritiesEnabled: formBoolean,
   ratingEnabled: formBoolean,
   almostTurnThreshold: z.coerce.number().int().min(1).max(10),
+  // Absent automatique après l'appel.
+  autoNoShowEnabled: formBoolean,
+  noShowGraceSeconds: z.coerce.number().int().min(30).max(1800),
+  noShowMoveBackPlaces: z.coerce.number().int().min(1).max(20),
   // M5b — règle d'équité des rendez-vous.
   appointmentMode: z.enum(["ratio", "strict"]),
   appointmentWalkinRatio: z.coerce.number().int().min(0).max(10),

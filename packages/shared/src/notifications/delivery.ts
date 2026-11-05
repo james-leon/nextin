@@ -31,10 +31,13 @@ export function retryDelaySeconds(attempt: number): number | null {
 /**
  * Un message n'a de sens que si le ticket (ou le rendez-vous, ou la demande) est toujours dans l'état attendu
  * (sinon il est ignoré). Rendez-vous : confirmé pour la confirmation, la réponse à une demande et les rappels,
- * annulé pour l'annulation. Ticket à distance annulé faute de présence : statut annulé.
+ * annulé pour l'annulation. Ticket à distance annulé faute de présence : statut annulé. Appel manqué : de nouveau en
+ * attente (replacé) ; deux appels manqués : absent.
  */
 export function isStillRelevant(event: NotifEvent, status: TicketStatus | AppointmentStatus | RequestStatus): boolean {
   if (event === "appointment_cancelled" || event === "remote_cancelled") return status === "cancelled";
+  // Absent automatique après deux appels manqués : statut « absent ».
+  if (event === "missed_call_cancelled") return status === "no_show";
   if (event.startsWith("appointment_") || event === "request_accepted" || event === "request_modified") return status === "confirmed";
   if (event === "request_code") return status === "unverified";
   if (event === "request_declined") return status === "declined";
