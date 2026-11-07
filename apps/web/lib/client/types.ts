@@ -14,6 +14,8 @@ export type EntryInfo = {
   branch: { id: string; name: string; city: string | null; is_open: boolean };
   priorities_enabled: boolean;
   priority_service_ids: string[];
+  /** Prise de ticket en ligne possible ; false sans la raison (réservée au personnel). */
+  online_open?: boolean;
   board: BranchBoard;
 };
 
@@ -99,6 +101,9 @@ export type NearbyBranch = {
 
 /** Page publique d'une agence (`branch_public`). */
 export type BranchPublic = Omit<NearbyBranch, "organization"> & {
+  /** Ticket à distance et demande de rendez-vous possibles ; false sans la raison (réservée au personnel). */
+  online_open?: boolean;
+  requests_open?: boolean;
   phone_e164: string | null;
   timezone: string;
   organization: { name: string; type: string; default_locale: string };
@@ -121,6 +126,8 @@ export type RequestOptions = {
   branch: Omit<NearbyBranch, "services">;
   timezone: string;
   days: number;
+  /** Demandes en ligne possibles ; false sans la raison (réservée au personnel). */
+  online_open?: boolean;
   /** Canaux du code et des réponses (console Wintek), dans l'ordre de préférence. */
   channels?: RequestChannel[];
   services: {

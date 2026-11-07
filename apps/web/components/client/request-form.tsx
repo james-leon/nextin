@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Phone, ShieldCheck } from "lucide-react";
+import { CalendarClock, Info, Phone, ShieldCheck } from "lucide-react";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -14,6 +14,7 @@ import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
 import { TextField } from "@/components/ui/text-field";
 import { sendAppointmentRequest } from "@/lib/client/appointment-request";
+import { isOnlineUnavailable } from "@/lib/client/online-unavailable";
 import type { RequestChannel, RequestOptions } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { cn } from "@/lib/cn";
@@ -51,6 +52,9 @@ export function RequestForm({
   identityRules?: IdentityRules;
 }) {
   const t = useLiteT("client.request");
+  const tc = useLiteT("common");
+  // Demandes en ligne indisponibles (abonnement) : connu dès l'ouverture, sans la raison ; envoi désactivé.
+  const [online, setOnline] = useState(options.online_open !== false);
   const te = useLiteT("errors");
   const locale = useLiteLocale();
   const router = useRouter();
@@ -104,7 +108,7 @@ export function RequestForm({
     : period
       ? `${dayLabel(day)} · ${t(`periods.${period}`)}`
       : null;
-  const ready = !!service && !!when && (channel === "email" ? email.trim().length > 0 : phone.trim().length > 0);
+  const ready = online && !!service && !!when && (channel === "email" ? email.trim().length > 0 : phone.trim().length > 0);
 
   function pickService(id: string) {
     setServiceId(id);
@@ -149,6 +153,8 @@ export function RequestForm({
       return;
     }
     setPending(false);
+    // Devenu indisponible depuis l'ouverture de la page : même encadré neutre, jamais la raison.
+    if (isOnlineUnavailable(outcome.error)) return setOnline(false);
     const message = te.has(outcome.error) ? te(outcome.error) : te("generic");
     if (outcome.error === "phone_invalid") setPhoneError(message);
     else if (outcome.error === "email_invalid") setEmailError(message);
@@ -278,6 +284,11 @@ export function RequestForm({
 
       <div className="mx-auto flex max-w-lg flex-col gap-6 px-4 pt-3 lg:grid lg:max-w-6xl lg:grid-cols-[1fr_24rem] lg:items-start lg:gap-8 lg:px-8">
         <div className="flex min-w-0 flex-col gap-6">
+          {!online ? (
+            <CalloutCard icon={<Info />} tone="neutral" role="status" data-testid="online-unavailable">
+              {tc("onlineUnavailable")}
+            </CalloutCard>
+          ) : null}
           <ListSection header={t("serviceHeader")} radioGroupLabel={t("serviceHeader")}>
             {options.services.map((s) => (
               <ListRow

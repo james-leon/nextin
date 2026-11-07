@@ -3,6 +3,8 @@ export const fr = {
     appName: "NextIn",
     by: "par Wintek",
     back: "Retour",
+    // Prise en ligne indisponible (abonnement, quota…) : jamais la raison côté client.
+    onlineUnavailable: "La prise de ticket en ligne est momentanément indisponible. Adressez-vous à l'accueil.",
     sidebarShow: "Afficher la barre latérale",
     sidebarHide: "Masquer la barre latérale",
     cancel: "Annuler",

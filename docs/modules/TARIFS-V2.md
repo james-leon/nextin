@@ -37,3 +37,7 @@ Tableau de bord et exports masquent les jours antérieurs à l'historique de la 
 ## Tableau de bord
 - Période par défaut : « 30 derniers jours » (glissants, comparés aux 30 jours précédents) ; Jour, Semaine, Mois au choix.
 - Courbe « Attente moyenne par jour » : moins de 7 jours renseignés → « Pas encore assez de données : revenez dans quelques jours. »
+
+## Pages client : prise en ligne indisponible
+Lecture seule, suspension, quota de tickets bloquant (à partir du lendemain) ou fonction absente de la formule : dès l'ouverture de /q, /b et /b/…/rdv, encadré neutre « La prise de ticket en ligne est momentanément indisponible. Adressez-vous à l'accueil. », services sans temps d'attente, bouton désactivé. Le visiteur ne voit jamais la raison (abonnement, paiement, quota) : un seul booléen `online_open` est exposé (`requests_open` pour la demande de rendez-vous sur /b). Si l'état change après l'ouverture, le refus de la base est ramené au même encadré. Le quota de tickets ne ferme pas les demandes de rendez-vous. Le personnel garde ses bandeaux détaillés (`BillingBanner`, `QuotaBanner`).
+Tests : `supabase/tests/database/online_availability.test.sql`, `apps/web/e2e/online-availability.spec.ts`.

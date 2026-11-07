@@ -11,7 +11,7 @@ export function CalloutCard({
   ...rest
 }: {
   icon: ReactNode;
-  tone?: "orange" | "accent" | "green" | "red";
+  tone?: "orange" | "accent" | "green" | "red" | "neutral";
   /** `alert` pour une erreur à annoncer immédiatement aux lecteurs d'écran. */
   role?: "alert" | "status";
   children: ReactNode;
@@ -28,6 +28,7 @@ export function CalloutCard({
           tone === "accent" && "bg-accent-tint text-accent-on-tint",
           tone === "green" && "bg-green-tint text-green-text",
           tone === "red" && "bg-red-tint text-red-text",
+          tone === "neutral" && "bg-fill-tertiary text-label-secondary",
         )}
       >
         {icon}

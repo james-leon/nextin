@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, Clock, MapPinned, Navigation, Phone, QrCode, Route, ScanLine } from "lucide-react";
+import {
+  CalendarPlus,
+  Clock,
+  Info,
+  MapPinned,
+  Navigation,
+  Phone,
+  QrCode,
+  Route,
+  ScanLine,
+} from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import type { BoardService, BranchBoard } from "@nextin/shared/queue/live";
 import { directionsUrl } from "@nextin/shared/remote";
@@ -18,7 +28,12 @@ import { getPosition } from "@/lib/client/geolocation";
 import { saveTicket } from "@/lib/client/my-tickets";
 import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import { takeTicket } from "@/lib/client/take-ticket";
-import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
+import { isOnlineUnavailable } from "@/lib/client/online-unavailable";
+import {
+  CustomerIdentityFields,
+  saveIdentity,
+  useIdentityValue,
+} from "./customer-identity-fields";
 import type { BranchPublic } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { branchHoursStatus } from "@/lib/client/branch-hours";
@@ -41,6 +56,7 @@ export function BranchView({
   identityRules?: IdentityRules;
 }) {
   const t = useLiteT("client.branch");
+  const tc = useLiteT("common");
   const to = useLiteT("orgTypes");
   const ts = useLiteT("client.service");
   const tw = useLiteT("weekdays");
@@ -51,32 +67,64 @@ export function BranchView({
   const [board, setBoard] = useState<BranchBoard>(branch.board);
   const remoteIds = branch.remote.enabled ? branch.remote.service_ids : [];
   const [selected, setSelected] = useState<string | null>(
-    () => branch.board.services.find((s) => remoteIds.includes(s.id))?.id ?? null,
+    () =>
+      branch.board.services.find((s) => remoteIds.includes(s.id))?.id ?? null,
   );
   const [pending, setPending] = useState<"locating" | "taking" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [identity, setIdentity] = useIdentityValue(identityRules.mode !== "off");
+  const [identity, setIdentity] = useIdentityValue(
+    identityRules.mode !== "off",
+  );
   const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => subscribeBoard(branch.id, setBoard), [branch.id]);
 
-  const name = (s: BoardService) => (locale === "en" && s.name_en ? s.name_en : s.name);
+  // Prise en ligne indisponible (abonnement, quota) : connu dès l'ouverture, sans la raison ; services sans temps
+  // d'attente, ticket à distance et demande de rendez-vous désactivés.
+  const [ticketsOpen, setTicketsOpen] = useState(branch.online_open !== false);
+  const requestsOpen = branch.requests_open !== false;
+  const name = (s: BoardService) =>
+    locale === "en" && s.name_en ? s.name_en : s.name;
   const summary = (s: BoardService) => {
     const minutes = waitMinutes(s.wait_seconds);
-    return s.waiting.length === 0 && minutes === 0 ? ts("noWait") : ts("people", { count: s.waiting.length, minutes });
+    return s.waiting.length === 0 && minutes === 0
+      ? ts("noWait")
+      : ts("people", { count: s.waiting.length, minutes });
   };
-  const hours = useMemo(() => branchHoursStatus(branch.hours, branch.timezone, branch.is_open, new Date()), [branch]);
+  const hours = useMemo(
+    () =>
+      branchHoursStatus(
+        branch.hours,
+        branch.timezone,
+        branch.is_open,
+        new Date(),
+      ),
+    [branch],
+  );
   const time = (hhmm: string) =>
-    new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(`1970-01-01T${hhmm}Z`));
+    new Intl.DateTimeFormat(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    }).format(new Date(`1970-01-01T${hhmm}Z`));
   const hoursText = hours.open
     ? t("openNow", { time: time(hours.closesAt) })
     : hours.next
       ? t("opensAt", {
-          day: hours.next.inDays === 0 ? t("today") : hours.next.inDays === 1 ? t("tomorrow") : tw(String(hours.next.weekday)),
+          day:
+            hours.next.inDays === 0
+              ? t("today")
+              : hours.next.inDays === 1
+                ? t("tomorrow")
+                : tw(String(hours.next.weekday)),
           time: time(hours.next.opensAt),
         })
       : t("closedNow");
   const remoteOn = branch.remote.enabled && remoteIds.length > 0;
+  const showUnavailable =
+    (remoteOn && !ticketsOpen) || (branch.requests_enabled && !requestsOpen);
+  const waitLine = (s: BoardService) =>
+    ticketsOpen ? <span className="tabular">{summary(s)}</span> : undefined;
   const current = board.services.find((s) => s.id === selected) ?? null;
   const hasLocation = branch.latitude != null && branch.longitude != null;
 
@@ -85,14 +133,18 @@ export function BranchView({
     const parsed = parseIdentity(identityRules, identity);
     if (!parsed.ok) {
       setNameError(te(parsed.error));
-      document.querySelector<HTMLInputElement>('input[name="customerName"]')?.focus();
+      document
+        .querySelector<HTMLInputElement>('input[name="customerName"]')
+        ?.focus();
       return;
     }
     setNameError(null);
     setError(null);
     setPending("locating");
     // Position facultative (trajet estimé), sauf si l'agence fixe une distance maximale.
-    const geo = await getPosition(branch.remote.max_distance_km ? 15_000 : 6_000);
+    const geo = await getPosition(
+      branch.remote.max_distance_km ? 15_000 : 6_000,
+    );
     if (!geo.ok && branch.remote.max_distance_km) {
       setPending(null);
       setError(t("locationNeeded"));
@@ -100,12 +152,23 @@ export function BranchView({
     }
     setPending("taking");
     const outcome = await takeTicket(
-      { serviceId: current.id, source: "remote", position: geo.ok ? geo.position : null, identity: parsed.identity },
+      {
+        serviceId: current.id,
+        source: "remote",
+        position: geo.ok ? geo.position : null,
+        identity: parsed.identity,
+      },
       { siteKey: captchaSiteKey, container: captchaRef.current },
     );
     if (outcome.ok) {
       if (identityRules.mode !== "off") saveIdentity(identity);
-      saveTicket({ token: outcome.token, code: outcome.code, entry: null, branchId: branch.id, remote: true });
+      saveTicket({
+        token: outcome.token,
+        code: outcome.code,
+        entry: null,
+        branchId: branch.id,
+        remote: true,
+      });
       router.push(`/t/${outcome.token}`);
       return;
     }
@@ -114,6 +177,8 @@ export function BranchView({
       return;
     }
     setPending(null);
+    // Devenu indisponible depuis l'ouverture de la page : même encadré neutre, jamais la raison.
+    if (isOnlineUnavailable(outcome.error)) return setTicketsOpen(false);
     setError(te.has(outcome.error) ? te(outcome.error) : te("generic"));
   }
 
@@ -123,17 +188,26 @@ export function BranchView({
       onClick={takeRemote}
       loading={pending !== null}
       loadingLabel={pending === "locating" ? t("locating") : t("taking")}
-      disabled={!current || !branch.is_open}
+      disabled={!current || !branch.is_open || !ticketsOpen}
     >
       {t("take")}
     </Button>
   );
-  const requestButton = (
+  const requestButton = requestsOpen ? (
     <Button asChild block variant={remoteOn ? "tinted" : "filled"}>
       <a href={`/b/${branch.id}/rdv`}>
         <CalendarPlus aria-hidden className="size-5" />
         {t("requestTitle")}
       </a>
+    </Button>
+  ) : (
+    <Button
+      block
+      variant={remoteOn ? "tinted" : "filled"}
+      disabled
+      leadingIcon={<CalendarPlus />}
+    >
+      {t("requestTitle")}
     </Button>
   );
   const errorText = error ? (
@@ -150,7 +224,9 @@ export function BranchView({
         back={{ href: "/nearby", label: t("back") }}
         contentClassName="max-w-lg lg:max-w-6xl lg:px-8"
       >
-        <p className="mt-1 text-subheadline text-label-secondary">{[branch.address, branch.city].filter(Boolean).join(", ")}</p>
+        <p className="mt-1 text-subheadline text-label-secondary">
+          {[branch.address, branch.city].filter(Boolean).join(", ")}
+        </p>
       </NavigationBar>
 
       <div className="mx-auto flex max-w-lg flex-col gap-6 px-4 pt-3 lg:grid lg:max-w-6xl lg:grid-cols-[1fr_22rem] lg:items-start lg:gap-8 lg:px-8">
@@ -165,10 +241,29 @@ export function BranchView({
               {hoursText}
             </Badge>
           </div>
-          <div className={cn("grid gap-3", hasLocation && branch.phone_e164 && "grid-cols-2")}>
+          {showUnavailable ? (
+            <CalloutCard
+              icon={<Info />}
+              tone="neutral"
+              role="status"
+              data-testid="online-unavailable"
+            >
+              {tc("onlineUnavailable")}
+            </CalloutCard>
+          ) : null}
+          <div
+            className={cn(
+              "grid gap-3",
+              hasLocation && branch.phone_e164 && "grid-cols-2",
+            )}
+          >
             {hasLocation ? (
               <Button asChild variant="tinted">
-                <a href={directionsUrl(branch.latitude!, branch.longitude!)} target="_blank" rel="noopener">
+                <a
+                  href={directionsUrl(branch.latitude!, branch.longitude!)}
+                  target="_blank"
+                  rel="noopener"
+                >
                   <Navigation aria-hidden className="size-5" />
                   {t("directions")}
                 </a>
@@ -185,7 +280,11 @@ export function BranchView({
           </div>
 
           {remoteOn ? (
-            <ListSection header={t("remoteChoose")} footer={t("queuesFooter")} radioGroupLabel={t("remoteChoose")}>
+            <ListSection
+              header={t("remoteChoose")}
+              footer={t("queuesFooter")}
+              radioGroupLabel={t("remoteChoose")}
+            >
               {board.services.map((s) =>
                 remoteIds.includes(s.id) ? (
                   <ListRow
@@ -195,7 +294,7 @@ export function BranchView({
                     onClick={() => setSelected(s.id)}
                     icon={<ServiceTile letter={s.prefix} color={s.color} />}
                     title={name(s)}
-                    subtitle={<span className="tabular">{summary(s)}</span>}
+                    subtitle={waitLine(s)}
                     accessory="check"
                   />
                 ) : (
@@ -203,7 +302,13 @@ export function BranchView({
                     key={s.id}
                     icon={<ServiceTile letter={s.prefix} color={s.color} />}
                     title={name(s)}
-                    subtitle={<span className="tabular">{`${summary(s)} · ${t("serviceNotRemote")}`}</span>}
+                    subtitle={
+                      <span className="tabular">
+                        {ticketsOpen
+                          ? `${summary(s)} · ${t("serviceNotRemote")}`
+                          : t("serviceNotRemote")}
+                      </span>
+                    }
                   />
                 ),
               )}
@@ -215,15 +320,21 @@ export function BranchView({
                   key={s.id}
                   icon={<ServiceTile letter={s.prefix} color={s.color} />}
                   title={name(s)}
-                  subtitle={<span className="tabular">{summary(s)}</span>}
+                  subtitle={waitLine(s)}
                 />
               ))}
             </ListSection>
           )}
 
           {remoteOn ? (
-            <section aria-labelledby="remote-how" className="flex flex-col gap-1.5">
-              <h2 id="remote-how" className="px-4 text-footnote text-label-secondary uppercase">
+            <section
+              aria-labelledby="remote-how"
+              className="flex flex-col gap-1.5"
+            >
+              <h2
+                id="remote-how"
+                className="px-4 text-footnote text-label-secondary uppercase"
+              >
                 {t("remoteHow")}
               </h2>
               <ol className="squircle flex flex-col gap-4 rounded-[var(--radius-md)] bg-grouped-secondary p-4">
@@ -233,14 +344,22 @@ export function BranchView({
                   { icon: <ScanLine />, text: t("remoteStep3") },
                 ].map((step, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <ListIcon color={i === 2 ? "var(--orange-fill)" : "var(--accent-fill)"}>{step.icon}</ListIcon>
+                    <ListIcon
+                      color={
+                        i === 2 ? "var(--orange-fill)" : "var(--accent-fill)"
+                      }
+                    >
+                      {step.icon}
+                    </ListIcon>
                     <span className="pt-1 text-callout">{step.text}</span>
                   </li>
                 ))}
               </ol>
               <p className="px-4 text-footnote text-label-secondary">
                 {t("remoteRule", { places: branch.remote.penalty_places })}{" "}
-                {branch.remote.max_distance_km ? t("remoteMax", { km: branch.remote.max_distance_km }) : t("remotePosition")}
+                {branch.remote.max_distance_km
+                  ? t("remoteMax", { km: branch.remote.max_distance_km })
+                  : t("remotePosition")}
               </p>
             </section>
           ) : (
@@ -250,7 +369,8 @@ export function BranchView({
           {branch.requests_enabled && remoteOn ? (
             <ListSection header={t("requestHeader")} className="lg:hidden">
               <ListRow
-                href={`/b/${branch.id}/rdv`}
+                href={requestsOpen ? `/b/${branch.id}/rdv` : undefined}
+                disabled={!requestsOpen}
                 prefetch={false}
                 icon={
                   <ListIcon>
@@ -259,7 +379,7 @@ export function BranchView({
                 }
                 title={t("requestTitle")}
                 subtitle={t("requestBody")}
-                accessory="chevron"
+                accessory={requestsOpen ? "chevron" : undefined}
               />
             </ListSection>
           ) : null}
@@ -274,7 +394,14 @@ export function BranchView({
                     title={tw(String(d))}
                     detail={
                       <span className="tabular">
-                        {day.length ? day.map((h) => `${time(h.opens_at)} – ${time(h.closes_at)}`).join(", ") : t("hoursClosed")}
+                        {day.length
+                          ? day
+                              .map(
+                                (h) =>
+                                  `${time(h.opens_at)} – ${time(h.closes_at)}`,
+                              )
+                              .join(", ")
+                          : t("hoursClosed")}
                       </span>
                     }
                   />
@@ -282,7 +409,7 @@ export function BranchView({
               })}
             </ListSection>
           ) : null}
-          {remoteOn ? (
+          {remoteOn && ticketsOpen ? (
             <CustomerIdentityFields
               rules={identityRules}
               value={identity}
@@ -302,7 +429,7 @@ export function BranchView({
             {remoteOn ? (
               <>
                 <h2 className="text-headline">{t("remoteHeader")}</h2>
-                {current ? (
+                {current && ticketsOpen ? (
                   <p className="text-subheadline text-label-secondary tabular">
                     {name(current)} · {summary(current)}
                   </p>
@@ -313,8 +440,14 @@ export function BranchView({
             ) : null}
             {branch.requests_enabled ? (
               <>
-                {remoteOn ? <div className="my-1 h-px bg-separator" aria-hidden /> : <h2 className="text-headline">{t("requestHeader")}</h2>}
-                <p className="text-subheadline text-label-secondary">{t("requestBody")}</p>
+                {remoteOn ? (
+                  <div className="my-1 h-px bg-separator" aria-hidden />
+                ) : (
+                  <h2 className="text-headline">{t("requestHeader")}</h2>
+                )}
+                <p className="text-subheadline text-label-secondary">
+                  {t("requestBody")}
+                </p>
                 {requestButton}
               </>
             ) : null}
@@ -325,7 +458,12 @@ export function BranchView({
       {remoteOn ? (
         <BottomBar
           className="lg:hidden"
-          summary={errorText ?? (current ? <span className="tabular">{`${name(current)} · ${summary(current)}`}</span> : undefined)}
+          summary={
+            errorText ??
+            (current && ticketsOpen ? (
+              <span className="tabular">{`${name(current)} · ${summary(current)}`}</span>
+            ) : undefined)
+          }
         >
           {takeButton}
         </BottomBar>

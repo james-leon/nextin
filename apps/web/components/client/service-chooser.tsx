@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { useRouter } from "next/navigation";
-import { Accessibility, Check, Clock } from "lucide-react";
+import { Accessibility, Check, Clock, Info } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import type { BranchBoard, BoardService } from "@nextin/shared/queue/live";
@@ -18,7 +18,12 @@ import { remoteTicketsFor, saveTicket } from "@/lib/client/my-tickets";
 import { callRpc } from "@/lib/client/supabase-public";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { takeTicket } from "@/lib/client/take-ticket";
-import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
+import { isOnlineUnavailable } from "@/lib/client/online-unavailable";
+import {
+  CustomerIdentityFields,
+  saveIdentity,
+  useIdentityValue,
+} from "./customer-identity-fields";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import type { EntryInfo, TicketView } from "@/lib/client/types";
 
@@ -41,21 +46,28 @@ export function ServiceChooser({
   captchaSiteKey: string | null;
 }) {
   const t = useLiteT("client.service");
+  const tc = useLiteT("common");
   const te = useLiteT("errors");
   const locale = useLiteLocale();
   const router = useRouter();
   const captchaRef = useRef<HTMLDivElement>(null);
   const [board, setBoard] = useState<BranchBoard>(entry.board);
   const services = useMemo(
-    () => board.services.filter((s) => !entry.service_id || s.id === entry.service_id),
+    () =>
+      board.services.filter(
+        (s) => !entry.service_id || s.id === entry.service_id,
+      ),
     [board, entry.service_id],
   );
-  const [selected, setSelected] = useState<string | null>(entry.service_id ?? services[0]?.id ?? null);
+  const [selected, setSelected] = useState<string | null>(
+    entry.service_id ?? services[0]?.id ?? null,
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [identity, setIdentity] = useIdentityValue(identityRules.mode !== "off");
+  const [identity, setIdentity] = useIdentityValue(
+    identityRules.mode !== "off",
+  );
   const [nameError, setNameError] = useState<string | null>(null);
-
 
   // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
   useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
@@ -66,7 +78,10 @@ export function ServiceChooser({
     let cancelled = false;
     void (async () => {
       for (const saved of remoteTicketsFor(entry.branch.id)) {
-        const { data } = await callRpc<TicketView>("confirm_presence", { p_token: saved.token, p_entry_code: presenceCode ?? entry.entry_code });
+        const { data } = await callRpc<TicketView>("confirm_presence", {
+          p_token: saved.token,
+          p_entry_code: presenceCode ?? entry.entry_code,
+        });
         if (cancelled) return;
         if (data && (data.status === "waiting" || data.status === "called")) {
           router.replace(`/t/${saved.token}`);
@@ -79,13 +94,20 @@ export function ServiceChooser({
     };
   }, [entry.branch.id, entry.entry_code, presenceCode, router]);
 
-  const name = (s: BoardService) => (locale === "en" && s.name_en ? s.name_en : s.name);
+  // Prise en ligne indisponible (abonnement, quota) : connu dès l'ouverture, sans la raison ; les services restent
+  // affichés, sans temps d'attente, et le bouton est désactivé.
+  const [online, setOnline] = useState(entry.online_open !== false);
+  const name = (s: BoardService) =>
+    locale === "en" && s.name_en ? s.name_en : s.name;
   const summary = (s: BoardService) => {
     const minutes = waitMinutes(s.wait_seconds);
-    return s.waiting.length === 0 && minutes === 0 ? t("noWait") : t("people", { count: s.waiting.length, minutes });
+    return s.waiting.length === 0 && minutes === 0
+      ? t("noWait")
+      : t("people", { count: s.waiting.length, minutes });
   };
   const current = services.find((s) => s.id === selected) ?? null;
-  const priorityOffered = entry.priorities_enabled && entry.priority_service_ids.length > 0;
+  const priorityOffered =
+    entry.priorities_enabled && entry.priority_service_ids.length > 0;
 
   async function submit() {
     if (!current) return;
@@ -93,7 +115,9 @@ export function ServiceChooser({
     if (!parsed.ok) {
       // Message sous le champ (annoncé par le lecteur d'écran) et focus dessus, plutôt qu'un doublon dans la barre.
       setNameError(te(parsed.error));
-      document.querySelector<HTMLInputElement>('input[name="customerName"]')?.focus();
+      document
+        .querySelector<HTMLInputElement>('input[name="customerName"]')
+        ?.focus();
       return;
     }
     setNameError(null);
@@ -110,7 +134,11 @@ export function ServiceChooser({
     );
     if (outcome.ok) {
       if (identityRules.mode !== "off") saveIdentity(identity);
-      saveTicket({ token: outcome.token, code: outcome.code, entry: entry.entry_code });
+      saveTicket({
+        token: outcome.token,
+        code: outcome.code,
+        entry: entry.entry_code,
+      });
       router.push(`/t/${outcome.token}`);
       return;
     }
@@ -119,6 +147,8 @@ export function ServiceChooser({
       return;
     }
     setPending(false);
+    // Devenu indisponible depuis l'ouverture de la page : même encadré neutre, jamais la raison.
+    if (isOnlineUnavailable(outcome.error)) return setOnline(false);
     setError(te.has(outcome.error) ? te(outcome.error) : te("generic"));
   }
 
@@ -143,7 +173,16 @@ export function ServiceChooser({
 
       <DesktopClientSidebar active="scan" />
       <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3 lg:max-w-[40rem]">
-        {!entry.branch.is_open ? (
+        {!online ? (
+          <CalloutCard
+            icon={<Info />}
+            tone="neutral"
+            role="status"
+            data-testid="online-unavailable"
+          >
+            {tc("onlineUnavailable")}
+          </CalloutCard>
+        ) : !entry.branch.is_open ? (
           <CalloutCard icon={<Clock />} role="status">
             {t("branchClosed")}
           </CalloutCard>
@@ -160,23 +199,33 @@ export function ServiceChooser({
                 onClick={() => setSelected(s.id)}
                 icon={<ServiceTile letter={s.prefix} color={s.color} />}
                 title={name(s)}
-                subtitle={<span className="tabular">{summary(s)}</span>}
+                subtitle={
+                  online ? (
+                    <span className="tabular">{summary(s)}</span>
+                  ) : undefined
+                }
                 accessory="check"
               />
             ))}
           </ListSection>
         )}
 
-        {priorityOffered ? <CalloutCard icon={<Accessibility />} tone="accent">{t("priorityInfo")}</CalloutCard> : null}
-        <CustomerIdentityFields
-          rules={identityRules}
-          value={identity}
-          onChange={(v) => {
-            setIdentity(v);
-            if (nameError) setNameError(null);
-          }}
-          nameError={nameError ?? undefined}
-        />
+        {priorityOffered && online ? (
+          <CalloutCard icon={<Accessibility />} tone="accent">
+            {t("priorityInfo")}
+          </CalloutCard>
+        ) : null}
+        {online ? (
+          <CustomerIdentityFields
+            rules={identityRules}
+            value={identity}
+            onChange={(v) => {
+              setIdentity(v);
+              if (nameError) setNameError(null);
+            }}
+            nameError={nameError ?? undefined}
+          />
+        ) : null}
         <div ref={captchaRef} className="flex justify-center empty:hidden" />
       </div>
 
@@ -188,14 +237,20 @@ export function ServiceChooser({
             <span role="alert" className="text-red-text">
               {error}
             </span>
-          ) : current ? (
+          ) : current && online ? (
             <span className="tabular">
               {name(current)} · {summary(current)}
             </span>
           ) : undefined
         }
       >
-        <Button block onClick={submit} loading={pending} loadingLabel={t("taking")} disabled={!current || !entry.branch.is_open}>
+        <Button
+          block
+          onClick={submit}
+          loading={pending}
+          loadingLabel={t("taking")}
+          disabled={!current || !entry.branch.is_open || !online}
+        >
           {t("take")}
         </Button>
       </BottomBar>

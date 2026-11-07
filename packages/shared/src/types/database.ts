@@ -2916,6 +2916,12 @@ isOneToOne: true
 "notification_dispatch_tick":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"online_requests_open":
+{ Args: { "p_org": string }; Returns: boolean
+                           },
+"online_tickets_open":
+{ Args: { "p_org": string,"p_remote"?: boolean }; Returns: boolean
+                           },
 "open_counter":
 { Args: { "p_counter": string }; Returns: Json
                            },

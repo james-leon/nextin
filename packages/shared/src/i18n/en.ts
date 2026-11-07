@@ -5,6 +5,7 @@ export const en: Messages = {
     appName: "NextIn",
     by: "by Wintek",
     back: "Back",
+    onlineUnavailable: "Online tickets are temporarily unavailable. Please ask at the front desk.",
     sidebarShow: "Show sidebar",
     sidebarHide: "Hide sidebar",
     cancel: "Cancel",
