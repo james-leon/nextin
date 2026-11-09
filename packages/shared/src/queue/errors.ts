@@ -1,0 +1,109 @@
+/**
+ * Erreurs métier levées par les RPC de file (message = code, SQLSTATE P04xx).
+ * Chaque code est aussi une clé du dictionnaire `errors`.
+ */
+export const QUEUE_ERROR_CODES = [
+  "slot_unavailable",
+  "schedule_overlap",
+  "appointment_not_today",
+  "not_found",
+  "not_allowed",
+  "rate_limited",
+  "invalid_entry",
+  "presence_tv_only",
+  "branch_closed",
+  "service_closed",
+  "quota_reached",
+  "priority_not_allowed",
+  "priority_staff_only",
+  "name_required",
+  "identity_invalid",
+  "remote_not_allowed",
+  "active_ticket_exists",
+  "counter_busy",
+  "counter_not_open",
+  "invalid_state",
+  "already_rated",
+  "rating_disabled",
+  "consent_required",
+  "phone_invalid",
+  // M9 — ticket à distance et demandes de rendez-vous.
+  "location_required",
+  "too_far",
+  "requests_disabled",
+  "request_duplicate",
+  "request_limit",
+  "code_invalid",
+  "code_expired",
+  // M10a — abonnements et paiements.
+  "plan_limit",
+  "feature_unavailable",
+  "subscription_read_only",
+  "phone_not_verified",
+  "too_many_organizations",
+  "invoice_paid",
+  "link_expired",
+  // Grille v2 : quota mensuel de tickets (bloqué à partir du lendemain), formule sur devis.
+  "monthly_quota_reached",
+  "plan_quote_only",
+  // M10b — publicité.
+  "surface_not_in_package",
+  "creative_required",
+  "health_visa_required",
+  "quiz_invalid",
+  "coupon_redeemed",
+  "coupon_expired",
+  "file_too_large",
+  // Backlog : agences choisies (formules plafonnées), caissiers.
+  "too_many_branches",
+  "user_not_found",
+] as const;
+export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
+
+/** Code métier d'une erreur PostgREST issue d'une RPC de file, ou null si l'erreur n'en est pas une. */
+export function queueErrorCode(error: { code?: string; message?: string } | null | undefined): QueueErrorCode | null {
+  if (!error) return null;
+  if (error.code === "42501") return "not_allowed";
+  const message = error.message?.trim() ?? "";
+  return (QUEUE_ERROR_CODES as readonly string[]).includes(message) ? (message as QueueErrorCode) : null;
+}
+
+/** Statut HTTP d'une erreur de file (route handlers). */
+export function queueErrorStatus(code: QueueErrorCode): number {
+  switch (code) {
+    case "not_found":
+      return 404;
+    case "not_allowed":
+    case "plan_limit":
+    case "feature_unavailable":
+      return 403;
+    case "subscription_read_only":
+    case "monthly_quota_reached":
+      return 402;
+    case "rate_limited":
+      return 429;
+    case "branch_closed":
+    case "service_closed":
+    case "quota_reached":
+    case "link_expired":
+    case "coupon_expired":
+      return 410;
+    case "counter_busy":
+    case "counter_not_open":
+    case "invalid_state":
+    case "already_rated":
+    case "rating_disabled":
+    case "active_ticket_exists":
+    case "request_duplicate":
+    case "request_limit":
+    case "code_expired":
+    case "invoice_paid":
+    case "plan_quote_only":
+    case "coupon_redeemed":
+      return 409;
+    case "too_many_organizations":
+      return 429;
+    default:
+      return 422;
+  }
+}

@@ -1,0 +1,259 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { useRouter } from "next/navigation";
+import { Accessibility, Check, Clock, Info } from "lucide-react";
+import { waitMinutes } from "@nextin/shared/queue/estimate";
+import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
+import type { BranchBoard, BoardService } from "@nextin/shared/queue/live";
+import { Badge } from "@/components/ui/badge";
+import { BottomBar } from "@/components/ui/bottom-bar";
+import { Button } from "@/components/ui/button";
+import { CalloutCard } from "@/components/ui/callout-card";
+import { ListRow, ListSection } from "@/components/ui/list";
+import { NavigationBar } from "@/components/ui/navigation-bar";
+import { ServiceTile } from "@/components/ui/service-tile";
+import { remoteTicketsFor, saveTicket } from "@/lib/client/my-tickets";
+import { callRpc } from "@/lib/client/supabase-public";
+import { subscribeBoard } from "@/lib/client/board-feed";
+import { takeTicket } from "@/lib/client/take-ticket";
+import { isOnlineUnavailable } from "@/lib/client/online-unavailable";
+import {
+  CustomerIdentityFields,
+  saveIdentity,
+  useIdentityValue,
+} from "./customer-identity-fields";
+import { DesktopClientSidebar } from "./desktop-client-sidebar";
+import type { EntryInfo, TicketView } from "@/lib/client/types";
+
+/**
+ * Écran 02 « Choisir un service » : files en direct, une action principale. L'accès prioritaire n'est plus demandé ici :
+ * une ligne d'information renvoie vers l'accueil, seul le personnel l'accorde (revue responsive P3).
+ * Ordinateur : menu latéral client, colonne centrée d'environ 640 px, résumé et bouton juste sous le contenu.
+ */
+export function ServiceChooser({
+  entry,
+  presenceCode = null,
+  captchaSiteKey,
+  identityRules = { mode: "off", extra: "none" },
+}: {
+  entry: EntryInfo;
+  /** Nom du client demandé par l'agence (non demandé, facultatif ou obligatoire). */
+  identityRules?: IdentityRules;
+  /** Code de présence tournant du QR code de l'écran TV (`?p=`), sinon le code d'entrée imprimé. */
+  presenceCode?: string | null;
+  captchaSiteKey: string | null;
+}) {
+  const t = useLiteT("client.service");
+  const tc = useLiteT("common");
+  const te = useLiteT("errors");
+  const locale = useLiteLocale();
+  const router = useRouter();
+  const captchaRef = useRef<HTMLDivElement>(null);
+  const [board, setBoard] = useState<BranchBoard>(entry.board);
+  const services = useMemo(
+    () =>
+      board.services.filter(
+        (s) => !entry.service_id || s.id === entry.service_id,
+      ),
+    [board, entry.service_id],
+  );
+  const [selected, setSelected] = useState<string | null>(
+    entry.service_id ?? services[0]?.id ?? null,
+  );
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [identity, setIdentity] = useIdentityValue(
+    identityRules.mode !== "off",
+  );
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  // Files mises à jour en direct ; rechargement complet à chaque (re)connexion.
+  useEffect(() => subscribeBoard(entry.branch.id, setBoard), [entry.branch.id]);
+
+  // Ticket à distance de cet appareil dans cette agence (M9) : scanner le QR code de l'écran TV (code tournant) ou,
+  // si l'agence l'accepte, celui de l'accueil confirme la présence.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      for (const saved of remoteTicketsFor(entry.branch.id)) {
+        const { data } = await callRpc<TicketView>("confirm_presence", {
+          p_token: saved.token,
+          p_entry_code: presenceCode ?? entry.entry_code,
+        });
+        if (cancelled) return;
+        if (data && (data.status === "waiting" || data.status === "called")) {
+          router.replace(`/t/${saved.token}`);
+          return;
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [entry.branch.id, entry.entry_code, presenceCode, router]);
+
+  // Prise en ligne indisponible (abonnement, quota) : connu dès l'ouverture, sans la raison ; les services restent
+  // affichés, sans temps d'attente, et le bouton est désactivé.
+  const [online, setOnline] = useState(entry.online_open !== false);
+  const name = (s: BoardService) =>
+    locale === "en" && s.name_en ? s.name_en : s.name;
+  const summary = (s: BoardService) => {
+    const minutes = waitMinutes(s.wait_seconds);
+    return s.waiting.length === 0 && minutes === 0
+      ? t("noWait")
+      : t("people", { count: s.waiting.length, minutes });
+  };
+  const current = services.find((s) => s.id === selected) ?? null;
+  const priorityOffered =
+    entry.priorities_enabled && entry.priority_service_ids.length > 0;
+
+  async function submit() {
+    if (!current) return;
+    const parsed = parseIdentity(identityRules, identity);
+    if (!parsed.ok) {
+      // Message sous le champ (annoncé par le lecteur d'écran) et focus dessus, plutôt qu'un doublon dans la barre.
+      setNameError(te(parsed.error));
+      document
+        .querySelector<HTMLInputElement>('input[name="customerName"]')
+        ?.focus();
+      return;
+    }
+    setNameError(null);
+    setPending(true);
+    setError(null);
+    const outcome = await takeTicket(
+      {
+        serviceId: current.id,
+        source: entry.source,
+        entryCode: entry.entry_code,
+        identity: parsed.identity,
+      },
+      { siteKey: captchaSiteKey, container: captchaRef.current },
+    );
+    if (outcome.ok) {
+      if (identityRules.mode !== "off") saveIdentity(identity);
+      saveTicket({
+        token: outcome.token,
+        code: outcome.code,
+        entry: entry.entry_code,
+      });
+      router.push(`/t/${outcome.token}`);
+      return;
+    }
+    if (outcome.existingPath) {
+      router.push(outcome.existingPath);
+      return;
+    }
+    setPending(false);
+    // Devenu indisponible depuis l'ouverture de la page : même encadré neutre, jamais la raison.
+    if (isOnlineUnavailable(outcome.error)) return setOnline(false);
+    setError(te.has(outcome.error) ? te(outcome.error) : te("generic"));
+  }
+
+  return (
+    <main className="min-h-dvh pb-48 md:pb-8">
+      <NavigationBar
+        title={t("title")}
+        eyebrow={entry.organization.name}
+        back={{ href: "/", label: t("back"), prefetch: false }}
+        trailing={
+          <Badge shape="pill" tone="green">
+            <Check aria-hidden />
+            {entry.source === "qr" ? t("recognized") : t("codeRecognized")}
+          </Badge>
+        }
+        contentClassName="max-w-lg lg:max-w-[40rem]"
+      >
+        <p className="mt-1 text-subheadline text-label-secondary">
+          {entry.branch.name} · {t("subtitle")}
+        </p>
+      </NavigationBar>
+
+      <DesktopClientSidebar active="scan" />
+      <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3 lg:max-w-[40rem]">
+        {!online ? (
+          <CalloutCard
+            icon={<Info />}
+            tone="neutral"
+            role="status"
+            data-testid="online-unavailable"
+          >
+            {tc("onlineUnavailable")}
+          </CalloutCard>
+        ) : !entry.branch.is_open ? (
+          <CalloutCard icon={<Clock />} role="status">
+            {t("branchClosed")}
+          </CalloutCard>
+        ) : null}
+        {services.length === 0 ? (
+          <CalloutCard icon={<Clock />}>{t("empty")}</CalloutCard>
+        ) : (
+          <ListSection header={t("header")} radioGroupLabel={t("header")}>
+            {services.map((s) => (
+              <ListRow
+                key={s.id}
+                role="radio"
+                selected={selected === s.id}
+                onClick={() => setSelected(s.id)}
+                icon={<ServiceTile letter={s.prefix} color={s.color} />}
+                title={name(s)}
+                subtitle={
+                  online ? (
+                    <span className="tabular">{summary(s)}</span>
+                  ) : undefined
+                }
+                accessory="check"
+              />
+            ))}
+          </ListSection>
+        )}
+
+        {priorityOffered && online ? (
+          <CalloutCard icon={<Accessibility />} tone="accent">
+            {t("priorityInfo")}
+          </CalloutCard>
+        ) : null}
+        {online ? (
+          <CustomerIdentityFields
+            rules={identityRules}
+            value={identity}
+            onChange={(v) => {
+              setIdentity(v);
+              if (nameError) setNameError(null);
+            }}
+            nameError={nameError ?? undefined}
+          />
+        ) : null}
+        <div ref={captchaRef} className="flex justify-center empty:hidden" />
+      </div>
+
+      <BottomBar
+        className="lg:static lg:bg-none lg:pt-2"
+        contentClassName="lg:max-w-[40rem]"
+        summary={
+          error ? (
+            <span role="alert" className="text-red-text">
+              {error}
+            </span>
+          ) : current && online ? (
+            <span className="tabular">
+              {name(current)} · {summary(current)}
+            </span>
+          ) : undefined
+        }
+      >
+        <Button
+          block
+          onClick={submit}
+          loading={pending}
+          loadingLabel={t("taking")}
+          disabled={!current || !entry.branch.is_open || !online}
+        >
+          {t("take")}
+        </Button>
+      </BottomBar>
+    </main>
+  );
+}

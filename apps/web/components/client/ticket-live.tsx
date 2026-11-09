@@ -1,0 +1,427 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { BadgeCheck, Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { optInLink } from "@nextin/shared/notifications/opt-in";
+import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
+import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
+import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
+import { Badge } from "@/components/ui/badge";
+import { Button, IconButton } from "@/components/ui/button";
+import { CalloutCard } from "@/components/ui/callout-card";
+import { NavigationBar } from "@/components/ui/navigation-bar";
+import { TicketHero } from "@/components/ui/ticket-hero";
+import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { primeAttention, signalAttention } from "@/lib/client/attention";
+import { subscribeBoard } from "@/lib/client/board-feed";
+import { savedTicket, saveTicket } from "@/lib/client/my-tickets";
+import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib/client/realtime";
+import { callRpc } from "@/lib/client/supabase-public";
+import { waitingProgress } from "@/lib/client/ticket-progress";
+import type { CounterRef, TicketView } from "@/lib/client/types";
+import { DesktopClientSidebar } from "./desktop-client-sidebar";
+import { PlayCard } from "./games/play-card";
+import { LazyMount } from "./lazy-mount";
+import { QueuePosition } from "./queue-position";
+import { RemoteTicketCard } from "./remote-ticket-card";
+
+// Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
+const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
+const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
+const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
+// Publicité et jeux (M10b) : jamais dans le premier chargement.
+const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
+const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
+
+const aheadKey = (token: string) => `nextin-ahead-${token}`;
+const noSubscribe = () => () => {};
+
+/** Plus grand nombre de personnes devant vu sur cet appareil (barre de progression). */
+function readMaxAhead(token: string): number {
+  try {
+    return Number(localStorage.getItem(aheadKey(token)) ?? 0) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Écran 03 « Mon ticket » : numéro et attente en héros, suivi en temps réel, appel, fin de passage. */
+export function TicketLive({
+  token,
+  initial,
+  whatsappNumber,
+  vapidKey,
+  couponBaseUrl,
+  gameCards,
+}: {
+  token: string;
+  initial: TicketView;
+  /** Numéro WhatsApp de NextIn (opt-in), lu côté serveur ; null : bouton masqué. */
+  whatsappNumber: string | null;
+  /** Clé publique VAPID (web push) ; null : pas de notification sur le téléphone. */
+  vapidKey: string | null;
+  /** Adresse absolue des bons de réduction (`/coupon/`), encodée dans leur QR code. */
+  couponBaseUrl: string;
+  /** Textes des cartes de jeu et de pub (les autres textes des jeux sont chargés avec la feuille). */
+  gameCards: Record<string, string>;
+}) {
+  const t = useLiteT("client.ticket");
+  const tk = useLiteT("counterKinds");
+  const locale = useLiteLocale();
+  const [view, setView] = useState(initial);
+  const [board, setBoard] = useState<BranchBoard | null>(null);
+  const [status, setStatus] = useState<RealtimeStatus>("connecting");
+  const [now, setNow] = useState(() => new Date());
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const lastAlert = useRef<string | null>(null);
+  // Données gardées sur l'appareil, lues sans décalage d'hydratation (null / 0 côté serveur).
+  const entry = useSyncExternalStore(noSubscribe, () => savedTicket(token)?.entry ?? null, () => null);
+  const storedMaxAhead = useSyncExternalStore(noSubscribe, () => readMaxAhead(token), () => 0);
+
+  const counterName = (c: CounterRef | Pick<BoardCall, "counter_kind" | "counter_number" | "counter_label">) =>
+    "kind" in c ? (c.label ?? `${tk(c.kind)} ${c.number}`) : (c.counter_label ?? `${tk(c.counter_kind)} ${c.counter_number}`);
+
+  // Ticket et tableau de l'agence en direct ; rechargés à chaque (re)connexion.
+  useEffect(() => {
+    const refreshTicket = () =>
+      callRpc<TicketView | null>("get_ticket", { p_token: token }).then(({ data }) => data && setView(data));
+    const offTicket = subscribeBroadcast(ticketTopic(token), REALTIME_EVENTS.ticket, (p) => setView(p as TicketView), refreshTicket);
+    const offBoard = subscribeBoard(initial.branch.id, setBoard);
+    const offStatus = onRealtimeStatus(setStatus);
+    const tick = setInterval(() => setNow(new Date()), 30_000);
+    const unprime = primeAttention();
+    return () => {
+      offTicket();
+      offBoard();
+      offStatus();
+      clearInterval(tick);
+      unprime();
+    };
+  }, [token, initial.branch.id]);
+
+  // Lien gardé sur l'appareil (onglet « Mon ticket »), y compris pour un lien reçu (ticket d'accueil, partage).
+  useEffect(() => {
+    const saved = savedTicket(token);
+    // Ticket à distance (M9) : l'agence est gardée pour confirmer la présence au scan de son QR code.
+    if (!saved || (initial.remote && !saved.remote)) {
+      saveTicket({ token, code: initial.display_code, entry: null, ...(initial.remote ? { branchId: initial.branch.id, remote: true } : {}) });
+    }
+  }, [token, initial.display_code, initial.remote, initial.branch.id]);
+
+  const call = board ? callForCode(board, view.display_code) : null;
+  const progress = view.status === "waiting" ? waitingProgress(view, board, storedMaxAhead, now) : null;
+
+  useEffect(() => {
+    if (!progress || progress.maxAhead <= readMaxAhead(token)) return;
+    try {
+      localStorage.setItem(aheadKey(token), String(progress.maxAhead));
+    } catch {
+      // Stockage indisponible : la barre repart du nombre actuel.
+    }
+  }, [progress, token]);
+
+  // Appel (et chaque rappel) : vibration, son, titre de l'onglet.
+  useEffect(() => {
+    if (view.status !== "called") {
+      lastAlert.current = null;
+      document.title = `${view.display_code} · ${t("title")}`;
+      return;
+    }
+    const key = `${view.called_at}:${call?.recall_count ?? 0}`;
+    if (lastAlert.current !== key) {
+      lastAlert.current = key;
+      signalAttention();
+    }
+    document.title = `${t("calledTitle")} · ${view.display_code}`;
+  }, [view.status, view.called_at, view.display_code, call?.recall_count, t]);
+
+  const serviceName = locale === "en" && view.service.name_en ? view.service.name_en : view.service.name;
+  const place = view.organization.name;
+  // Pas de préchargement de la page de retour : chaque octet compte en 3G (budget < 200 Ko).
+  const back = entry
+    ? { href: `/q/${entry}`, label: t("back"), prefetch: false }
+    : view.remote
+      ? { href: `/b/${view.branch.id}`, label: t("back"), prefetch: false }
+      : { href: "/", label: t("home"), prefetch: false };
+  const nowServing = board?.calls.find((c) => isActiveCall(c) && c.service_id === view.service.id && c.code !== view.display_code);
+  // Numéros devant le client dans sa file (publics, comme sur l'écran TV) ; null si le tableau n'est pas encore là.
+  const queueWaiting = board?.services.find((s) => s.id === view.service.id)?.waiting ?? null;
+  const myIndex = queueWaiting ? queueWaiting.indexOf(view.display_code) : -1;
+  const queueAhead = queueWaiting && myIndex >= 0 ? queueWaiting.slice(0, myIndex) : null;
+
+  async function share() {
+    const url = window.location.href;
+    const text = t("shareText", { code: view.display_code, place });
+    if (navigator.share) {
+      await navigator.share({ title: view.display_code, text, url }).catch(() => undefined);
+    } else if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(url).then(() => setCopied(true), () => undefined);
+    } else {
+      // Page non sécurisée (test en Wi-Fi local) : partage par WhatsApp.
+      window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, "_blank", "noopener");
+    }
+  }
+
+  async function signalOnMyWay() {
+    const { data } = await callRpc<TicketView>("signal_on_my_way", { p_token: token });
+    if (data) setView(data);
+  }
+
+  async function cancel() {
+    const { data } = await callRpc<TicketView>("cancel_my_ticket", { p_token: token });
+    if (data) setView(data);
+  }
+
+  const active = view.status === "waiting" || view.status === "called";
+  const closeGame = useCallback(() => setPlaying(false), []);
+  const heroCommon = {
+    code: view.display_code,
+    service: serviceName,
+    place,
+    aheadLabel: t("ahead"),
+    waitLabel: t("wait"),
+    progressLabel: t("progress"),
+  };
+
+  return (
+    <main className={active && view.remote && !view.remote.presence_confirmed_at ? "min-h-dvh pb-48 lg:pb-12" : active ? "min-h-dvh pb-36 lg:pb-12" : "min-h-dvh pb-40 lg:pb-12"}>
+      <NavigationBar
+        variant="inline"
+        title={t("title")}
+        back={back}
+        trailing={<IconButton label={copied ? t("copied") : t("share")} icon={<Share />} variant="plain" onClick={share} />}
+        contentClassName="max-w-lg lg:max-w-5xl"
+      />
+      <DesktopClientSidebar active="ticket" />
+      {/* Ordinateur : le ticket à gauche (héros, attente), alertes et actions à droite. */}
+      <div className="mx-auto grid max-w-lg grid-cols-1 gap-4 px-4 pt-3 lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:gap-8">
+        <div className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-16">
+        {status === "offline" ? (
+          <Badge shape="pill" tone="red" className="self-center" role="status">
+            <WifiOff aria-hidden />
+            {t("offline")}
+          </Badge>
+        ) : null}
+
+        {view.status === "waiting" && progress ? (
+          <TicketHero
+            {...heroCommon}
+            ahead={progress.ahead}
+            wait={progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes })}
+            progress={progress.progress}
+            nowServing={nowServing ? t("nowServing", { code: nowServing.code, counter: counterName(nowServing) }) : undefined}
+            live={status === "offline" ? undefined : t("live")}
+          />
+        ) : view.status === "called" || view.status === "serving" ? (
+          <TicketHero
+            {...heroCommon}
+            ahead={0}
+            wait=""
+            progress={1}
+            state="called"
+            calledTitle={view.status === "called" ? t("calledTitle") : t("servingTitle")}
+            calledBody={
+              view.counter
+                ? view.status === "called"
+                  ? t("calledBody", { counter: counterName(view.counter) })
+                  : t("servingBody", { counter: counterName(view.counter) })
+                : undefined
+            }
+          />
+        ) : (
+          <section
+            aria-live="polite"
+            className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center shadow-card"
+          >
+            {view.status === "served" ? (
+              <CheckCircle2 aria-hidden className="size-10 stroke-[1.5] text-green" />
+            ) : (
+              <XCircle aria-hidden className="size-10 stroke-[1.5] text-label-secondary" />
+            )}
+            <p className="text-title2 font-bold">
+              {view.status === "served" ? t("servedTitle") : view.status === "cancelled" ? t("cancelledTitle") : t("noShowTitle")}
+            </p>
+            <p className="text-callout text-label-secondary">
+              {view.display_code} · {serviceName} · {place}
+            </p>
+            {view.status === "cancelled" ? (
+              <p className="text-body text-label-secondary">{view.remote?.cancelled_for_absence ? t("cancelledAbsence") : t("cancelledBody")}</p>
+            ) : null}
+            {view.status === "no_show" ? (
+              <p className="text-body text-label-secondary">{(view.missed_calls ?? 0) >= 2 ? t("noShowMissedBody") : t("noShowBody")}</p>
+            ) : null}
+          </section>
+        )}
+
+        {/* Appel manqué (absent automatique) : le client est replacé ; au suivant, le ticket est annulé. */}
+        {view.status === "waiting" && (view.missed_calls ?? 0) > 0 ? (
+          <CalloutCard icon={<Bell />} role="status" className="shadow-card" data-testid="missed-call">
+            <span className="block font-semibold">{t("missedCallTitle")}</span>
+            {t("missedCallBody")}
+          </CalloutCard>
+        ) : null}
+
+        {/* Accès prioritaire : accordé uniquement par le personnel (accueil, poste ou arrivée d'un rendez-vous). */}
+        {active && view.priority_reason ? (
+          <Badge shape="pill" tone="accent" className="self-center" data-testid="ticket-priority">
+            <BadgeCheck aria-hidden />
+            {t("priority")}
+          </Badge>
+        ) : null}
+
+        {view.status === "waiting" && queueAhead ? (
+          <QueuePosition
+            title={t("positionTitle")}
+            current={nowServing ? { code: nowServing.code, counter: counterName(nowServing) } : null}
+            ahead={queueAhead}
+            me={view.display_code}
+            labels={{
+              now: (counter) => t("positionNow", { counter }),
+              idle: t("positionIdle"),
+              more: (count) => t("positionMore", { count }),
+              you: t("positionYou"),
+            }}
+          />
+        ) : null}
+
+        {view.status === "called" && call && call.recall_count > 0 ? (
+          <Badge shape="pill" tone="orange" className="self-center">
+            <Bell aria-hidden />
+            {t("recalled", { count: call.recall_count })}
+          </Badge>
+        ) : null}
+
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">
+        {active && view.alerts?.whatsapp ? (
+          <Badge shape="pill" tone="green" className="self-center" role="status">
+            <Check aria-hidden />
+            {t("whatsappOn")}
+          </Badge>
+        ) : active && whatsappNumber ? (
+          <div className="flex flex-col gap-1.5">
+            <Button asChild block variant="tinted">
+              <a href={optInLink(whatsappNumber, view.display_code, token, locale === "en" ? "en" : "fr")} target="_blank" rel="noopener">
+                <MessageCircle aria-hidden className="size-5" />
+                {t("whatsapp")}
+              </a>
+            </Button>
+            <p className="px-4 text-center text-footnote text-label-secondary">{t("whatsappHint")}</p>
+          </div>
+        ) : null}
+
+        {active && vapidKey ? <PushAlerts token={token} vapidKey={vapidKey} subscribed={!!view.alerts?.push} /> : null}
+
+        {view.status === "waiting" && view.remote ? (
+          <RemoteTicketCard
+            token={token}
+            view={view}
+            waitSeconds={progress ? (progress.imminent ? 0 : progress.minutes * 60) : view.wait_seconds}
+            onChange={setView}
+          />
+        ) : null}
+
+        {view.status === "waiting" && view.practitioner_late_until && new Date(view.practitioner_late_until).getTime() > now.getTime() ? (
+          <CalloutCard icon={<Clock />} role="status">
+            {t("practitionerLate", {
+              time: new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }).format(
+                new Date(view.practitioner_late_until),
+              ),
+            })}
+          </CalloutCard>
+        ) : null}
+
+        {view.status === "waiting" ? (
+          <CalloutCard icon={<Bell />}>{view.alerts?.whatsapp || view.alerts?.push ? t("keepOpenAlerts") : t("keepOpen")}</CalloutCard>
+        ) : null}
+
+        {view.status === "waiting" ? (
+          <LiteIntlProvider locale={locale} messages={{ games: gameCards }}>
+            <LazyMount>
+              <div className="flex flex-col gap-4">
+                <PlayCard token={token} onOpen={() => setPlaying(true)} />
+                <SponsoredCard token={token} />
+              </div>
+            </LazyMount>
+          </LiteIntlProvider>
+        ) : null}
+
+        {view.status === "served" ? (
+          view.rating_enabled && view.rating == null ? (
+            <TicketRating token={token} onRated={setView} />
+          ) : view.rating != null ? (
+            <CalloutCard icon={<CheckCircle2 />} tone="green" role="status">
+              {t("rated")}
+            </CalloutCard>
+          ) : null
+        ) : null}
+
+        {view.status === "cancelled" || view.status === "no_show" ? (
+          <Button asChild block variant="tinted">
+            <Link href={entry ? `/q/${entry}` : "/"}>{t("newTicket")}</Link>
+          </Button>
+        ) : null}
+        {active ? (
+          <TicketBottomActions
+            position="sticky"
+            className="hidden bg-none p-0 lg:block"
+            source={view.source}
+            onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
+            onMyWay={signalOnMyWay}
+            onMyWayHref={view.remote?.on_my_way_at ? "/" : undefined}
+            hideRemote={!view.remote || !!view.remote.presence_confirmed_at}
+            cancelLabel={t("cancel")}
+            onCancel={() => setConfirmCancel(true)}
+          />
+        ) : null}
+        </div>
+      </div>
+
+      {playing && (view.status === "waiting" || view.status === "called") ? (
+        <GameSheet
+          token={token}
+          code={view.display_code}
+          status={
+            progress
+              ? `${progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes })} · ${t("ahead")} : ${progress.ahead}`
+              : t("calledTitle")
+          }
+          call={view.status === "called" ? { counter: view.counter ? counterName(view.counter) : "" } : null}
+          couponBaseUrl={couponBaseUrl}
+          onClose={closeGame}
+        />
+      ) : null}
+
+      {active ? (
+        <>
+          <TicketBottomActions
+            className="lg:hidden"
+            source={view.source}
+            onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
+            onMyWay={signalOnMyWay}
+            onMyWayHref={view.remote?.on_my_way_at ? "/" : undefined}
+            hideRemote={!view.remote || !!view.remote.presence_confirmed_at}
+            cancelLabel={t("cancel")}
+            onCancel={() => setConfirmCancel(true)}
+          />
+          {confirmCancel ? (
+            <AlertDialog
+              open
+              onOpenChange={setConfirmCancel}
+              title={t("cancelTitle")}
+              description={t("cancelBody")}
+              cancelLabel={t("cancelKeep")}
+              actionLabel={t("cancel")}
+              destructive
+              onAction={cancel}
+            />
+          ) : null}
+        </>
+      ) : null}
+    </main>
+  );
+}

@@ -1,0 +1,25 @@
+{
+  "_comment": "Parité computeSubscriptionPrice (TS) et public.subscription_price (SQL) : recopié dans supabase/tests/database/m10a_billing.test.sql. Grille v2 : Starter 29 900, Business 59 900, Premium 124 900 FCFA/mois ; annuel = 2 mois offerts.",
+  "cases": [
+    { "name": "Starter, 1 agence, mensuel", "base": 29900, "included": 1, "extra": null, "freeMonths": 2, "branches": 1, "period": "monthly", "discount": null,
+      "expected": { "monthly": 29900, "months": 1, "extraBranches": 0, "subtotal": 29900, "discount": 0, "total": 29900 } },
+    { "name": "Starter, annuel (2 mois offerts)", "base": 29900, "included": 1, "extra": null, "freeMonths": 2, "branches": 1, "period": "annual", "discount": null,
+      "expected": { "monthly": 29900, "months": 10, "extraBranches": 0, "subtotal": 299000, "discount": 0, "total": 299000 } },
+    { "name": "Business, 1 agence, mensuel", "base": 59900, "included": 1, "extra": null, "freeMonths": 2, "branches": 1, "period": "monthly", "discount": null,
+      "expected": { "monthly": 59900, "months": 1, "extraBranches": 0, "subtotal": 59900, "discount": 0, "total": 59900 } },
+    { "name": "Business, annuel (2 mois offerts)", "base": 59900, "included": 1, "extra": null, "freeMonths": 2, "branches": 1, "period": "annual", "discount": null,
+      "expected": { "monthly": 59900, "months": 10, "extraBranches": 0, "subtotal": 599000, "discount": 0, "total": 599000 } },
+    { "name": "Premium, 3 agences, annuel", "base": 124900, "included": 3, "extra": null, "freeMonths": 2, "branches": 3, "period": "annual", "discount": null,
+      "expected": { "monthly": 124900, "months": 10, "extraBranches": 0, "subtotal": 1249000, "discount": 0, "total": 1249000 } },
+    { "name": "Premium, 2 agences (sous les incluses)", "base": 124900, "included": 3, "extra": null, "freeMonths": 2, "branches": 2, "period": "monthly", "discount": null,
+      "expected": { "monthly": 124900, "months": 1, "extraBranches": 0, "subtotal": 124900, "discount": 0, "total": 124900 } },
+    { "name": "Agence supplémentaire facturable (formule réglée par le super admin)", "base": 59900, "included": 1, "extra": 40000, "freeMonths": 2, "branches": 2, "period": "monthly", "discount": { "kind": "percent", "value": 15 },
+      "expected": { "monthly": 99900, "months": 1, "extraBranches": 1, "subtotal": 99900, "discount": 14985, "total": 84915 } },
+    { "name": "Remise en pourcentage arrondie à l'entier", "base": 12345, "included": 1, "extra": null, "freeMonths": 0, "branches": 1, "period": "monthly", "discount": { "kind": "percent", "value": 10 },
+      "expected": { "monthly": 12345, "months": 1, "extraBranches": 0, "subtotal": 12345, "discount": 1235, "total": 11110 } },
+    { "name": "Remise fixe plafonnée au prix", "base": 29900, "included": 1, "extra": null, "freeMonths": 2, "branches": 1, "period": "monthly", "discount": { "kind": "fixed_xaf", "value": 50000 },
+      "expected": { "monthly": 29900, "months": 1, "extraBranches": 0, "subtotal": 29900, "discount": 29900, "total": 0 } },
+    { "name": "Formule sans agence supplémentaire facturable", "base": 30000, "included": 1, "extra": null, "freeMonths": 1, "branches": 3, "period": "annual", "discount": { "kind": "fixed_xaf", "value": 10000 },
+      "expected": { "monthly": 30000, "months": 11, "extraBranches": 2, "subtotal": 330000, "discount": 10000, "total": 320000 } }
+  ]
+}

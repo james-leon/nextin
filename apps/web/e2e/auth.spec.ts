@@ -1,0 +1,257 @@
+import { createClient } from "@supabase/supabase-js";
+import { expect, test } from "@playwright/test";
+import { PASSWORD, expectAccessible, expectTouchTargets, orgIdFromUrl, signInViaUi, signUpViaUi, uniqueEmail, verifyPhoneViaUi } from "./helpers";
+
+test.describe("M1 — authentification et établissements", () => {
+  test("un espace du personnel exige une connexion et revient à la page demandée", async ({ page }) => {
+    await page.goto("/app/new");
+    await expect(page).toHaveURL(/\/login\?next=%2Fapp%2Fnew$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
+  });
+
+  test("inscription → création d'établissement → liste, puis déconnexion et reconnexion", async ({ page }) => {
+    const email = uniqueEmail("directeur");
+    await signUpViaUi(page, { name: "Dr Ngo Biyong", email });
+    await expect(page).toHaveURL(/\/app$/);
+    await expect(page.getByRole("heading", { name: "Aucun établissement pour l'instant" })).toBeVisible();
+    await expectAccessible(page);
+
+    await page.getByRole("link", { name: "Créer un établissement" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Nouvel établissement" })).toBeVisible();
+    // M10a : téléphone du directeur vérifié par un code (WhatsApp, faux fournisseur en test).
+    await expectAccessible(page);
+    await verifyPhoneViaUi(page);
+
+    // Validation : secteur obligatoire.
+    await page.getByLabel("Nom de l'établissement").fill("Clinique Test Akwa");
+    await expect(page.getByText("Identifiant : clinique-test-akwa")).toBeVisible();
+    await page.getByRole("button", { name: "Créer l'établissement" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Choisissez un secteur." })).toBeVisible();
+
+    await page.getByRole("radio", { name: "Clinique" }).click();
+    await expect(page.getByRole("radio", { name: "Clinique" })).toHaveAttribute("aria-checked", "true");
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await page.getByRole("button", { name: "Créer l'établissement" }).click();
+
+    // Essai gratuit : assistant de démarrage avec message de bienvenue.
+    await expect(page).toHaveURL(/\/setup\?welcome=1$/);
+    await expect(page.getByRole("status").filter({ hasText: "Bienvenue dans NextIn" })).toBeVisible();
+    await expectAccessible(page);
+    await page.goto("/app");
+    await expect(page.getByText("Clinique Test Akwa")).toBeVisible();
+    await expect(page.getByText("Clinique · Administrateur")).toBeVisible();
+    await expectAccessible(page);
+
+    // Déjà connecté : /login renvoie vers /app.
+    await page.goto("/login");
+    await expect(page).toHaveURL(/\/app$/);
+
+    // Déconnexion depuis Réglages (M4).
+    await page.getByRole("link", { name: "Réglages" }).click();
+    await page.getByRole("button", { name: "Se déconnecter" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+
+    await signInViaUi(page, email, "MauvaisMotDePasse1");
+    await expect(page.getByRole("alert").filter({ hasText: "E-mail ou mot de passe incorrect." })).toBeVisible();
+
+    await signInViaUi(page, email);
+    await expect(page).toHaveURL(/\/app$/);
+    await expect(page.getByText("Clinique Test Akwa")).toBeVisible();
+  });
+
+  test("deux établissements portant le même nom reçoivent des identifiants distincts", async ({ page }) => {
+    await signUpViaUi(page, { name: "Serge Tchoupo", email: uniqueEmail("eneo") });
+    for (let i = 0; i < 2; i++) {
+      await page.goto("/app/new");
+      await verifyPhoneViaUi(page);
+      await page.getByLabel("Nom de l'établissement").fill("Eneo Bonanjo Doublon");
+      await page.getByRole("radio", { name: "Service public (eau, électricité)" }).click();
+      await page.getByRole("button", { name: "Créer l'établissement" }).click();
+      await expect(page).toHaveURL(/\/setup\?welcome=1$/);
+    }
+    await page.goto("/app");
+    await expect(page.getByText("Eneo Bonanjo Doublon")).toHaveCount(2);
+  });
+
+  test("les erreurs de formulaire sont expliquées champ par champ", async ({ page }) => {
+    await page.goto("/signup");
+    await page.getByLabel("Nom complet").fill("A");
+    await page.getByLabel("E-mail").fill("pas-un-email");
+    await page.getByLabel("Mot de passe", { exact: true }).fill("court");
+    await page.getByRole("button", { name: "Créer mon compte" }).click();
+    await expect(page).toHaveURL(/\/signup$/);
+    await expect(page.getByText("Au moins 2 caractères.")).toBeVisible();
+    await expect(page.getByText("Adresse e-mail invalide.")).toBeVisible();
+    await expect(page.getByText("Au moins 10 caractères.")).toBeVisible();
+    await expect(page.getByLabel("E-mail")).toHaveAttribute("aria-invalid", "true");
+    await expectAccessible(page);
+  });
+
+  test("une adresse déjà inscrite est signalée", async ({ page, browser }) => {
+    const email = uniqueEmail("doublon");
+    await signUpViaUi(page, { name: "Premier Compte", email });
+    await expect(page).toHaveURL(/\/app$/);
+    const otherContext = await browser.newContext();
+    const other = await otherContext.newPage();
+    await signUpViaUi(other, { name: "Second Compte", email, expectSuccess: false });
+    await expect(other.getByRole("alert").filter({ hasText: "Un compte existe déjà" })).toBeVisible();
+    await otherContext.close();
+  });
+
+  test("redirection ouverte refusée après connexion", async ({ page }) => {
+    const email = uniqueEmail("redirect");
+    await signUpViaUi(page, { name: "Test Redirect", email });
+    // Déconnexion depuis Réglages (M4).
+    await page.getByRole("link", { name: "Réglages" }).click();
+    await page.getByRole("button", { name: "Se déconnecter" }).click();
+    await page.goto(`/login?next=${encodeURIComponent("https://evil.example/app")}`);
+    await signInViaUi(page, email);
+    await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/app$/);
+  });
+
+  test("invitation : aperçu, création de compte et adhésion à l'équipe", async ({ page, browser }) => {
+    const adminEmail = uniqueEmail("admin");
+    await signUpViaUi(page, { name: "Directrice Invite", email: adminEmail });
+    await page.goto("/app/new");
+    await verifyPhoneViaUi(page);
+    await page.getByLabel("Nom de l'établissement").fill("Clinique Invitation");
+    await page.getByRole("radio", { name: "Clinique" }).click();
+    await page.getByRole("button", { name: "Créer l'établissement" }).click();
+    await page.waitForURL(/\/setup\?welcome=1$/);
+    const orgId = orgIdFromUrl(page.url());
+
+    // L'administratrice crée l'invitation (l'écran « Personnel » arrive au M2).
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false },
+    });
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email: adminEmail, password: PASSWORD });
+    expect(loginError).toBeNull();
+    const receptionistEmail = uniqueEmail("accueil");
+    const { data: token, error } = await supabase.rpc("create_invitation", {
+      p_org: orgId,
+      p_role: "receptionist",
+      p_email: receptionistEmail,
+    });
+    expect(error).toBeNull();
+
+    const guestContext = await browser.newContext();
+    const guest = await guestContext.newPage();
+    await guest.goto(`/invite/${token}`);
+    await expect(guest.getByText("Vous êtes invité à rejoindre Clinique Invitation en tant que Réceptionniste.")).toBeVisible();
+    await expect(guest.getByText(/Invitation envoyée à a•••@nextin\.test/)).toBeVisible();
+    await expectAccessible(guest);
+    await guest.getByRole("link", { name: "Créer un compte" }).click();
+    await signUpViaUi(guest, { name: "Mireille Ekambi", email: receptionistEmail, next: `/invite/${token}` });
+    await expect(guest).toHaveURL(new RegExp(`/invite/${token}$`));
+    await guest.getByRole("button", { name: "Rejoindre l'équipe" }).click();
+    await expect(guest).toHaveURL(/\/app\?joined=/);
+    await expect(guest.getByRole("status").filter({ hasText: "Vous avez rejoint Clinique Invitation." })).toBeVisible();
+    await expect(guest.getByText("Clinique · Réceptionniste")).toBeVisible();
+
+    // Lien réutilisé : l'invitation est consommée.
+    await guest.goto(`/invite/${token}`);
+    await expect(guest.getByRole("heading", { name: "Invitation déjà utilisée" })).toBeVisible();
+    await guestContext.close();
+  });
+
+  test("lien d'invitation inconnu", async ({ page }) => {
+    await page.goto("/invite/inexistant-0000000000000000");
+    await expect(page.getByRole("heading", { name: "Invitation introuvable" })).toBeVisible();
+  });
+
+  test("écran de connexion accessible, en anglais aussi", async ({ page }) => {
+    await page.goto("/login");
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await page.getByRole("button", { name: "Recevoir un code par e-mail" }).click();
+    await expect(page.getByRole("button", { name: "Envoyer le code" })).toBeVisible();
+    await page.getByRole("button", { name: "English" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
+    await page.getByRole("button", { name: "Français" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
+  });
+
+  test("se souvenir de moi : décoché, cookies de session seulement", async ({ page, context }) => {
+    const email = uniqueEmail("session");
+    await signUpViaUi(page, { name: "Agent Session", email });
+    await expect(page).toHaveURL(/\/app$/);
+    await context.clearCookies();
+    await page.goto("/login");
+    // Cochée par défaut (comportement précédent : session persistante).
+    const remember = page.getByRole("checkbox", { name: "Se souvenir de moi" });
+    await expect(remember).toBeChecked();
+    await remember.uncheck();
+    await signInViaUi(page, email);
+    await expect(page).toHaveURL(/\/app$/);
+    const auth = (await context.cookies()).filter((c) => c.name.startsWith("sb-"));
+    expect(auth.length).toBeGreaterThan(0);
+    // Cookies de session : aucune date d'expiration (-1), effacés à la fermeture du navigateur.
+    for (const c of auth) expect(c.expires).toBe(-1);
+    // Rafraîchissement par le proxy : toujours sans expiration.
+    await page.goto("/app");
+    for (const c of (await context.cookies()).filter((c) => c.name.startsWith("sb-"))) expect(c.expires).toBe(-1);
+  });
+
+  test("mot de passe oublié : code par e-mail puis nouveau mot de passe", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Mot de passe oublié ?" }).click();
+    await expect(page.getByText("Recevez un code par e-mail pour vous connecter, puis choisissez un nouveau mot de passe.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Envoyer le code" })).toBeVisible();
+
+    // Page « Nouveau mot de passe » : réservée à un compte connecté.
+    await page.goto("/reset-password");
+    await expect(page).toHaveURL(/\/login\?next=%2Freset-password/);
+
+    const email = uniqueEmail("oubli");
+    await signUpViaUi(page, { name: "Agent Oubli", email });
+    await expect(page).toHaveURL(/\/app$/);
+    await page.goto("/reset-password");
+    await expect(page.getByRole("heading", { level: 1, name: "Nouveau mot de passe" })).toBeVisible();
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("Bonaberi2026neuf");
+    await page.getByLabel("Confirmer le mot de passe", { exact: true }).fill("Bonaberi2026autre");
+    await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
+    await expect(page.getByText("Les deux mots de passe ne correspondent pas.")).toBeVisible();
+    // Les champs de mot de passe sont vidés après un refus (formulaire réinitialisé par React).
+    await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("Bonaberi2026neuf");
+    await page.getByLabel("Confirmer le mot de passe", { exact: true }).fill("Bonaberi2026neuf");
+    await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
+    await expect(page).toHaveURL(/\/app$/);
+
+    await page.context().clearCookies();
+    await page.goto("/login");
+    await signInViaUi(page, email, "Bonaberi2026neuf");
+    await expect(page).toHaveURL(/\/app$/);
+  });
+
+  test("CGU et politique de confidentialité : version, articles numérotés, tableaux, mentions à compléter", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("link", { name: "CGU" }).click();
+    await expect(page).toHaveURL(/\/cgu$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Conditions générales d'utilisation" })).toBeVisible();
+    await expect(page.locator("[data-legal-version]")).toHaveText("Version 1.0 — en vigueur le [DATE DE MISE EN LIGNE]");
+    await expect(page.getByText("Projet à faire relire par un juriste avant publication.")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "1. Éditeur" })).toBeVisible();
+    await expect(page.locator("[data-legal-placeholder]", { hasText: "[À COMPLÉTER]" }).first()).toBeVisible();
+    await page.getByRole("link", { name: "17. Contact" }).click();
+    await expect(page).toHaveURL(/#article-17$/);
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await page.goto("/confidentialite");
+    await expect(page.getByRole("heading", { level: 1, name: "Politique de confidentialité" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "7. Vos droits" })).toBeVisible();
+    // Tableau sur tablette et ordinateur, une fiche par ligne sur téléphone.
+    await expect(page.getByText("Gérer votre place dans la file").filter({ visible: true })).toBeVisible();
+    await expect(page.getByText("Numéro WhatsApp ou de téléphone").filter({ visible: true })).toBeVisible();
+    if ((page.viewportSize()?.width ?? 0) >= 640) await expect(page.getByRole("columnheader", { name: "Pourquoi" })).toBeVisible();
+    await expectAccessible(page);
+    await page.context().addCookies([{ name: "NEXTIN_LOCALE", value: "en", url: page.url() }]);
+    await page.reload();
+    await expect(page.getByRole("heading", { level: 1, name: "Privacy policy" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "7. Your rights" })).toBeVisible();
+    await expect(page.getByText("Translation for information; the French version prevails.")).toBeVisible();
+    await expect(page.locator("[data-legal-version]")).toContainText("Version 1.0");
+  });
+});

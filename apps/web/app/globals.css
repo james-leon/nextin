@@ -1,0 +1,509 @@
+@import "tailwindcss";
+
+/*
+ * NextIn design system — Apple Human Interface Guidelines.
+ * Les couleurs sémantiques sont des variables CSS : le thème clair/sombre est porté par
+ * <html data-theme="light|dark"> (résolu avant le premier rendu par un script inline),
+ * avec repli sur prefers-color-scheme si JavaScript est indisponible.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Fonds (style A : fond plus clair, cartes blanches) */
+  --bg-grouped: #f7f9fc;
+  --bg-grouped-secondary: #ffffff;
+  --bg-grouped-tertiary: #f7f9fc;
+  --bg-elevated: #ffffff;
+
+  /* Libellés */
+  --label: #000000;
+  /* Gris secondaire « accessible » d'Apple (opaque) : contraste AA sur fonds blanc et groupé. */
+  --label-secondary: #6c6c70;
+  /* Tertiaire : icônes, chevrons, placeholders uniquement — jamais pour du texte informatif. */
+  --label-tertiary: rgb(60 60 67 / 0.3);
+  --label-on-accent: #ffffff;
+
+  /* Séparateurs et remplissages */
+  /* Bordures de SchoolMaster (#E8EDF4). */
+  --separator: #e8edf4;
+  --separator-opaque: #e8edf4;
+  --fill: rgb(120 120 128 / 0.2);
+  --fill-secondary: rgb(120 120 128 / 0.16);
+  --fill-tertiary: rgb(118 118 128 / 0.12);
+
+  /* Matériaux translucides (barres) */
+  --material-bar: rgb(249 249 249 / 0.78);
+  --material-sheet: rgb(255 255 255 / 0.92);
+  --overlay: rgb(0 0 0 / 0.4);
+
+  /* Accents Wintek. *-fill = fond (texte blanc AA), *-text = texte/icône sur fond neutre (AA). */
+  --navy: #0d2c54;
+  /* Action principale (alignement SchoolMaster) : bleu nuit en clair ; liens et éléments secondaires en bleu (--accent-*). */
+  --primary-fill: #0d2c54;
+  --primary-fill-pressed: #0a2443;
+  --navy-deep: #081d38;
+  --accent-fill: #1a6bb5;
+  --accent-fill-pressed: #155894;
+  --accent-text: #1a6bb5;
+  --accent-tint: rgb(26 107 181 / 0.12);
+  --accent-on-tint: #155894;
+  --orange-fill: #f58b1f;
+  --orange-text: #a3550a;
+  --orange-tint: rgb(245 139 31 / 0.15);
+  --green-fill: #15a05a;
+  --green-text: #176b2c;
+  --green-tint: rgb(21 160 90 / 0.14);
+  --red-fill: #d70015;
+  --red-text: #d70015;
+  --red-tint: rgb(255 59 48 / 0.12);
+  /* Texte rouge sur fond teinté (badges) : AA sur --red-tint. */
+  --red-on-tint: #b3000f;
+
+  /* Numéro de ticket : Navy en clair (maquette), blanc en sombre. */
+  --ticket-number: #0d2c54;
+  /* Mot-symbole du logo (design/logo) : version claire. */
+  --logo-name: #0d2c54;
+  --logo-tagline: #5b6b80;
+  /* Pastille de marque (icônes d'établissement) : Navy en clair, bleu d'action en sombre pour rester lisible. */
+  --brand-tile: #0d2c54;
+  /* Surfaces toujours sombres : viseur de scan (maquette 01) et écran TV (maquette 05). */
+  --scanner-bg: #0b0f16;
+  --scanner-surface: #191d23;
+  --scanner-control: #23272d;
+  --tv-bg: #0b1f3b;
+  --tv-surface: #16345e;
+  --on-navy-control: rgb(255 255 255 / 0.14);
+  /* Carte « C'est votre tour » : vert profond de la marque, texte blanc conforme AA (5,4:1), clair comme sombre. */
+  --called-fill: #187a31;
+  /* Sky Catch (M10b) : ciel, pièces, orages, lus par le rendu du canvas. */
+  --game-sky-top: #5aa9e6;
+  --game-sky-bottom: #d7ecfb;
+  --game-cloud: rgb(255 255 255 / 0.7);
+  --game-coin: #f5b81f;
+  --game-coin-edge: #c98a0c;
+  --game-storm: #4b5563;
+  --game-bolt: #f58b1f;
+
+  /* Ombre de carte très douce, teintée Navy (style A). */
+  --elev-card: 0 8px 30px rgb(13 44 84 / 0.06);
+  --elev-floating: 0 12px 36px rgb(13 44 84 / 0.14), 0 2px 8px rgb(13 44 84 / 0.06);
+  /* Barre d'onglets flottante (pilule) : blanc translucide. */
+  --material-pill: rgb(255 255 255 / 0.82);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-grouped: #000000;
+  --bg-grouped-secondary: #1c1c1e;
+  --bg-grouped-tertiary: #2c2c2e;
+  --bg-elevated: #1c1c1e;
+  --label: #ffffff;
+  --label-secondary: rgb(235 235 245 / 0.6);
+  --label-tertiary: rgb(235 235 245 / 0.3);
+  --separator: rgb(84 84 88 / 0.65);
+  --separator-opaque: #38383a;
+  --fill: rgb(120 120 128 / 0.36);
+  --fill-secondary: rgb(120 120 128 / 0.32);
+  --fill-tertiary: rgb(118 118 128 / 0.24);
+  --material-bar: rgb(22 22 24 / 0.78);
+  --material-sheet: rgb(28 28 30 / 0.94);
+  --overlay: rgb(0 0 0 / 0.6);
+  --accent-fill: #1a6bb5;
+  --accent-fill-pressed: #155894;
+  /* En sombre, le bleu nuit disparaît sur le noir : bleu plus clair (texte blanc 5,2:1, bord 3,3:1 sur les cartes). */
+  --primary-fill: #2a6fb5;
+  --primary-fill-pressed: #245f9c;
+  --accent-text: #5ea8f0;
+  --accent-tint: rgb(94 168 240 / 0.18);
+  --accent-on-tint: #6fb2f2;
+  --orange-text: #ffaa55;
+  --orange-tint: rgb(245 139 31 / 0.22);
+  --green-text: #5fd97a;
+  --green-tint: rgb(21 160 90 / 0.24);
+  --red-fill: #d70015;
+  --red-text: #ff6961;
+  --red-tint: rgb(255 69 58 / 0.2);
+  --red-on-tint: #ff8a84;
+  --ticket-number: #ffffff;
+  /* Mot-symbole du logo : version sombre. */
+  --logo-name: #ffffff;
+  --logo-tagline: #b8c4d6;
+  --brand-tile: #1a6bb5;
+  --game-sky-top: #0b1f3b;
+  --game-sky-bottom: #1f4f86;
+  --game-cloud: rgb(255 255 255 / 0.12);
+  --game-storm: #8b95a5;
+  --elev-card: none;
+  --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
+  --material-pill: rgb(44 44 46 / 0.82);
+}
+
+/* Repli sans JavaScript */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --logo-name: #ffffff;
+    --logo-tagline: #b8c4d6;
+    --bg-grouped: #000000;
+    --bg-grouped-secondary: #1c1c1e;
+    --bg-grouped-tertiary: #2c2c2e;
+    --label: #ffffff;
+    --label-secondary: rgb(235 235 245 / 0.6);
+    --separator: rgb(84 84 88 / 0.65);
+    --accent-text: #5ea8f0;
+  }
+}
+
+/* Logo sur fond sombre fixe (panneau bleu nuit de la connexion, écran TV) : version sombre forcée. */
+[data-logo-tone="inverse"] {
+  --logo-name: #ffffff;
+  --logo-tagline: #b8c4d6;
+}
+
+/* Piles de polices : Inter / Sora (next/font, classes sur <html>), police système en repli. */
+:root {
+  --system-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
+  --app-font-sans: var(--font-inter), var(--system-font);
+  --app-font-display: var(--font-sora), var(--font-inter), var(--system-font);
+}
+/* Pages client : police système au premier affichage, Inter et Sora une fois la page chargée
+   (`FontsAfterLoad` pose data-fonts-ready) — le premier chargement reste sous 200 Ko. */
+html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
+  --app-font-sans: var(--system-font);
+  --app-font-display: var(--system-font);
+}
+
+@theme inline {
+  /* Texte courant en Inter, grands titres et titres de section en Sora (polices de SchoolMaster, next/font).
+     Variables résolues à l'exécution : les pages client affichent d'abord la police système (budget). */
+  --font-sans: var(--app-font-sans);
+  --font-display: var(--app-font-display);
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+
+  --color-grouped: var(--bg-grouped);
+  --color-grouped-secondary: var(--bg-grouped-secondary);
+  --color-grouped-tertiary: var(--bg-grouped-tertiary);
+  --color-elevated: var(--bg-elevated);
+  --color-label: var(--label);
+  --color-label-secondary: var(--label-secondary);
+  --color-label-tertiary: var(--label-tertiary);
+  --color-on-accent: var(--label-on-accent);
+  --color-separator: var(--separator);
+  --color-separator-opaque: var(--separator-opaque);
+  --color-fill: var(--fill);
+  --color-fill-secondary: var(--fill-secondary);
+  --color-fill-tertiary: var(--fill-tertiary);
+  --color-bar: var(--material-bar);
+  --color-sheet: var(--material-sheet);
+  --color-pill: var(--material-pill);
+  --color-overlay: var(--overlay);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-primary: var(--primary-fill);
+  --color-primary-pressed: var(--primary-fill-pressed);
+  --color-ticket-number: var(--ticket-number);
+  --color-scanner: var(--scanner-bg);
+  --color-scanner-surface: var(--scanner-surface);
+  --color-scanner-control: var(--scanner-control);
+  --color-tv: var(--tv-bg);
+  --color-tv-surface: var(--tv-surface);
+  --color-on-navy-control: var(--on-navy-control);
+  --color-accent: var(--accent-fill);
+  --color-accent-pressed: var(--accent-fill-pressed);
+  --color-accent-text: var(--accent-text);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-on-tint: var(--accent-on-tint);
+  --color-orange: var(--orange-fill);
+  --color-orange-text: var(--orange-text);
+  --color-orange-tint: var(--orange-tint);
+  --color-green: var(--green-fill);
+  --color-called: var(--called-fill);
+  --color-green-text: var(--green-text);
+  --color-green-tint: var(--green-tint);
+  --color-red: var(--red-fill);
+  --color-red-text: var(--red-text);
+  --color-red-tint: var(--red-tint);
+  --color-red-on-tint: var(--red-on-tint);
+
+  /* Échelle typographique iOS (en rem : suit la taille de texte de l'utilisateur) */
+  --text-large-title: 2.125rem;
+  --text-large-title--line-height: 2.5625rem;
+  --text-large-title--letter-spacing: 0.0234em;
+  --text-title1: 1.75rem;
+  --text-title1--line-height: 2.125rem;
+  --text-title1--letter-spacing: 0.0122em;
+  --text-title2: 1.375rem;
+  --text-title2--line-height: 1.75rem;
+  --text-title2--letter-spacing: -0.0118em;
+  --text-title3: 1.25rem;
+  --text-title3--line-height: 1.5625rem;
+  --text-title3--letter-spacing: -0.0225em;
+  --text-headline: 1.0625rem;
+  --text-headline--line-height: 1.375rem;
+  --text-headline--letter-spacing: -0.0254em;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.375rem;
+  --text-body--letter-spacing: -0.0254em;
+  --text-callout: 1rem;
+  --text-callout--line-height: 1.3125rem;
+  --text-callout--letter-spacing: -0.0194em;
+  --text-subheadline: 0.9375rem;
+  --text-subheadline--line-height: 1.25rem;
+  --text-subheadline--letter-spacing: -0.0153em;
+  --text-footnote: 0.8125rem;
+  --text-footnote--line-height: 1.125rem;
+  --text-footnote--letter-spacing: -0.0062em;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--letter-spacing: 0;
+  /* Numéro de ticket (style A : 76 px). */
+  --text-hero: 4.75rem;
+  --text-hero--line-height: 1;
+  --text-hero--letter-spacing: -0.03em;
+  --text-display: 3.75rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+
+  /* Rayons continus */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  /* Cartes héros (ticket, établissement à la une, client en cours). */
+  --radius-2xl: 28px;
+
+  --shadow-card: var(--elev-card);
+  --shadow-floating: var(--elev-floating);
+
+  /* Ressort iOS (amortissement critique léger) */
+  --ease-spring: linear(
+    0,
+    0.013 0.6%,
+    0.05 1.2%,
+    0.2 2.6%,
+    0.4 4.3%,
+    0.6 6.5%,
+    0.78 9.2%,
+    0.9 12.3%,
+    0.96 15.6%,
+    0.99 19.5%,
+    1.005 24%,
+    1.01 30%,
+    1.004 42%,
+    1
+  );
+  --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  --animate-sheet-in: sheet-in 420ms var(--ease-spring);
+  --animate-pop-in: pop-in 320ms var(--ease-spring);
+  --animate-fade-in: fade-in 200ms var(--ease-ios);
+  --animate-banner-in: banner-in 480ms var(--ease-spring);
+  --animate-slide-in-left: slide-in-left 360ms var(--ease-spring);
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(1.12);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes banner-in {
+    from {
+      opacity: 0;
+      transform: translateY(-120%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  /* Pages client à barre d'onglets latérale (ordinateur) : le contenu se décale de sa largeur (place réservée avant le chargement du menu). */
+  @media (min-width: 1024px) {
+    body:has([data-tab-sidebar], [data-reserve-tab-sidebar]) {
+      --shell-sidebar: 15rem;
+      padding-left: 15rem;
+    }
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--bg-grouped);
+  }
+  /* Grands titres et titres de section : Sora (titres de liste et légendes restent en Inter). */
+  :where(h1, h2) {
+    font-family: var(--app-font-display);
+    /* Sora est plus large que la police système : un mot long (« établissements ») ne doit jamais déborder
+       d'un écran de 360 px avec un texte agrandi — césure française, sinon coupure en dernier recours. */
+    hyphens: auto;
+    overflow-wrap: break-word;
+  }
+  body {
+    @apply bg-grouped text-label font-sans text-body antialiased;
+    font-feature-settings: "kern";
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 3px solid var(--accent-text);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--accent-tint);
+  }
+}
+
+/*
+ * Séparateur de liste groupée iOS : filet inset aligné sur le texte (après la pastille), absent
+ * sous la dernière ligne. 0,5 px sur écran haute densité, 1 px sinon pour rester visible.
+ * La ligne porteuse doit être dans un <li class="group/row">.
+ */
+@utility list-separator {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--separator);
+    pointer-events: none;
+  }
+  @media (min-resolution: 2dppx) {
+    &::after {
+      height: 0.5px;
+    }
+  }
+  :where(.group\/row:last-child) &::after {
+    display: none;
+  }
+}
+
+/* Rangée de pastilles qui défile horizontalement (filtres, villes) : jamais coupée net.
+   Fondu à droite tant que la rangée continue, à gauche une fois défilée (animation pilotée par le défilement) ;
+   sans défilement possible, aucun fondu. Navigateurs sans cette animation : fondu fixe à droite. */
+@property --fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 3rem;
+}
+@keyframes scroll-fade {
+  0% {
+    --fade-start: 0px;
+    --fade-end: 3rem;
+  }
+  12% {
+    --fade-start: 1.5rem;
+  }
+  88% {
+    --fade-end: 3rem;
+  }
+  100% {
+    --fade-start: 1.5rem;
+    --fade-end: 0px;
+  }
+}
+@utility scroll-fade-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    --fade-end: 0px;
+    animation: scroll-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+@utility hairline-b {
+  box-shadow: inset 0 -0.5px 0 var(--separator);
+}
+@utility hairline-t {
+  box-shadow: inset 0 0.5px 0 var(--separator);
+}
+@utility material-blur {
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+@utility squircle {
+  corner-shape: squircle;
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility pressable {
+  transition:
+    transform 220ms var(--ease-spring),
+    opacity 150ms var(--ease-ios),
+    background-color 150ms var(--ease-ios);
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+/* Plan schématique des établissements à proximité (sans fournisseur de tuiles) : quadrillage discret. */
+@utility map-plan {
+  background-image:
+    linear-gradient(var(--fill-tertiary) 1px, transparent 1px),
+    linear-gradient(90deg, var(--fill-tertiary) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center;
+}
+
+/* Appel pendant un jeu : éclair doux de l'écran (désactivé si l'utilisateur réduit les animations). */
+@keyframes call-flash {
+  0%, 100% { background-color: var(--bg-grouped); }
+  50% { background-color: var(--accent-tint); }
+}
+@utility call-flash {
+  animation: call-flash 900ms var(--ease-ios) 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

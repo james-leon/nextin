@@ -1,0 +1,163 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@nextin/shared/database";
+import type { BranchBoard, PriorityReason } from "@nextin/shared/queue/live";
+import { practitionerName } from "./counter-name";
+import type { DeskTicket } from "@nextin/shared/desk";
+import type { IdentityRules } from "@nextin/shared/identity";
+import { serviceDay, toIdentity } from "./snapshot";
+
+type Db = SupabaseClient<Database>;
+
+export type ReceptionService = { id: string; name: string; prefix: string; color: string; allowPriority: boolean };
+export type ReceptionTicket = {
+  id: string;
+  code: string;
+  serviceId: string;
+  priorityReason: PriorityReason | null;
+  createdAt: string;
+  preferredCounterId: string | null;
+  source: "qr" | "short_code" | "remote" | "reception";
+  /** Ticket à distance (M9) : présence confirmée, « en route », nombre de reculs. */
+  remote: { confirmed: boolean; onMyWay: boolean; delays: number } | null;
+  /** Nom du client (personnel de l'agence uniquement). */
+  identity: DeskTicket["identity"];
+};
+export type ReceptionPractitioner = {
+  id: string;
+  name: string;
+  counterIds: string[];
+  serviceIds: string[];
+  absence: { id: string; kind: "absent" | "late"; until: string | null } | null;
+};
+export type ReceptionCounter = { id: string; kind: string; number: number; label: string | null; status: string; practitionerId: string | null };
+export type ReceptionData = {
+  branch: { id: string; name: string; organizationName: string; timeZone: string; prioritiesEnabled: boolean; identityRules: IdentityRules };
+  services: ReceptionService[];
+  board: BranchBoard | null;
+  waiting: ReceptionTicket[];
+  practitioners: ReceptionPractitioner[];
+  counters: ReceptionCounter[];
+  /** Rendez-vous du jour encore attendus (confirmés, heure à venir ou en cours de tolérance). */
+  upcomingAppointments: number;
+  /** Les prochains d'entre eux (8 au plus), pour la colonne « Rendez-vous du jour » sur ordinateur. */
+  nextAppointments: { id: string; startsAt: string; practitionerId: string; serviceId: string }[];
+  /** Demandes de rendez-vous en attente de réponse (M9). */
+  pendingRequests: number;
+};
+
+/** Données du poste d'accueil d'une agence (sous RLS) ; null si l'agence n'est pas accessible. */
+export async function loadReception(supabase: Db, branchId: string): Promise<ReceptionData | null> {
+  const { data: branch } = await supabase
+    .from("branches")
+    .select("id, name, timezone, organization:organizations(name), branch_settings(priorities_enabled, customer_name_mode, customer_name_extra)")
+    .eq("id", branchId)
+    .maybeSingle();
+  if (!branch) return null;
+  const now = new Date().toISOString();
+  const [services, board, waiting, practitioners, counters, absences] = await Promise.all([
+    supabase.from("services").select("id, name, prefix, color, allow_priority").eq("branch_id", branchId).eq("active", true).order("sort_order"),
+    supabase.rpc("get_branch_board", { p_branch: branchId }),
+    supabase
+      .from("tickets")
+      .select(
+        "id, display_code, service_id, priority_reason, priority_level, sort_key, number, created_at, preferred_counter_id, source, is_remote, presence_confirmed_at, on_my_way_at, delay_count, identity:ticket_identities(full_name, age, file_number)",
+      )
+      .eq("branch_id", branchId)
+      .eq("status", "waiting")
+      .eq("service_day", serviceDay(branch.timezone))
+      .order("priority_level", { ascending: false })
+      .order("sort_key")
+      .order("number"),
+    supabase.from("practitioners").select("id, title, display_name").eq("branch_id", branchId).eq("active", true).order("display_name"),
+    supabase
+      .from("counters")
+      .select("id, kind, number, label, status, default_practitioner_id, counter_services(service_id)")
+      .eq("branch_id", branchId)
+      .eq("active", true)
+      .order("kind")
+      .order("number"),
+    supabase.from("practitioner_absences").select("id, practitioner_id, kind, until, created_at").eq("branch_id", branchId).is("ended_at", null),
+  ]);
+  const today = serviceDay(branch.timezone);
+  const { data: next, count: upcoming } = await supabase
+    .from("appointments")
+    .select("id, starts_at, practitioner_id, service_id", { count: "exact" })
+    .eq("branch_id", branchId)
+    .eq("status", "confirmed")
+    .gte("starts_at", new Date(Date.now() - 60 * 60_000).toISOString())
+    .lt("starts_at", `${today}T23:59:59${offsetOf(branch.timezone)}`)
+    .order("starts_at")
+    .limit(8);
+  const { count: requests } = await supabase
+    .from("appointment_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("branch_id", branchId)
+    .eq("status", "pending");
+  const error = services.error ?? board.error ?? waiting.error ?? practitioners.error ?? counters.error ?? absences.error;
+  if (error) throw new Error(error.message);
+
+  const active = (absences.data ?? [])
+    .filter((a) => !a.until || a.until > now)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  type SettingsRow = { priorities_enabled: boolean; customer_name_mode: string; customer_name_extra: string };
+  const raw = branch.branch_settings as SettingsRow | SettingsRow[] | null;
+  const settings = Array.isArray(raw) ? raw[0] : raw;
+  const prioritiesEnabled = settings?.priorities_enabled ?? true;
+  const identityRules = {
+    mode: (settings?.customer_name_mode ?? "off") as IdentityRules["mode"],
+    extra: (settings?.customer_name_extra ?? "none") as IdentityRules["extra"],
+  };
+
+  return {
+    branch: {
+      id: branch.id,
+      name: branch.name,
+      organizationName: (branch.organization as { name: string } | null)?.name ?? "",
+      timeZone: branch.timezone,
+      prioritiesEnabled,
+      identityRules,
+    },
+    services: (services.data ?? []).map((s) => ({ id: s.id, name: s.name, prefix: s.prefix, color: s.color, allowPriority: s.allow_priority })),
+    board: (board.data as BranchBoard | null) ?? null,
+    waiting: (waiting.data ?? []).map((t) => ({
+      id: t.id,
+      code: t.display_code,
+      serviceId: t.service_id,
+      priorityReason: t.priority_reason,
+      createdAt: t.created_at,
+      preferredCounterId: t.preferred_counter_id,
+      source: t.source,
+      remote: t.is_remote ? { confirmed: !!t.presence_confirmed_at, onMyWay: !!t.on_my_way_at, delays: t.delay_count } : null,
+      identity: toIdentity(t.identity as Parameters<typeof toIdentity>[0]),
+    })),
+    practitioners: (practitioners.data ?? []).map((p) => {
+      const own = (counters.data ?? []).filter((c) => c.default_practitioner_id === p.id);
+      const absence = active.find((a) => a.practitioner_id === p.id);
+      return {
+        id: p.id,
+        name: practitionerName(p),
+        counterIds: own.map((c) => c.id),
+        serviceIds: [...new Set(own.flatMap((c) => (c.counter_services ?? []).map((cs) => cs.service_id)))],
+        absence: absence ? { id: absence.id, kind: absence.kind, until: absence.until } : null,
+      };
+    }),
+    counters: (counters.data ?? []).map((c) => ({
+      id: c.id,
+      kind: c.kind,
+      number: c.number,
+      label: c.label,
+      status: c.status,
+      practitionerId: c.default_practitioner_id,
+    })),
+    upcomingAppointments: upcoming ?? 0,
+    nextAppointments: (next ?? []).map((a) => ({ id: a.id, startsAt: a.starts_at, practitionerId: a.practitioner_id, serviceId: a.service_id })),
+    pendingRequests: requests ?? 0,
+  };
+}
+
+/** Décalage horaire courant d'un fuseau, « +01:00 » (Douala : pas d'heure d'été). */
+function offsetOf(timeZone: string): string {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" }).formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value;
+  const m = name?.match(/GMT([+-]\d{2}:\d{2})/);
+  return m ? m[1]! : "+00:00";
+}

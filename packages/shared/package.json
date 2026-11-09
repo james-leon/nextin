@@ -1,0 +1,44 @@
+{
+  "name": "@nextin/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./database": "./src/types/database.ts",
+    "./queue": "./src/queue/index.ts",
+    "./queue/live": "./src/queue/live.ts",
+    "./ticket": "./src/ticket.ts",
+    "./queue/realtime": "./src/queue/realtime.ts",
+    "./queue/estimate": "./src/queue/estimate.ts",
+    "./desk": "./src/desk/index.ts",
+    "./announcements": "./src/announcements/index.ts",
+    "./notifications": "./src/notifications/index.ts",
+    "./notifications/opt-in": "./src/notifications/opt-in.ts",
+    "./appointments": "./src/appointments/index.ts",
+    "./stats": "./src/stats/index.ts",
+    "./remote": "./src/remote/index.ts",
+    "./billing": "./src/billing/index.ts",
+    "./billing/pricing": "./src/billing/pricing.ts",
+    "./phone": "./src/phone.ts",
+    "./money": "./src/money.ts",
+    "./ads": "./src/ads/index.ts",
+    "./ads/sky-catch": "./src/ads/sky-catch.ts",
+    "./identity": "./src/identity.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  },
+  "sideEffects": false
+}

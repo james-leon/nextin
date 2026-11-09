@@ -1,0 +1,147 @@
+import { describe, expect, it } from "vitest";
+import {
+  createOrganizationSchema,
+  inviteMemberSchema,
+  loginCodeVerifySchema,
+  newOrganizationFormSchema,
+  signupSchema,
+  takeTicketSchema,
+  appointmentRequestSchema,
+  requestCodeSchema,
+} from "./index";
+
+describe("schemas", () => {
+  it("createOrganization applique les valeurs par défaut", () => {
+    const v = createOrganizationSchema.parse({ name: "Douala Clinic", slug: "douala-clinic", type: "clinic" });
+    expect(v.defaultLocale).toBe("fr");
+    expect(v.dataRetentionDays).toBe(30);
+  });
+  it("createOrganization rejette un slug invalide et une rétention hors bornes", () => {
+    expect(createOrganizationSchema.safeParse({ name: "X Y", slug: "Douala Clinic", type: "clinic" }).success).toBe(false);
+    expect(
+      createOrganizationSchema.safeParse({ name: "Eneo", slug: "eneo", type: "utility", dataRetentionDays: 2 }).success,
+    ).toBe(false);
+  });
+  it("inviteMember exige un contact et normalise le téléphone", () => {
+    const id = "6f1c1d2e-8a3b-4c5d-9e6f-7a8b9c0d1e2f";
+    expect(inviteMemberSchema.safeParse({ organizationId: id, role: "agent" }).success).toBe(false);
+    const v = inviteMemberSchema.parse({ organizationId: id, role: "agent", phone: "6 77 12 34 56" });
+    expect(v.phone).toBe("+237677123456");
+    expect(v.branchId).toBeNull();
+  });
+});
+
+describe("auth schemas", () => {
+  it("inscription : mot de passe de 10 caractères avec lettres et chiffres", () => {
+    const base = { fullName: "Dr Ngo Biyong", email: " Directeur@DoualaClinic.CM " };
+    expect(signupSchema.safeParse({ ...base, password: "court1" }).success).toBe(false);
+    expect(signupSchema.safeParse({ ...base, password: "seulementdeslettres" }).success).toBe(false);
+    expect(signupSchema.safeParse({ ...base, password: "1234567890" }).success).toBe(false);
+    const ok = signupSchema.parse({ ...base, password: "Douala2026ok" });
+    expect(ok.email).toBe("directeur@doualaclinic.cm");
+  });
+  it("code de connexion à 6 chiffres", () => {
+    expect(loginCodeVerifySchema.safeParse({ email: "a@b.cm", code: "123456" }).success).toBe(true);
+    expect(loginCodeVerifySchema.safeParse({ email: "a@b.cm", code: "12345a" }).success).toBe(false);
+  });
+  it("nouvel établissement : secteur requis, langue FR par défaut", () => {
+    expect(newOrganizationFormSchema.safeParse({ name: "Eneo" }).success).toBe(false);
+    expect(newOrganizationFormSchema.parse({ name: "Eneo Bonanjo", type: "utility" }).defaultLocale).toBe("fr");
+  });
+});
+
+describe("M2 schemas", () => {
+  it("service : préfixe en majuscules, durée en minutes, quota facultatif", async () => {
+    const { serviceFormSchema } = await import("./index");
+    const v = serviceFormSchema.parse({
+      name: "Consultation générale",
+      prefix: "c",
+      color: "#1A6BB5",
+      defaultMinutes: "10",
+      maxDailyTickets: "",
+      specialtyId: "",
+      allowPriority: "on",
+    });
+    expect(v).toMatchObject({ prefix: "C", defaultMinutes: 10, maxDailyTickets: null, specialtyId: null, allowPriority: true, allowRemote: false });
+    expect(serviceFormSchema.safeParse({ name: "X", prefix: "C1", color: "#1A6BB5", defaultMinutes: "0" }).success).toBe(false);
+  });
+  it("horaires : fermeture après ouverture pour les jours ouverts", async () => {
+    const { openingHoursSchema } = await import("./index");
+    const days = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, open: weekday < 6, opensAt: "07:30", closesAt: "17:00" }));
+    expect(openingHoursSchema.safeParse(days).success).toBe(true);
+    days[0] = { weekday: 1, open: true, opensAt: "18:00", closesAt: "08:00" };
+    expect(openingHoursSchema.safeParse(days).success).toBe(false);
+    days[0] = { weekday: 1, open: false, opensAt: "18:00", closesAt: "08:00" };
+    expect(openingHoursSchema.safeParse(days).success).toBe(true);
+  });
+  it("invitation : un responsable d'agence exige une agence", async () => {
+    const { inviteFormSchema } = await import("./index");
+    expect(inviteFormSchema.safeParse({ role: "branch_manager", email: "a@b.cm", branchId: "" }).success).toBe(false);
+    expect(inviteFormSchema.safeParse({ role: "agent", email: "a@b.cm", branchId: "" }).success).toBe(true);
+    expect(inviteFormSchema.safeParse({ role: "org_admin", email: "a@b.cm", branchId: "6f1c1d2e-8a3b-4c5d-9e6f-7a8b9c0d1e2f" }).success).toBe(false);
+  });
+  it("agence : téléphone camerounais normalisé, coordonnées facultatives", async () => {
+    const { branchFormSchema } = await import("./index");
+    const v = branchFormSchema.parse({ name: "Akwa", address: "", city: "Douala", phone: "6 77 12 34 56", lat: "", lng: "" });
+    expect(v).toMatchObject({ name: "Akwa", address: null, city: "Douala", phone: "+237677123456" });
+    expect(v.lat).toBeUndefined();
+    expect(branchFormSchema.safeParse({ name: "Akwa", phone: "12345" }).success).toBe(false);
+  });
+});
+
+describe("M3 schemas", () => {
+  const serviceId = "6f1c1f9e-4b8a-4b8f-9a55-3c3c1d2a7b10";
+  it("accepte une demande par QR code", () => {
+    const r = takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "AbCdEfGhIjKlMnOpQrStUv" });
+    expect(r.success).toBe(true);
+  });
+  it("exige un code d'entrée hors ticket à distance", () => {
+    const r = takeTicketSchema.safeParse({ serviceId, source: "short_code" });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("invalid_entry");
+    expect(takeTicketSchema.safeParse({ serviceId, source: "remote" }).success).toBe(true);
+  });
+  it("refuse la source accueil et ne transmet jamais de priorité demandée par le client", () => {
+    expect(takeTicketSchema.safeParse({ serviceId, source: "reception", entryCode: "ABCDEF" }).success).toBe(false);
+    const r = takeTicketSchema.safeParse({ serviceId, source: "qr", entryCode: "ABCDEF", priorityReason: "pregnancy" });
+    expect(r.success).toBe(true);
+    expect(r.data).not.toHaveProperty("priorityReason");
+  });
+});
+
+describe("M9 — ticket à distance et demandes de rendez-vous", () => {
+  const ids = { branchId: "6f1c1b7e-8a3b-4f7e-9c51-2b3a4d5e6f70", serviceId: "7f1c1b7e-8a3b-4f7e-9c51-2b3a4d5e6f71" };
+  it("ticket à distance : position complète ou absente", () => {
+    expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 4.05, longitude: 9.7 }).success).toBe(true);
+    expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 4.05 }).success).toBe(false);
+    expect(takeTicketSchema.safeParse({ serviceId: ids.serviceId, source: "remote", latitude: 95, longitude: 9.7 }).success).toBe(false);
+  });
+  it("demande WhatsApp : créneau précis, ou jour + moment ; numéro normalisé", () => {
+    const wa = { ...ids, channel: "whatsapp" };
+    const precise = appointmentRequestSchema.safeParse({ ...wa, startsAt: "2026-10-29T09:00:00+01:00", phone: "6 77 00 09 01" });
+    expect(precise.success && precise.data.phone).toBe("+237677000901");
+    expect(appointmentRequestSchema.safeParse({ ...wa, day: "2026-10-30", period: "morning", phone: "677000901" }).success).toBe(true);
+    const none = appointmentRequestSchema.safeParse({ ...wa, phone: "677000901" });
+    expect(none.success ? null : none.error.issues[0]?.message).toBe("slot_required");
+    const bad = appointmentRequestSchema.safeParse({ ...wa, day: "2026-10-30", period: "morning", phone: "12" });
+    expect(bad.success ? null : bad.error.issues[0]?.message).toBe("phone_invalid");
+    const noPhone = appointmentRequestSchema.safeParse({ ...wa, day: "2026-10-30", period: "morning" });
+    expect(noPhone.success ? null : noPhone.error.issues[0]?.message).toBe("phone_invalid");
+  });
+  it("demande par e-mail (défaut) : adresse exigée et normalisée, téléphone facultatif", () => {
+    const slot = { ...ids, day: "2026-10-30", period: "morning" };
+    const ok = appointmentRequestSchema.safeParse({ ...slot, email: "  Awa.Ngo@Exemple.CM " });
+    expect(ok.success && [ok.data.channel, ok.data.email, ok.data.phone]).toEqual(["email", "awa.ngo@exemple.cm", null]);
+    const withPhone = appointmentRequestSchema.safeParse({ ...slot, email: "awa@exemple.cm", phone: "677000901" });
+    expect(withPhone.success && withPhone.data.phone).toBe("+237677000901");
+    const missing = appointmentRequestSchema.safeParse({ ...slot, phone: "677000901" });
+    expect(missing.success ? null : missing.error.issues[0]?.message).toBe("email_invalid");
+    const bad = appointmentRequestSchema.safeParse({ ...slot, email: "awa@" });
+    expect(bad.success ? null : bad.error.issues[0]?.message).toBe("email_invalid");
+    expect(appointmentRequestSchema.safeParse({ ...slot, email: "a@b.cm", channel: "fax" }).success).toBe(false);
+  });
+  it("code : six chiffres, espaces tolérés", () => {
+    expect(requestCodeSchema.parse("481 516")).toBe("481516");
+    expect(requestCodeSchema.safeParse("48151").success).toBe(false);
+  });
+});
