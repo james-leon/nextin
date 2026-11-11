@@ -109,6 +109,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - **Un seul bouton principal** dont le rôle suit `primaryAction` (`@nextin/shared/desk`) : Ouvrir → Alerter le suivant → Admettre → Terminer et alerter le suivant.
 - Hors ligne : `useDesk` (copie de la file + commandes en attente en IndexedDB, `lib/desk/*`), application locale par `applyOp`, rejeu ordonné ; appel hors ligne = `call_ticket` (conflit → suivant disponible + bandeau). Identifiants de commande : `uuidV4()` (jamais `crypto.randomUUID`).
 - Postes du personnel : supabase-js autorisé (pas de budget), canal privé `staffTopic` + interrogation de secours.
+- Demande d'aide (C3) : `request_ticket_help` (page du ticket, 1 / 5 min) → table `ticket_help_requests` (jamais la table des tickets : rien vers la TV) + événement privé `help` ; accueil : encadré « Traité » (`handle_ticket_help`) et pastille « Aide ».
 - Numéro WhatsApp saisi à l'accueil : uniquement avec consentement (`consent_required`), table `notification_contacts`, purgée avec les données personnelles.
 - Absence d'un praticien : réorientation vers un collègue de même spécialité (`reroute_counter`) ; retard : patients gardés, attente ≥ retour prévu (`practitioner_late_until`).
 

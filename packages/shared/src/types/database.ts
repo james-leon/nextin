@@ -1792,6 +1792,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"ticket_help_requests": {
+                  Row: {
+                    "branch_id": string,"handled_at": string | null,"handled_by": string | null,"id": string,"organization_id": string,"requested_at": string,"ticket_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "branch_id": string,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"organization_id": string,"requested_at"?: string,"ticket_id": string
+                  }
+                  Update: {
+                    "branch_id"?: string,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"organization_id"?: string,"requested_at"?: string,"ticket_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ticket_help_requests_organization_id_branch_id_fkey"
+      columns: ["organization_id","branch_id"]
+isOneToOne: false
+      referencedRelation: "branches"
+      referencedColumns: ["organization_id","id"]
+    },{
+      foreignKeyName: "ticket_help_requests_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ticket_help_requests_ticket_id_fkey"
+      columns: ["ticket_id"]
+isOneToOne: false
+      referencedRelation: "tickets"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"ticket_identities": {
                   Row: {
                     "age": number | null,"branch_id": string,"file_number": string | null,"full_name": string | null,"organization_id": string,"ticket_id": string,"updated_at": string
@@ -2607,6 +2639,9 @@ isOneToOne: false
 "handle_missed_call":
 { Args: { "p_ticket": string }; Returns: string
                            },
+"handle_ticket_help":
+{ Args: { "p_request": string }; Returns: undefined
+                           },
 "has_mfa_factor":
 { Args: { "p_user": string }; Returns: boolean
                            },
@@ -3337,6 +3372,9 @@ isOneToOne: false
 "request_staff_json":
 { Args: { "p_request": string }; Returns: Json
                            },
+"request_ticket_help":
+{ Args: { "p_token": string }; Returns: Json
+                           },
 "request_view":
 { Args: { "p_request": string }; Returns: Json
                            },
@@ -3659,6 +3697,9 @@ isOneToOne: false
       } },
 "ticket_display_code":
 { Args: { "p_number": number,"p_prefix": string }; Returns: string
+                           },
+"ticket_help":
+{ Args: { "p_token": string }; Returns: Json
                            },
 "ticket_position":
 { Args: { "p_ticket": string }; Returns: number

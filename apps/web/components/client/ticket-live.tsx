@@ -173,6 +173,14 @@ export function TicketLive({
     if (data) setView(data);
   }
 
+  // C3 : demande d'aide à l'accueil (5 minutes entre deux demandes, vérifié par la base).
+  const [help, setHelp] = useState<"idle" | "sending" | "sent" | "soon">("idle");
+  async function requestHelp() {
+    setHelp("sending");
+    const { error } = await callRpc<unknown>("request_ticket_help", { p_token: token });
+    setHelp(!error ? "sent" : error.message === "help_too_soon" ? "soon" : "idle");
+  }
+
   async function cancel() {
     const { data } = await callRpc<TicketView>("cancel_my_ticket", { p_token: token });
     if (data) setView(data);
@@ -398,6 +406,17 @@ export function TicketLive({
             cancelLabel={t("cancel")}
             onCancel={() => setConfirmCancel(true)}
           />
+        ) : null}
+        {active ? (
+          help === "sent" || help === "soon" ? (
+            <p role="status" className="text-center text-subheadline text-green-text">
+              {t(help === "sent" ? "helpSent" : "helpTooSoon")}
+            </p>
+          ) : (
+            <Button variant="gray" block loading={help === "sending"} onClick={requestHelp} leadingIcon={<CircleHelp aria-hidden />}>
+              {t("helpRequest")}
+            </Button>
+          )
         ) : null}
         {/* C2 : aide (questions fréquentes, téléphone et horaires de l'établissement), sans préchargement (budget). */}
         <Link

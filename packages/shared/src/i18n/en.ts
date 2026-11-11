@@ -1037,6 +1037,9 @@ export const en: Messages = {
     },
     ticket: {
       helpLink: "Help and facility contact",
+      helpRequest: "Ask reception for help",
+      helpSent: "Request sent: a member of reception is coming to you.",
+      helpTooSoon: "Request already sent less than 5 minutes ago: reception is on its way.",
       back: "Services",
       home: "Scan",
       title: "My ticket",
@@ -1442,6 +1445,11 @@ export const en: Messages = {
     rerouted: "{count, plural, =0 {No patient to redirect.} one {# patient redirected.} other {# patients redirected.}}",
   },
   reception: {
+    helpHeader: "{count, plural, one {Help request} other {# help requests}}",
+    helpSince: "since {time}",
+    helpDone: "Handled",
+    helpDoneLabel: "Help request for ticket {code} handled",
+    helpBadge: "Help",
     title: "Reception",
     newTicket: "New ticket",
     servicesHeader: "Services",

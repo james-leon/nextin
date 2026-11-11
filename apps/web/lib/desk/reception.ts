@@ -43,6 +43,8 @@ export type ReceptionData = {
   nextAppointments: { id: string; startsAt: string; practitionerId: string; serviceId: string }[];
   /** Demandes de rendez-vous en attente de réponse (M9). */
   pendingRequests: number;
+  /** C3 — demandes d'aide envoyées depuis la page du ticket, pas encore traitées (plus anciennes d'abord). */
+  helpRequests: { id: string; ticketId: string; code: string; requestedAt: string }[];
 };
 
 /** Données du poste d'accueil d'une agence (sous RLS) ; null si l'agence n'est pas accessible. */
@@ -88,6 +90,12 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
     .lt("starts_at", `${today}T23:59:59${offsetOf(branch.timezone)}`)
     .order("starts_at")
     .limit(8);
+  const { data: help } = await supabase
+    .from("ticket_help_requests")
+    .select("id, ticket_id, requested_at, ticket:tickets(display_code, status)")
+    .eq("branch_id", branchId)
+    .is("handled_at", null)
+    .order("requested_at");
   const { count: requests } = await supabase
     .from("appointment_requests")
     .select("id", { count: "exact", head: true })
@@ -152,6 +160,11 @@ export async function loadReception(supabase: Db, branchId: string): Promise<Rec
     upcomingAppointments: upcoming ?? 0,
     nextAppointments: (next ?? []).map((a) => ({ id: a.id, startsAt: a.starts_at, practitionerId: a.practitioner_id, serviceId: a.service_id })),
     pendingRequests: requests ?? 0,
+    // Tickets terminés depuis : la demande n'a plus d'objet à l'accueil.
+    helpRequests: (help ?? [])
+      .map((h) => ({ h, ticket: h.ticket as { display_code: string; status: string } | null }))
+      .filter(({ ticket }) => ticket && ["waiting", "called", "serving"].includes(ticket.status))
+      .map(({ h, ticket }) => ({ id: h.id, ticketId: h.ticket_id, code: ticket!.display_code, requestedAt: h.requested_at })),
   };
 }
 

@@ -1036,6 +1036,9 @@ export const fr = {
     },
     ticket: {
       helpLink: "Aide et contact de l'établissement",
+      helpRequest: "Demander de l'aide à l'accueil",
+      helpSent: "Demande envoyée : un membre de l'accueil vient vous voir.",
+      helpTooSoon: "Demande déjà envoyée il y a moins de 5 minutes : l'accueil arrive.",
       back: "Services",
       home: "Scanner",
       title: "Mon ticket",
@@ -1441,6 +1444,11 @@ export const fr = {
     rerouted: "{count, plural, =0 {Aucun patient à réorienter.} one {# patient réorienté.} other {# patients réorientés.}}",
   },
   reception: {
+    helpHeader: "{count, plural, one {Demande d'aide} other {# demandes d'aide}}",
+    helpSince: "depuis {time}",
+    helpDone: "Traité",
+    helpDoneLabel: "Demande d'aide du ticket {code} traitée",
+    helpBadge: "Aide",
     title: "Accueil",
     newTicket: "Nouveau ticket",
     servicesHeader: "Services",

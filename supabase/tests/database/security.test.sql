@@ -28,7 +28,7 @@ select is(
     'confirm_presence', 'coupon_view', 'customer_identity_rules', 'effective_duration_seconds', 'estimate_wait_seconds',
     'finish_quiz', 'finish_sky_catch', 'game_session', 'games_available', 'get_appointment_request', 'get_branch_board',
     'get_invitation', 'get_ticket', 'has_org_role', 'is_anonymous', 'is_platform_admin', 'is_privileged_context',
-    'nearby_branches', 'pay_invoice_view', 'rate_ticket', 'request_options', 'resolve_entry', 'set_remote_travel',
+    'nearby_branches', 'pay_invoice_view', 'rate_ticket', 'request_options', 'request_ticket_help', 'resolve_entry', 'set_remote_travel',
     'shares_org_with', 'signal_on_my_way', 'start_quiz', 'start_sky_catch', 'subscription_price', 'ticket_display_code', 'ticket_help',
     'verify_appointment_request'],
   'rôle anonyme : seulement les pages publiques et les contrôles de droits (liste fermée)');
