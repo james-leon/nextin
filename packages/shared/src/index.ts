@@ -8,3 +8,4 @@ export * from "./time";
 export * from "./text";
 export * from "./structure";
 export * from "./queue";
+export * from "./service-templates";

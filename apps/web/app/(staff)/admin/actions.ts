@@ -16,13 +16,17 @@ import {
   campaignReviewSchema,
   platformSettingsFormSchema,
   mfaResetSchema,
+  adminCreateOrganizationSchema,
 } from "@nextin/shared/schemas";
+import { absoluteUrl, slugify, templateServices } from "@nextin/shared";
+import { invitationEmail } from "@nextin/shared/notifications";
 import type { Json } from "@nextin/shared/database";
 import { mapDbError } from "@/lib/admin/db-errors";
 import { formObject } from "@/lib/admin/form";
 import { fieldErrorsFrom, type ActionResult } from "@/lib/auth/errors";
 import { requireStaffSession } from "@/lib/auth/session";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getProviders } from "@/lib/notifications/providers";
 
 /**
  * Console Wintek (§11.9) : actions du super admin. Les droits sont vérifiés par chaque RPC (`assert_platform_admin`)
@@ -281,4 +285,55 @@ export async function upsertAdSector(_prev: ActionResult | null, data: FormData)
   });
   if (error) return { ok: false, error: mapDbError(error) };
   done("/admin/ads/packages");
+}
+
+export type CreatedOrganization = {
+  organizationId: string;
+  name: string;
+  email: string;
+  mailSent: boolean;
+  /** Lien d'invitation, montré seulement si l'e-mail n'est pas parti (à transmettre au responsable). */
+  link: string | null;
+};
+
+/**
+ * P1 — établissement créé pour un client : formule, essai, première agence, services du modèle, invitation du
+ * responsable. L'e-mail part aussitôt (jeton jamais stocké en clair) ; s'il échoue, le lien est affiché une fois.
+ */
+export async function createOrganizationForClient(
+  _prev: ActionResult<CreatedOrganization> | null,
+  data: FormData,
+): Promise<ActionResult<CreatedOrganization>> {
+  const supabase = await platform();
+  const parsed = adminCreateOrganizationSchema.safeParse(formObject(data, ["services"]));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  const { data: created, error } = await supabase.rpc("admin_create_organization", {
+    p_fields: {
+      name: v.name,
+      type: v.type,
+      locale: v.locale,
+      slug: slugify(v.name),
+      plan_id: v.planId,
+      trial_days: v.trialDays,
+      owner_email: v.ownerEmail,
+      owner_phone: v.ownerPhone ?? null,
+      branch_name: v.branchName,
+      branch_city: v.branchCity,
+      services: templateServices(v.type, v.services),
+      reason: v.reason,
+    } as Json,
+  });
+  if (error || !created) return { ok: false, error: mapDbError(error) };
+  const result = created as { organization_id: string; token: string };
+  const link = absoluteUrl(`/invite/${result.token}`);
+  const mail = invitationEmail(v.locale, { organization: v.name, role: "org_admin", link, validDays: 7, byWintek: true });
+  let mailSent = false;
+  try {
+    mailSent = (await getProviders().email.send(v.ownerEmail, mail.subject, mail.text, mail.html)).ok;
+  } catch {
+    mailSent = false;
+  }
+  revalidatePath("/admin", "layout");
+  return { ok: true, organizationId: result.organization_id, name: v.name, email: v.ownerEmail, mailSent, link: mailSent ? null : link };
 }

@@ -1986,6 +1986,9 @@ isOneToOne: false
 "admin_change_plan":
 { Args: { "p_plan": string,"p_reason": string,"p_subscription": string }; Returns: undefined
                            },
+"admin_create_organization":
+{ Args: { "p_fields": Json }; Returns: Json
+                           },
 "admin_grant_days":
 { Args: { "p_days": number,"p_reason": string,"p_subscription": string }; Returns: Json
                            },

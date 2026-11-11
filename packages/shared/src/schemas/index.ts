@@ -651,6 +651,27 @@ export const mfaResetSchema = z.object({
   reason: z.string().trim().min(3, "reason_required").max(300),
 });
 
+/** P1 — création d'un établissement depuis la console Wintek, pour un client. */
+export const adminCreateOrganizationSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  type: orgTypeSchema,
+  locale: z.enum(["fr", "en"]).default("fr"),
+  planId: z.uuid("generic"),
+  trialDays: z.coerce.number().int("trial_days_invalid").min(1, "trial_days_invalid").max(365, "trial_days_invalid"),
+  ownerEmail: emailSchema,
+  ownerPhone: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined)
+    .pipe(cameroonPhoneSchema.optional()),
+  branchName: z.string().trim().min(2, "name_too_short").max(80),
+  branchCity: z.string().trim().max(80).optional().transform((v) => v || null),
+  services: z.array(z.string().regex(/^[a-z_]{2,30}$/)).max(12),
+  reason: z.string().trim().min(3, "reason_required").max(300),
+});
+export type AdminCreateOrganizationInput = z.infer<typeof adminCreateOrganizationSchema>;
+
 /* ─── M10b : publicité ──────────────────────────────────────────────────── */
 
 const AD_SURFACES = ["tv", "app", "game"] as const;

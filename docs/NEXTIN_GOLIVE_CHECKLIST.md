@@ -55,8 +55,8 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | S1 | Dependabot, `pnpm audit --prod --audit-level high` et gitleaks dans la CI ; actions GitHub épinglées par SHA | 🤖 || ✅ `e53492d` : `.github/dependabot.yml`, `pnpm audit --prod --audit-level high` et job gitleaks (`.gitleaks.toml`) dans la CI, actions épinglées par empreinte |
 | S2 | Test d'isolement entre établissements, généré pour chaque table métier (A ne lit, ne modifie ni ne supprime rien de B) | 🤖 || ✅ `8314aad` : `supabase/tests/database/isolation_all.test.sql` (toutes les tables avec `organization_id`, lecture / modification / suppression, dans les deux sens) |
 | S3 | Journal d'audit non modifiable (aucune mise à jour ni suppression) + alertes e-mail : connexion admin depuis un nouvel appareil, 10 échecs en 15 min, 2FA désactivée, rôle admin attribué, export massif | 🤖 || ✅ `082f443` : journal d'audit inaltérable (déjà testé) + 5 alertes e-mail — reste 👤 : adresse de sécurité dans la console |
-| S4 | `docs/NEXTIN_INCIDENT.md` séparé + registre des tests de restauration mensuels | 🤖 || ✅ (commit S4) : `docs/NEXTIN_INCIDENT.md` — reste 👤 : premier test de restauration avec Supabase Pro |
-| S5 | Section « Normes » : alignement ISO 27001:2022 / 27701:2025 sans certification, avec la correspondance de l'annexe A | 🤖 || ✅ (commit S5) : `docs/NEXTIN_SECURITY_AND_PRIVACY.md` §7 |
+| S4 | `docs/NEXTIN_INCIDENT.md` séparé + registre des tests de restauration mensuels | 🤖 || ✅ 85519c1 : `docs/NEXTIN_INCIDENT.md` — reste 👤 : premier test de restauration avec Supabase Pro |
+| S5 | Section « Normes » : alignement ISO 27001:2022 / 27701:2025 sans certification, avec la correspondance de l'annexe A | 🤖 || ✅ 0958cf2 : `docs/NEXTIN_SECURITY_AND_PRIVACY.md` §7 |
 | S6 | Activer *Secret scanning* et *Push protection* sur GitHub | 👤 | ☐ |
 | S7 | Revue de sécurité indépendante, puis test d'intrusion | Claude (cette conversation) | ☐ |
 
@@ -66,7 +66,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 
 | # | Point | Qui | État |
 |---|---|---|---|
-| P1 | **Création d'un établissement depuis /admin** pour un client (formule, durée d'essai, invitation du responsable par e-mail, modèles de services) | 🤖 | ☐ |
+| P1 | **Création d'un établissement depuis /admin** pour un client (formule, durée d'essai, invitation du responsable par e-mail, modèles de services) | 🤖 | ✅ (commit P1) — `docs/modules/P1-CONSOLE-ORG.md` |
 | P2 | **Invitations du personnel envoyées par e-mail** : aujourd'hui le lien est seulement affiché, à copier et transmettre à la main | 🤖 | ☐ |
 | P3 | Page « À proximité » : section « Récents » + invitation à activer la position | 🤖 | ☐ |
 | P4 | Voix des annonces (ElevenLabs, `pnpm voices:generate`) | 👤 | ☐ |
