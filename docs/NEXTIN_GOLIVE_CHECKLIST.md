@@ -44,7 +44,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | # | Point | Qui | État |
 |---|---|---|---|
 | — | Page « Mon ticket » : attente sans débordement, barre de progression, « Annuler » discret avec confirmation, agence fermée / aucun poste ouvert, « Vous êtes le prochain » | 🤖 | ✅ `beac9a4`, `d6350b8` |
-| T1 | **Publicité sur les écrans TV** : `displays.show_ads` n'est réglable nulle part (`updateDisplay` envoie toujours `false`, l'appairage ne le passe pas). Interrupteur « Publicité sur cet écran » (appairage et modification, activé par défaut), seed de démo, test Playwright | 🤖 | ✅ (commit T1) |
+| T1 | **Publicité sur les écrans TV** : `displays.show_ads` n'est réglable nulle part (`updateDisplay` envoie toujours `false`, l'appairage ne le passe pas). Interrupteur « Publicité sur cet écran » (appairage et modification, activé par défaut), seed de démo, test Playwright | 🤖 | ✅ `f590967` |
 
 ---
 
@@ -52,7 +52,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 
 | # | Point | Qui | État |
 |---|---|---|---|
-| S1 | Dependabot, `pnpm audit --prod --audit-level high` et gitleaks dans la CI ; actions GitHub épinglées par SHA | 🤖 | ☐ |
+| S1 | Dependabot, `pnpm audit --prod --audit-level high` et gitleaks dans la CI ; actions GitHub épinglées par SHA | 🤖 || ✅ (commit S1) : `.github/dependabot.yml`, `pnpm audit --prod --audit-level high` et job gitleaks (`.gitleaks.toml`) dans la CI, actions épinglées par empreinte |
 | S2 | Test d'isolement entre établissements, généré pour chaque table métier (A ne lit, ne modifie ni ne supprime rien de B) | 🤖 | ☐ |
 | S3 | Journal d'audit non modifiable (aucune mise à jour ni suppression) + alertes e-mail : connexion admin depuis un nouvel appareil, 10 échecs en 15 min, 2FA désactivée, rôle admin attribué, export massif | 🤖 | ☐ |
 | S4 | `docs/NEXTIN_INCIDENT.md` séparé + registre des tests de restauration mensuels | 🤖 | ☐ |
