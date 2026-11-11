@@ -113,7 +113,9 @@ export function LineChart({
           </div>
         </div>
       </div>
-      <table className="sr-only">
+      {/* Tableau pour lecteurs d'écran : `sr-only` sur un conteneur, une table s'élargirait à ses colonnes. */}
+      <div className="sr-only">
+      <table>
         <caption>{caption}</caption>
         <thead>
           <tr>
@@ -134,6 +136,7 @@ export function LineChart({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

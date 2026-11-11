@@ -227,7 +227,7 @@ export function NearbyExplorer({
               </span>
               <span className="block p-5">
                 {position ? <span className="block text-footnote font-semibold text-accent-text uppercase">{t("nearest")}</span> : null}
-                <span className="block truncate text-title3 font-semibold">
+                <span className="relative block truncate text-title3 font-semibold">
                   {featured.organization.name}
                   <span className="sr-only"> · {to(featured.organization.type)}</span>
                 </span>
@@ -268,7 +268,7 @@ export function NearbyExplorer({
                       </span>
                       <span className="relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator">
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                          <span className="truncate text-headline">
+                          <span className="relative truncate text-headline">
                             {b.organization.name}
                             <span className="sr-only"> · {to(b.organization.type)}</span>
                           </span>
