@@ -9,11 +9,21 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
   const { provider: name } = await params;
+  return handle(name, await request.text(), request.headers);
+}
+
+/** CamPay (B1) appelle le webhook en GET, paramètres et signature dans l'adresse : la chaîne de requête sert de corps. */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider: name } = await params;
+  if (name !== "campay") return new NextResponse(null, { status: 405 });
+  return handle(name, request.nextUrl.search.replace(/^\?/, ""), request.headers);
+}
+
+async function handle(name: string, raw: string, headers: Headers) {
   const provider = activeProvider();
   if (name !== provider.name) return new NextResponse(null, { status: 404 });
 
-  const raw = await request.text();
-  if (!provider.verifyWebhook(raw, request.headers)) return new NextResponse(null, { status: 401 });
+  if (!provider.verifyWebhook(raw, headers)) return new NextResponse(null, { status: 401 });
   let event;
   try {
     event = provider.parseEvent(raw);

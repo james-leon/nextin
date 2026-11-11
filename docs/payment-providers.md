@@ -56,3 +56,30 @@ Points communs à tous :
 - [Flutterwave — tarifs Cameroun](https://flutterwave.com/cm/pricing), [Francophone Mobile Money](https://developer.flutterwave.com/docs/francophone), [ticket GitHub tiers sur le délai et la pause des virements](https://github.com/vaam-apps/vpay/issues/292)
 - [Guide marchand CamerPay (documents KYC)](https://camerpay.biz/blog/comment-accepter-paiements-en-ligne-cameroun?lang=en), [Orange Money Pro — paiement marchand](https://business.orange.cm/fr/orange-money-pro/paiement-marchand.html), [NIU et plateforme ATOM](https://lefisk.cm/blog/atom-dgi-cameroun-immatriculation-fiscale-guide-complet)
 - [Taxe sur les transferts Mobile Money (Cameroon Tribune)](https://www.cameroon-tribune.cm/article.html/68589/fr.html/transfert-retrait-dargent-par-mobile-money-les-frais-en-hausse)
+
+## Adaptateurs branchés (B1, novembre 2026)
+Fournisseur actif choisi par `PAYMENT_PROVIDER` :
+- `fake` : par défaut ;
+- `notchpay` : `packages/payments/src/notchpay.ts` ;
+- `campay` : `packages/payments/src/campay.ts`.
+
+Une clé manquante bloque le démarrage du paiement, avec le nom de la variable (`PaymentConfigError`). Les clés sont dans `.env.example`, sans valeurs.
+
+| | Notch Pay | CamPay |
+|---|---|---|
+| Création | `POST /payments` (référence NextIn), puis `POST /payments/<réf.>` (débit direct `cm.mtn` / `cm.orange`) ; page hébergée en secours | `POST /token/` (jeton d'accès, mis en cache), puis `POST /collect/` (débit sur le téléphone) |
+| Webhook | `POST /api/payments/webhook/notchpay`, en-tête `x-notch-signature` = HMAC SHA-256 hexadécimal du corps brut avec la clé de hachage | `GET /api/payments/webhook/campay?…&signature=<JWT HS256>` signé avec la clé de webhook |
+| Revérification | `GET /payments/<réf.>` | `GET /transaction/<réf.>/` |
+| Variables | `NOTCHPAY_PUBLIC_KEY`, `NOTCHPAY_PRIVATE_KEY`, `NOTCHPAY_WEBHOOK_HASH`, `NOTCHPAY_API_URL` (facultative) | `CAMPAY_USERNAME`, `CAMPAY_PASSWORD`, `CAMPAY_WEBHOOK_KEY`, `CAMPAY_API_URL` (bac à sable par défaut) |
+
+Règles communes :
+- **un webhook seul n'active jamais rien** : le statut est revérifié par l'API ;
+- une référence renvoyée qui ne correspond pas au paiement NextIn est refusée (`reference_mismatch`) ;
+- les événements sont enregistrés une seule fois (`record_webhook_event`).
+
+**À valider en bac à sable avant la mise en production.** Les formats viennent des documentations publiques, que l'environnement de développement ne pouvait pas consulter.
+1. Créer le compte bac à sable du fournisseur retenu.
+2. Renseigner ses clés dans Vercel (Preview) et `PAYMENT_PROVIDER`.
+3. Payer une facture de test sur `/pay/<jeton>`, avec MTN puis Orange.
+4. Vérifier dans Supabase que le webhook est reçu (`webhook_events`), que le paiement passe à `succeeded` et que l'abonnement est prolongé.
+5. En cas d'écart (nom d'un champ, en-tête, statut), l'ajuster dans l'adaptateur et dans `providers.test.ts`.
