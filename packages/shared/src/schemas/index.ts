@@ -629,6 +629,14 @@ export const platformSettingsFormSchema = z.object({
     .pipe(z.array(z.enum(REQUEST_CHANNELS)).min(1, "channels_required").max(3)),
   // Canal du code d'inscription d'un établissement (B2) : e-mail du compte tant qu'aucun fournisseur SMS n'est branché.
   signupCodeChannel: z.enum(SIGNUP_CODE_CHANNELS).default("email"),
+  // Double authentification obligatoire pour le super admin et les administrateurs (B5).
+  mfaRequired: formBoolean.default(false),
+});
+
+/** Réinitialisation de la double authentification d'un compte par le super admin (B5). */
+export const mfaResetSchema = z.object({
+  email: z.string().trim().toLowerCase().email("email_invalid").max(254),
+  reason: z.string().trim().min(3, "reason_required").max(300),
 });
 
 /* ─── M10b : publicité ──────────────────────────────────────────────────── */

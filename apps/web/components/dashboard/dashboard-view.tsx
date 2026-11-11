@@ -538,7 +538,7 @@ export function DashboardView({
             <ListRow
               key={kind}
               href={exportHref(kind)}
-              download
+              download="navigate"
               icon={
                 <ListIcon color="var(--green-fill)">
                   <FileSpreadsheet />

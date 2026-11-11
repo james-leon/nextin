@@ -45,7 +45,7 @@ La publicité n'est **jamais** ciblée à partir de données personnelles ou de 
 | Changement de mot de passe sans connexion récente | Faible | `secure_password_change` (à reporter dans Supabase, §4) |
 
 ## 3. Recommandations restantes (à décider)
-1. **Double authentification (TOTP) pour la console Wintek** et les administrateurs d'établissement : la console voit tous les abonnements. Supabase la fournit ; à activer et à imposer côté application (niveau `aal2`). Recommandé avant la mise en production.
+1. ~~**Double authentification (TOTP)**~~ : **faite (B5)**, voir `docs/modules/B5-2FA.md` (aal2 exigé par la base dans les fonctions sensibles, code récent avant suppression, changement de rôle et export, console fermée après 30 min d'inactivité, réinitialisation journalisée). Reste à activer TOTP dans Supabase puis l'obligation dans la console.
 2. **Comptes des services** (Supabase, Vercel, GitHub, Meta, agrégateur Mobile Money, Brevo/Resend) : double authentification obligatoire, accès nominatifs, retrait le jour du départ d'un collaborateur.
 3. **Sauvegardes** : sauvegarde quotidienne et restauration à un instant donné (offre Supabase Pro), test de restauration chaque trimestre.
 4. **Protection contre les mots de passe divulgués** (Supabase Auth, offre Pro).

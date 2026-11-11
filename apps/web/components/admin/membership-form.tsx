@@ -9,6 +9,7 @@ import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { SelectField } from "@/components/ui/select-field";
+import { useMfaStepUp } from "@/components/security/use-mfa-step-up";
 import { useFormErrors } from "./use-form-errors";
 
 export function MembershipForm({
@@ -25,7 +26,9 @@ export function MembershipForm({
   const t = useTranslations("staffMgmt");
   const tr = useTranslations("roles");
   const ta = useTranslations("admin");
-  const [state, formAction, pending] = useActionState(action, null);
+  // Changement de rôle (B5) : code de double authentification récent demandé si la base l'exige.
+  const stepUp = useMfaStepUp();
+  const [state, formAction, pending] = useActionState((prev: ActionResult | null, data: FormData) => stepUp.run(() => action(prev, data)), null);
   const { field, top } = useFormErrors(state);
   const roles = MEMBER_ROLES.filter((r) => canAssignRole(actorRole, r));
   const [role, setRole] = useState<MemberRole>(initial.role);
@@ -36,6 +39,7 @@ export function MembershipForm({
   ];
   return (
     <form action={formAction} noValidate className="flex flex-col gap-5">
+      {stepUp.dialog}
       <FormError message={top} />
       <ListSection header={t("role")} radioGroupLabel={t("role")}>
         {roles.map((r) => (

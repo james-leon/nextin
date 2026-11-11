@@ -9,6 +9,7 @@ import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { TextField } from "@/components/ui/text-field";
+import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { REQUEST_CHANNELS, SIGNUP_CODE_CHANNELS, type RequestChannel, type SignupCodeChannel } from "@nextin/shared/schemas";
 
 export type PlatformSettingsValues = {
@@ -31,6 +32,8 @@ export type PlatformSettingsValues = {
   request_channels: RequestChannel[];
   /** Canal du code d'inscription d'un établissement (B2). */
   signup_code_channel: SignupCodeChannel;
+  /** Double authentification obligatoire (super admin, administrateurs d'établissement) (B5). */
+  mfa_required: boolean;
 };
 
 /** Mentions légales des factures et durées du cycle de vie, modifiables sans déploiement. */
@@ -41,6 +44,7 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
   const { field, top } = useFormErrors(state);
   const [channels, setChannels] = useState<RequestChannel[]>(values.request_channels ?? ["email"]);
   const [signupChannel, setSignupChannel] = useState<SignupCodeChannel>(values.signup_code_channel ?? "email");
+  const [mfaRequired, setMfaRequired] = useState(values.mfa_required === true);
   // Ordre fixe (e-mail, WhatsApp, SMS) : le premier canal coché est proposé par défaut au patient.
   const toggle = (c: RequestChannel) =>
     setChannels((list) => REQUEST_CHANNELS.filter((x) => (x === c ? !list.includes(c) : list.includes(x))));
@@ -102,6 +106,10 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
         ))}
       </ListSection>
       <input type="hidden" name="signupCodeChannel" value={signupChannel} />
+      <ListSection footer={field("mfaRequired") ?? t("settingsFields.mfaRequiredFooter")}>
+        <ListSwitchRow title={t("settingsFields.mfaRequired")} checked={mfaRequired} onCheckedChange={setMfaRequired} />
+      </ListSection>
+      <input type="hidden" name="mfaRequired" value={String(mfaRequired)} />
       <BottomBar>
         <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>
           {ta("save")}

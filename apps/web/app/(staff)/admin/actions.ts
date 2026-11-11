@@ -15,6 +15,7 @@ import {
   adSectorFormSchema,
   campaignReviewSchema,
   platformSettingsFormSchema,
+  mfaResetSchema,
 } from "@nextin/shared/schemas";
 import type { Json } from "@nextin/shared/database";
 import { mapDbError } from "@/lib/admin/db-errors";
@@ -190,9 +191,23 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
       quota_alert_percent: v.quotaAlertPercent,
       request_channels: v.requestChannels,
       signup_code_channel: v.signupCodeChannel,
+      mfa_required: v.mfaRequired,
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };
+  done("/admin/settings");
+}
+
+/** Réinitialisation de la double authentification d'un compte (téléphone perdu), motif obligatoire, journalisée. */
+export async function resetAccountMfa(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = mfaResetSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const { error } = await supabase.rpc("admin_reset_mfa", { p_email: parsed.data.email, p_reason: parsed.data.reason });
+  if (error) {
+    const code = mapDbError(error);
+    return { ok: false, error: code, fieldErrors: error.message === "not_found" ? { email: "not_found" } : undefined };
+  }
   done("/admin/settings");
 }
 

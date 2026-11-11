@@ -1224,14 +1224,14 @@ isOneToOne: true
                   ]
                 },"organizations": {
                   Row: {
-                    "country": string,"created_at": string,"created_by": string | null,"currency": string,"data_retention_days": number,"default_locale": string,"id": string,"logo_path": string | null,"name": string,"onboarding_step": number,"phone_e164": string | null,"slug": string,"status": Database["public"]['Enums']["org_status"],"suspended_reason": string | null,"type": Database["public"]['Enums']["org_type"],"updated_at": string,"validated_at": string | null,"validated_by": string | null
+                    "country": string,"created_at": string,"created_by": string | null,"currency": string,"data_retention_days": number,"default_locale": string,"id": string,"logo_path": string | null,"mfa_required_all": boolean,"name": string,"onboarding_step": number,"phone_e164": string | null,"slug": string,"status": Database["public"]['Enums']["org_status"],"suspended_reason": string | null,"type": Database["public"]['Enums']["org_type"],"updated_at": string,"validated_at": string | null,"validated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"name": string,"onboarding_step"?: number,"phone_e164"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type": Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
+                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"mfa_required_all"?: boolean,"name": string,"onboarding_step"?: number,"phone_e164"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type": Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
                   }
                   Update: {
-                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"name"?: string,"onboarding_step"?: number,"phone_e164"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type"?: Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
+                    "country"?: string,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"data_retention_days"?: number,"default_locale"?: string,"id"?: string,"logo_path"?: string | null,"mfa_required_all"?: boolean,"name"?: string,"onboarding_step"?: number,"phone_e164"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["org_status"],"suspended_reason"?: string | null,"type"?: Database["public"]['Enums']["org_type"],"updated_at"?: string,"validated_at"?: string | null,"validated_by"?: string | null
                   }
                   Relationships: [
                     
@@ -1320,14 +1320,14 @@ isOneToOne: false
                   ]
                 },"platform_settings": {
                   Row: {
-                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"signup_code_channel": string,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
+                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"mfa_required": boolean,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"signup_code_channel": string,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"mfa_required"?: boolean,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Update: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"mfa_required"?: boolean,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Relationships: [
                     
@@ -1941,6 +1941,9 @@ isOneToOne: false
 "admin_grant_days":
 { Args: { "p_days": number,"p_reason": string,"p_subscription": string }; Returns: Json
                            },
+"admin_reset_mfa":
+{ Args: { "p_email": string,"p_reason": string }; Returns: number
+                           },
 "admin_revenue":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2032,6 +2035,9 @@ isOneToOne: false
                            },
 "assert_feature":
 { Args: { "p_feature": string,"p_org": string }; Returns: undefined
+                           },
+"assert_mfa":
+{ Args: { "p_org": string,"p_recent"?: boolean }; Returns: undefined
                            },
 "assert_org_admin":
 { Args: { "p_org": string }; Returns: undefined
@@ -2483,6 +2489,9 @@ isOneToOne: false
 "handle_missed_call":
 { Args: { "p_ticket": string }; Returns: string
                            },
+"has_mfa_factor":
+{ Args: { "p_user": string }; Returns: boolean
+                           },
 "has_org_role":
 { Args: { "p_org": string,"p_roles"?: (Database["public"]['Enums']["member_role"])[] }; Returns: boolean
                            },
@@ -2924,8 +2933,17 @@ isOneToOne: false
 "mask_phone":
 { Args: { "p_phone": string }; Returns: string
                            },
+"mfa_required_for":
+{ Args: { "p_org": string }; Returns: boolean
+                           },
+"mfa_verified_since":
+{ Args: { "p_seconds": number }; Returns: boolean
+                           },
 "move_back_ticket":
 { Args: { "p_places": number,"p_ticket": string }; Returns: Json
+                           },
+"my_mfa_status":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "nearby_branches":
 { Args: { "p_lat"?: number,"p_limit"?: number,"p_lng"?: number,"p_query"?: string,"p_radius_km"?: number }; Returns: Json
@@ -3244,6 +3262,9 @@ isOneToOne: false
 { Args: { "p_service": string }; Returns: {
               "busy_remaining_seconds": number,"counter_id": string,"duration_seconds": number
             }[]
+                           },
+"session_aal":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "set_ad_preferences":
 { Args: { "p_blocked": (string)[],"p_house": boolean,"p_org": string,"p_quiz": boolean,"p_sky_catch": boolean }; Returns: undefined

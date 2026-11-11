@@ -114,6 +114,23 @@ export async function inviteMember(
   return { ok: true, link: absoluteUrl(`/invite/${token}`), email: v.email };
 }
 
+/** Double authentification pour tout le personnel (B5) : administrateurs seulement ; session aal2 exigée par la base. */
+export async function setOrgMfaRequired(orgId: string, enabled: boolean): Promise<ActionResult> {
+  check(orgId);
+  const ctx = await getOrgContext(orgId);
+  if (!ctx.canManageOrg) return { ok: false, error: "not_allowed" };
+  const supabase = await getSupabaseServerClient();
+  const { data: affected, error } = await supabase
+    .from("organizations")
+    .update({ mfa_required_all: enabled === true })
+    .eq("id", orgId)
+    .select("id");
+  if (error) return { ok: false, error: mapDbError(error) };
+  if (!affected?.length) return { ok: false, error: "not_allowed" };
+  revalidatePath(`/app/o/${orgId}/staff`);
+  return { ok: true };
+}
+
 export async function revokeInvitation(orgId: string, invitationId: string): Promise<ActionResult> {
   check(orgId, invitationId);
   await getOrgContext(orgId);

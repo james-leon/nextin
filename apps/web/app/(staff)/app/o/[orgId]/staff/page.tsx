@@ -13,7 +13,8 @@ import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { getOrgContext } from "@/lib/admin/context";
 import { cn } from "@/lib/cn";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { revokeInvitation } from "../_actions/people";
+import { OrgMfaSwitch } from "@/components/admin/org-mfa-switch";
+import { revokeInvitation, setOrgMfaRequired } from "../_actions/people";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("staffMgmt");
@@ -35,7 +36,7 @@ export default async function StaffPage({
   const ta = await getTranslations("admin");
   const format = await getFormatter();
   const supabase = await getSupabaseServerClient();
-  const [{ data: members }, { data: invitations }, { data: branches }] = await Promise.all([
+  const [{ data: members }, { data: invitations }, { data: branches }, { data: security }] = await Promise.all([
     supabase.rpc("list_org_members", { p_org: orgId }),
     supabase
       .from("invitations")
@@ -44,6 +45,7 @@ export default async function StaffPage({
       .is("accepted_at", null)
       .order("created_at", { ascending: false }),
     supabase.from("branches").select("id, name").eq("organization_id", orgId),
+    supabase.from("organizations").select("mfa_required_all").eq("id", orgId).maybeSingle(),
   ]);
   const branchName = new Map((branches ?? []).map((b) => [b.id, b.name]));
   const scope = (branchId: string | null) => (branchId ? branchName.get(branchId) : ta("allBranches"));
@@ -204,6 +206,10 @@ export default async function StaffPage({
             </Button>
           </BottomBar>
         </>
+      ) : null}
+      {/* Double authentification pour tout le personnel (B5) : administrateurs seulement. */}
+      {ctx.canManageOrg && security ? (
+        <OrgMfaSwitch initial={security.mfa_required_all === true} action={setOrgMfaRequired.bind(null, orgId)} />
       ) : null}
     </AdminPage>
   );
