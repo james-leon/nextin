@@ -73,7 +73,7 @@ Registre des incidents : à tenir par Wintek (date, nature, périmètre, notific
 ## 6. Contrôles automatiques
 | Contrôle | Où |
 |---|---|
-| RLS partout, isolation entre établissements | `supabase/tests/database/*.test.sql` |
+| RLS partout, isolation entre établissements | `supabase/tests/database/*.test.sql` ; **toutes les tables métier** (généré, S2) : `isolation_all.test.sql` |
 | Droits d'exécution, chemins de recherche, journaux inaltérables, appels hors ordre | `supabase/tests/database/security.test.sql` |
 | En-têtes et CSP | `apps/web/lib/security/headers.test.ts`, `apps/web/e2e/security.spec.ts` |
 | Session invalide, redirections | `apps/web/e2e/session.spec.ts`, `lib/auth` |
