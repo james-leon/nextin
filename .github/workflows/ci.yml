@@ -82,7 +82,9 @@ jobs:
         run: |
           supabase status -o env | sed -n 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p; s/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/p; s/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @nextin/web exec playwright install --with-deps chromium
+      # Dépendances système par apt ; si les miroirs Ubuntu sont injoignables, le navigateur seul (l'image
+      # ubuntu-latest contient déjà les bibliothèques de Chrome).
+      - run: pnpm --filter @nextin/web exec playwright install --with-deps chromium || pnpm --filter @nextin/web exec playwright install chromium
       - run: pnpm build
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
