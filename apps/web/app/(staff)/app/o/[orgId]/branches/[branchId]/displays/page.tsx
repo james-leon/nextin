@@ -151,7 +151,7 @@ export default async function DisplaysPage({ params, searchParams }: Props) {
               <span className="mt-2 block font-semibold break-all">{tvUrl}</span>
             </CalloutCard>
             <CopyButton value={tvUrl} label={t("tvUrl")} copiedLabel={tq("copied")} variant="gray" />
-            <PairDisplayForm action={pairDisplay.bind(null, orgId, branchId)} services={services.data ?? []} />
+            <PairDisplayForm action={pairDisplay.bind(null, orgId, branchId)} services={services.data ?? []} adsHref={`/app/o/${orgId}/ads`} />
           </section>
         ) : null}
       </div>

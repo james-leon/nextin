@@ -353,11 +353,15 @@ export const pairDisplayFormSchema = z.object({
   code: z.string().trim().regex(/^\d{6}$/, "pairing_code_invalid"),
   name: z.string().trim().min(1, "name_too_short").max(60),
   serviceIds: z.array(z.uuid()).default([]),
+  // Publicité sur l'écran (T1) : activée par défaut à l'appairage.
+  showAds: formBoolean.default(true),
 });
 
 export const displayFormSchema = z.object({
   name: z.string().trim().min(1, "name_too_short").max(60),
   serviceIds: z.array(z.uuid()).default([]),
+  // Absente : la valeur actuelle de l'écran est conservée (T1).
+  showAds: formBoolean.optional(),
 });
 
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "time_invalid");

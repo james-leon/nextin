@@ -25,7 +25,7 @@ export default async function DisplayPage({ params }: Props) {
   const [{ data: display }, services] = await Promise.all([
     supabase
       .from("displays")
-      .select("id, name, display_services(service_id)")
+      .select("id, name, show_ads, display_services(service_id)")
       .eq("id", displayId)
       .eq("branch_id", branchId)
       .eq("status", "active")
@@ -40,7 +40,8 @@ export default async function DisplayPage({ params }: Props) {
       <DisplayForm
         action={updateDisplay.bind(null, orgId, branchId, displayId)}
         services={services.data ?? []}
-        initial={{ name, serviceIds: (display.display_services ?? []).map((s) => s.service_id) }}
+        initial={{ name, serviceIds: (display.display_services ?? []).map((s) => s.service_id), showAds: display.show_ads }}
+        adsHref={`/app/o/${orgId}/ads`}
         disabled={!canManage}
       />
       {canManage ? (

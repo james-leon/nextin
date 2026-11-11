@@ -44,7 +44,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | # | Point | Qui | État |
 |---|---|---|---|
 | — | Page « Mon ticket » : attente sans débordement, barre de progression, « Annuler » discret avec confirmation, agence fermée / aucun poste ouvert, « Vous êtes le prochain » | 🤖 | ✅ `beac9a4`, `d6350b8` |
-| T1 | **Publicité sur les écrans TV** : `displays.show_ads` n'est réglable nulle part (`updateDisplay` envoie toujours `false`, l'appairage ne le passe pas). Interrupteur « Publicité sur cet écran » (appairage et modification, activé par défaut), seed de démo, test Playwright | 🤖 | ☐ |
+| T1 | **Publicité sur les écrans TV** : `displays.show_ads` n'est réglable nulle part (`updateDisplay` envoie toujours `false`, l'appairage ne le passe pas). Interrupteur « Publicité sur cet écran » (appairage et modification, activé par défaut), seed de démo, test Playwright | 🤖 | ✅ (commit T1) |
 
 ---
 

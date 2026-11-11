@@ -13,6 +13,9 @@ import { usePageFrame } from "./page-frame";
  * - ordinateur (≥ 1024 px), dans un `PageFrame` : l'action remonte dans la barre de titre, à droite du grand titre.
  *   Un bouton d'envoi y reste relié à son formulaire (attribut `form`).
  */
+/** Numéro des formulaires reliés à une barre du bas, unique sur la page. */
+let formSequence = 0;
+
 export function BottomBar({
   summary,
   children,
@@ -36,6 +39,7 @@ export function BottomBar({
   const anchor = useRef<HTMLDivElement>(null);
   const portal = useRef<HTMLDivElement>(null);
   const generatedId = useId();
+  const mountId = useRef<string | null>(null);
   const [formId, setFormId] = useState<string | null>(null);
 
   // Formulaire de la barre (s'il y en a un) : identifiant pour relier le bouton déplacé dans la barre de titre.
@@ -43,7 +47,12 @@ export function BottomBar({
     anchor.current = el;
     const form = el?.closest("form");
     if (!form) return;
-    if (!form.id) form.id = `form-${generatedId.replace(/[^a-zA-Z0-9-]/g, "")}`;
+    // Identifiant propre à cet affichage : `useId` seul se répète d'une visite à l'autre de la même page, et Next.js
+    // garde les pages déjà visitées, masquées, dans le document ; le bouton déplacé enverrait alors l'ancien formulaire.
+    if (!form.id) {
+      mountId.current ??= `form-${generatedId.replace(/[^a-zA-Z0-9-]/g, "")}-${++formSequence}`;
+      form.id = mountId.current;
+    }
     if (form.id !== formId) setFormId(form.id);
   };
 
