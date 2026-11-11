@@ -75,8 +75,8 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | C1 | Paiement manuel dans la console (espèces, virement, chèque, Mobile Money hors ligne), effet identique à un paiement en ligne, annulation avec motif, journalisé | 🤖 | ✅ 2f6e693 — `docs/modules/C1-MANUAL-PAYMENT.md` |
 | C2 | Page Aide du patient (FAQ bilingue + coordonnées et horaires de l'établissement du ticket) | 🤖 | ✅ 56bd381 — `/help`, `docs/modules/M4.md` §C2 |
 | C3 | « Demander de l'aide » sur la page ticket → pastille à l'accueil avec « Traité » (une demande / 5 min, rien sur la TV) | 🤖 | ✅ 84bf9eb — `docs/modules/M5.md` §C3 |
-| C4 | Tableau de bord : « Aujourd'hui », « Hier », « Période personnalisée » (92 jours max, limite d'historique), comparaison avec la période précédente | 🤖 | ✅ (commit C4) — `docs/modules/M8.md` §C4 |
-| C5 | `docs/NEXTIN_RECETTE_PILOTE.md` : grille de 15 tests manuels sur place | 🤖 | ☐ |
+| C4 | Tableau de bord : « Aujourd'hui », « Hier », « Période personnalisée » (92 jours max, limite d'historique), comparaison avec la période précédente | 🤖 | ✅ 34e86dc — `docs/modules/M8.md` §C4 |
+| C5 | `docs/NEXTIN_RECETTE_PILOTE.md` : grille de 15 tests manuels sur place | 🤖 | ✅ (commit C5) — à dérouler sur place par Wintek et le directeur |
 | U1 | Écarts du §0 du référentiel UX : `loading.tsx` (squelettes), `error.tsx` / `global-error.tsx` bilingues, `EmptyState`, `useOptimistic`, « Annuler » 5 s, titres sans coupure, axe sur toutes les pages principales (clair et sombre) | 🤖 | ☐ |
 
 **Reporté après le pilote** (noté, non développé) : liste complète des organisations dans `/admin` (suspendre, réactiver, activité) ; module Incidents ; supervision globale (écrans en ligne, erreurs, impayés).
