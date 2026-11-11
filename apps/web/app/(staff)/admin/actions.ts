@@ -18,15 +18,15 @@ import {
   mfaResetSchema,
   adminCreateOrganizationSchema,
 } from "@nextin/shared/schemas";
-import { absoluteUrl, slugify, templateServices } from "@nextin/shared";
-import { invitationEmail } from "@nextin/shared/notifications";
+import { slugify, templateServices } from "@nextin/shared";
 import type { Json } from "@nextin/shared/database";
 import { mapDbError } from "@/lib/admin/db-errors";
 import { formObject } from "@/lib/admin/form";
 import { fieldErrorsFrom, type ActionResult } from "@/lib/auth/errors";
 import { requireStaffSession } from "@/lib/auth/session";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getProviders } from "@/lib/notifications/providers";
+import { sendInvitationEmail } from "@/lib/notifications/invitation";
+import { resendInvitationWith, type ResendResult } from "@/lib/admin/invitations";
 
 /**
  * Console Wintek (§11.9) : actions du super admin. Les droits sont vérifiés par chaque RPC (`assert_platform_admin`)
@@ -326,14 +326,22 @@ export async function createOrganizationForClient(
   });
   if (error || !created) return { ok: false, error: mapDbError(error) };
   const result = created as { organization_id: string; token: string };
-  const link = absoluteUrl(`/invite/${result.token}`);
-  const mail = invitationEmail(v.locale, { organization: v.name, role: "org_admin", link, validDays: 7, byWintek: true });
-  let mailSent = false;
-  try {
-    mailSent = (await getProviders().email.send(v.ownerEmail, mail.subject, mail.text, mail.html)).ok;
-  } catch {
-    mailSent = false;
-  }
+  const { mailSent, link } = await sendInvitationEmail({
+    to: v.ownerEmail,
+    token: result.token,
+    organization: v.name,
+    role: "org_admin",
+    locale: v.locale,
+    byWintek: true,
+  });
   revalidatePath("/admin", "layout");
   return { ok: true, organizationId: result.organization_id, name: v.name, email: v.ownerEmail, mailSent, link: mailSent ? null : link };
+}
+
+/** P2 — console : renvoi de l'invitation d'un responsable (nouveau lien, 7 jours). */
+export async function resendOwnerInvitation(invitationId: string): Promise<ResendResult> {
+  const supabase = await platform();
+  const result = await resendInvitationWith(supabase, invitationId, true);
+  revalidatePath("/admin", "layout");
+  return result;
 }

@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { MessageCircle, UserPlus } from "lucide-react";
+import { MailCheck, MessageCircle, UserPlus } from "lucide-react";
 import { MEMBER_ROLES, canAssignRole, type MemberRole } from "@nextin/shared";
 import type { ActionResult } from "@/lib/auth/errors";
 import { FormError } from "@/components/auth/form-error";
@@ -15,7 +15,7 @@ import { TextField } from "@/components/ui/text-field";
 import { CopyButton } from "./copy-button";
 import { useFormErrors } from "./use-form-errors";
 
-type Result = ActionResult<{ link?: string; email?: string }>;
+type Result = ActionResult<{ link?: string; email?: string; mailSent?: boolean }>;
 
 export function InviteForm({
   action,
@@ -44,14 +44,22 @@ export function InviteForm({
     const text = t("whatsappText", { org: orgName, url: state.link });
     return (
       <div className="flex flex-col gap-5" role="status">
-        <section className="flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5">
-          <h2 className="text-title3 font-semibold">{t("createdTitle")}</h2>
-          <p className="text-body text-label-secondary">{t("createdBody", { email: state.email ?? "" })}</p>
+        <section className="squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
+          {state.mailSent ? (
+            <span className="squircle flex size-12 items-center justify-center rounded-[14px] bg-green-tint text-green-text">
+              <MailCheck aria-hidden className="size-6 stroke-[1.75]" />
+            </span>
+          ) : null}
+          <h2 className="text-title3 font-semibold">{state.mailSent ? t("sentTitle") : t("createdTitle")}</h2>
+          <p className="text-body text-label-secondary">
+            {state.mailSent ? t("sentBody", { email: state.email ?? "" }) : t("mailFailed", { email: state.email ?? "" })}
+          </p>
+          {state.mailSent ? <p className="text-subheadline text-label-secondary">{t("fallbackHint")}</p> : null}
           <p className="truncate rounded-[10px] bg-grouped-tertiary px-3 py-2.5 text-subheadline" title={state.link}>
             {state.link}
           </p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Button asChild variant="filled" block>
+            <Button asChild variant={state.mailSent ? "tinted" : "filled"} block>
               <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle aria-hidden className="size-5" />
                 {t("shareWhatsapp")}

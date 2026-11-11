@@ -13,6 +13,8 @@ import { ListRow, ListSection } from "@/components/ui/list";
 import { formatDay, formatShortDay } from "@/lib/billing/format";
 import type { AdminSubscriptionDetail } from "@/lib/billing/platform";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { ResendInvitationButton } from "@/components/admin/resend-invitation-button";
+import { resendOwnerInvitation } from "../../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("platform");
@@ -47,6 +49,14 @@ export default async function SubscriptionDetail({
   ]);
   if (!data) notFound();
   const d = data as unknown as AdminSubscriptionDetail;
+  // Responsable invité depuis la console (P1) et pas encore inscrit : renvoi possible (P2).
+  const { data: ownerInvites } = await supabase
+    .from("invitations")
+    .select("id, email, expires_at")
+    .eq("organization_id", d.organization.id)
+    .eq("role", "org_admin")
+    .is("accepted_at", null)
+    .order("created_at", { ascending: false });
   const s = d.subscription;
   const xaf = (n: number) => formatXaf(n, locale);
   const eventKey = (type: string) => (t.has(`events.${type}` as Parameters<typeof t.has>[0]) ? t(`events.${type}` as Parameters<typeof t>[0]) : type);
@@ -80,6 +90,19 @@ export default async function SubscriptionDetail({
           </span>
         ) : null}
       </div>
+
+      {ownerInvites?.length ? (
+        <ListSection header={t("ownerInvitation")} footer={t("ownerInvitationFooter")}>
+          {ownerInvites.map((inv) => (
+            <ListRow
+              key={inv.id}
+              title={inv.email ?? ""}
+              subtitle={t("ownerInvitationExpires", { date: formatShortDay(inv.expires_at, locale) })}
+              trailing={inv.email ? <ResendInvitationButton email={inv.email} action={resendOwnerInvitation.bind(null, inv.id)} /> : null}
+            />
+          ))}
+        </ListSection>
+      ) : null}
 
       <SubscriptionActions
         subscriptionId={s.id}

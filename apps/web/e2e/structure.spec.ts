@@ -142,7 +142,9 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByLabel("Agence").selectOption({ label: "Deïdo" });
     await expectAccessible(page);
     await page.getByRole("button", { name: "Créer l'invitation" }).click();
-    await expect(page.getByRole("heading", { name: "Invitation prête" })).toBeVisible();
+    // P2 : l'invitation part par e-mail ; le lien reste proposé en secours.
+    await expect(page.getByRole("heading", { name: "Invitation envoyée" })).toBeVisible();
+    await expect(page.getByText(`Un e-mail vient de partir vers ${memberEmail}.`, { exact: false })).toBeVisible();
     await expect(page.getByRole("link", { name: "Envoyer par WhatsApp" })).toHaveAttribute("href", /^https:\/\/wa\.me\/\?text=/);
     const link = (await page.locator("p[title]").getAttribute("title"))!;
     expect(link).toMatch(/\/invite\/[A-Za-z0-9_-]+$/);

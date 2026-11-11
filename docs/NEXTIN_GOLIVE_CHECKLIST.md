@@ -66,8 +66,8 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 
 | # | Point | Qui | État |
 |---|---|---|---|
-| P1 | **Création d'un établissement depuis /admin** pour un client (formule, durée d'essai, invitation du responsable par e-mail, modèles de services) | 🤖 | ✅ (commit P1) — `docs/modules/P1-CONSOLE-ORG.md` |
-| P2 | **Invitations du personnel envoyées par e-mail** : aujourd'hui le lien est seulement affiché, à copier et transmettre à la main | 🤖 | ☐ |
+| P1 | **Création d'un établissement depuis /admin** pour un client (formule, durée d'essai, invitation du responsable par e-mail, modèles de services) | 🤖 | ✅ 2e304fb — `docs/modules/P1-CONSOLE-ORG.md` |
+| P2 | **Invitations du personnel envoyées par e-mail** : aujourd'hui le lien est seulement affiché, à copier et transmettre à la main | 🤖 | ✅ (commit P2) — e-mail à la création, « Renvoyer » (nouveau lien) dans l'équipe et la console, `docs/modules/P2-INVITATIONS-EMAIL.md` |
 | P3 | Page « À proximité » : section « Récents » + invitation à activer la position | 🤖 | ☐ |
 | P4 | Voix des annonces (ElevenLabs, `pnpm voices:generate`) | 👤 | ☐ |
 | P5 | Fiche d'installation client + fiche « coupure de courant » | Claude, sur demande | ☐ |

@@ -14,7 +14,8 @@ import { getOrgContext } from "@/lib/admin/context";
 import { cn } from "@/lib/cn";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { OrgMfaSwitch } from "@/components/admin/org-mfa-switch";
-import { revokeInvitation, setOrgMfaRequired } from "../_actions/people";
+import { resendInvitation, revokeInvitation, setOrgMfaRequired } from "../_actions/people";
+import { ResendInvitationButton } from "@/components/admin/resend-invitation-button";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("staffMgmt");
@@ -52,6 +53,13 @@ export default async function StaffPage({
 
   const members_ = members ?? [];
   const expires = (iso: string) => format.dateTime(new Date(iso), { day: "numeric", month: "long" });
+  // Renvoyer (P2, nouveau lien par e-mail) et annuler : les deux actions d'une invitation en attente.
+  const actions = (inv: { id: string; email: string | null }) => (
+    <span className="flex shrink-0 items-center gap-1">
+      {inv.email ? <ResendInvitationButton email={inv.email} action={resendInvitation.bind(null, orgId, inv.id)} /> : null}
+      {revoke(inv)}
+    </span>
+  );
   const revoke = (inv: { id: string; email: string | null }) => (
     <ConfirmAction
       action={revokeInvitation.bind(null, orgId, inv.id)}
@@ -159,7 +167,7 @@ export default async function StaffPage({
                         {[tr(inv.role), scope(inv.branch_id), t("expires", { date: expires(inv.expires_at) })].join(" · ")}
                       </span>
                     </span>
-                    {revoke(inv)}
+                    {actions(inv)}
                   </span>
                 </li>
               ))
@@ -190,7 +198,7 @@ export default async function StaffPage({
                     <td className={cn(td, "whitespace-nowrap")}>{tr(inv.role)}</td>
                     <td className={td}>{scope(inv.branch_id)}</td>
                     <td className={cn(td, "whitespace-nowrap text-label-secondary")}>{expires(inv.expires_at)}</td>
-                    <td className={cn(td, "text-right")}>{revoke(inv)}</td>
+                    <td className={cn(td, "text-right")}><span className="inline-flex justify-end">{actions(inv)}</span></td>
                   </tr>
                 ))}
               </DataTable>

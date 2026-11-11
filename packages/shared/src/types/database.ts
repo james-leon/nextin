@@ -3272,6 +3272,9 @@ isOneToOne: false
 "register_request_push_contact":
 { Args: { "p_locale"?: string,"p_subscription": Json,"p_token": string }; Returns: Json
                            },
+"reissue_invitation":
+{ Args: { "p_invitation": string }; Returns: Json
+                           },
 "remote_travel_seconds":
 { Args: { "p_distance_m": number,"p_kmh": number }; Returns: number
                            },
