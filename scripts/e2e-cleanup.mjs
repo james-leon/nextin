@@ -13,9 +13,11 @@ const run = (extra) =>
 
 // Décompte (une requête par appel : la CLI n'accepte qu'une instruction), puis suppression en un bloc transactionnel.
 const COUNT = `select
-  (select count(*) from public.organizations o where exists (select 1 from public.memberships m where m.organization_id = o.id)
+  (select count(*) from public.organizations o where (exists (select 1 from public.memberships m where m.organization_id = o.id)
      and not exists (select 1 from public.memberships m join auth.users u on u.id = m.user_id
-                     where m.organization_id = o.id and u.email not like '%@nextin.test')) as organizations,
+                     where m.organization_id = o.id and u.email not like '%@nextin.test'))
+     or (not exists (select 1 from public.memberships m where m.organization_id = o.id)
+         and exists (select 1 from auth.users u where u.id = o.created_by and u.email like '%@nextin.test'))) as organizations,
   (select count(*) from public.advertisers a where exists (select 1 from public.advertiser_members m where m.advertiser_id = a.id)
      and not exists (select 1 from public.advertiser_members m join auth.users u on u.id = m.user_id
                      where m.advertiser_id = a.id and u.email not like '%@nextin.test')) as advertisers,

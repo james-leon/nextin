@@ -726,6 +726,9 @@ async function main() {
   await upload("branch-photos", `${clinic}/${akwa.branchId}/thumb.webp`, facadePng(160, 160), "image/png");
   await must(db.from("branches").update({ photo_updated_at: new Date().toISOString() }).eq("id", akwa.branchId).select("id"));
   await ensureDemoAds(clinic);
+  // Publicité sur les écrans TV de démo (T1) : activée pour les écrans déjà appairés des deux établissements (les
+  // nouveaux écrans l'ont par défaut à l'appairage).
+  await must(db.from("displays").update({ show_ads: true }).in("organization_id", [clinic, eneo]).select("id"));
 
   console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa, Pro payé) et Eneo — Douala (agence Bonanjo, essai Pro)");
   console.log("  Console Wintek : /admin avec superadmin@nextin.demo");

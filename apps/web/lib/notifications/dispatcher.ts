@@ -2,6 +2,7 @@ import "server-only";
 import { YOUR_TURN_SMS_GUARD_SECONDS, retryDelaySeconds } from "@nextin/shared/notifications";
 import type { Json } from "@nextin/shared/database";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isSecurityAlertKind, securityAlertEmail, type SecurityAlertDetail } from "@nextin/shared/security";
 import { recheckPendingPayments } from "@/lib/payments/service";
 import { sendAccountMessage, type ClaimedAccountMessage } from "./account";
 import { getProviders, type Providers } from "./providers";
@@ -49,6 +50,29 @@ async function processAccountMessage(admin: Admin, providers: Providers, m: Clai
   });
 }
 
+type ClaimedSecurityAlert = { id: string; kind: string; detail: SecurityAlertDetail; to_email: string; locale: string; attempt: number };
+
+/** Alerte de sécurité (S3) : e-mail seulement, trois essais. */
+async function processSecurityAlert(admin: Admin, providers: Providers, a: ClaimedSecurityAlert) {
+  let status: "sent" | "failed" = "failed";
+  let error: string | null = null;
+  try {
+    if (!isSecurityAlertKind(a.kind)) throw new Error("unknown_kind");
+    const mail = securityAlertEmail(a.kind, a.locale === "en" ? "en" : "fr", a.detail ?? {});
+    const r = await providers.email.send(a.to_email, mail.subject, mail.text);
+    status = r.ok ? "sent" : "failed";
+    error = r.ok ? null : (r.error ?? "send_failed");
+  } catch (e) {
+    error = (e as Error).message;
+  }
+  await admin.rpc("complete_security_alert", {
+    p_alert: a.id,
+    p_status: status,
+    p_error: error ?? (null as unknown as string),
+    p_retry_in_seconds: (status === "failed" && a.attempt < 3 ? retryDelaySeconds(a.attempt) : null) as unknown as number,
+  });
+}
+
 let running: Promise<number> | null = null;
 
 /**
@@ -78,6 +102,15 @@ export function dispatchNotifications(options: { budgetMs?: number; providers?: 
         if (!batch.length) break;
         await Promise.all(batch.map((m) => processAccountMessage(admin, providers, m)));
         processed += batch.length;
+      }
+      // Alertes de sécurité (S3) : file à part, e-mail seulement.
+      while (Date.now() - started < (options.budgetMs ?? 8_000)) {
+        const { data, error } = await admin.rpc("claim_security_alerts", { p_limit: 20 });
+        if (error) throw new Error(`claim_security_alerts: ${error.message}`);
+        const alerts = (data ?? []) as unknown as ClaimedSecurityAlert[];
+        if (!alerts.length) break;
+        await Promise.all(alerts.map((a) => processSecurityAlert(admin, providers, a)));
+        processed += alerts.length;
       }
       // Rattrapage des paiements dont le webhook n'est pas arrivé (§11.5).
       await recheckPendingPayments(admin).catch((e: unknown) => console.error("[payments] recheck", e instanceof Error ? e.message : e));

@@ -353,11 +353,15 @@ export const pairDisplayFormSchema = z.object({
   code: z.string().trim().regex(/^\d{6}$/, "pairing_code_invalid"),
   name: z.string().trim().min(1, "name_too_short").max(60),
   serviceIds: z.array(z.uuid()).default([]),
+  // Publicité sur l'écran (T1) : activée par défaut à l'appairage.
+  showAds: formBoolean.default(true),
 });
 
 export const displayFormSchema = z.object({
   name: z.string().trim().min(1, "name_too_short").max(60),
   serviceIds: z.array(z.uuid()).default([]),
+  // Absente : la valeur actuelle de l'écran est conservée (T1).
+  showAds: formBoolean.optional(),
 });
 
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "time_invalid");
@@ -603,6 +607,9 @@ export const adminQuotaPackSchema = z.object({
   active: formBoolean,
 });
 
+export const SIGNUP_CODE_CHANNELS = ["email", "sms"] as const;
+export type SignupCodeChannel = (typeof SIGNUP_CODE_CHANNELS)[number];
+
 export const platformSettingsFormSchema = z.object({
   companyLegalName: z.string().trim().max(160),
   companyRc: z.string().trim().max(60),
@@ -624,6 +631,65 @@ export const platformSettingsFormSchema = z.object({
     .string()
     .transform((v) => [...new Set(v.split(",").map((c) => c.trim()).filter(Boolean))])
     .pipe(z.array(z.enum(REQUEST_CHANNELS)).min(1, "channels_required").max(3)),
+  // Canal du code d'inscription d'un établissement (B2) : e-mail du compte tant qu'aucun fournisseur SMS n'est branché.
+  signupCodeChannel: z.enum(SIGNUP_CODE_CHANNELS).default("email"),
+  // Double authentification obligatoire pour le super admin et les administrateurs (B5).
+  mfaRequired: formBoolean.default(false),
+  // Adresse des alertes de sécurité (S3) ; vide = adresse de la société.
+  securityAlertEmail: z
+    .string()
+    .trim()
+    .max(254)
+    .optional()
+    .transform((v) => v || null)
+    .pipe(z.email("email_invalid").nullable()),
+});
+
+/** Réinitialisation de la double authentification d'un compte par le super admin (B5). */
+export const mfaResetSchema = z.object({
+  email: z.string().trim().toLowerCase().email("email_invalid").max(254),
+  reason: z.string().trim().min(3, "reason_required").max(300),
+});
+
+/** P1 — création d'un établissement depuis la console Wintek, pour un client. */
+export const adminCreateOrganizationSchema = z.object({
+  name: z.string().trim().min(2, "name_too_short").max(120),
+  type: orgTypeSchema,
+  locale: z.enum(["fr", "en"]).default("fr"),
+  planId: z.uuid("generic"),
+  trialDays: z.coerce.number().int("trial_days_invalid").min(1, "trial_days_invalid").max(365, "trial_days_invalid"),
+  ownerEmail: emailSchema,
+  ownerPhone: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined)
+    .pipe(cameroonPhoneSchema.optional()),
+  branchName: z.string().trim().min(2, "name_too_short").max(80),
+  branchCity: z.string().trim().max(80).optional().transform((v) => v || null),
+  services: z.array(z.string().regex(/^[a-z_]{2,30}$/)).max(12),
+  reason: z.string().trim().min(3, "reason_required").max(300),
+});
+export type AdminCreateOrganizationInput = z.infer<typeof adminCreateOrganizationSchema>;
+
+/** C1 — paiement manuel enregistré dans la console (espèces, virement, chèque, Mobile Money hors ligne). */
+export const MANUAL_PAYMENT_METHODS = ["cash", "transfer", "cheque", "mobile_money_offline"] as const;
+export type ManualPaymentMethod = (typeof MANUAL_PAYMENT_METHODS)[number];
+export const manualPaymentSchema = z
+  .object({
+    invoiceId: z.uuid("generic"),
+    method: z.enum(MANUAL_PAYMENT_METHODS, { error: "generic" }),
+    amountXaf: z.coerce.number().int("amount_mismatch").positive("amount_mismatch"),
+    paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_date"),
+    reference: z.string().trim().max(80).optional().transform((v) => v || null),
+    note: z.string().trim().max(300).optional().transform((v) => v || null),
+  })
+  .superRefine((v, ctx) => {
+    if (v.method !== "cash" && !v.reference) ctx.addIssue({ code: "custom", message: "reference_required", path: ["reference"] });
+  });
+export const manualPaymentCancelSchema = z.object({
+  manualPaymentId: z.uuid("generic"),
+  reason: z.string().trim().min(3, "reason_required").max(300),
 });
 
 /* ─── M10b : publicité ──────────────────────────────────────────────────── */

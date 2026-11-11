@@ -68,7 +68,8 @@ test.describe("M1 — authentification et établissements", () => {
       await page.getByLabel("Nom de l'établissement").fill("Eneo Bonanjo Doublon");
       await page.getByRole("radio", { name: "Service public (eau, électricité)" }).click();
       await page.getByRole("button", { name: "Créer l'établissement" }).click();
-      await expect(page).toHaveURL(/\/setup\?welcome=1$/);
+      // Un seul essai par adresse e-mail (B2) : le second établissement du même compte passe par le paiement.
+      await expect(page).toHaveURL(i === 0 ? /\/setup\?welcome=1$/ : /\/billing\?no_trial=1$/);
     }
     await page.goto("/app");
     await expect(page.getByText("Eneo Bonanjo Doublon")).toHaveCount(2);

@@ -40,6 +40,7 @@ export async function pairDisplay(orgId: string, branchId: string, _prev: Action
     p_branch: branchId,
     p_name: v.name,
     p_service_ids: v.serviceIds,
+    p_show_ads: v.showAds,
   });
   if (error) {
     if (error.message === "pairing_code_invalid") return { ok: false, error: "generic", fieldErrors: { code: "pairing_code_invalid" } };
@@ -53,11 +54,17 @@ export async function updateDisplay(orgId: string, branchId: string, displayId: 
   if (!id.safeParse(displayId).success) return { ok: false, error: "not_found" };
   const parsed = displayFormSchema.safeParse(formObject(data, ["serviceIds"]));
   if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  // Publicité : valeur du formulaire, sinon celle de l'écran (jamais remise à zéro par une modification du nom).
+  let showAds = parsed.data.showAds;
+  if (showAds === undefined) {
+    const { data: current } = await supabase.from("displays").select("show_ads").eq("id", displayId).maybeSingle();
+    showAds = current?.show_ads ?? false;
+  }
   const { error } = await supabase.rpc("update_display", {
     p_display: displayId,
     p_name: parsed.data.name,
     p_service_ids: parsed.data.serviceIds,
-    p_show_ads: false,
+    p_show_ads: showAds,
   });
   if (error) return { ok: false, error: mapDbError(error) };
   done(orgId, branchId);

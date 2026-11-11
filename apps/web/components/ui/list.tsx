@@ -62,8 +62,11 @@ type RowProps = {
   href?: string;
   /** Préchargement du lien (désactivé sur les pages client : budget de 200 Ko). */
   prefetch?: boolean;
-  /** Lien de téléchargement (fichier) : balise <a download> plutôt qu'une navigation. */
-  download?: boolean;
+  /**
+   * Lien vers un fichier : `true` = balise <a download> ; `"navigate"` = <a> simple, sans `download` (le serveur
+   * envoie le fichier en pièce jointe, ou redirige, par exemple vers la saisie du code de double authentification).
+   */
+  download?: boolean | "navigate";
   onClick?: () => void;
   selected?: boolean;
   destructive?: boolean;
@@ -128,7 +131,7 @@ export function ListRow({
   if (href && download) {
     return (
       <li className={liClass}>
-        <a href={href} download className={cn(base, interactive)}>
+        <a href={href} download={download === true ? true : undefined} className={cn(base, interactive)}>
           {content}
         </a>
         {side}

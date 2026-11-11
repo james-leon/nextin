@@ -15,6 +15,8 @@ async function login(page: Page, email: string, next?: string) {
 
 /** Boîte d'un élément entièrement visible, marge haute ≥ 8 px, et chevauchant verticalement le grand titre. */
 async function alignedWithTitle(page: Page, action: import("@playwright/test").Locator) {
+  // Page rendue en flux (squelette d'abord) : attendre l'action avant de mesurer.
+  await expect(action).toBeVisible();
   const box = (await action.boundingBox())!;
   const title = (await page.getByRole("heading", { level: 1 }).first().boundingBox())!;
   expect(box.y).toBeGreaterThanOrEqual(8);
@@ -34,7 +36,7 @@ test.describe("Backlog — ordinateur : gabarit du personnel", () => {
 
     // Tableau de bord, vue mois : « Exporter » aligné avec le titre, puis dans la barre compacte au défilement.
     await page.goto(`/app/o/${b.orgId}`);
-    await page.getByRole("radio", { name: "Mois" }).click();
+    await page.getByRole("combobox", { name: "Période" }).selectOption("month");
     await alignedWithTitle(page, page.getByRole("button", { name: "Exporter" }));
     await page.mouse.wheel(0, 5000);
     await page.waitForTimeout(400);

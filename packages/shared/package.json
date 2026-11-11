@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./i18n/error-texts": "./src/i18n/error-texts.ts",
     "./schemas": "./src/schemas/index.ts",
     "./database": "./src/types/database.ts",
     "./queue": "./src/queue/index.ts",
@@ -21,6 +22,7 @@
     "./stats": "./src/stats/index.ts",
     "./remote": "./src/remote/index.ts",
     "./billing": "./src/billing/index.ts",
+    "./security": "./src/security/alerts.ts",
     "./billing/pricing": "./src/billing/pricing.ts",
     "./phone": "./src/phone.ts",
     "./money": "./src/money.ts",

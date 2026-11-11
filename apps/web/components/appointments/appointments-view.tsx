@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -271,10 +272,7 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
               ) : items.length ? (
                 <ListSection header={t("count", { count: items.length })}>{items.map((a) => row(a))}</ListSection>
               ) : (
-                <div className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-lg)] bg-grouped-secondary px-6 py-10 text-center">
-                  <CalendarDays aria-hidden className="size-9 stroke-[1.5] text-label-tertiary" />
-                  <p className="text-body text-label-secondary">{t("empty")}</p>
-                </div>
+                <EmptyState title={t("empty")} icon={<CalendarDays />} />
               )}
             </section>
             {desktop ? (

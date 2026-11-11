@@ -38,7 +38,7 @@ export type PaymentEvent = {
 };
 
 export interface PaymentProvider {
-  readonly name: "fake" | "notchpay" | "fapshi" | "mesomb" | "cinetpay" | "flutterwave";
+  readonly name: "fake" | "notchpay" | "campay" | "fapshi" | "mesomb" | "cinetpay" | "flutterwave";
   createCheckout(request: CheckoutRequest): Promise<CheckoutResult>;
   /** Signature du webhook vérifiée sur le corps brut, en temps constant. */
   verifyWebhook(rawBody: string, headers: Headers): boolean;

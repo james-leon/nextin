@@ -9,7 +9,7 @@ import { pushMessage, type NotifEvent, type NotificationData } from "./messages"
 
 export type EmailContent = { subject: string; text: string; html: string };
 
-type Block = {
+export type EmailBlock = {
   subject: string;
   /** Aperçu affiché par la messagerie sous l'objet. */
   preheader: string;
@@ -65,7 +65,7 @@ function appointmentRows(locale: NotifLocale, d: NotificationData): [string, str
   return rows;
 }
 
-function block(event: NotifEvent, locale: NotifLocale, d: NotificationData): Block {
+function block(event: NotifEvent, locale: NotifLocale, d: NotificationData): EmailBlock {
   const l = L[locale];
   const fr = locale === "fr";
   const a = d.appointment;
@@ -174,18 +174,18 @@ const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 /** Texte brut (lu par les messageries sans HTML et par les lecteurs d'écran). */
-function toText(b: Block, locale: NotifLocale): string {
+function toText(b: EmailBlock, locale: NotifLocale, footer: string = FOOTER[locale]): string {
   const sep = locale === "fr" ? "\u00a0: " : ": ";
   const lines = [b.title, "", b.intro];
   if (b.code) lines.push("", b.code);
   if (b.rows?.length) lines.push("", ...b.rows.map(([k, v]) => `${k}${sep}${v}`));
   if (b.notes?.length) lines.push("", ...b.notes);
   if (b.action) lines.push("", `${b.action.label}${sep}${b.action.href}`);
-  lines.push("", "—", FOOTER[locale]);
+  lines.push("", "—", footer);
   return lines.join("\n");
 }
 
-function toHtml(b: Block, locale: NotifLocale): string {
+function toHtml(b: EmailBlock, locale: NotifLocale, footer: string = FOOTER[locale]): string {
   const e = escapeHtml;
   const rows = b.rows?.length
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-collapse:collapse">${b.rows
@@ -215,7 +215,7 @@ function toHtml(b: Block, locale: NotifLocale): string {
 <p style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#3C4A5C">${e(b.intro)}</p>
 ${code}${rows}${notes}${action}
 </td></tr>
-<tr><td style="padding:16px 8px;font-size:12px;line-height:1.5;color:#5B6676">${e(FOOTER[locale])}</td></tr>
+<tr><td style="padding:16px 8px;font-size:12px;line-height:1.5;color:#5B6676">${e(footer)}</td></tr>
 </table></td></tr></table>
 </body>
 </html>`;
@@ -225,4 +225,9 @@ ${code}${rows}${notes}${action}
 export function notificationEmail(event: NotifEvent, locale: NotifLocale, data: NotificationData): EmailContent {
   const b = block(event, locale, data);
   return { subject: b.subject, text: toText(b, locale), html: toHtml(b, locale) };
+}
+
+/** Mise en page commune (texte brut + HTML) pour les autres e-mails de NextIn (invitations…), avec leur pied de page. */
+export function renderEmail(b: EmailBlock, locale: NotifLocale, footer: string): EmailContent {
+  return { subject: b.subject, text: toText(b, locale, footer), html: toHtml(b, locale, footer) };
 }

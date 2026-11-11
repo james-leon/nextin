@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { LogOut, Mail } from "lucide-react";
+import { LogOut, Mail, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { AdminPage } from "@/components/admin/admin-page";
 import { Preferences } from "@/components/settings/preferences";
@@ -22,6 +22,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");
   const ta = await getTranslations("auth");
+  const tm = await getTranslations("mfa");
   const back = safeNextPath(from, "/app");
 
   return (
@@ -35,6 +36,17 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               </ListIcon>
             }
             title={session.email ?? ""}
+          />
+          <ListRow
+            href="/app/settings/security"
+            icon={
+              <ListIcon color="var(--brand-tile)">
+                <ShieldCheck />
+              </ListIcon>
+            }
+            title={tm("row")}
+            detail={session.mfa.enrolled ? tm("on") : tm("off")}
+            accessory="chevron"
           />
         </ListSection>
         <Preferences labels={await preferencesLabels(t("appearanceFooter"))} locale={await getLocale()} />

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { CheckCircle2 } from "lucide-react";
@@ -13,6 +14,8 @@ import { ListRow, ListSection } from "@/components/ui/list";
 import { formatDay, formatShortDay } from "@/lib/billing/format";
 import type { AdminSubscriptionDetail } from "@/lib/billing/platform";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { ResendInvitationButton } from "@/components/admin/resend-invitation-button";
+import { resendOwnerInvitation } from "../../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("platform");
@@ -47,6 +50,20 @@ export default async function SubscriptionDetail({
   ]);
   if (!data) notFound();
   const d = data as unknown as AdminSubscriptionDetail;
+  const tm = await getTranslations("platform.manual");
+  // Factures réglées par un paiement manuel en vigueur (C1).
+  const { data: manualRows } = d.invoices.length
+    ? await supabase.from("manual_payments").select("invoice_id").in("invoice_id", d.invoices.map((i) => i.id)).is("cancelled_at", null)
+    : { data: [] };
+  const manualInvoices = new Set((manualRows ?? []).map((m) => m.invoice_id));
+  // Responsable invité depuis la console (P1) et pas encore inscrit : renvoi possible (P2).
+  const { data: ownerInvites } = await supabase
+    .from("invitations")
+    .select("id, email, expires_at")
+    .eq("organization_id", d.organization.id)
+    .eq("role", "org_admin")
+    .is("accepted_at", null)
+    .order("created_at", { ascending: false });
   const s = d.subscription;
   const xaf = (n: number) => formatXaf(n, locale);
   const eventKey = (type: string) => (t.has(`events.${type}` as Parameters<typeof t.has>[0]) ? t(`events.${type}` as Parameters<typeof t>[0]) : type);
@@ -81,6 +98,19 @@ export default async function SubscriptionDetail({
         ) : null}
       </div>
 
+      {ownerInvites?.length ? (
+        <ListSection header={t("ownerInvitation")} footer={t("ownerInvitationFooter")}>
+          {ownerInvites.map((inv) => (
+            <ListRow
+              key={inv.id}
+              title={inv.email ?? ""}
+              subtitle={t("ownerInvitationExpires", { date: formatShortDay(inv.expires_at, locale) })}
+              trailing={inv.email ? <ResendInvitationButton email={inv.email} action={resendOwnerInvitation.bind(null, inv.id)} /> : null}
+            />
+          ))}
+        </ListSection>
+      ) : null}
+
       <SubscriptionActions
         subscriptionId={s.id}
         organizationId={d.organization.id}
@@ -113,8 +143,22 @@ export default async function SubscriptionDetail({
               href={`/app/o/${d.organization.id}/billing/invoices/${i.id}`}
               download
               title={<span className="tabular">{i.number}</span>}
-              subtitle={tb("invoiceSubtitle", { date: formatShortDay(i.issued_at, locale), amount: xaf(i.total_xaf) })}
-              detail={tb(`invoiceStatus.${i.status}`)}
+              subtitle={[
+                tb("invoiceSubtitle", { date: formatShortDay(i.issued_at, locale), amount: xaf(i.total_xaf) }),
+                tb(`invoiceStatus.${i.status}`),
+              ].join(" · ")}
+              // C1 : encaissement hors ligne d'une facture ouverte, ou détail du paiement manuel (annulation).
+              trailing={
+                i.status === "open" || manualInvoices.has(i.id) ? (
+                  <Link
+                    href={`/admin/invoices/${i.id}/payment`}
+                    aria-label={i.status === "open" ? tm("actionLabel", { number: i.number }) : tm("detailsLabel", { number: i.number })}
+                    className="inline-flex min-h-11 items-center text-subheadline font-semibold text-accent-text"
+                  >
+                    {i.status === "open" ? tm("action") : tm("details")}
+                  </Link>
+                ) : null
+              }
             />
           ))}
         </ListSection>

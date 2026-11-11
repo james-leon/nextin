@@ -1,6 +1,7 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import { Plus, LayoutGrid } from "lucide-react";
 import { formatTicketCode } from "@nextin/shared";
 import { MasterDetail, SavedFromQuery, SplitRow } from "@/components/admin/master-detail";
 import { SplitListPane } from "@/components/admin/split-pane";
@@ -57,7 +58,7 @@ export default async function ServicesLayout({
         </ListSection>
       ) : (
         <>
-          <p className="rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-8 text-center text-body text-label-secondary">{t("empty")}</p>
+          <EmptyState title={t("empty")} icon={<LayoutGrid />} />
           {canManage ? (
             <Button asChild block>
               <Link href={`${base}/services/new`}>

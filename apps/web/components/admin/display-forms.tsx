@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import type { ActionResult } from "@/lib/auth/errors";
 import { FormError } from "@/components/auth/form-error";
@@ -44,8 +45,34 @@ function ServicesPicker({ services, initial, disabled }: { services: Service[]; 
   );
 }
 
-/** Appairage : code affiché sur l'écran, nom, services affichés (tous par défaut). */
-export function PairDisplayForm({ action, services }: { action: Action; services: Service[] }) {
+/**
+ * Publicité sur l'écran (T1) : annonces de l'établissement et annonceurs validés par Wintek ; les secteurs refusés se
+ * règlent dans Publicité (lien).
+ */
+function ShowAdsSwitch({ initial, adsHref, disabled }: { initial: boolean; adsHref: string; disabled?: boolean }) {
+  const t = useTranslations("displays");
+  const [on, setOn] = useState(initial);
+  return (
+    <>
+      <ListSection
+        footer={
+          <>
+            {t("showAdsFooter")}{" "}
+            <Link href={adsHref} className="inline-flex min-h-11 items-center text-accent-text underline-offset-2 hover:underline">
+              {t("showAdsLink")}
+            </Link>
+          </>
+        }
+      >
+        <ListSwitchRow title={t("showAds")} checked={on} onCheckedChange={setOn} disabled={disabled} />
+      </ListSection>
+      <input type="hidden" name="showAds" value={String(on)} />
+    </>
+  );
+}
+
+/** Appairage : code affiché sur l'écran, nom, services affichés (tous par défaut), publicité (activée par défaut). */
+export function PairDisplayForm({ action, services, adsHref }: { action: Action; services: Service[]; adsHref: string }) {
   const t = useTranslations("displays");
   const [state, formAction, pending] = useActionState(action, null);
   const { top, field } = useFormErrors(state);
@@ -65,6 +92,7 @@ export function PairDisplayForm({ action, services }: { action: Action; services
       />
       <TextField name="name" label={t("name")} placeholder={t("namePlaceholder")} error={field("name")} maxLength={60} required />
       <ServicesPicker services={services} initial={services.map((s) => s.id)} />
+      <ShowAdsSwitch initial adsHref={adsHref} />
       <BottomBar>
         <Button type="submit" block loading={pending}>
           {t("pair")}
@@ -74,7 +102,19 @@ export function PairDisplayForm({ action, services }: { action: Action; services
   );
 }
 
-export function DisplayForm({ action, services, initial, disabled }: { action: Action; services: Service[]; initial: { name: string; serviceIds: string[] }; disabled?: boolean }) {
+export function DisplayForm({
+  action,
+  services,
+  initial,
+  adsHref,
+  disabled,
+}: {
+  action: Action;
+  services: Service[];
+  initial: { name: string; serviceIds: string[]; showAds: boolean };
+  adsHref: string;
+  disabled?: boolean;
+}) {
   const t = useTranslations("displays");
   const ta = useTranslations("admin");
   const [state, formAction, pending] = useActionState(action, null);
@@ -84,6 +124,7 @@ export function DisplayForm({ action, services, initial, disabled }: { action: A
       <FormError message={top} />
       <TextField name="name" label={t("name")} defaultValue={initial.name} error={field("name")} maxLength={60} required disabled={disabled} />
       <ServicesPicker services={services} initial={initial.serviceIds} disabled={disabled} />
+      <ShowAdsSwitch initial={initial.showAds} adsHref={adsHref} disabled={disabled} />
       {disabled ? null : (
         <BottomBar>
           <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>

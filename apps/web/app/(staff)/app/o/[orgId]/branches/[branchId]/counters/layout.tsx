@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { DoorOpen, Plus } from "lucide-react";
@@ -66,7 +67,7 @@ export default async function CountersLayout({
         </ListSection>
       ) : (
         <>
-          <p className="rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-8 text-center text-body text-label-secondary">{t("empty")}</p>
+          <EmptyState title={t("empty")} icon={<DoorOpen />} />
           {canManage ? (
             <Button asChild block>
               <Link href={`${base}/counters/new`}>

@@ -73,8 +73,8 @@ for (const size of Object.keys(SIZES) as Size[]) {
     await director.page.goto("/app");
     await shot(director.page, "01-app-home", size);
     await director.page.goto(root);
-    const month = director.page.getByRole("radio", { name: "Mois" });
-    if (await month.count()) await month.first().click();
+    const period = director.page.getByRole("combobox", { name: "Période" });
+    if (await period.count()) await period.first().selectOption("month");
     await shot(director.page, "02-dashboard-month", size);
     const pages: [string, string][] = [
       ["03-branches", `${root}/branches`],

@@ -20,10 +20,10 @@ const DESKTOP: Size = { name: "1440", width: 1440, height: 900, touch: false };
 const WIDE: Size = { name: "1920", width: 1920, height: 1080, touch: false };
 const ALL = [PHONE_360, PHONE, TABLET_PORTRAIT, TABLET_LANDSCAPE, DESKTOP, WIDE];
 
-type User = "owner" | "advertiser" | "visitor";
+type User = "owner" | "advertiser" | "wintek" | "visitor";
 type Screen = { name: string; path: string; user: User; primary?: (page: Page) => Locator };
-type Fixture = { owner: string; advertiser: string; screens: Screen[]; branchId: string; staff: Awaited<ReturnType<typeof setUpBranch>>["staff"] };
-const USERS: User[] = ["owner", "advertiser", "visitor"];
+type Fixture = { owner: string; advertiser: string; wintek: string; screens: Screen[]; branchId: string; staff: Awaited<ReturnType<typeof setUpBranch>>["staff"] };
+const USERS: User[] = ["owner", "advertiser", "wintek", "visitor"];
 
 let fixture: Fixture;
 
@@ -48,11 +48,26 @@ test.beforeAll(async () => {
   await adv.storage.from("ad-creatives").upload(creative, bannerPng("#1A6BB5", "#0D2C54"), { contentType: "image/png" });
   await rpc(adv, "save_creative", { p_campaign: campaignId, p_creative: null, p_fields: { storage_path: creative, kind: "image", headline: "Pain tout chaud", duration_seconds: 8 } });
 
+  // Super admin (console Wintek).
+  const wintek = uniqueEmail("wintek");
+  const wintekUser = await admin.auth.admin.createUser({ email: wintek, password: PASSWORD, email_confirm: true });
+  await admin.from("platform_admins").insert({ user_id: wintekUser.data.user!.id });
+  // Facture ouverte d'un second établissement en essai (paiement manuel, C1).
+  const billed = await setUpBranch(`Clinique Facture ${Date.now()}`);
+  const { data: trialPlan } = await admin.from("plans").select("id").eq("trial_eligible", true).limit(1).single();
+  const { data: billedSub } = await admin
+    .from("subscriptions")
+    .insert({ organization_id: billed.orgId, plan_id: trialPlan!.id, status: "trialing", trial_ends_at: new Date(Date.now() + 14 * 86_400_000).toISOString(), locale: "fr" })
+    .select("id")
+    .single();
+  const { data: openInvoice } = await admin.rpc("issue_invoice", { p_subscription: billedSub!.id });
+
   const root = `/app/o/${b.orgId}`;
   const base = `${root}/branches/${b.branchId}`;
   fixture = {
     owner: b.email,
     advertiser,
+    wintek,
     branchId: b.branchId,
     staff: b.staff,
     screens: [
@@ -83,6 +98,13 @@ test.beforeAll(async () => {
       { name: "ads-new", path: "/ads/campaigns/new", user: "advertiser", primary: (p) => p.getByRole("button", { name: "Enregistrer" }) },
       { name: "ads-redeem", path: "/ads/redeem", user: "advertiser" },
       { name: "ads-campaign", path: `/ads/campaigns/${campaignId}`, user: "advertiser", primary: (p) => p.getByRole("button", { name: "Soumettre à la validation" }) },
+      { name: "admin-new-org", path: "/admin/organizations/new", user: "wintek", primary: (p) => p.getByRole("button", { name: "Créer et inviter" }) },
+      {
+        name: "admin-manual-payment",
+        path: `/admin/invoices/${(openInvoice as { id: string }).id}/payment`,
+        user: "wintek",
+        primary: (p) => p.getByRole("button", { name: "Enregistrer le paiement" }),
+      },
       // Pages client (visiteur anonyme), barre d'onglets latérale à partir de 1024 px (R5).
       { name: "client-scanner", path: "/", user: "visitor" },
       { name: "client-code", path: "/c", user: "visitor" },
@@ -92,6 +114,7 @@ test.beforeAll(async () => {
       { name: "client-nearby", path: "/nearby", user: "visitor" },
       { name: "client-branch", path: `/b/${b.branchId}`, user: "visitor" },
       { name: "client-profile", path: "/profile", user: "visitor" },
+      { name: "client-help", path: `/help?t=${tickets[12]!.public_token}`, user: "visitor" },
     ],
   };
 });
@@ -100,7 +123,7 @@ const sessions = new Map<string, Awaited<ReturnType<BrowserContext["storageState
 
 /** Contexte à la taille voulue, déjà connecté (session mémorisée par compte). */
 async function open(browser: Browser, size: Size, user: User, colorScheme: "light" | "dark" = "light") {
-  const email = user === "owner" ? fixture.owner : user === "advertiser" ? fixture.advertiser : null;
+  const email = user === "owner" ? fixture.owner : user === "advertiser" ? fixture.advertiser : user === "wintek" ? fixture.wintek : null;
   const context = await browser.newContext({
     viewport: { width: size.width, height: size.height },
     hasTouch: size.touch,

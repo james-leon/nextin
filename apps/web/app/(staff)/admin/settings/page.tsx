@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
+import { MfaResetForm } from "@/components/platform/mfa-reset-form";
 import { PlatformNav } from "@/components/platform/platform-sidebar";
 import { SettingsForm, type PlatformSettingsValues } from "@/components/platform/settings-form";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -35,6 +36,7 @@ export default async function PlatformSettingsPage({ searchParams }: { searchPar
         </CalloutCard>
       ) : null}
       <SettingsForm values={values} />
+      <MfaResetForm />
     </AdminPage>
   );
 }

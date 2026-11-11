@@ -1,8 +1,9 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, Ban, CalendarDays, Eye, EyeOff, Inbox, PenLine, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { ArrowDown, Ban, CalendarDays, Check, CircleHelp, Eye, EyeOff, Inbox, PenLine, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
 import { identityLine } from "@nextin/shared/identity";
 import { useNameMask } from "@/lib/desk/name-mask";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
@@ -72,6 +73,8 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
         timer = setTimeout(() => void refresh(), 250);
       })
       .on("broadcast", { event: "identity" }, () => void refresh())
+      // C3 : demande d'aide envoyée depuis la page d'un ticket (ou traitée sur un autre poste).
+      .on("broadcast", { event: "help" }, () => void refresh())
       .subscribe();
     const poll = setInterval(() => void refresh(), 15_000);
     return () => {
@@ -103,6 +106,8 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
     setSelected(null);
     await refresh();
   }
+
+  const helpTickets = new Set(data.helpRequests.map((h) => h.ticketId));
 
   return (
     <PageFrame>
@@ -247,7 +252,41 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
             ) : null}
           </div>
 
-          <ListSection header={t("queueHeader", { count: data.waiting.length })} footer={data.waiting.length ? undefined : t("queueEmpty")}>
+          <div className="flex flex-col gap-7">
+          {/* C3 : demandes d'aide des patients (page du ticket), à traiter en premier ; rien sur l'écran TV. */}
+          {data.helpRequests.length ? (
+            <section aria-labelledby="help-requests" className="squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card ring-1 ring-orange/40">
+              <h2 id="help-requests" className="flex items-center gap-2 text-headline text-orange-text">
+                <CircleHelp aria-hidden className="size-5 stroke-[2]" />
+                {t("helpHeader", { count: data.helpRequests.length })}
+              </h2>
+              <ul role="list" className="flex flex-col gap-1">
+                {data.helpRequests.map((h) => (
+                  <li key={h.id} className="flex min-h-11 items-center justify-between gap-3">
+                    <span className="min-w-0 text-body">
+                      <span className="font-semibold">{h.code}</span>
+                      <span className="text-label-secondary"> · {t("helpSince", { time: time(h.requestedAt) })}</span>
+                    </span>
+                    <Button
+                      variant="tinted"
+                      size="md"
+                      aria-label={t("helpDoneLabel", { code: h.code })}
+                      leadingIcon={<Check aria-hidden className="size-4 stroke-[2.5]" />}
+                      onClick={async () => {
+                        const { error } = await supabase.rpc("handle_ticket_help", { p_request: h.id });
+                        if (error) toast(te("generic"));
+                        await refresh();
+                      }}
+                    >
+                      {t("helpDone")}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          <ListSection header={t("queueHeader", { count: data.waiting.length })}>
+            {data.waiting.length ? null : <EmptyState variant="inline" title={t("queueEmpty")} icon={<Inbox />} />}
             {data.waiting.map((tk2) => {
               const service = serviceById.get(tk2.serviceId);
               const doctor = practitionerOfCounter(tk2.preferredCounterId);
@@ -279,12 +318,20 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                     </>
                   }
                   accessory={
-                    tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : "chevron"
+                    tk2.priorityReason || helpTickets.has(tk2.id) ? (
+                      <span className="flex items-center gap-1.5">
+                        {helpTickets.has(tk2.id) ? <Badge tone="orange">{t("helpBadge")}</Badge> : null}
+                        {tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : null}
+                      </span>
+                    ) : (
+                      "chevron"
+                    )
                   }
                 />
               );
             })}
           </ListSection>
+          </div>
           {/* Tablette : barre collée en bas, à la largeur exacte du contenu ; ordinateur : dans la barre de titre. */}
           <BottomBar className="md:col-span-2 lg:col-span-3">
             <Button block onClick={() => setCreateOpen(true)} leadingIcon={<Plus aria-hidden className="size-5 stroke-[2.25]" />}>

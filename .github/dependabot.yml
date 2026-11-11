@@ -1,0 +1,25 @@
+# Mises à jour des dépendances (S1) : une proposition groupée par semaine, sécurité à part (immédiate).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Douala
+    open-pull-requests-limit: 5
+    target-branch: main
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Douala
+    target-branch: main
+    labels: [dependencies]

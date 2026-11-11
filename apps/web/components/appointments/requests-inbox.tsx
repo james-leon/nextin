@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { CalendarCheck2, CalendarClock, Inbox, Mail, Phone } from "lucide-react";
@@ -105,10 +106,7 @@ export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onB
             ))}
           </ListSection>
         ) : (
-          <div className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-lg)] bg-grouped-secondary px-6 py-10 text-center">
-            <Inbox aria-hidden className="size-9 stroke-[1.5] text-label-tertiary" />
-            <p className="text-body text-label-secondary">{t("empty")}</p>
-          </div>
+          <EmptyState title={t("empty")} icon={<Inbox />} />
         )}
       </section>
 

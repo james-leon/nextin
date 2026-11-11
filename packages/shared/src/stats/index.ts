@@ -4,8 +4,13 @@
  */
 import { addDays, weekStart, type IsoDate } from "../appointments/calendar";
 
-/** « 30 derniers jours » (glissants, période par défaut), puis jour, semaine, mois. */
-export const STATS_PERIODS = ["last30", "day", "week", "month"] as const;
+/**
+ * « 30 derniers jours » (glissants, période par défaut), « Aujourd'hui », « Hier », puis jour, semaine, mois et
+ * « Période personnalisée » (C4 : du … au …, 92 jours au plus, dans la limite d'historique de la formule).
+ */
+export const STATS_PERIODS = ["last30", "today", "yesterday", "day", "week", "month", "custom"] as const;
+/** Durée maximale d'une période personnalisée (au-delà : export, et alerte de sécurité S3). */
+export const MAX_CUSTOM_DAYS = 92;
 /** Durée de la période glissante par défaut. */
 export const ROLLING_DAYS = 30;
 export type StatsPeriod = (typeof STATS_PERIODS)[number];
@@ -22,7 +27,9 @@ function monthEnd(date: IsoDate): IsoDate {
 /** Période contenant le jour de référence : les 30 jours qui s'y terminent, le jour, la semaine (lundi → dimanche) ou le mois. */
 export function periodRange(period: StatsPeriod, anchor: IsoDate): DateRange {
   if (period === "last30") return { from: addDays(anchor, -(ROLLING_DAYS - 1)), to: anchor };
-  if (period === "day") return { from: anchor, to: anchor };
+  // « Aujourd'hui » et « Personnalisée » (sans bornes) : le jour de référence ; « Hier » : la veille.
+  if (period === "day" || period === "today" || period === "custom") return { from: anchor, to: anchor };
+  if (period === "yesterday") return { from: addDays(anchor, -1), to: addDays(anchor, -1) };
   if (period === "week") return { from: weekStart(anchor), to: addDays(weekStart(anchor), 6) };
   return { from: monthStart(anchor), to: monthEnd(anchor) };
 }
@@ -34,6 +41,10 @@ export function periodRange(period: StatsPeriod, anchor: IsoDate): DateRange {
 export function comparisonRange(period: StatsPeriod, range: DateRange, today: IsoDate): DateRange {
   const end = range.to > today ? today : range.to;
   if (period === "last30") return { from: addDays(range.from, -ROLLING_DAYS), to: addDays(range.from, -1) };
+  // Aujourd'hui, hier, personnalisée : la période précédente de même durée (aujourd'hui → hier).
+  if (period === "today" || period === "yesterday" || period === "custom") {
+    return { from: addDays(range.from, -rangeDays(range)), to: addDays(range.from, -1) };
+  }
   if (period === "day") return { from: addDays(range.from, -7), to: addDays(range.from, -7) };
   if (period === "week") return { from: addDays(range.from, -7), to: addDays(end, -7) };
   const previousStart = monthStart(addDays(range.from, -1));
@@ -43,8 +54,40 @@ export function comparisonRange(period: StatsPeriod, range: DateRange, today: Is
   return { from: previousStart, to: candidate > previousEnd ? previousEnd : candidate };
 }
 
+/** Nombre de jours d'une période (bornes comprises). */
+export function rangeDays(range: DateRange): number {
+  return Math.round((Date.parse(range.to) - Date.parse(range.from)) / 86_400_000) + 1;
+}
+
+/** Une période d'un seul jour (affluence par heure plutôt que par jour). */
+export function isSingleDay(period: StatsPeriod, range: DateRange): boolean {
+  return period === "day" || period === "today" || period === "yesterday" || range.from === range.to;
+}
+
+/** Périodes qui se parcourent avec « précédente / suivante » (les autres sont fixes ou choisies). */
+export function isNavigable(period: StatsPeriod): boolean {
+  return period === "last30" || period === "day" || period === "week" || period === "month";
+}
+
+export type CustomRangeError = "range_invalid" | "range_order" | "range_future" | "range_too_long" | "range_history";
+
+/**
+ * Période personnalisée valide : dates lisibles, début avant la fin, rien dans le futur, 92 jours au plus,
+ * pas avant le premier jour couvert par la formule (`historyFrom`, null : tout l'historique).
+ */
+export function customRangeError(from: string, to: string, today: IsoDate, historyFrom: IsoDate | null): CustomRangeError | null {
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (!iso.test(from) || !iso.test(to) || Number.isNaN(Date.parse(from)) || Number.isNaN(Date.parse(to))) return "range_invalid";
+  if (from > to) return "range_order";
+  if (to > today) return "range_future";
+  if (rangeDays({ from, to }) > MAX_CUSTOM_DAYS) return "range_too_long";
+  if (historyFrom && from < historyFrom) return "range_history";
+  return null;
+}
+
 /** Période suivante ou précédente (navigation). */
 export function shiftPeriod(period: StatsPeriod, anchor: IsoDate, step: -1 | 1): IsoDate {
+  if (!isNavigable(period)) return anchor;
   if (period === "last30") return addDays(anchor, ROLLING_DAYS * step);
   if (period === "day") return addDays(anchor, step);
   if (period === "week") return addDays(anchor, 7 * step);

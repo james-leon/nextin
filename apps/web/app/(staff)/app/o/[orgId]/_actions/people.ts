@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { absoluteUrl, canAssignRole, isMemberRole } from "@nextin/shared";
+import { canAssignRole, isMemberRole } from "@nextin/shared";
 import { messages } from "@nextin/shared/i18n";
 import { inviteFormSchema, practitionerFormSchema, specialtyFormSchema } from "@nextin/shared/schemas";
 import { getOrgContext } from "@/lib/admin/context";
@@ -11,6 +11,8 @@ import { mapDbError } from "@/lib/admin/db-errors";
 import { formObject } from "@/lib/admin/form";
 import { fieldErrorsFrom, type ActionResult } from "@/lib/auth/errors";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { sendInvitationEmail } from "@/lib/notifications/invitation";
+import { resendInvitationWith, type ResendResult } from "@/lib/admin/invitations";
 
 const KNOWN = Object.keys(messages.fr.errors);
 const id = z.uuid();
@@ -88,11 +90,9 @@ export async function deletePractitioner(orgId: string, practitionerId: string):
 
 /* ─── Personnel ───────────────────────────────────────────────────────────── */
 
-export async function inviteMember(
-  orgId: string,
-  _prev: ActionResult<{ link?: string; email?: string }> | null,
-  data: FormData,
-): Promise<ActionResult<{ link?: string; email?: string }>> {
+export type InviteResult = ActionResult<{ link?: string; email?: string; mailSent?: boolean }>;
+
+export async function inviteMember(orgId: string, _prev: InviteResult | null, data: FormData): Promise<InviteResult> {
   check(orgId);
   const ctx = await getOrgContext(orgId);
   const parsed = inviteFormSchema.safeParse(formObject(data));
@@ -109,12 +109,51 @@ export async function inviteMember(
     p_branch: v.branchId ?? undefined,
     p_email: v.email,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error || !token) return { ok: false, error: mapDbError(error) };
+  // P2 : l'invitation part aussitôt par e-mail ; le lien reste proposé (WhatsApp, copie) en secours.
+  const { mailSent, link } = await sendInvitationEmail({
+    to: v.email,
+    token,
+    organization: ctx.org.name,
+    role: v.role,
+    locale: ctx.org.default_locale,
+  });
   revalidatePath(`/app/o/${orgId}/staff`);
-  return { ok: true, link: absoluteUrl(`/invite/${token}`), email: v.email };
+  return { ok: true, link, email: v.email, mailSent };
 }
 
-export async function revokeInvitation(orgId: string, invitationId: string): Promise<ActionResult> {
+/** P2 — renvoi d'une invitation en attente : nouveau lien de 7 jours, envoyé par e-mail. */
+export async function resendInvitation(orgId: string, invitationId: string): Promise<ResendResult> {
+  check(orgId, invitationId);
+  await getOrgContext(orgId);
+  const supabase = await getSupabaseServerClient();
+  const result = await resendInvitationWith(supabase, invitationId);
+  revalidatePath(`/app/o/${orgId}/staff`);
+  return result;
+}
+
+/** Double authentification pour tout le personnel (B5) : administrateurs seulement ; session aal2 exigée par la base. */
+export async function setOrgMfaRequired(orgId: string, enabled: boolean): Promise<ActionResult> {
+  check(orgId);
+  const ctx = await getOrgContext(orgId);
+  if (!ctx.canManageOrg) return { ok: false, error: "not_allowed" };
+  const supabase = await getSupabaseServerClient();
+  const { data: affected, error } = await supabase
+    .from("organizations")
+    .update({ mfa_required_all: enabled === true })
+    .eq("id", orgId)
+    .select("id");
+  if (error) return { ok: false, error: mapDbError(error) };
+  if (!affected?.length) return { ok: false, error: "not_allowed" };
+  revalidatePath(`/app/o/${orgId}/staff`);
+  return { ok: true };
+}
+
+/**
+ * U1 — retrait d'une invitation sans redirection : l'écran l'a déjà masquée (mise à jour optimiste) et l'envoie
+ * après le délai « Annuler » de 5 s ; en cas de refus, la ligne réapparaît.
+ */
+export async function withdrawInvitation(orgId: string, invitationId: string): Promise<ActionResult> {
   check(orgId, invitationId);
   await getOrgContext(orgId);
   const supabase = await getSupabaseServerClient();
@@ -122,7 +161,8 @@ export async function revokeInvitation(orgId: string, invitationId: string): Pro
     .select("id");
   if (error) return { ok: false, error: mapDbError(error) };
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, `/app/o/${orgId}/staff`);
+  revalidatePath(`/app/o/${orgId}/staff`);
+  return { ok: true };
 }
 
 export async function updateMembership(

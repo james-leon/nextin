@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ShieldCheck, UserRound } from "lucide-react";
+import { CircleHelp, ShieldCheck, UserRound } from "lucide-react";
 import { ClientTabBar } from "@/components/client/client-tab-bar";
 import { Preferences } from "@/components/settings/preferences";
 import { preferencesLabels } from "@/lib/i18n/preferences-labels";
@@ -28,6 +28,17 @@ export default async function ProfilePage() {
           </CalloutCard>
         </section>
         <ListSection>
+          <ListRow
+            href="/help"
+            prefetch={false}
+            icon={
+              <ListIcon color="var(--accent-fill)">
+                <CircleHelp />
+              </ListIcon>
+            }
+            title={t("help")}
+            accessory="chevron"
+          />
           <ListRow
             href="/login"
             icon={

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { getTranslations } from "next-intl/server";
 import { Building2, Plus } from "lucide-react";
 import { MasterDetail, SavedFromQuery, SplitRow } from "@/components/admin/master-detail";
@@ -52,7 +53,7 @@ export default async function BranchesLayout({ children, params }: { children: R
         </ListSection>
       ) : (
         <>
-          <p className="rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-8 text-center text-body text-label-secondary">{t("empty")}</p>
+          <EmptyState title={t("empty")} icon={<Building2 />} />
           {ctx.canManageOrg ? (
             <Button asChild block>
               <Link href={`/app/o/${orgId}/branches/new`}>

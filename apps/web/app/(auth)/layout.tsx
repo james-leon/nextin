@@ -23,7 +23,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     { icon: ChartNoAxesColumnIncreasing, title: t("benefitStatsTitle"), body: t("benefitStatsBody") },
   ];
   return (
-    <NextIntlClientProvider messages={{ common: m.common, auth: m.auth, errors: m.errors }}>
+    <NextIntlClientProvider messages={{ common: m.common, auth: m.auth, errors: m.errors, mfa: m.mfa }}>
       <div className="min-h-dvh bg-grouped lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         {/* Panneau de marque : bleu nuit dans les deux apparences (couleur de marque, texte blanc). */}
         <aside

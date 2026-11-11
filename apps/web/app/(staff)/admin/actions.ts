@@ -15,13 +15,20 @@ import {
   adSectorFormSchema,
   campaignReviewSchema,
   platformSettingsFormSchema,
+  mfaResetSchema,
+  adminCreateOrganizationSchema,
+  manualPaymentCancelSchema,
+  manualPaymentSchema,
 } from "@nextin/shared/schemas";
+import { slugify, templateServices } from "@nextin/shared";
 import type { Json } from "@nextin/shared/database";
 import { mapDbError } from "@/lib/admin/db-errors";
 import { formObject } from "@/lib/admin/form";
 import { fieldErrorsFrom, type ActionResult } from "@/lib/auth/errors";
 import { requireStaffSession } from "@/lib/auth/session";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { sendInvitationEmail } from "@/lib/notifications/invitation";
+import { resendInvitationWith, type ResendResult } from "@/lib/admin/invitations";
 
 /**
  * Console Wintek (§11.9) : actions du super admin. Les droits sont vérifiés par chaque RPC (`assert_platform_admin`)
@@ -189,9 +196,26 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
       invoice_lead_days: v.invoiceLeadDays,
       quota_alert_percent: v.quotaAlertPercent,
       request_channels: v.requestChannels,
+      signup_code_channel: v.signupCodeChannel,
+      mfa_required: v.mfaRequired,
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };
+  const alerts = await supabase.rpc("admin_set_security_alert_email", { p_email: v.securityAlertEmail ?? "" });
+  if (alerts.error) return { ok: false, error: mapDbError(alerts.error) };
+  done("/admin/settings");
+}
+
+/** Réinitialisation de la double authentification d'un compte (téléphone perdu), motif obligatoire, journalisée. */
+export async function resetAccountMfa(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = mfaResetSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const { error } = await supabase.rpc("admin_reset_mfa", { p_email: parsed.data.email, p_reason: parsed.data.reason });
+  if (error) {
+    const code = mapDbError(error);
+    return { ok: false, error: code, fieldErrors: error.message === "not_found" ? { email: "not_found" } : undefined };
+  }
   done("/admin/settings");
 }
 
@@ -263,4 +287,94 @@ export async function upsertAdSector(_prev: ActionResult | null, data: FormData)
   });
   if (error) return { ok: false, error: mapDbError(error) };
   done("/admin/ads/packages");
+}
+
+export type CreatedOrganization = {
+  organizationId: string;
+  name: string;
+  email: string;
+  mailSent: boolean;
+  /** Lien d'invitation, montré seulement si l'e-mail n'est pas parti (à transmettre au responsable). */
+  link: string | null;
+};
+
+/**
+ * P1 — établissement créé pour un client : formule, essai, première agence, services du modèle, invitation du
+ * responsable. L'e-mail part aussitôt (jeton jamais stocké en clair) ; s'il échoue, le lien est affiché une fois.
+ */
+export async function createOrganizationForClient(
+  _prev: ActionResult<CreatedOrganization> | null,
+  data: FormData,
+): Promise<ActionResult<CreatedOrganization>> {
+  const supabase = await platform();
+  const parsed = adminCreateOrganizationSchema.safeParse(formObject(data, ["services"]));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  const { data: created, error } = await supabase.rpc("admin_create_organization", {
+    p_fields: {
+      name: v.name,
+      type: v.type,
+      locale: v.locale,
+      slug: slugify(v.name),
+      plan_id: v.planId,
+      trial_days: v.trialDays,
+      owner_email: v.ownerEmail,
+      owner_phone: v.ownerPhone ?? null,
+      branch_name: v.branchName,
+      branch_city: v.branchCity,
+      services: templateServices(v.type, v.services),
+      reason: v.reason,
+    } as Json,
+  });
+  if (error || !created) return { ok: false, error: mapDbError(error) };
+  const result = created as { organization_id: string; token: string };
+  const { mailSent, link } = await sendInvitationEmail({
+    to: v.ownerEmail,
+    token: result.token,
+    organization: v.name,
+    role: "org_admin",
+    locale: v.locale,
+    byWintek: true,
+  });
+  revalidatePath("/admin", "layout");
+  return { ok: true, organizationId: result.organization_id, name: v.name, email: v.ownerEmail, mailSent, link: mailSent ? null : link };
+}
+
+/** P2 — console : renvoi de l'invitation d'un responsable (nouveau lien, 7 jours). */
+export async function resendOwnerInvitation(invitationId: string): Promise<ResendResult> {
+  const supabase = await platform();
+  const result = await resendInvitationWith(supabase, invitationId, true);
+  revalidatePath("/admin", "layout");
+  return result;
+}
+
+/** C1 — paiement reçu hors ligne : même effet qu'un paiement en ligne (base : `admin_record_manual_payment`). */
+export async function recordManualPayment(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = manualPaymentSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  const { error } = await supabase.rpc("admin_record_manual_payment", {
+    p_invoice: v.invoiceId,
+    p_fields: { method: v.method, amount_xaf: v.amountXaf, paid_on: v.paidOn, reference: v.reference, note: v.note } as Json,
+  });
+  if (error) {
+    const code = mapDbError(error);
+    const fieldOf: Partial<Record<string, string>> = { amount_mismatch: "amountXaf", reference_required: "reference", invalid_date: "paidOn" };
+    const fieldName = fieldOf[code];
+    return fieldName ? { ok: false, error: code, fieldErrors: { [fieldName]: code } } : { ok: false, error: code };
+  }
+  done(`/admin/invoices/${v.invoiceId}/payment`);
+}
+
+/** C1 — annulation d'un paiement manuel, motif obligatoire ; code de double authentification récent si exigé. */
+export async function cancelManualPayment(manualPaymentId: string, reason: string, invoiceId: string): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = manualPaymentCancelSchema.safeParse({ manualPaymentId, reason });
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const { error } = await supabase.rpc("admin_cancel_manual_payment", { p_manual: parsed.data.manualPaymentId, p_reason: parsed.data.reason });
+  if (error) return { ok: false, error: mapDbError(error) };
+  revalidatePath("/admin", "layout");
+  revalidatePath(`/admin/invoices/${invoiceId}/payment`);
+  return { ok: true };
 }

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,6 +10,8 @@ import { BarChart } from "@/components/dashboard/bar-chart";
 import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 import { PlatformNav } from "@/components/platform/platform-sidebar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus, CreditCard } from "lucide-react";
 import { DataTable, td, th } from "@/components/ui/data-table";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { StatCard } from "@/components/ui/stat-card";
@@ -48,7 +51,18 @@ export default async function PlatformHome({ searchParams }: { searchParams: Pro
   const href = (s: StatusFilter) => `/admin?${new URLSearchParams({ ...(s !== "all" ? { status: s } : {}), ...(q ? { q } : {}) })}`;
 
   return (
-    <AdminPage title={t("title")} eyebrow={t("eyebrow")}>
+    <AdminPage
+      title={t("title")}
+      eyebrow={t("eyebrow")}
+      trailing={
+        <Button asChild variant="filled" size="md">
+          <Link href="/admin/organizations/new">
+            <Plus aria-hidden className="size-4 stroke-[2.5]" />
+            {t("newOrg.action")}
+          </Link>
+        </Button>
+      }
+    >
       <PlatformNav variant="inline" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard label={t("mrr")} value={<span className="tabular">{xaf(revenue.mrr_xaf)}</span>} />
@@ -156,7 +170,8 @@ export default async function PlatformHome({ searchParams }: { searchParams: Pro
             ))}
           </DataTable>
         ) : null}
-        <ListSection footer={subs.length ? undefined : t("empty")} className={subs.length ? "lg:hidden" : undefined}>
+        <ListSection className={subs.length ? "lg:hidden" : undefined}>
+        {subs.length ? null : <EmptyState variant="inline" title={t("empty")} icon={<CreditCard />} />}
           {subs.map((s) => (
             <ListRow
               key={s.id}

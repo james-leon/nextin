@@ -9,7 +9,8 @@ import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { TextField } from "@/components/ui/text-field";
-import { REQUEST_CHANNELS, type RequestChannel } from "@nextin/shared/schemas";
+import { ListSwitchRow } from "@/components/ui/list-switch-row";
+import { REQUEST_CHANNELS, SIGNUP_CODE_CHANNELS, type RequestChannel, type SignupCodeChannel } from "@nextin/shared/schemas";
 
 export type PlatformSettingsValues = {
   company_legal_name: string;
@@ -29,6 +30,12 @@ export type PlatformSettingsValues = {
   quota_alert_percent: number;
   /** Canaux des demandes de rendez-vous en ligne, dans l'ordre de préférence. */
   request_channels: RequestChannel[];
+  /** Canal du code d'inscription d'un établissement (B2). */
+  signup_code_channel: SignupCodeChannel;
+  /** Double authentification obligatoire (super admin, administrateurs d'établissement) (B5). */
+  mfa_required: boolean;
+  /** Adresse des alertes de sécurité (S3). */
+  security_alert_email: string | null;
 };
 
 /** Mentions légales des factures et durées du cycle de vie, modifiables sans déploiement. */
@@ -38,6 +45,8 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
   const [state, action, pending] = useActionState(updateSettings, null);
   const { field, top } = useFormErrors(state);
   const [channels, setChannels] = useState<RequestChannel[]>(values.request_channels ?? ["email"]);
+  const [signupChannel, setSignupChannel] = useState<SignupCodeChannel>(values.signup_code_channel ?? "email");
+  const [mfaRequired, setMfaRequired] = useState(values.mfa_required === true);
   // Ordre fixe (e-mail, WhatsApp, SMS) : le premier canal coché est proposé par défaut au patient.
   const toggle = (c: RequestChannel) =>
     setChannels((list) => REQUEST_CHANNELS.filter((x) => (x === c ? !list.includes(c) : list.includes(x))));
@@ -61,6 +70,16 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
           {text("companyNiu", "company_niu", t("settingsFields.companyNiu"), 60)}
           {text("companyPhone", "company_phone", t("settingsFields.companyPhone"), 40)}
           {text("companyEmail", "company_email", t("settingsFields.companyEmail"), 120)}
+          <TextField
+            name="securityAlertEmail"
+            type="email"
+            inputMode="email"
+            label={t("settingsFields.securityAlertEmail")}
+            hint={t("settingsFields.securityAlertEmailHint")}
+            defaultValue={values.security_alert_email ?? ""}
+            maxLength={254}
+            error={field("securityAlertEmail")}
+          />
         </div>
         {text("invoiceFooter", "invoice_footer", t("settingsFields.invoiceFooter"), 500)}
       </section>
@@ -89,6 +108,20 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
         ))}
       </ListSection>
       <input type="hidden" name="requestChannels" value={channels.join(",")} />
+      <ListSection
+        header={t("settingsFields.signupChannel")}
+        footer={t("settingsFields.signupChannelFooter")}
+        radioGroupLabel={t("settingsFields.signupChannel")}
+      >
+        {SIGNUP_CODE_CHANNELS.map((c) => (
+          <ListRow key={c} role="radio" selected={signupChannel === c} onClick={() => setSignupChannel(c)} title={t(`signupChannels.${c}`)} accessory="check" />
+        ))}
+      </ListSection>
+      <input type="hidden" name="signupCodeChannel" value={signupChannel} />
+      <ListSection footer={field("mfaRequired") ?? t("settingsFields.mfaRequiredFooter")}>
+        <ListSwitchRow title={t("settingsFields.mfaRequired")} checked={mfaRequired} onCheckedChange={setMfaRequired} />
+      </ListSection>
+      <input type="hidden" name="mfaRequired" value={String(mfaRequired)} />
       <BottomBar>
         <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>
           {ta("save")}

@@ -1,5 +1,6 @@
 export * from "./roles";
 export * from "./phone";
+export * from "./mask-email";
 export * from "./money";
 export * from "./app-url";
 export * from "./ticket";
@@ -7,3 +8,4 @@ export * from "./time";
 export * from "./text";
 export * from "./structure";
 export * from "./queue";
+export * from "./service-templates";

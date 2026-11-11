@@ -1,0 +1,24 @@
+# Recherche de secrets (S1) : règles par défaut de gitleaks, avec une liste d'exceptions limitée aux jeux d'essai.
+# Aucune vraie clé ne doit jamais apparaître dans le dépôt (CLAUDE.md, règle absolue) : les exceptions ne couvrent
+# que des valeurs de test publiques ou factices.
+title = "NextIn"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valeurs de test publiques ou factices"
+regexes = [
+  # Clé secrète de test officielle de Cloudflare Turnstile (toujours valide, ne protège rien).
+  '''1x0000000000000000000000000000000AA''',
+  # Clés de démonstration de Supabase en local (identiques pour tous, jamais celles d'un projet).
+  '''sb_(publishable|secret)_[A-Za-z0-9_-]{20,}''',
+]
+paths = [
+  # Tests unitaires, pgTAP et Playwright : secrets factices générés pour l'essai.
+  '''(^|/)[^/]+\.test\.ts$''',
+  '''^apps/web/e2e/''',
+  '''^apps/web/playwright\.config\.ts$''',
+  '''^supabase/tests/''',
+  '''^pnpm-lock\.yaml$''',
+]

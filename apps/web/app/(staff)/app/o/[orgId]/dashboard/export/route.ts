@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getTranslations } from "next-intl/server";
 import { toCsv, toMinutes } from "@nextin/shared/stats";
@@ -42,6 +42,13 @@ export async function GET(request: NextRequest, { params: route }: { params: Pro
     p_to: to,
     p_kind: kind,
   });
+  // Double authentification (B5) : code récent exigé pour un export ; saisi sur /mfa, puis l'export reprend.
+  if (error && (error.message === "mfa_recent_required" || error.message === "mfa_required")) {
+    const mfa = request.nextUrl.clone();
+    mfa.pathname = "/mfa";
+    mfa.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
+    return NextResponse.redirect(mfa);
+  }
   if (error) return new Response("Forbidden", { status: error.code === "42501" || error.message === "feature_unavailable" ? 403 : 400 });
   const t = await getTranslations("dashboard.csv");
   const tk = await getTranslations("counterKinds");

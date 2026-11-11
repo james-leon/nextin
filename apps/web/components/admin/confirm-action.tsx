@@ -7,10 +7,12 @@ import type { ActionResult } from "@/lib/auth/errors";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useMfaStepUp } from "@/components/security/use-mfa-step-up";
 
 /**
  * Bouton d'action à confirmer (suppression, régénération…) : alerte iOS, puis action serveur.
  * Une erreur éventuelle est affichée en notification ; un succès redirige (géré par l'action).
+ * Double authentification (B5) : si la base exige un code récent, il est demandé puis l'action est rejouée.
  */
 export function ConfirmAction({
   action,
@@ -39,24 +41,28 @@ export function ConfirmAction({
   const te = useTranslations("errors");
   const toast = useToast();
   const [pending, start] = useTransition();
+  const stepUp = useMfaStepUp();
   return (
-    <AlertDialog
-      trigger={
-        <Button variant={variant} block={block} size={size} loading={pending} leadingIcon={icon}>
-          {label}
-        </Button>
-      }
-      title={title}
-      description={body}
-      cancelLabel={tc("cancel")}
-      actionLabel={confirmLabel}
-      destructive={destructive}
-      onAction={() =>
-        start(async () => {
-          const result = await action();
-          if (result && !result.ok) toast(te(result.error), <AlertCircle aria-hidden />);
-        })
-      }
-    />
+    <>
+      {stepUp.dialog}
+      <AlertDialog
+        trigger={
+          <Button variant={variant} block={block} size={size} loading={pending} leadingIcon={icon}>
+            {label}
+          </Button>
+        }
+        title={title}
+        description={body}
+        cancelLabel={tc("cancel")}
+        actionLabel={confirmLabel}
+        destructive={destructive}
+        onAction={() =>
+          start(async () => {
+            const result = await stepUp.run(action);
+            if (result && !result.ok) toast(te(result.error), <AlertCircle aria-hidden />);
+          })
+        }
+      />
+    </>
   );
 }

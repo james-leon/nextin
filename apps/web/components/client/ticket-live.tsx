@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { BadgeCheck, Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Check, CheckCircle2, CircleHelp, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
 import { optInLink } from "@nextin/shared/notifications/opt-in";
 import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
@@ -22,7 +22,6 @@ import { callRpc } from "@/lib/client/supabase-public";
 import { ticketAvailability, waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
-import { PlayCard } from "./games/play-card";
 import { LazyMount } from "./lazy-mount";
 import { QueuePosition } from "./queue-position";
 
@@ -35,6 +34,8 @@ const RemoteTicketCard = dynamic(() => import("./remote-ticket-card").then((m) =
 // Publicité et jeux (M10b) : jamais dans le premier chargement.
 const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
 const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
+// Carte « Jouer en attendant » : montée 3 s après le chargement (LazyMount), son code aussi (budget de 200 Ko).
+const PlayCard = dynamic(() => import("./games/play-card").then((m) => m.PlayCard), { ssr: false });
 
 const aheadKey = (token: string) => `nextin-ahead-${token}`;
 const noSubscribe = () => () => {};
@@ -171,6 +172,14 @@ export function TicketLive({
   async function signalOnMyWay() {
     const { data } = await callRpc<TicketView>("signal_on_my_way", { p_token: token });
     if (data) setView(data);
+  }
+
+  // C3 : demande d'aide à l'accueil (5 minutes entre deux demandes, vérifié par la base).
+  const [help, setHelp] = useState<"idle" | "sending" | "sent" | "soon">("idle");
+  async function requestHelp() {
+    setHelp("sending");
+    const { error } = await callRpc<unknown>("request_ticket_help", { p_token: token });
+    setHelp(!error ? "sent" : error.message === "help_too_soon" ? "soon" : "idle");
   }
 
   async function cancel() {
@@ -399,6 +408,26 @@ export function TicketLive({
             onCancel={() => setConfirmCancel(true)}
           />
         ) : null}
+        {active ? (
+          help === "sent" || help === "soon" ? (
+            <p role="status" className="text-center text-subheadline text-green-text">
+              {t(help === "sent" ? "helpSent" : "helpTooSoon")}
+            </p>
+          ) : (
+            <Button variant="gray" block loading={help === "sending"} onClick={requestHelp} leadingIcon={<CircleHelp aria-hidden />}>
+              {t("helpRequest")}
+            </Button>
+          )
+        ) : null}
+        {/* C2 : aide (questions fréquentes, téléphone et horaires de l'établissement), sans préchargement (budget). */}
+        <Link
+          href={`/help?t=${encodeURIComponent(token)}`}
+          prefetch={false}
+          className="inline-flex min-h-11 items-center justify-center gap-2 self-center text-subheadline font-semibold text-accent-text"
+        >
+          <CircleHelp aria-hidden className="size-4 stroke-[2]" />
+          {t("helpLink")}
+        </Link>
         </div>
       </div>
 
