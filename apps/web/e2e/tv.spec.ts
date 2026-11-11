@@ -99,8 +99,15 @@ test.describe("M6 — écran TV", () => {
 
     // Révocation : l'écran revient à l'appairage.
     await staff.getByRole("link", { name: /Salle d'attente/ }).click();
-    await staff.getByRole("button", { name: "Révoquer l'écran" }).click();
-    await staff.getByRole("alertdialog").getByRole("button", { name: "Révoquer l'écran" }).click();
+    await staff.waitForURL(/\/displays\/[0-9a-f-]{36}$/);
+    // Fiche de l'écran rendue par le serveur : le bouton n'ouvre la confirmation qu'une fois la page hydratée
+    // (CI plus lente) ; on réessaie le clic jusqu'à ce que la confirmation s'ouvre.
+    const confirm = staff.getByRole("alertdialog");
+    await expect(async () => {
+      await staff.getByRole("button", { name: "Révoquer l'écran" }).click();
+      await expect(confirm).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    await confirm.getByRole("button", { name: "Révoquer l'écran" }).click();
     await expect(staff.getByText("Écran révoqué.")).toBeVisible();
     await tv.reload();
     await expect(tv.getByRole("heading", { name: "Appairez cet écran" })).toBeVisible();
