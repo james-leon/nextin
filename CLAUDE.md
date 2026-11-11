@@ -2,6 +2,8 @@
 
 Plateforme SaaS de files d'attente virtuelles (Cameroun) : PWA web d'abord, app Expo au M11.
 Plan d'architecture validé : `docs/PLAN.md`. Notes de module : `docs/modules/`. Améliorations reportées à la fin : `docs/BACKLOG.md`.
+Liste unique avant la mise en ligne : `docs/NEXTIN_GOLIVE_CHECKLIST.md` (à tenir à jour : cocher ce qui est fait avec le commit, noter les questions en attente). Référentiel UX obligatoire : `docs/NEXTIN_UX_STANDARDS.md` — **aucun écran n'est terminé sans la liste de contrôle du §7** (5 états, axe clair et sombre, clavier, texte à 200 %, 360/768/1280 px, aucun texte en dur ni anglais dans l'interface française, budget 200 Ko des pages client).
+Production : site en ligne sur Vercel depuis `main`. Travail uniquement sur la branche de développement, jamais sur `main` (fusion par Leonel après vérification). **Chaque migration reste compatible avec le code déjà en ligne** (ajouts seulement : nouvelles colonnes avec valeur par défaut, nouvelles fonctions ou nouveaux paramètres facultatifs ; jamais de suppression ni de renommage utilisé par `main`).
 
 ## Règles absolues
 - **Aucun secret dans le code ni dans Git.** Variables listées dans `.env.example` (sans valeurs). Les fichiers `.env*` (sauf `.env.example`) et `supabase/.env` sont ignorés.
