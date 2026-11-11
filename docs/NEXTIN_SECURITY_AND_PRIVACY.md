@@ -60,16 +60,7 @@ La publicité n'est **jamais** ciblée à partir de données personnelles ou de 
 - **Domaine** : HTTPS uniquement ; enregistrements SPF, DKIM et DMARC pour l'expéditeur des e-mails.
 
 ## 5. Procédure en cas d'incident
-Un incident est tout accès non autorisé, perte, fuite ou indisponibilité prolongée touchant des données de visiteurs, du personnel ou de facturation.
-
-1. **Détecter et signaler** (immédiatement) : toute personne qui constate un incident prévient le responsable sécurité de Wintek (contact@wintekservices.com — +237 690 72 23 16). Noter l'heure, ce qui a été vu, les établissements concernés.
-2. **Contenir** (dans l'heure) : révoquer les accès en cause (mot de passe, sessions dans Supabase, clés d'API) ; faire tourner les secrets exposés (clé de service Supabase, `WHATSAPP_TOKEN`, `PAYMENT_WEBHOOK_SECRET`, `NOTIFY_DISPATCH_SECRET`, `SMTP_PASSWORD`, clés VAPID) ; suspendre si besoin l'établissement concerné depuis la console.
-3. **Évaluer** (sous 24 h) : périmètre (quelles données, quels établissements, combien de personnes), cause, à l'aide du journal d'audit, des journaux Supabase et Vercel. Conserver les preuves (exports des journaux).
-4. **Notifier** : chaque établissement concerné sans délai (il est responsable des données de ses visiteurs) ; l'autorité camerounaise de protection des données dans le délai prévu par la loi n° 2024/017 ; les personnes concernées si le risque est élevé (avec l'établissement).
-5. **Corriger** : corriger la cause, ajouter un test qui empêche le retour du problème, déployer.
-6. **Retour d'expérience** (sous 2 semaines) : rapport écrit (chronologie, cause, données touchées, mesures), mise à jour de ce document.
-
-Registre des incidents : à tenir par Wintek (date, nature, périmètre, notifications faites, mesures).
+Document séparé : **`docs/NEXTIN_INCIDENT.md`**. Il contient les niveaux, la procédure (détecter, contenir, évaluer, notifier, corriger, retour d'expérience), le registre des incidents et le registre des tests de restauration mensuels.
 
 ## 6. Contrôles automatiques
 | Contrôle | Où |
