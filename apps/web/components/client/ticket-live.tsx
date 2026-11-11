@@ -19,18 +19,19 @@ import { subscribeBoard } from "@/lib/client/board-feed";
 import { savedTicket, saveTicket } from "@/lib/client/my-tickets";
 import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib/client/realtime";
 import { callRpc } from "@/lib/client/supabase-public";
-import { waitingProgress } from "@/lib/client/ticket-progress";
+import { ticketAvailability, waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import { PlayCard } from "./games/play-card";
 import { LazyMount } from "./lazy-mount";
 import { QueuePosition } from "./queue-position";
-import { RemoteTicketCard } from "./remote-ticket-card";
 
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
 const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
 const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
 const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
+// Ticket à distance seulement : rendu côté serveur s'il sert, jamais téléchargé pour un ticket pris sur place.
+const RemoteTicketCard = dynamic(() => import("./remote-ticket-card").then((m) => m.RemoteTicketCard));
 // Publicité et jeux (M10b) : jamais dans le premier chargement.
 const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
 const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
@@ -114,6 +115,7 @@ export function TicketLive({
 
   const call = board ? callForCode(board, view.display_code) : null;
   const progress = view.status === "waiting" ? waitingProgress(view, board, storedMaxAhead, now) : null;
+  const availability = view.status === "waiting" ? ticketAvailability(view, board, now) : null;
 
   useEffect(() => {
     if (!progress || progress.maxAhead <= readMaxAhead(token)) return;
@@ -176,6 +178,25 @@ export function TicketLive({
     if (data) setView(data);
   }
 
+  // Attente affichée : jamais « D'un instant à l'autre » si personne ne peut appeler (agence fermée, aucun poste).
+  const waitText = (): string => {
+    if (!progress) return "";
+    if (availability?.kind === "noCounter") return t(`noCounterOpen.${view.service.counter_kind ?? "guichet"}`);
+    if (availability?.kind === "closed") {
+      const next = availability.next;
+      if (!next) return t("closedNow");
+      if (next.inDays === 0) return t("opensToday", { time: next.opensAt });
+      if (next.inDays === 1) return t("opensTomorrow", { time: next.opensAt });
+      // 2 novembre 2026 = lundi (jour ISO 1).
+      const day = new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(
+        new Date(Date.UTC(2026, 10, 1 + next.weekday)),
+      );
+      return t("opensOn", { day, time: next.opensAt });
+    }
+    return progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes });
+  };
+  const wait = waitText();
+
   const active = view.status === "waiting" || view.status === "called";
   const closeGame = useCallback(() => setPlaying(false), []);
   const heroCommon = {
@@ -188,7 +209,7 @@ export function TicketLive({
   };
 
   return (
-    <main className={active && view.remote && !view.remote.presence_confirmed_at ? "min-h-dvh pb-48 lg:pb-12" : active ? "min-h-dvh pb-36 lg:pb-12" : "min-h-dvh pb-40 lg:pb-12"}>
+    <main className="min-h-dvh pb-[calc(2.5rem+env(safe-area-inset-bottom))] lg:pb-12">
       <NavigationBar
         variant="inline"
         title={t("title")}
@@ -211,7 +232,8 @@ export function TicketLive({
           <TicketHero
             {...heroCommon}
             ahead={progress.ahead}
-            wait={progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes })}
+            next={{ label: t("nextPlace"), value: t("youAreNext") }}
+            wait={wait}
             progress={progress.progress}
             nowServing={nowServing ? t("nowServing", { code: nowServing.code, counter: counterName(nowServing) }) : undefined}
             live={status === "offline" ? undefined : t("live")}
@@ -365,10 +387,9 @@ export function TicketLive({
             <Link href={entry ? `/q/${entry}` : "/"}>{t("newTicket")}</Link>
           </Button>
         ) : null}
+        {/* En bas du contenu, jamais fixé : rien ne masque le ticket. */}
         {active ? (
           <TicketBottomActions
-            position="sticky"
-            className="hidden bg-none p-0 lg:block"
             source={view.source}
             onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
             onMyWay={signalOnMyWay}
@@ -387,7 +408,7 @@ export function TicketLive({
           code={view.display_code}
           status={
             progress
-              ? `${progress.imminent ? t("waitNow") : t("waitValue", { minutes: progress.minutes })} · ${t("ahead")} : ${progress.ahead}`
+              ? `${wait} · ${progress.ahead === 0 ? t("youAreNext") : `${t("ahead")} : ${progress.ahead}`}`
               : t("calledTitle")
           }
           call={view.status === "called" ? { counter: view.counter ? counterName(view.counter) : "" } : null}
@@ -396,31 +417,17 @@ export function TicketLive({
         />
       ) : null}
 
-      {active ? (
-        <>
-          <TicketBottomActions
-            className="lg:hidden"
-            source={view.source}
-            onMyWayLabel={view.remote?.on_my_way_at ? t("scanToConfirm") : t("onMyWay")}
-            onMyWay={signalOnMyWay}
-            onMyWayHref={view.remote?.on_my_way_at ? "/" : undefined}
-            hideRemote={!view.remote || !!view.remote.presence_confirmed_at}
-            cancelLabel={t("cancel")}
-            onCancel={() => setConfirmCancel(true)}
-          />
-          {confirmCancel ? (
-            <AlertDialog
-              open
-              onOpenChange={setConfirmCancel}
-              title={t("cancelTitle")}
-              description={t("cancelBody")}
-              cancelLabel={t("cancelKeep")}
-              actionLabel={t("cancel")}
-              destructive
-              onAction={cancel}
-            />
-          ) : null}
-        </>
+      {active && confirmCancel ? (
+        <AlertDialog
+          open
+          onOpenChange={setConfirmCancel}
+          title={t("cancelTitle", { code: view.display_code })}
+          description={t("cancelBody")}
+          cancelLabel={t("cancelKeep")}
+          actionLabel={t("cancel")}
+          destructive
+          onAction={cancel}
+        />
       ) : null}
     </main>
   );

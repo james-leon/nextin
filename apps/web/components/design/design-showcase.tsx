@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import {
   SERVICE_COLORS,
-  canSignalOnMyWay,
   formatTicketCode,
   normalizeCameroonPhone,
   type TicketSource,
@@ -1062,7 +1061,7 @@ function MockMyTicket() {
         />
       }
     >
-      <div className={cn("absolute inset-0 overflow-y-auto", canSignalOnMyWay(source) ? "pb-44" : "pb-28")}>
+      <div className="absolute inset-0 overflow-y-auto pb-10">
         <NavigationBar
           variant="inline"
           title={t("title")}
@@ -1078,14 +1077,10 @@ function MockMyTicket() {
             {t.rich("alert", { count: 3, b: (chunks) => <strong className="font-semibold">{chunks}</strong> })}
           </CalloutCard>
           <AdRow />
+          {/* Actions en bas du contenu, jamais fixées. */}
+          <TicketBottomActions source={source} onMyWayLabel={t("onMyWay")} cancelLabel={t("cancel")} />
         </div>
       </div>
-      <TicketBottomActions
-        position="absolute"
-        source={source}
-        onMyWayLabel={t("onMyWay")}
-        cancelLabel={t("cancel")}
-      />
     </PhoneFrame>
   );
 }

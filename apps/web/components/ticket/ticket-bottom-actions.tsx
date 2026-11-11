@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { canSignalOnMyWay, type TicketSource } from "@nextin/shared";
-import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 /**
- * Actions du bas de « Mon ticket » (maquette 03), toujours visibles dans une BottomBar.
- * Ticket pris à distance (`canSignalOnMyWay`) : « Je suis en route », puis « Je suis arrivé » (lien vers le
- * scanner, `onMyWayHref`) ; rien une fois la présence confirmée (`hideRemote`).
+ * Actions du bas de « Mon ticket » (maquette 03), **à la fin du contenu**, jamais fixées sur l'écran (rien ne
+ * masque le ticket ni l'attente). Ticket pris à distance (`canSignalOnMyWay`) : « Je suis en route », puis
+ * « Je suis arrivé » (lien vers le scanner, `onMyWayHref`) ; rien une fois la présence confirmée (`hideRemote`).
+ * « Annuler le ticket » : lien discret (gris, souligné), toujours suivi d'une confirmation.
  */
 export function TicketBottomActions({
   source,
@@ -16,7 +17,6 @@ export function TicketBottomActions({
   onMyWayHref,
   hideRemote,
   onCancel,
-  position,
   className,
 }: {
   source: TicketSource;
@@ -26,11 +26,10 @@ export function TicketBottomActions({
   onMyWayHref?: string;
   hideRemote?: boolean;
   onCancel?: () => void;
-  position?: "fixed" | "sticky" | "absolute";
   className?: string;
 }) {
   return (
-    <BottomBar position={position} className={className}>
+    <div className={cn("flex flex-col items-center gap-2 pt-2", className)}>
       {canSignalOnMyWay(source) && !hideRemote ? (
         onMyWayHref ? (
           <Button asChild block variant="tinted">
@@ -42,9 +41,14 @@ export function TicketBottomActions({
           </Button>
         )
       ) : null}
-      <Button block variant="destructive-plain" onClick={onCancel} className="-mt-2">
+      <Button
+        variant="plain"
+        size="md"
+        onClick={onCancel}
+        className="font-normal text-label-secondary underline decoration-separator-opaque underline-offset-4"
+      >
         {cancelLabel}
       </Button>
-    </BottomBar>
+    </div>
   );
 }

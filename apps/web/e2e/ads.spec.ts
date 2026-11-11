@@ -141,7 +141,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.getByRole("button", { name: "Choisir un jeu" }).click();
     const sheet = page.getByRole("dialog");
     await expect(sheet.getByText("C-001")).toBeVisible();
-    await expect(sheet.getByText(/Devant vous : 0/)).toBeVisible();
+    await expect(sheet.getByText(/Vous êtes le prochain/)).toBeVisible();
     await sheet.getByRole("button", { name: /^Quiz/ }).click();
 
     await expect(sheet.getByText(/Question 1 sur 3/)).toBeVisible();
