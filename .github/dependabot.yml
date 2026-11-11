@@ -23,6 +23,9 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [version-update:semver-major]
+      # La 1.65 mesure les pages client environ 2 Ko plus lourdes (budget de 200 Ko) : montée à la main (checklist §8).
+      - dependency-name: "@playwright/test"
+        update-types: [version-update:semver-minor]
     labels: [dependencies]
 
   - package-ecosystem: github-actions
