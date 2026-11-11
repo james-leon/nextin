@@ -71,7 +71,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | P3 | Page « À proximité » : section « Récents » + invitation à activer la position | 🤖 | ✅ ea62f52 — `docs/modules/M9.md` §P3, budget /nearby 198 Ko |
 | P4 | Voix des annonces (ElevenLabs, `pnpm voices:generate`) | 👤 | ☐ |
 | P5 | Fiche d'installation client + fiche « coupure de courant » | Claude, sur demande | ☐ |
-| P6 | Document d'architecture du poste local hors ligne (`NEXTIN_OFFLINE_FIRST.md`), sans développement | 🤖 | ✅ (commit P6) — 4 questions ouvertes au §12 (matériel, formule, bascule, nom des clients) |
+| P6 | Document d'architecture du poste local hors ligne (`NEXTIN_OFFLINE_FIRST.md`), sans développement | 🤖 | ✅ e139312 — 4 questions ouvertes au §12 (matériel, formule, bascule, nom des clients) |
 | C1 | Paiement manuel dans la console (espèces, virement, chèque, Mobile Money hors ligne), effet identique à un paiement en ligne, annulation avec motif, journalisé | 🤖 | ✅ 2f6e693 — `docs/modules/C1-MANUAL-PAYMENT.md` |
 | C2 | Page Aide du patient (FAQ bilingue + coordonnées et horaires de l'établissement du ticket) | 🤖 | ✅ 56bd381 — `/help`, `docs/modules/M4.md` §C2 |
 | C3 | « Demander de l'aide » sur la page ticket → pastille à l'accueil avec « Traité » (une demande / 5 min, rien sur la TV) | 🤖 | ✅ 84bf9eb — `docs/modules/M5.md` §C3 |
@@ -107,6 +107,9 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 
    Les secrets ne vont jamais dans Git ni dans la conversation.
 6. Après le premier déploiement : `pnpm notify:configure` (enregistre l'adresse d'envoi des notifications dans Supabase).
+   - Migrations de cette série à pousser (`pnpm db:link` puis `pnpm db:push`, avant le déploiement de `main`, toutes compatibles avec le code en ligne) : `20261120090000` (B2), `20261121090000` (B5), `20261122090000` (B1), `20261123090000` (S3), `20261124090000` (P1), `20261125090000` (P2), `20261126090000` (C1), `20261127090000` (C2), `20261128090000` (C3).
+   - Console Wintek → Réglages : adresse des alertes de sécurité (S3), canal du code d'inscription (e-mail par défaut, B2) ; double authentification obligatoire **après** avoir configuré son propre code (B5).
+   - Supabase → Authentication → Email Templates : coller les modèles de `docs/auth-emails/` (B3).
 7. Compte **Notch Pay** (vérification d'identité, compte marchand), URL du webhook : `https://<domaine>/api/payments/webhook/notchpay`.
 8. **Supabase Pro** au premier client payant (sauvegardes, pas de mise en pause).
 9. Plus tard : compte SMS (agrégateur camerounais), WhatsApp Business (Meta).
@@ -136,6 +139,8 @@ Les questions apparues pendant le développement sont ajoutées ici, avec le poi
 | ISO | Alignement sans certification |
 | Prix des packs d'extension | À confirmer |
 | Absence automatique après appel | À tester, puis valider |
+| Poste local hors ligne (P6, `NEXTIN_OFFLINE_FIRST.md` §12) : matériel (PC de l'accueil ou boîtier Wintek), formule (option ou Premium/Enterprise), bascule automatique à 30 s ou manuelle, nom des clients sur le poste local | Boîtier Wintek en option ; bascule automatique ; nom gardé seulement pour les cliniques |
+| U1 : sur `/t`, `/nearby` et `/b`, ni page d'erreur dédiée ni squelette, pour tenir le budget de 200 Ko (la page d'erreur globale bilingue s'affiche) | Garder ainsi ; ou relever le budget de ces pages à 205 Ko |
 
 ---
 
