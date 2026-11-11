@@ -1278,14 +1278,14 @@ isOneToOne: false
                   ]
                 },"phone_verifications": {
                   Row: {
-                    "attempts": number,"code_hash": string | null,"created_at": string,"expires_at": string,"id": string,"phone_e164": string | null,"phone_hash": string,"used_at": string | null,"user_id": string,"verified_at": string | null
+                    "attempts": number,"channel": string,"code_hash": string | null,"created_at": string,"expires_at": string,"id": string,"phone_e164": string | null,"phone_hash": string,"used_at": string | null,"user_id": string,"verified_at": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "attempts"?: number,"code_hash"?: string | null,"created_at"?: string,"expires_at": string,"id"?: string,"phone_e164"?: string | null,"phone_hash": string,"used_at"?: string | null,"user_id": string,"verified_at"?: string | null
+                    "attempts"?: number,"channel"?: string,"code_hash"?: string | null,"created_at"?: string,"expires_at": string,"id"?: string,"phone_e164"?: string | null,"phone_hash": string,"used_at"?: string | null,"user_id": string,"verified_at"?: string | null
                   }
                   Update: {
-                    "attempts"?: number,"code_hash"?: string | null,"created_at"?: string,"expires_at"?: string,"id"?: string,"phone_e164"?: string | null,"phone_hash"?: string,"used_at"?: string | null,"user_id"?: string,"verified_at"?: string | null
+                    "attempts"?: number,"channel"?: string,"code_hash"?: string | null,"created_at"?: string,"expires_at"?: string,"id"?: string,"phone_e164"?: string | null,"phone_hash"?: string,"used_at"?: string | null,"user_id"?: string,"verified_at"?: string | null
                   }
                   Relationships: [
                     
@@ -1320,14 +1320,14 @@ isOneToOne: false
                   ]
                 },"platform_settings": {
                   Row: {
-                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
+                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"signup_code_channel": string,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Update: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Relationships: [
                     
@@ -1844,6 +1844,26 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"trial_email_claims": {
+                  Row: {
+                    "claimed_at": string,"email_hash": string,"organization_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "claimed_at"?: string,"email_hash": string,"organization_id"?: string | null
+                  }
+                  Update: {
+                    "claimed_at"?: string,"email_hash"?: string,"organization_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trial_email_claims_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"whatsapp_opt_outs": {
                   Row: {
                     "opted_out_at": string,"phone_hash": string
@@ -2347,6 +2367,9 @@ isOneToOne: true
                            },
 "effective_duration_seconds":
 { Args: { "p_default": number,"p_ewma": number,"p_samples": number }; Returns: number
+                           },
+"email_fingerprint":
+{ Args: { "p_email": string }; Returns: string
                            },
 "end_house_campaign":
 { Args: { "p_campaign": string }; Returns: undefined
@@ -3153,6 +3176,9 @@ isOneToOne: true
                            },
 "request_phone_code":
 { Args: { "p_locale"?: string,"p_phone": string,"p_user": string }; Returns: string
+                           },
+"request_signup_code":
+{ Args: { "p_locale"?: string,"p_phone": string,"p_user": string }; Returns: Json
                            },
 "request_slot_key":
 { Args: { "p_day": string,"p_period": string,"p_starts_at": string }; Returns: string

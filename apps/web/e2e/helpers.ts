@@ -9,6 +9,20 @@ export function uniqueEmail(prefix: string): string {
 }
 
 export async function expectAccessible(page: Page) {
+  // Transitions et animations finies (fondus, titre réduit de la barre) : axe mesurerait des couleurs intermédiaires.
+  // Les animations infinies (pastille « En direct », chargement) sont ignorées.
+  // Attente plafonnée à 1 s : une animation en pause ne se termine jamais.
+  await page.evaluate(() =>
+    Promise.race([
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => undefined)),
+      ),
+      new Promise((resolve) => setTimeout(resolve, 1000)),
+    ]),
+  );
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
   const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => `${n.target.join(" ")} ${n.html.slice(0, 120)} ${n.failureSummary?.split("\n").pop()?.trim() ?? ""}`).join(", ")}`)).toEqual([]);
@@ -57,13 +71,21 @@ export async function latestPhoneCode(phoneLocal: string): Promise<string> {
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  // Code d'inscription (B2) : envoyé par e-mail (adresse du compte) ou par WhatsApp / SMS selon la console ; on
+  // retrouve la vérification par le numéro saisi, puis son message dans la file d'envoi.
+  const { data: verification } = await admin
+    .from("phone_verifications")
+    .select("id")
+    .eq("phone_e164", `+237${phoneLocal}`)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
   const { data } = await admin
     .from("account_messages")
     .select("payload")
     .eq("kind", "phone_code")
-    .eq("channel", "whatsapp")
-    .eq("to_phone", `+237${phoneLocal}`)
-    .order("created_at", { ascending: false })
+    .like("dedupe_key", `phone_code:${verification!.id}:%`)
+    .in("channel", ["email", "whatsapp"])
     .limit(1)
     .single();
   return (data!.payload as { code: string }).code;
@@ -74,6 +96,8 @@ export async function verifyPhoneViaUi(page: Page, phone = randomPhone()) {
   await page.getByLabel("Numéro de téléphone").fill(phone);
   await page.getByRole("button", { name: "Recevoir le code" }).click();
   await expect(page.getByRole("heading", { name: "Code de vérification" })).toBeVisible();
+  // Canal par défaut (B2) : code envoyé à l'adresse du compte, masquée.
+  await expect(page.getByText(/Saisissez le code à 6 chiffres envoyé à .•••@/)).toBeVisible();
   await page.getByLabel("Code").fill(await latestPhoneCode(phone));
   await page.getByRole("button", { name: "Vérifier" }).click();
   await expect(page.getByRole("heading", { name: "Votre établissement" })).toBeVisible();

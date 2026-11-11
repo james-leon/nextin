@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { maskPhone, randomSlugSuffix, slugWithSuffix, slugify } from "@nextin/shared";
+import { randomSlugSuffix, slugWithSuffix, slugify } from "@nextin/shared";
 import { messages } from "@nextin/shared/i18n";
 import { phoneCodeRequestSchema, phoneCodeVerifySchema, selfServiceSignupSchema } from "@nextin/shared/schemas";
 import { mapDbError } from "@/lib/admin/db-errors";
@@ -17,13 +17,16 @@ const KNOWN = Object.keys(messages.fr.errors);
 const MAX_SLUG_ATTEMPTS = 6;
 
 /**
- * Inscription d'un établissement (M10a, §11.1) en trois étapes : téléphone du directeur (code WhatsApp, SMS en secours),
- * code, puis établissement. Un seul essai gratuit par numéro, vérifié par la base.
+ * Inscription d'un établissement (M10a, §11.1) en trois étapes : téléphone du directeur, code, puis établissement.
+ * Canal du code réglé dans la console (B2) : e-mail du compte par défaut (téléphone gardé sans vérification),
+ * ou SMS / WhatsApp. Un seul essai gratuit par numéro et par adresse, vérifié par la base.
  */
+export type SignupCodeSent = { verificationId: string; destination: string; channel: "email" | "phone" };
+
 export async function requestSignupCode(
-  _prev: ActionResult<{ verificationId: string; phoneMasked: string }> | null,
+  _prev: ActionResult<SignupCodeSent> | null,
   data: FormData,
-): Promise<ActionResult<{ verificationId: string; phoneMasked: string }>> {
+): Promise<ActionResult<SignupCodeSent>> {
   const session = await requireStaffSession("/app/new");
   const parsed = phoneCodeRequestSchema.safeParse({
     phone: data.get("phone"),
@@ -39,13 +42,14 @@ export async function requestSignupCode(
   if (!captcha.ok) return { ok: false, error: "captcha_failed" };
 
   // Envoi par le serveur seulement (captcha vérifié) : la RPC n'est pas exposée aux sessions.
-  const { data: verificationId, error } = await getSupabaseAdminClient().rpc("request_phone_code", {
+  const { data: sent, error } = await getSupabaseAdminClient().rpc("request_signup_code", {
     p_user: session.userId,
     p_phone: parsed.data.phone,
     p_locale: parsed.data.locale,
   });
-  if (error || !verificationId) return { ok: false, error: mapDbError(error) };
-  return { ok: true, verificationId, phoneMasked: maskPhone(parsed.data.phone) };
+  if (error || !sent) return { ok: false, error: mapDbError(error) };
+  const r = sent as { verification_id: string; destination: string; channel: "email" | "phone" };
+  return { ok: true, verificationId: r.verification_id, destination: r.destination, channel: r.channel };
 }
 
 export async function verifySignupCode(

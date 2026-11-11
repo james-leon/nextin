@@ -189,6 +189,7 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
       invoice_lead_days: v.invoiceLeadDays,
       quota_alert_percent: v.quotaAlertPercent,
       request_channels: v.requestChannels,
+      signup_code_channel: v.signupCodeChannel,
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };

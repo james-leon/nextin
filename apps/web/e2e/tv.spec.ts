@@ -24,6 +24,8 @@ test.describe("M6 — écran TV", () => {
   test.skip(({ isMobile }) => isMobile, "écran de salle d'attente : grand écran");
 
   test("appairage par code → appels affichés et annoncés → révocation", async ({ browser }) => {
+    // Parcours long (appairage, quatre appels annoncés, révocation) : 30 s ne suffisent pas sur une machine chargée.
+    test.setTimeout(60_000);
     const b = await setUpBranch("Clinique TV");
     const tvContext = await browser.newContext({ viewport: { width: 1920, height: 1080 }, locale: "fr-FR" });
     const tv = await tvContext.newPage();

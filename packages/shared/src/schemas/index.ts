@@ -603,6 +603,9 @@ export const adminQuotaPackSchema = z.object({
   active: formBoolean,
 });
 
+export const SIGNUP_CODE_CHANNELS = ["email", "sms"] as const;
+export type SignupCodeChannel = (typeof SIGNUP_CODE_CHANNELS)[number];
+
 export const platformSettingsFormSchema = z.object({
   companyLegalName: z.string().trim().max(160),
   companyRc: z.string().trim().max(60),
@@ -624,6 +627,8 @@ export const platformSettingsFormSchema = z.object({
     .string()
     .transform((v) => [...new Set(v.split(",").map((c) => c.trim()).filter(Boolean))])
     .pipe(z.array(z.enum(REQUEST_CHANNELS)).min(1, "channels_required").max(3)),
+  // Canal du code d'inscription d'un établissement (B2) : e-mail du compte tant qu'aucun fournisseur SMS n'est branché.
+  signupCodeChannel: z.enum(SIGNUP_CODE_CHANNELS).default("email"),
 });
 
 /* ─── M10b : publicité ──────────────────────────────────────────────────── */

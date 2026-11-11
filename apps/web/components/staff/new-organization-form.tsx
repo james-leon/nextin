@@ -22,19 +22,31 @@ type Step = "phone" | "code" | "org";
 const STEPS: Step[] = ["phone", "code", "org"];
 
 /**
- * Inscription d'un établissement (M10a) : téléphone du directeur, code reçu sur WhatsApp, puis établissement.
- * Une seule action principale par étape, dans la barre du bas.
+ * Inscription d'un établissement (M10a) : téléphone du directeur, code de vérification (e-mail du compte par défaut,
+ * SMS / WhatsApp selon la console), puis établissement. Une seule action principale par étape, dans la barre du bas.
  */
-export function NewOrganizationForm({ siteKey, defaultLocale, trialPlan }: { siteKey: string | null; defaultLocale: "fr" | "en"; trialPlan: string }) {
+export function NewOrganizationForm({
+  siteKey,
+  defaultLocale,
+  trialPlan,
+  codeChannel,
+  emailMasked,
+}: {
+  siteKey: string | null;
+  defaultLocale: "fr" | "en";
+  trialPlan: string;
+  codeChannel: "email" | "phone";
+  emailMasked: string;
+}) {
   const t = useTranslations("orgNew");
   const te = useTranslations("errors");
   const [step, setStep] = useState<Step>("phone");
-  const [verification, setVerification] = useState<{ id: string; phoneMasked: string } | null>(null);
+  const [verification, setVerification] = useState<{ id: string; destination: string; channel: "email" | "phone" } | null>(null);
   // Étape suivante dès que le serveur répond (pas d'effet : l'état suit directement la réponse de l'action).
   const [phoneState, phoneAction, phonePending] = useActionState(async (prev: Awaited<ReturnType<typeof requestSignupCode>> | null, data: FormData) => {
     const result = await requestSignupCode(prev, data);
     if (result.ok) {
-      setVerification({ id: result.verificationId, phoneMasked: result.phoneMasked });
+      setVerification({ id: result.verificationId, destination: result.destination, channel: result.channel });
       setStep("code");
     }
     return result;
@@ -55,7 +67,7 @@ export function NewOrganizationForm({ siteKey, defaultLocale, trialPlan }: { sit
       <div className="mx-auto flex max-w-3xl flex-col gap-7 px-4 pt-3">
         {step === "phone" ? (
           <form id="signup-step" action={phoneAction} noValidate className="flex flex-col gap-7">
-            <StepHeader title={t("phoneTitle")} body={t("phoneBody")} />
+            <StepHeader title={t("phoneTitle")} body={codeChannel === "email" ? t("phoneBodyEmail", { email: emailMasked }) : t("phoneBody")} />
             <FormError message={phoneState && !phoneState.ok && !phoneState.fieldErrors ? te(phoneState.error) : null} />
             <TextField
               name="phone"
@@ -77,7 +89,10 @@ export function NewOrganizationForm({ siteKey, defaultLocale, trialPlan }: { sit
 
         {step === "code" && verification ? (
           <form id="signup-step" action={codeAction} noValidate className="flex flex-col gap-7">
-            <StepHeader title={t("codeTitle")} body={t("codeBody", { phone: verification.phoneMasked })} />
+            <StepHeader
+              title={t("codeTitle")}
+              body={verification.channel === "email" ? t("codeBodyEmail", { email: verification.destination }) : t("codeBody", { phone: verification.destination })}
+            />
             <input type="hidden" name="verificationId" value={verification.id} />
             <TextField
               name="code"
