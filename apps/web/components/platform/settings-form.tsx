@@ -34,6 +34,8 @@ export type PlatformSettingsValues = {
   signup_code_channel: SignupCodeChannel;
   /** Double authentification obligatoire (super admin, administrateurs d'établissement) (B5). */
   mfa_required: boolean;
+  /** Adresse des alertes de sécurité (S3). */
+  security_alert_email: string | null;
 };
 
 /** Mentions légales des factures et durées du cycle de vie, modifiables sans déploiement. */
@@ -68,6 +70,16 @@ export function SettingsForm({ values }: { values: PlatformSettingsValues }) {
           {text("companyNiu", "company_niu", t("settingsFields.companyNiu"), 60)}
           {text("companyPhone", "company_phone", t("settingsFields.companyPhone"), 40)}
           {text("companyEmail", "company_email", t("settingsFields.companyEmail"), 120)}
+          <TextField
+            name="securityAlertEmail"
+            type="email"
+            inputMode="email"
+            label={t("settingsFields.securityAlertEmail")}
+            hint={t("settingsFields.securityAlertEmailHint")}
+            defaultValue={values.security_alert_email ?? ""}
+            maxLength={254}
+            error={field("securityAlertEmail")}
+          />
         </div>
         {text("invoiceFooter", "invoice_footer", t("settingsFields.invoiceFooter"), 500)}
       </section>

@@ -53,8 +53,8 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | # | Point | Qui | État |
 |---|---|---|---|
 | S1 | Dependabot, `pnpm audit --prod --audit-level high` et gitleaks dans la CI ; actions GitHub épinglées par SHA | 🤖 || ✅ `e53492d` : `.github/dependabot.yml`, `pnpm audit --prod --audit-level high` et job gitleaks (`.gitleaks.toml`) dans la CI, actions épinglées par empreinte |
-| S2 | Test d'isolement entre établissements, généré pour chaque table métier (A ne lit, ne modifie ni ne supprime rien de B) | 🤖 || ✅ (commit S2) : `supabase/tests/database/isolation_all.test.sql` (toutes les tables avec `organization_id`, lecture / modification / suppression, dans les deux sens) |
-| S3 | Journal d'audit non modifiable (aucune mise à jour ni suppression) + alertes e-mail : connexion admin depuis un nouvel appareil, 10 échecs en 15 min, 2FA désactivée, rôle admin attribué, export massif | 🤖 | ☐ |
+| S2 | Test d'isolement entre établissements, généré pour chaque table métier (A ne lit, ne modifie ni ne supprime rien de B) | 🤖 || ✅ `8314aad` : `supabase/tests/database/isolation_all.test.sql` (toutes les tables avec `organization_id`, lecture / modification / suppression, dans les deux sens) |
+| S3 | Journal d'audit non modifiable (aucune mise à jour ni suppression) + alertes e-mail : connexion admin depuis un nouvel appareil, 10 échecs en 15 min, 2FA désactivée, rôle admin attribué, export massif | 🤖 || ✅ (commit S3) : journal d'audit inaltérable (déjà testé) + 5 alertes e-mail — reste 👤 : adresse de sécurité dans la console |
 | S4 | `docs/NEXTIN_INCIDENT.md` séparé + registre des tests de restauration mensuels | 🤖 | ☐ |
 | S5 | Section « Normes » : alignement ISO 27001:2022 / 27701:2025 sans certification, avec la correspondance de l'annexe A | 🤖 | ☐ |
 | S6 | Activer *Secret scanning* et *Push protection* sur GitHub | 👤 | ☐ |

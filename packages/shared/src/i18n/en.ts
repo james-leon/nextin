@@ -2115,6 +2115,8 @@ export const en: Messages = {
       requestChannels: "Online appointment request channels",
       signupChannel: "Organization sign-up code",
       signupChannelFooter: "Email: the code goes to the director's account address, the phone is asked but not verified. SMS: the phone is verified (WhatsApp, SMS as fallback); choose it once the SMS provider is connected.",
+      securityAlertEmail: "Security alert address",
+      securityAlertEmailHint: "Administrator on a new device, repeated sign-in failures, two-factor turned off, new administrator, large export. Empty: company address.",
       mfaRequired: "Two-factor authentication required",
       mfaRequiredFooter: "Super admin and organization administrators: code at each sign-in and before sensitive actions. Turn it on only after setting up your own code (Settings → Two-factor authentication) and enabling TOTP in Supabase.",
       mfaResetTitle: "Reset an account's two-factor authentication",

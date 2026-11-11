@@ -7,6 +7,7 @@ import { messages } from "@nextin/shared/i18n";
 import { loginCodeRequestSchema, loginCodeVerifySchema, loginSchema, resetPasswordSchema, signupSchema } from "@nextin/shared/schemas";
 import { fieldErrorsFrom, mapAuthError, type ActionResult } from "@/lib/auth/errors";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { recordLoginFailure, recordStaffLogin } from "@/lib/auth/login-security";
 import { SESSION_ONLY_COOKIE } from "@/lib/auth/session-cookies";
 
 const KNOWN = Object.keys(messages.fr.errors);
@@ -32,7 +33,12 @@ export async function signInWithPassword(_prev: ActionResult | null, data: FormD
   else cookieStore.set(SESSION_ONLY_COOKIE, "1", { path: "/", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
   const supabase = await getSupabaseServerClient({ sessionOnly: !remember });
   const { error } = await supabase.auth.signInWithPassword({ email, password, options: captcha(captchaToken) });
-  if (error) return { ok: false, error: mapAuthError(error) };
+  if (error) {
+    // Mauvais identifiants : comptés pour l'alerte « 10 échecs en 15 minutes » (S3).
+    if (error.code === "invalid_credentials") await recordLoginFailure(email);
+    return { ok: false, error: mapAuthError(error) };
+  }
+  await recordStaffLogin(supabase);
   redirect(safeNextPath(next));
 }
 
@@ -60,7 +66,11 @@ export async function verifyLoginCode(_prev: ActionResult | null, data: FormData
   if (!parsed.success) return { ok: false, error: "code_invalid", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
   const supabase = await getSupabaseServerClient();
   const { error } = await supabase.auth.verifyOtp({ email: parsed.data.email, token: parsed.data.code, type: "email" });
-  if (error) return { ok: false, error: mapAuthError(error) === "generic" ? "code_invalid" : mapAuthError(error) };
+  if (error) {
+    await recordLoginFailure(parsed.data.email);
+    return { ok: false, error: mapAuthError(error) === "generic" ? "code_invalid" : mapAuthError(error) };
+  }
+  await recordStaffLogin(supabase);
   redirect(safeNextPath(parsed.data.next));
 }
 

@@ -2114,6 +2114,8 @@ export const fr = {
       requestChannels: "Canaux des demandes de rendez-vous en ligne",
       signupChannel: "Code d'inscription d'un établissement",
       signupChannelFooter: "E-mail : le code part à l'adresse du compte du directeur, le téléphone est demandé sans être vérifié. SMS : le téléphone est vérifié (WhatsApp, SMS en secours) ; à choisir une fois le fournisseur SMS branché.",
+      securityAlertEmail: "Adresse des alertes de sécurité",
+      securityAlertEmailHint: "Nouvel appareil d'un administrateur, échecs de connexion répétés, double authentification désactivée, nouvel administrateur, export massif. Vide : adresse de la société.",
       mfaRequired: "Double authentification obligatoire",
       mfaRequiredFooter: "Super admin et administrateurs d'établissement : code à chaque connexion et avant les actions sensibles. Activez-la seulement après avoir configuré votre propre code (Réglages → Double authentification) et activé TOTP dans Supabase.",
       mfaResetTitle: "Réinitialiser la double authentification d'un compte",

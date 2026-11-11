@@ -195,6 +195,8 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };
+  const alerts = await supabase.rpc("admin_set_security_alert_email", { p_email: v.securityAlertEmail ?? "" });
+  if (alerts.error) return { ok: false, error: mapDbError(alerts.error) };
   done("/admin/settings");
 }
 

@@ -1048,6 +1048,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"login_failures": {
+                  Row: {
+                    "at": string,"email_hash": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "at"?: string,"email_hash": string
+                  }
+                  Update: {
+                    "at"?: string,"email_hash"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"memberships": {
                   Row: {
                     "active": boolean,"branch_id": string | null,"created_at": string,"id": string,"invited_by": string | null,"organization_id": string,"role": Database["public"]['Enums']["member_role"],"updated_at": string,"user_id": string
@@ -1320,14 +1334,14 @@ isOneToOne: false
                   ]
                 },"platform_settings": {
                   Row: {
-                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"mfa_required": boolean,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"signup_code_channel": string,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
+                    "company_address": string,"company_email": string,"company_legal_name": string,"company_niu": string,"company_phone": string,"company_rc": string,"default_closing_time": string,"grace_days": number,"id": boolean,"interstitial_min_gap_seconds": number,"interstitial_skip_after_seconds": number,"invoice_footer": string,"invoice_lead_days": number,"mfa_required": boolean,"quota_alert_percent": number,"read_only_days": number,"request_channels": (string)[],"retention_after_suspension_days": number,"security_alert_email": string | null,"signup_code_channel": string,"trial_days": number,"updated_at": string,"updated_by": string | null,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"mfa_required"?: boolean,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"mfa_required"?: boolean,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"security_alert_email"?: string | null,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Update: {
-                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"mfa_required"?: boolean,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
+                    "company_address"?: string,"company_email"?: string,"company_legal_name"?: string,"company_niu"?: string,"company_phone"?: string,"company_rc"?: string,"default_closing_time"?: string,"grace_days"?: number,"id"?: boolean,"interstitial_min_gap_seconds"?: number,"interstitial_skip_after_seconds"?: number,"invoice_footer"?: string,"invoice_lead_days"?: number,"mfa_required"?: boolean,"quota_alert_percent"?: number,"read_only_days"?: number,"request_channels"?: (string)[],"retention_after_suspension_days"?: number,"security_alert_email"?: string | null,"signup_code_channel"?: string,"trial_days"?: number,"updated_at"?: string,"updated_by"?: string | null,"vat_rate"?: number
                   }
                   Relationships: [
                     
@@ -1556,6 +1570,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"security_alerts": {
+                  Row: {
+                    "attempt": number,"created_at": string,"dedupe_key": string,"detail": NonNullable<Json>,"id": string,"kind": string,"last_error": string | null,"locale": string,"next_attempt_at": string,"organization_id": string | null,"status": string,"to_email": string,"updated_at": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempt"?: number,"created_at"?: string,"dedupe_key": string,"detail"?: NonNullable<Json>,"id"?: string,"kind": string,"last_error"?: string | null,"locale"?: string,"next_attempt_at"?: string,"organization_id"?: string | null,"status"?: string,"to_email": string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "attempt"?: number,"created_at"?: string,"dedupe_key"?: string,"detail"?: NonNullable<Json>,"id"?: string,"kind"?: string,"last_error"?: string | null,"locale"?: string,"next_attempt_at"?: string,"organization_id"?: string | null,"status"?: string,"to_email"?: string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "security_alerts_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"service_time_stats": {
                   Row: {
                     "counter_id": string | null,"ewma_seconds": number,"organization_id": string,"samples": number,"service_id": string,"updated_at": string
@@ -1627,6 +1661,20 @@ isOneToOne: false
       referencedRelation: "organizations"
       referencedColumns: ["id"]
     }
+                  ]
+                },"staff_devices": {
+                  Row: {
+                    "device_hash": string,"first_seen_at": string,"label": string | null,"last_seen_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "device_hash": string,"first_seen_at"?: string,"label"?: string | null,"last_seen_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "device_hash"?: string,"first_seen_at"?: string,"label"?: string | null,"last_seen_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
                   ]
                 },"subscription_events": {
                   Row: {
@@ -1956,6 +2004,9 @@ isOneToOne: false
 "admin_set_limits":
 { Args: { "p_limits": Json,"p_reason": string,"p_subscription": string }; Returns: undefined
                            },
+"admin_set_security_alert_email":
+{ Args: { "p_email": string }; Returns: undefined
+                           },
 "admin_set_suspension":
 { Args: { "p_org": string,"p_reason": string,"p_suspended": boolean }; Returns: undefined
                            },
@@ -2234,6 +2285,29 @@ isOneToOne: false
 "claim_notification_jobs":
 { Args: { "p_limit"?: number }; Returns: Json
                            },
+"claim_security_alerts":
+{ Args: { "p_limit"?: number }; Returns: {
+              "attempt": number,
+"created_at": string,
+"dedupe_key": string,
+"detail": NonNullable<Json>,
+"id": string,
+"kind": string,
+"last_error": string | null,
+"locale": string,
+"next_attempt_at": string,
+"organization_id": string | null,
+"status": string,
+"to_email": string,
+"updated_at": string,
+"user_id": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "security_alerts"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "clear_phone_code":
 { Args: { "p_verification": string }; Returns: undefined
                            },
@@ -2254,6 +2328,9 @@ isOneToOne: false
                            },
 "complete_notification_job":
 { Args: { "p_error"?: string,"p_job": string,"p_payload"?: Json,"p_provider_message_id"?: string,"p_retry_in_seconds"?: number,"p_status": Database["public"]['Enums']["job_status"],"p_template_name"?: string }; Returns: undefined
+                           },
+"complete_security_alert":
+{ Args: { "p_alert": string,"p_error"?: string,"p_retry_in_seconds"?: number,"p_status": string }; Returns: undefined
                            },
 "compute_branch_stats":
 { Args: { "p_branch": string,"p_day": string }; Returns: {
@@ -2541,6 +2618,9 @@ isOneToOne: false
       } },
 "invoice_document":
 { Args: { "p_invoice": string }; Returns: Json
+                           },
+"is_admin_account":
+{ Args: { "p_user": string }; Returns: boolean
                            },
 "is_advertiser_member":
 { Args: { "p_advertiser": string,"p_roles"?: (string)[] }; Returns: boolean
@@ -3122,6 +3202,9 @@ isOneToOne: false
 "quota_status":
 { Args: { "p_org": string }; Returns: Json
                            },
+"raise_security_alert":
+{ Args: { "p_dedupe": string,"p_detail": Json,"p_kind": string,"p_notify_org_admins"?: boolean,"p_notify_user"?: boolean,"p_org": string,"p_user": string }; Returns: number
+                           },
 "random_string":
 { Args: { "p_alphabet": string,"p_length": number }; Returns: string
                            },
@@ -3143,8 +3226,14 @@ isOneToOne: false
 "record_display_ad_events":
 { Args: { "p_device_token": string,"p_events": Json }; Returns: number
                            },
+"record_login_failure":
+{ Args: { "p_email": string }; Returns: number
+                           },
 "record_service_duration":
 { Args: { "p_counter": string,"p_org": string,"p_seconds": number,"p_service": string }; Returns: undefined
+                           },
+"record_staff_login":
+{ Args: { "p_device_id": string,"p_label"?: string }; Returns: boolean
                            },
 "record_ticket_ad_events":
 { Args: { "p_events": Json,"p_ticket_token": string }; Returns: number
@@ -3254,6 +3343,9 @@ isOneToOne: false
                            },
 "schedule_sms_fallback":
 { Args: { "p_delay_seconds"?: number,"p_guard"?: boolean,"p_job": string }; Returns: string
+                           },
+"security_alert_inbox":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "self_service_signup":
 { Args: { "p_default_locale": string,"p_name": string,"p_slug": string,"p_type": Database["public"]['Enums']["org_type"],"p_verification": string }; Returns: Json

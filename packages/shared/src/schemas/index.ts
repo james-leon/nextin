@@ -635,6 +635,14 @@ export const platformSettingsFormSchema = z.object({
   signupCodeChannel: z.enum(SIGNUP_CODE_CHANNELS).default("email"),
   // Double authentification obligatoire pour le super admin et les administrateurs (B5).
   mfaRequired: formBoolean.default(false),
+  // Adresse des alertes de sécurité (S3) ; vide = adresse de la société.
+  securityAlertEmail: z
+    .string()
+    .trim()
+    .max(254)
+    .optional()
+    .transform((v) => v || null)
+    .pipe(z.email("email_invalid").nullable()),
 });
 
 /** Réinitialisation de la double authentification d'un compte par le super admin (B5). */
