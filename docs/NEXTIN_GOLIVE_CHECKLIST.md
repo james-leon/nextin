@@ -33,8 +33,8 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | # | Problème constaté | Qui | État |
 |---|---|---|---|
 | B1 | **Aucun paiement réel** : `packages/payments` ne contient que le faux fournisseur (`fake`). Personne ne peut payer un abonnement ni une campagne | 🤖 adaptateur Notch Pay (recommandé dans `docs/payment-providers.md`) + 👤 compte marchand | ☐ |
-| B2 | **Le code d'inscription d'un établissement part uniquement par SMS** (`request_phone_code`, canal `sms`). Sans fournisseur SMS, l'inscription est impossible | 🤖 code par e-mail en attendant les SMS | ✅ (voir le commit B2 ci-dessous) |
-| B3 | **E-mails de connexion Supabase** (confirmation, mot de passe oublié, code de connexion) : le serveur d'e-mails par défaut de Supabase est limité à quelques envois par heure et n'est pas fait pour la production | 👤 SMTP Brevo ou Resend dans Supabase + 🤖 modèles FR/EN aux couleurs NextIn | ☐ |
+| B2 | **Le code d'inscription d'un établissement part uniquement par SMS** (`request_phone_code`, canal `sms`). Sans fournisseur SMS, l'inscription est impossible | 🤖 code par e-mail en attendant les SMS | ✅ `6b2060d` (code par e-mail, canal réglable dans la console, un essai par e-mail et par numéro) |
+| B3 | **E-mails de connexion Supabase** (confirmation, mot de passe oublié, code de connexion) : le serveur d'e-mails par défaut de Supabase est limité à quelques envois par heure et n'est pas fait pour la production | 👤 SMTP Brevo ou Resend dans Supabase + 🤖 modèles FR/EN aux couleurs NextIn || ✅ 🤖 modèles : `docs/NEXTIN_AUTH_EMAILS.md` + `docs/auth-emails/` — reste 👤 SMTP et collage dans Supabase |
 | B4 | **CI rouge** (tests de facturation sans `APP_URL`) | 🤖 | ✅ `fb9ba8a` (APP_URL du test de facturation) + `d6350b8` (CI verte) |
 | B5 | **Pas de double authentification (2FA)** pour le super admin ni pour les admins d'établissement | 🤖 + 👤 activer TOTP dans Supabase | ☐ |
 | B6 | **Projet Supabase gratuit** (si c'est le cas) : mise en pause après une période d'inactivité, pas de sauvegarde exploitable | 👤 formule Pro au premier client payant | ☐ 👤 |
