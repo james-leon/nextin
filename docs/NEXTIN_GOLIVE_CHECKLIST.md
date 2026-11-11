@@ -52,7 +52,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 
 | # | Point | Qui | État |
 |---|---|---|---|
-| S1 | Dependabot, `pnpm audit --prod --audit-level high` et gitleaks dans la CI ; actions GitHub épinglées par SHA | 🤖 || ✅ `e53492d` : `.github/dependabot.yml`, `pnpm audit --prod --audit-level high` et job gitleaks (`.gitleaks.toml`) dans la CI, actions épinglées par empreinte |
+| S1 | Dependabot, `pnpm audit --prod --audit-level high` et gitleaks dans la CI ; actions GitHub épinglées par SHA | 🤖 || ✅ `e53492d` : `.github/dependabot.yml`, `pnpm audit --prod --audit-level high` et job gitleaks (`.gitleaks.toml`) dans la CI, actions épinglées par empreinte. 11 nov. : Dependabot hebdomadaire, mineures et correctifs groupés par écosystème vers `claude/bold-ride-v2yswm`, majeures ignorées (§8), sécurité à part ; Vercel ne construit plus les branches `dependabot/*` (`apps/web/vercel.json`) |
 | S2 | Test d'isolement entre établissements, généré pour chaque table métier (A ne lit, ne modifie ni ne supprime rien de B) | 🤖 || ✅ `8314aad` : `supabase/tests/database/isolation_all.test.sql` (toutes les tables avec `organization_id`, lecture / modification / suppression, dans les deux sens) |
 | S3 | Journal d'audit non modifiable (aucune mise à jour ni suppression) + alertes e-mail : connexion admin depuis un nouvel appareil, 10 échecs en 15 min, 2FA désactivée, rôle admin attribué, export massif | 🤖 || ✅ `082f443` : journal d'audit inaltérable (déjà testé) + 5 alertes e-mail — reste 👤 : adresse de sécurité dans la console |
 | S4 | `docs/NEXTIN_INCIDENT.md` séparé + registre des tests de restauration mensuels | 🤖 || ✅ 85519c1 : `docs/NEXTIN_INCIDENT.md` — reste 👤 : premier test de restauration avec Supabase Pro |
@@ -95,7 +95,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
    - MFA TOTP activé ;
    - longueur minimale des mots de passe : 10.
 4. **Cloudflare Turnstile** : un widget pour le domaine de production (les clés locales ne marchent pas sur le vrai domaine).
-5. **Vercel** : importer le dépôt, dossier `apps/web`, puis saisir les variables de `.env.example` :
+5. **Vercel** : importer le dépôt, dossier `apps/web` (son `vercel.json` saute les branches `dependabot/*`), puis saisir les variables de `.env.example` :
    - `APP_URL` ;
    - les clés Supabase ;
    - Turnstile ;
@@ -145,6 +145,22 @@ Les questions apparues pendant le développement sont ajoutées ici, avec le poi
 ---
 
 ## 8. Après la mise en ligne
+
+### Mises à jour majeures à planifier (🤖, une par commit, CI verte)
+Dependabot ignore désormais les versions majeures (`.github/dependabot.yml`) : chacune est faite à la main, ici, dans
+l'ordre de priorité. Leurs Pull Requests du 11 novembre 2026 ont été fermées.
+
+| Priorité | Mise à jour | Ce qu'elle implique |
+|---|---|---|
+| 1 | **Actions GitHub sous Node 24** : `gitleaks/gitleaks-action` 2 → 3, `actions/setup-node` 4 → 7, `actions/upload-artifact` 4 → 7, `pnpm/action-setup` 4 → 6, `supabase/setup-cli` 1 → 3 | GitHub retire Node 20 des serveurs d'exécution : gitleaks v2 cessera de tourner. Mettre à jour les empreintes dans `ci.yml` (épinglage S1), vérifier les entrées (`cache: pnpm`, `version` de la CLI Supabase) et la CI complète. Peu de risque, à faire en premier. |
+| 2 | **web-push** 3 → 4 | Paquet passé en ESM seul : le build de la PR Dependabot cassait. Adapter l'import de `lib/notifications/providers/push.ts` (import nommé ou dynamique), vérifier `serverExternalPackages` de Next et les tests de `notifications.test.ts` ; puis un envoi réel de notification push (clés VAPID) en local. |
+| 3 | **CLI Supabase** (`supabase`, racine) 2 → 3 | Toute commande qui modifie le projet distant demande une confirmation (`--yes` sans terminal) ; `--remote` remplace `--linked` / `--project-ref` / `--db-url` ; les variables `SUPABASE_*` priment sur `config.toml`. Adapter `scripts/supabase-remote.mjs` (`link --project-ref`, `db push`), `local-env.mjs`, `db-*.mjs`, et la version épinglée dans `ci.yml` (`setup-cli` `version: 2.122.0`). À faire **après** la mise en ligne, pas pendant le premier `db push`. |
+| 4 | **ESLint** 9 → 10 | Dépend de la compatibilité d'`eslint-config-next` (même version que Next) : attendre qu'elle déclare ESLint 10. Vérifier ensuite `eslint.config.mjs` (configuration « flat » déjà utilisée) et les règles retirées. |
+| 5 | **@types/node** 22 → 26 | Les types doivent suivre la version de Node réellement utilisée (Node 22 en CI, `engines >=22`, Vercel). Ne passer à 24 ou 26 qu'avec le passage de Node lui-même (CI `node-version`, réglage Vercel), en vérifiant `pnpm typecheck`. |
+| 6 | **@playwright/test** 1.63 → 1.65 (version mineure, retenue) | La 1.65 compte environ 2 Ko de plus au premier chargement des mêmes pages (même build, mesuré le 11 nov.) : `/t` 201 Ko, `/nearby` 202 Ko, au-dessus du budget de 200 Ko. Ce n'est pas l'application qui grossit : c'est l'instrument de mesure qui change. Avant de monter : comprendre ce qui est compté en plus, puis soit regagner la marge sur les pages client, soit adapter la mesure (sans relever le budget). Dependabot l'ignore d'ici là. |
+| 6 bis | **lucide-react** 1.61 → 1.70 (version mineure, retenue) | Ajoute environ 1 Ko au premier chargement des pages client (`/t` à 200 Ko sur une base propre, 199 Ko en 1.61). À monter avec un gain de marge sur `/t` (icônes chargées à la demande, par exemple). Dependabot l'ignore d'ici là. |
+| 7 | **minimatch** (alerte modérée, outil de développement seulement) | Déni de service par motif de recherche, via `eslint-config-next` → `@typescript-eslint` → `minimatch` < 11.0.1. Absent de la production (`pnpm audit --prod` propre). Se règle avec la mise à jour d'`eslint-config-next` / ESLint 10 (ligne 4). |
+| plus tard | **@supabase/supabase-js** 3 (pas encore proposée) | Changera l'API du client (auth, realtime) : à prévoir avec `@supabase/ssr`, en vérifiant les pages client (budget de 200 Ko, aucun supabase-js dans le navigateur) et les postes. |
 
 - Poste local hors ligne (selon `NEXTIN_OFFLINE_FIRST.md`).
 - WhatsApp, puis SMS.

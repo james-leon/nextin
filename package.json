@@ -32,7 +32,7 @@
     "whatsapp:simulate": "node --env-file-if-exists=apps/web/.env.local scripts/whatsapp-simulate.mjs"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "2.118.0",
+    "@supabase/supabase-js": "2.119.0",
     "@types/node": "22.20.5",
     "supabase": "2.122.0",
     "tsx": "4.23.15",
