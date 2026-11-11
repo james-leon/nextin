@@ -26,6 +26,7 @@ import { ServiceTile } from "@/components/ui/service-tile";
 import { subscribeBoard } from "@/lib/client/board-feed";
 import { getPosition } from "@/lib/client/geolocation";
 import { saveTicket } from "@/lib/client/my-tickets";
+import { rememberBranch } from "@/lib/client/recent-branches";
 import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import { takeTicket } from "@/lib/client/take-ticket";
 import { isOnlineUnavailable } from "@/lib/client/online-unavailable";
@@ -78,6 +79,10 @@ export function BranchView({
   const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => subscribeBoard(branch.id, setBoard), [branch.id]);
+  // « Récents » de « À proximité » (P3) : informations publiques de l'agence, sur cet appareil seulement.
+  useEffect(() => {
+    rememberBranch({ id: branch.id, organization: branch.organization.name, name: branch.name, type: branch.organization.type, city: branch.city });
+  }, [branch.id, branch.organization.name, branch.name, branch.organization.type, branch.city]);
 
   // Prise en ligne indisponible (abonnement, quota) : connu dès l'ouverture, sans la raison ; services sans temps
   // d'attente, ticket à distance et demande de rendez-vous désactivés.

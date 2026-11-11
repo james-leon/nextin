@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ChevronRight, LocateFixed, MapPin } from "lucide-react";
+import { ChevronRight, History, LocateFixed, MapPin } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { formatDistance } from "@nextin/shared/remote";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { SearchField } from "@/components/ui/text-field";
 import { getPosition, positionGranted, type GeoPosition } from "@/lib/client/geolocation";
+import { clearRecentBranches, recentBranchesStore } from "@/lib/client/recent-branches";
 import { branchPhotoUrl, callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
 import { useMediaQuery } from "@/components/ui/use-media-query";
@@ -98,6 +99,8 @@ export function NearbyExplorer({
   const [category, setCategory] = useState<Category>("all");
   const photos = useAfterFirstLoad();
   const rows = useRef<Map<string, HTMLLIElement>>(new Map());
+  // Agences consultées sur cet appareil (P3) : lues après l'hydratation, rien côté serveur.
+  const recents = useSyncExternalStore(recentBranchesStore.subscribe, recentBranchesStore.getSnapshot, recentBranchesStore.getServerSnapshot);
 
   async function locateMe() {
     setLocate("locating");
@@ -175,6 +178,44 @@ export function NearbyExplorer({
 
   const list = (
     <section aria-label={t("results", { count: shownBranches.length })} className="flex flex-col gap-4">
+      {recents.length && !query ? (
+        <section aria-labelledby="nearby-recent" className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-3 pl-4">
+            <h2 id="nearby-recent" className="flex items-center gap-1.5 text-footnote uppercase text-label-secondary">
+              <History aria-hidden className="size-3.5 stroke-[2]" />
+              {t("recent")}
+            </h2>
+            <Button variant="plain" size="md" onClick={clearRecentBranches} aria-label={t("recentClearLabel")}>
+              {t("recentClear")}
+            </Button>
+          </div>
+          <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
+            {recents.slice(0, 4).map((r) => (
+              <li key={r.id} className="group/row">
+                <Link
+                  href={`/b/${r.id}`}
+                  prefetch={false}
+                  className="flex w-full items-center gap-3 pl-4 text-left transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary"
+                >
+                  <span
+                    aria-hidden
+                    className="squircle flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-tint text-accent-on-tint [&_svg]:size-5 [&_svg]:stroke-[1.75]"
+                  >
+                    <OrgTypeIcon type={r.type} />
+                  </span>
+                  <span className="relative flex min-h-14 min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 list-separator">
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-body">{r.organization}</span>
+                      <span className="truncate text-subheadline text-label-secondary">{[r.name, r.city].filter(Boolean).join(" · ")}</span>
+                    </span>
+                    <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <div role="radiogroup" aria-label={t("categoriesLabel")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
         {CATEGORIES.map((c) => (
           <button
@@ -305,19 +346,26 @@ export function NearbyExplorer({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:max-w-[26rem]">
           <SearchField label={t("search")} clearLabel={t("clear")} value={query} onValueChange={setQuery} className="flex-1" />
         </div>
+        {locate === "idle" || locate === "locating" ? (
+          // Invitation à activer la position (P3) : expliquée avant que le navigateur ne la demande.
+          <section aria-labelledby="nearby-locate" className="squircle flex items-start gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card lg:max-w-[26rem]">
+            <span aria-hidden className="squircle flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-tint text-accent-on-tint">
+              <LocateFixed className="size-5 stroke-[1.75]" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <div className="flex flex-col gap-0.5">
+                <h2 id="nearby-locate" className="text-headline [text-wrap:balance]">
+                  {t("locateTitle")}
+                </h2>
+                <p className="text-subheadline text-label-secondary">{t("locateBody")}</p>
+              </div>
+              <Button variant="tinted" size="md" onClick={locateMe} loading={locate === "locating"} loadingLabel={t("locating")} className="self-start">
+                {t("locate")}
+              </Button>
+            </div>
+          </section>
+        ) : null}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:max-w-[26rem]">
-          {locate !== "located" ? (
-            <Button
-              variant="tinted"
-              onClick={locateMe}
-              loading={locate === "locating"}
-              loadingLabel={t("locating")}
-              leadingIcon={<LocateFixed />}
-              className="sm:flex-1"
-            >
-              {t("locate")}
-            </Button>
-          ) : null}
           {!wide ? (
             <div role="group" aria-label={t("view")} className="grid h-11 grid-cols-2 rounded-[10px] bg-fill-tertiary p-[3px] sm:flex-1">
               {(["list", "map"] as const).map((v) => (

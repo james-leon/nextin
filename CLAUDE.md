@@ -141,6 +141,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 
 ## Distance (M9, `docs/modules/M9.md`)
 - Pages client : `/nearby` (onglet « À proximité », liste + carte), `/b/[branchId]` (agence, ticket à distance), `/b/[branchId]/rdv` (demande de rendez-vous), `/r/[token]` (code WhatsApp puis réponse). Même budget < 200 Ko (testé) : pas de préchargement des pages d'agence depuis la liste, détail des services seulement dans `branch_public`.
+- « À proximité » (P3) : carte d'invitation à la position (demande du navigateur au clic seulement) et section « Récents » (`lib/client/recent-branches.ts` : agences ouvertes sur l'appareil, informations publiques seulement, effaçables).
 - Position du client : `lib/client/geolocation.ts`, demandée seulement quand elle sert, **jamais enregistrée** (seul `tickets.remote_travel_seconds`). « Quand partir » : `leaveAdvice` (`@nextin/shared/remote`) ; `travelSeconds` identique à `public.remote_travel_seconds`.
 - Carte maison sans bibliothèque (`components/client/nearby-map.tsx`) ; tuiles seulement via `NEXT_PUBLIC_MAP_TILES_URL` (fournisseur sous contrat), sinon plan schématique.
 - Ticket à distance non confirmé : jamais appelé ; recul ou annulation dans `pick_next_ticket` (un autre patient doit attendre). Présence : `confirm_presence` (QR ou code court de l'agence, automatique en ouvrant `/q/<code>` avec un ticket à distance enregistré sur l'appareil) ou `staff_confirm_presence`.
