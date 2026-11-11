@@ -72,8 +72,8 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | P4 | Voix des annonces (ElevenLabs, `pnpm voices:generate`) | 👤 | ☐ |
 | P5 | Fiche d'installation client + fiche « coupure de courant » | Claude, sur demande | ☐ |
 | P6 | Document d'architecture du poste local hors ligne (`NEXTIN_OFFLINE_FIRST.md`), sans développement | 🤖 | ☐ |
-| C1 | Paiement manuel dans la console (espèces, virement, chèque, Mobile Money hors ligne), effet identique à un paiement en ligne, annulation avec motif, journalisé | 🤖 | ✅ (commit C1) — `docs/modules/C1-MANUAL-PAYMENT.md` |
-| C2 | Page Aide du patient (FAQ bilingue + coordonnées et horaires de l'établissement du ticket) | 🤖 | ☐ |
+| C1 | Paiement manuel dans la console (espèces, virement, chèque, Mobile Money hors ligne), effet identique à un paiement en ligne, annulation avec motif, journalisé | 🤖 | ✅ 2f6e693 — `docs/modules/C1-MANUAL-PAYMENT.md` |
+| C2 | Page Aide du patient (FAQ bilingue + coordonnées et horaires de l'établissement du ticket) | 🤖 | ✅ (commit C2) — `/help`, `docs/modules/M4.md` §C2 |
 | C3 | « Demander de l'aide » sur la page ticket → pastille à l'accueil avec « Traité » (une demande / 5 min, rien sur la TV) | 🤖 | ☐ |
 | C4 | Tableau de bord : « Aujourd'hui », « Hier », « Période personnalisée » (92 jours max, limite d'historique), comparaison avec la période précédente | 🤖 | ☐ |
 | C5 | `docs/NEXTIN_RECETTE_PILOTE.md` : grille de 15 tests manuels sur place | 🤖 | ☐ |

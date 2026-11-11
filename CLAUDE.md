@@ -98,7 +98,7 @@ Vitrine de référence : `/design` (`components/design/design-showcase.tsx`). To
 - Temps réel : topics de `@nextin/shared/queue` (`boardTopic`, `ticketTopic`, `staffTopic`), alimentés par les déclencheurs SQL ; jamais de nom ni d'identifiant client dans une diffusion.
 
 ## Pages client (M4, `docs/modules/M4.md`)
-- `app/(client)` : `/` scanner, `/c` code, `/q/[code]` choix du service, `/t/[token]` ticket, `/t` onglet, `/profile`. RSC + petits composants client.
+- `app/(client)` : `/` scanner, `/c` code, `/q/[code]` choix du service, `/t/[token]` ticket, `/t` onglet, `/profile`, `/help` (C2 : FAQ sans JS ; avec `?t=<jeton>`, coordonnées publiques de l'établissement par `ticket_help`, jamais de donnée du patient). RSC + petits composants client.
 - **Budget < 200 Ko** (test Playwright) : pas de supabase-js ni de next-intl côté navigateur sur ces pages. Utiliser `lib/client/*` (`callRpc`, `subscribeBroadcast`, session anonyme, `takeTicket`) et `useLiteT` / `useLiteLocale` (`lib/i18n/lite.tsx`) ; importer `@nextin/shared/queue/live` (sans Zod) plutôt que `@nextin/shared/queue`. Charger à la demande (`next/dynamic`) ce qui ne sert pas au premier affichage.
 - Textes : le gabarit client ne transmet que `common` et `client.tabs` ; chaque page entoure ses composants client de `LiteMessages paths={[…]}` (`lib/i18n/lite-server.tsx`) avec les seuls espaces de noms qu'ils utilisent (les fournisseurs imbriqués se complètent).
 - Pas de `crypto.randomUUID`, caméra ni presse-papiers sans repli : le test en Wi-Fi local est en `http`.

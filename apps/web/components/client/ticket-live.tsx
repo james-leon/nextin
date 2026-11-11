@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { BadgeCheck, Bell, Check, CheckCircle2, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Check, CheckCircle2, CircleHelp, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
 import { optInLink } from "@nextin/shared/notifications/opt-in";
 import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
@@ -399,6 +399,15 @@ export function TicketLive({
             onCancel={() => setConfirmCancel(true)}
           />
         ) : null}
+        {/* C2 : aide (questions fréquentes, téléphone et horaires de l'établissement), sans préchargement (budget). */}
+        <Link
+          href={`/help?t=${encodeURIComponent(token)}`}
+          prefetch={false}
+          className="inline-flex min-h-11 items-center justify-center gap-2 self-center text-subheadline font-semibold text-accent-text"
+        >
+          <CircleHelp aria-hidden className="size-4 stroke-[2]" />
+          {t("helpLink")}
+        </Link>
         </div>
       </div>
 

@@ -114,6 +114,7 @@ test.beforeAll(async () => {
       { name: "client-nearby", path: "/nearby", user: "visitor" },
       { name: "client-branch", path: `/b/${b.branchId}`, user: "visitor" },
       { name: "client-profile", path: "/profile", user: "visitor" },
+      { name: "client-help", path: `/help?t=${tickets[12]!.public_token}`, user: "visitor" },
     ],
   };
 });
