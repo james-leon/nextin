@@ -1,4 +1,7 @@
-# Mises à jour des dépendances (S1) : une proposition groupée par semaine, sécurité à part (immédiate).
+# Mises à jour des dépendances (S1) : une Pull Request groupée par semaine et par écosystème (versions mineures et
+# correctifs), vers la branche de développement pour être vérifiée avant `main`. Versions majeures ignorées : elles
+# sont planifiées et faites à la main (docs/NEXTIN_GOLIVE_CHECKLIST.md §8). Les mises à jour de sécurité restent
+# proposées par Dependabot (alertes du dépôt), y compris pour une version majeure, et regroupées à part.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -8,12 +11,20 @@ updates:
       day: monday
       time: "06:00"
       timezone: Africa/Douala
+    target-branch: claude/bold-ride-v2yswm
     open-pull-requests-limit: 5
-    target-branch: main
     groups:
       minor-and-patch:
+        applies-to: version-updates
         update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
     labels: [dependencies]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -21,5 +32,15 @@ updates:
       day: monday
       time: "06:00"
       timezone: Africa/Douala
-    target-branch: main
+    target-branch: claude/bold-ride-v2yswm
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
     labels: [dependencies]

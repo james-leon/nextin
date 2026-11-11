@@ -27,6 +27,9 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     locale: "fr-FR",
     trace: "retain-on-failure",
+    // Navigateur déjà installé sur la machine (ex. conteneur de développement) quand sa version diffère de celle de
+    // @playwright/test ; en CI, variable absente : navigateur installé par `playwright install`.
+    ...(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } } : {}),
   },
   projects: [
     { name: "mobile", use: { ...devices["Pixel 7"], browserName: "chromium" } },
