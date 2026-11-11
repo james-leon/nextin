@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { CheckCircle2 } from "lucide-react";
@@ -49,6 +50,12 @@ export default async function SubscriptionDetail({
   ]);
   if (!data) notFound();
   const d = data as unknown as AdminSubscriptionDetail;
+  const tm = await getTranslations("platform.manual");
+  // Factures réglées par un paiement manuel en vigueur (C1).
+  const { data: manualRows } = d.invoices.length
+    ? await supabase.from("manual_payments").select("invoice_id").in("invoice_id", d.invoices.map((i) => i.id)).is("cancelled_at", null)
+    : { data: [] };
+  const manualInvoices = new Set((manualRows ?? []).map((m) => m.invoice_id));
   // Responsable invité depuis la console (P1) et pas encore inscrit : renvoi possible (P2).
   const { data: ownerInvites } = await supabase
     .from("invitations")
@@ -136,8 +143,22 @@ export default async function SubscriptionDetail({
               href={`/app/o/${d.organization.id}/billing/invoices/${i.id}`}
               download
               title={<span className="tabular">{i.number}</span>}
-              subtitle={tb("invoiceSubtitle", { date: formatShortDay(i.issued_at, locale), amount: xaf(i.total_xaf) })}
-              detail={tb(`invoiceStatus.${i.status}`)}
+              subtitle={[
+                tb("invoiceSubtitle", { date: formatShortDay(i.issued_at, locale), amount: xaf(i.total_xaf) }),
+                tb(`invoiceStatus.${i.status}`),
+              ].join(" · ")}
+              // C1 : encaissement hors ligne d'une facture ouverte, ou détail du paiement manuel (annulation).
+              trailing={
+                i.status === "open" || manualInvoices.has(i.id) ? (
+                  <Link
+                    href={`/admin/invoices/${i.id}/payment`}
+                    aria-label={i.status === "open" ? tm("actionLabel", { number: i.number }) : tm("detailsLabel", { number: i.number })}
+                    className="inline-flex min-h-11 items-center text-subheadline font-semibold text-accent-text"
+                  >
+                    {i.status === "open" ? tm("action") : tm("details")}
+                  </Link>
+                ) : null
+              }
             />
           ))}
         </ListSection>

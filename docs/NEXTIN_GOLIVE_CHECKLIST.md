@@ -68,11 +68,11 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 |---|---|---|---|
 | P1 | **Création d'un établissement depuis /admin** pour un client (formule, durée d'essai, invitation du responsable par e-mail, modèles de services) | 🤖 | ✅ 2e304fb — `docs/modules/P1-CONSOLE-ORG.md` |
 | P2 | **Invitations du personnel envoyées par e-mail** : aujourd'hui le lien est seulement affiché, à copier et transmettre à la main | 🤖 | ✅ 760c7d9 — e-mail à la création, « Renvoyer » (nouveau lien) dans l'équipe et la console, `docs/modules/P2-INVITATIONS-EMAIL.md` |
-| P3 | Page « À proximité » : section « Récents » + invitation à activer la position | 🤖 | ✅ (commit P3) — `docs/modules/M9.md` §P3, budget /nearby 198 Ko |
+| P3 | Page « À proximité » : section « Récents » + invitation à activer la position | 🤖 | ✅ ea62f52 — `docs/modules/M9.md` §P3, budget /nearby 198 Ko |
 | P4 | Voix des annonces (ElevenLabs, `pnpm voices:generate`) | 👤 | ☐ |
 | P5 | Fiche d'installation client + fiche « coupure de courant » | Claude, sur demande | ☐ |
 | P6 | Document d'architecture du poste local hors ligne (`NEXTIN_OFFLINE_FIRST.md`), sans développement | 🤖 | ☐ |
-| C1 | Paiement manuel dans la console (espèces, virement, chèque, Mobile Money hors ligne), effet identique à un paiement en ligne, annulation avec motif, journalisé | 🤖 | ☐ |
+| C1 | Paiement manuel dans la console (espèces, virement, chèque, Mobile Money hors ligne), effet identique à un paiement en ligne, annulation avec motif, journalisé | 🤖 | ✅ (commit C1) — `docs/modules/C1-MANUAL-PAYMENT.md` |
 | C2 | Page Aide du patient (FAQ bilingue + coordonnées et horaires de l'établissement du ticket) | 🤖 | ☐ |
 | C3 | « Demander de l'aide » sur la page ticket → pastille à l'accueil avec « Traité » (une demande / 5 min, rien sur la TV) | 🤖 | ☐ |
 | C4 | Tableau de bord : « Aujourd'hui », « Hier », « Période personnalisée » (92 jours max, limite d'historique), comparaison avec la période précédente | 🤖 | ☐ |

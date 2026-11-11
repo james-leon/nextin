@@ -672,6 +672,26 @@ export const adminCreateOrganizationSchema = z.object({
 });
 export type AdminCreateOrganizationInput = z.infer<typeof adminCreateOrganizationSchema>;
 
+/** C1 — paiement manuel enregistré dans la console (espèces, virement, chèque, Mobile Money hors ligne). */
+export const MANUAL_PAYMENT_METHODS = ["cash", "transfer", "cheque", "mobile_money_offline"] as const;
+export type ManualPaymentMethod = (typeof MANUAL_PAYMENT_METHODS)[number];
+export const manualPaymentSchema = z
+  .object({
+    invoiceId: z.uuid("generic"),
+    method: z.enum(MANUAL_PAYMENT_METHODS, { error: "generic" }),
+    amountXaf: z.coerce.number().int("amount_mismatch").positive("amount_mismatch"),
+    paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_date"),
+    reference: z.string().trim().max(80).optional().transform((v) => v || null),
+    note: z.string().trim().max(300).optional().transform((v) => v || null),
+  })
+  .superRefine((v, ctx) => {
+    if (v.method !== "cash" && !v.reference) ctx.addIssue({ code: "custom", message: "reference_required", path: ["reference"] });
+  });
+export const manualPaymentCancelSchema = z.object({
+  manualPaymentId: z.uuid("generic"),
+  reason: z.string().trim().min(3, "reason_required").max(300),
+});
+
 /* ─── M10b : publicité ──────────────────────────────────────────────────── */
 
 const AD_SURFACES = ["tv", "app", "game"] as const;

@@ -138,6 +138,8 @@ export type InvoiceDocumentData = {
   due_at: string;
   paid_at: string | null;
   paid_channel: PaymentChannel | null;
+  /** C1 — mode du paiement manuel en vigueur (console), sinon absent. */
+  manual_method?: "cash" | "transfer" | "cheque" | "mobile_money_offline" | null;
   buyer_snapshot: { name: string; phone: string | null; email: string | null; city: string | null };
   seller_snapshot: { legal_name: string; rc: string; niu: string; address: string; phone: string; email: string; footer: string };
 };

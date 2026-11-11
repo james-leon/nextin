@@ -1062,6 +1062,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"manual_payments": {
+                  Row: {
+                    "advertiser_id": string | null,"amount_xaf": number,"campaign_status_before": string | null,"cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"created_at": string,"id": string,"invoice_id": string,"method": string,"note": string | null,"organization_id": string | null,"paid_on": string,"recorded_by": string | null,"reference": string | null,"subscription_before": Json | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "advertiser_id"?: string | null,"amount_xaf": number,"campaign_status_before"?: string | null,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"created_at"?: string,"id"?: string,"invoice_id": string,"method": string,"note"?: string | null,"organization_id"?: string | null,"paid_on": string,"recorded_by"?: string | null,"reference"?: string | null,"subscription_before"?: Json | null
+                  }
+                  Update: {
+                    "advertiser_id"?: string | null,"amount_xaf"?: number,"campaign_status_before"?: string | null,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"created_at"?: string,"id"?: string,"invoice_id"?: string,"method"?: string,"note"?: string | null,"organization_id"?: string | null,"paid_on"?: string,"recorded_by"?: string | null,"reference"?: string | null,"subscription_before"?: Json | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "manual_payments_advertiser_id_fkey"
+      columns: ["advertiser_id"]
+isOneToOne: false
+      referencedRelation: "advertisers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "manual_payments_invoice_id_fkey"
+      columns: ["invoice_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "manual_payments_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"memberships": {
                   Row: {
                     "active": boolean,"branch_id": string | null,"created_at": string,"id": string,"invited_by": string | null,"organization_id": string,"role": Database["public"]['Enums']["member_role"],"updated_at": string,"user_id": string
@@ -1983,6 +2015,9 @@ isOneToOne: false
 "admin_apply_discount":
 { Args: { "p_invoices": number,"p_kind": string,"p_org": string,"p_reason": string,"p_value": number }; Returns: string
                            },
+"admin_cancel_manual_payment":
+{ Args: { "p_manual": string,"p_reason": string }; Returns: undefined
+                           },
 "admin_change_plan":
 { Args: { "p_plan": string,"p_reason": string,"p_subscription": string }; Returns: undefined
                            },
@@ -1991,6 +2026,9 @@ isOneToOne: false
                            },
 "admin_grant_days":
 { Args: { "p_days": number,"p_reason": string,"p_subscription": string }; Returns: Json
+                           },
+"admin_record_manual_payment":
+{ Args: { "p_fields": Json,"p_invoice": string }; Returns: Json
                            },
 "admin_reset_mfa":
 { Args: { "p_email": string,"p_reason": string }; Returns: number
@@ -3390,6 +3428,9 @@ isOneToOne: false
                            },
 "set_ticket_priority":
 { Args: { "p_reason": Database["public"]['Enums']["priority_reason"],"p_ticket": string }; Returns: Json
+                           },
+"settle_invoice":
+{ Args: { "p_channel": Database["public"]['Enums']["payment_channel"],"p_invoice": string,"p_payment"?: string,"p_provider": string }; Returns: Json
                            },
 "sha256_hex":
 { Args: { "p_text": string }; Returns: string

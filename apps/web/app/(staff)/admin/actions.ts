@@ -17,6 +17,8 @@ import {
   platformSettingsFormSchema,
   mfaResetSchema,
   adminCreateOrganizationSchema,
+  manualPaymentCancelSchema,
+  manualPaymentSchema,
 } from "@nextin/shared/schemas";
 import { slugify, templateServices } from "@nextin/shared";
 import type { Json } from "@nextin/shared/database";
@@ -344,4 +346,35 @@ export async function resendOwnerInvitation(invitationId: string): Promise<Resen
   const result = await resendInvitationWith(supabase, invitationId, true);
   revalidatePath("/admin", "layout");
   return result;
+}
+
+/** C1 — paiement reçu hors ligne : même effet qu'un paiement en ligne (base : `admin_record_manual_payment`). */
+export async function recordManualPayment(_prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = manualPaymentSchema.safeParse(formObject(data));
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const v = parsed.data;
+  const { error } = await supabase.rpc("admin_record_manual_payment", {
+    p_invoice: v.invoiceId,
+    p_fields: { method: v.method, amount_xaf: v.amountXaf, paid_on: v.paidOn, reference: v.reference, note: v.note } as Json,
+  });
+  if (error) {
+    const code = mapDbError(error);
+    const fieldOf: Partial<Record<string, string>> = { amount_mismatch: "amountXaf", reference_required: "reference", invalid_date: "paidOn" };
+    const fieldName = fieldOf[code];
+    return fieldName ? { ok: false, error: code, fieldErrors: { [fieldName]: code } } : { ok: false, error: code };
+  }
+  done(`/admin/invoices/${v.invoiceId}/payment`);
+}
+
+/** C1 — annulation d'un paiement manuel, motif obligatoire ; code de double authentification récent si exigé. */
+export async function cancelManualPayment(manualPaymentId: string, reason: string, invoiceId: string): Promise<ActionResult> {
+  const supabase = await platform();
+  const parsed = manualPaymentCancelSchema.safeParse({ manualPaymentId, reason });
+  if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
+  const { error } = await supabase.rpc("admin_cancel_manual_payment", { p_manual: parsed.data.manualPaymentId, p_reason: parsed.data.reason });
+  if (error) return { ok: false, error: mapDbError(error) };
+  revalidatePath("/admin", "layout");
+  revalidatePath(`/admin/invoices/${invoiceId}/payment`);
+  return { ok: true };
 }

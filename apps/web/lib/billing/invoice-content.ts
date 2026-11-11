@@ -52,7 +52,7 @@ export function invoiceContent(inv: InvoiceDocumentData, locale: Locale, t: T, t
     totals,
     stamp:
       inv.status === "paid" && inv.paid_at
-        ? { text: t("paid", { date: formatDay(inv.paid_at, locale), channel: inv.paid_channel ? tc(inv.paid_channel) : "Mobile Money" }), tone: "paid" }
+        ? { text: t("paid", { date: formatDay(inv.paid_at, locale), channel: inv.manual_method ? tc(inv.manual_method) : inv.paid_channel ? tc(inv.paid_channel) : "Mobile Money" }), tone: "paid" }
         : inv.status === "void"
           ? { text: t("voided"), tone: "void" }
           : null,

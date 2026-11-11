@@ -52,6 +52,15 @@ test.beforeAll(async () => {
   const wintek = uniqueEmail("wintek");
   const wintekUser = await admin.auth.admin.createUser({ email: wintek, password: PASSWORD, email_confirm: true });
   await admin.from("platform_admins").insert({ user_id: wintekUser.data.user!.id });
+  // Facture ouverte d'un second établissement en essai (paiement manuel, C1).
+  const billed = await setUpBranch(`Clinique Facture ${Date.now()}`);
+  const { data: trialPlan } = await admin.from("plans").select("id").eq("trial_eligible", true).limit(1).single();
+  const { data: billedSub } = await admin
+    .from("subscriptions")
+    .insert({ organization_id: billed.orgId, plan_id: trialPlan!.id, status: "trialing", trial_ends_at: new Date(Date.now() + 14 * 86_400_000).toISOString(), locale: "fr" })
+    .select("id")
+    .single();
+  const { data: openInvoice } = await admin.rpc("issue_invoice", { p_subscription: billedSub!.id });
 
   const root = `/app/o/${b.orgId}`;
   const base = `${root}/branches/${b.branchId}`;
@@ -90,6 +99,12 @@ test.beforeAll(async () => {
       { name: "ads-redeem", path: "/ads/redeem", user: "advertiser" },
       { name: "ads-campaign", path: `/ads/campaigns/${campaignId}`, user: "advertiser", primary: (p) => p.getByRole("button", { name: "Soumettre à la validation" }) },
       { name: "admin-new-org", path: "/admin/organizations/new", user: "wintek", primary: (p) => p.getByRole("button", { name: "Créer et inviter" }) },
+      {
+        name: "admin-manual-payment",
+        path: `/admin/invoices/${(openInvoice as { id: string }).id}/payment`,
+        user: "wintek",
+        primary: (p) => p.getByRole("button", { name: "Enregistrer le paiement" }),
+      },
       // Pages client (visiteur anonyme), barre d'onglets latérale à partir de 1024 px (R5).
       { name: "client-scanner", path: "/", user: "visitor" },
       { name: "client-code", path: "/c", user: "visitor" },

@@ -57,6 +57,18 @@ export const QUEUE_ERROR_CODES = [
   // Backlog : agences choisies (formules plafonnées), caissiers.
   "too_many_branches",
   "user_not_found",
+  // B5 — double authentification exigée par la base (déclenche la demande du code, `useMfaStepUp`).
+  "mfa_required",
+  "mfa_recent_required",
+  // P2 — renvoi d'invitation ; C1 — paiement manuel dans la console.
+  "invitation_invalid",
+  "email_required",
+  "reason_required",
+  "amount_mismatch",
+  "reference_required",
+  "invalid_date",
+  "invoice_not_open",
+  "cancel_not_latest",
 ] as const;
 export type QueueErrorCode = (typeof QUEUE_ERROR_CODES)[number];
 
