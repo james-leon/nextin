@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { comparisonRange, delta, hasEnoughPoints, peakIndex, periodRange, shiftPeriod, STATS_PERIODS, toCsv, toMinutes } from "./index";
+import {
+  comparisonRange,
+  customRangeError,
+  delta,
+  hasEnoughPoints,
+  isNavigable,
+  isSingleDay,
+  MAX_CUSTOM_DAYS,
+  peakIndex,
+  periodRange,
+  rangeDays,
+  shiftPeriod,
+  STATS_PERIODS,
+  toCsv,
+  toMinutes,
+} from "./index";
 
 describe("période par défaut : 30 derniers jours glissants", () => {
   it("se termine le jour de référence, comparée aux 30 jours d'avant", () => {
@@ -63,5 +78,40 @@ describe("export CSV", () => {
     expect(csv).toBe(
       '﻿Jour;Service;Note\r\n2026-10-28;"Consultation ""générale""; adultes";4,5\r\n2026-10-29;\'=HYPERLINK(1);\r\n',
     );
+  });
+});
+
+describe("C4 — aujourd'hui, hier, période personnalisée", () => {
+  const today = "2026-11-11";
+  it("aujourd'hui comparé à hier ; hier comparé à avant-hier", () => {
+    const r = periodRange("today", today);
+    expect(r).toEqual({ from: today, to: today });
+    expect(comparisonRange("today", r, today)).toEqual({ from: "2026-11-10", to: "2026-11-10" });
+    const y = periodRange("yesterday", today);
+    expect(y).toEqual({ from: "2026-11-10", to: "2026-11-10" });
+    expect(comparisonRange("yesterday", y, today)).toEqual({ from: "2026-11-09", to: "2026-11-09" });
+  });
+  it("personnalisée : comparée à la période précédente de même durée", () => {
+    const r = { from: "2026-10-01", to: "2026-10-10" };
+    expect(rangeDays(r)).toBe(10);
+    expect(comparisonRange("custom", r, today)).toEqual({ from: "2026-09-21", to: "2026-09-30" });
+  });
+  it("validation : ordre, futur, 92 jours au plus, limite d'historique", () => {
+    expect(customRangeError("2026-10-01", "2026-10-10", today, null)).toBeNull();
+    expect(customRangeError("2026-10-10", "2026-10-01", today, null)).toBe("range_order");
+    expect(customRangeError("2026-11-01", "2026-11-12", today, null)).toBe("range_future");
+    expect(customRangeError("2026-08-10", "2026-11-10", today, null)).toBe("range_too_long");
+    expect(customRangeError("2026-08-12", "2026-11-11", today, null)).toBeNull();
+    expect(MAX_CUSTOM_DAYS).toBe(92);
+    expect(customRangeError("2026-05-01", "2026-05-10", today, "2026-06-01")).toBe("range_history");
+    expect(customRangeError("2026-13-01", "2026-10-10", today, null)).toBe("range_invalid");
+  });
+  it("navigation et affichage par heure", () => {
+    expect(isNavigable("today")).toBe(false);
+    expect(isNavigable("custom")).toBe(false);
+    expect(isNavigable("week")).toBe(true);
+    expect(shiftPeriod("today", today, -1)).toBe(today);
+    expect(isSingleDay("yesterday", periodRange("yesterday", today))).toBe(true);
+    expect(isSingleDay("custom", { from: "2026-10-01", to: "2026-10-03" })).toBe(false);
   });
 });

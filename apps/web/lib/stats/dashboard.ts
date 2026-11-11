@@ -79,4 +79,5 @@ export type DashboardData = {
   }[];
 };
 
-export type DashboardQuery = { branchId: string | null; period: StatsPeriod; anchor: string };
+/** Requête du tableau de bord ; `from` / `to` : bornes de la période personnalisée (C4). */
+export type DashboardQuery = { branchId: string | null; period: StatsPeriod; anchor: string; from?: string; to?: string };

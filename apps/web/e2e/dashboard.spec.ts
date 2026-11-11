@@ -36,7 +36,7 @@ test.describe("M8 — tableau de bord", () => {
     await expect(kpi(page, "Tickets émis")).toContainText("3");
     // Moins de 7 jours de données : état vide clair au lieu d'une courbe presque vide.
     await expect(page.getByText("Pas encore assez de données : revenez dans quelques jours.")).toBeVisible();
-    await page.getByRole("radio", { name: "Jour", exact: true }).click();
+    await page.getByRole("combobox", { name: "Période" }).selectOption("today");
     await expect(page.getByRole("heading", { name: "Aujourd'hui", level: 1 })).toBeVisible();
     await expect(page.getByRole("region", { name: "Files en direct" })).toContainText("Consultation");
     await expect(page.getByRole("region", { name: "Files en direct" })).toContainText("2 en attente");
@@ -49,7 +49,7 @@ test.describe("M8 — tableau de bord", () => {
     await rpc(b.staff, "reception_create_ticket", { p_service: b.serviceId });
     await expect(kpi(page, "Tickets émis")).toContainText("4", { timeout: 15_000 });
 
-    await page.getByRole("radio", { name: "Semaine" }).click();
+    await page.getByRole("combobox", { name: "Période" }).selectOption("week");
     await expect(page.getByRole("heading", { name: "Cette semaine", level: 1 })).toBeVisible();
     await expect(page.getByRole("region", { name: "Tickets par jour" })).toBeVisible();
     await expect(kpi(page, "Tickets émis")).toContainText("4");
@@ -67,6 +67,34 @@ test.describe("M8 — tableau de bord", () => {
     // Configuration incomplète : accès au démarrage.
     await page.getByRole("link", { name: /Configuration : \d étapes sur 4/ }).click();
     await expect(page.getByRole("heading", { name: "Démarrage", level: 1 })).toBeVisible();
+  });
+
+  test("C4 : hier, période personnalisée (92 jours au plus) comparée à la période précédente", async ({ page }, info) => {
+    test.skip(info.project.name !== "desktop", "vue ordinateur");
+    const b = await prepare();
+    await open(page, b);
+    const period = page.getByRole("combobox", { name: "Période" });
+    await period.selectOption("yesterday");
+    await expect(page.getByRole("heading", { name: "Hier", level: 1 })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Affluence par heure" })).toBeVisible();
+    // Personnalisée à partir d'« Aujourd'hui » : bornes initiales = aujourd'hui.
+    await period.selectOption("today");
+    await period.selectOption("custom");
+    const from = page.getByLabel("Du", { exact: true });
+    const to = page.getByLabel("Au", { exact: true });
+    const today = await to.inputValue();
+    // Plus de 92 jours : refusé, la période affichée ne change pas.
+    const tooOld = new Date(Date.parse(today) - 100 * 86_400_000).toISOString().slice(0, 10);
+    await from.fill(tooOld);
+    await expect(page.getByRole("alert").filter({ hasText: "92 jours au plus" })).toBeVisible();
+    // 10 jours se terminant aujourd'hui : « Du … au … », indicateurs comparés à la période précédente.
+    const start = new Date(Date.parse(today) - 9 * 86_400_000).toISOString().slice(0, 10);
+    await from.fill(start);
+    await expect(page.getByRole("heading", { name: /^Du .+ au .+/, level: 1 })).toBeVisible();
+    await expect(page.getByRole("note").filter({ hasText: "comparés à la période précédente de même durée" })).toBeVisible();
+    await expect(kpi(page, "Tickets émis")).toContainText("3");
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expectAccessible(page);
   });
 
   test("droits : un agent n'a pas de tableau de bord, l'export lui est refusé", async ({ page }, info) => {
@@ -94,7 +122,7 @@ test.describe("M8 — tableau de bord", () => {
     await expect(kpi(page, "Tickets émis")).toContainText("3");
     await expectTouchTargets(page);
     await expectAccessible(page);
-    await page.getByRole("radio", { name: "Mois" }).click();
+    await page.getByRole("combobox", { name: "Période" }).selectOption("month");
     await expect(page.getByRole("heading", { name: "Ce mois-ci", level: 1 })).toBeVisible();
     // Chargement terminé et fondu des indicateurs fini : axe mesurerait sinon des couleurs intermédiaires.
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);

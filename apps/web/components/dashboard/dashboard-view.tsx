@@ -6,12 +6,17 @@ import { ChevronLeft, ChevronRight, Download, FileSpreadsheet, Stethoscope } fro
 import { staffTopic } from "@nextin/shared/queue/realtime";
 import {
   comparisonRange,
+  customRangeError,
   delta,
   hasEnoughPoints,
+  isNavigable,
+  isSingleDay,
+  MAX_CUSTOM_DAYS,
   peakIndex,
   periodRange,
   shiftPeriod,
   toMinutes,
+  type CustomRangeError,
   type Delta,
   type StatsPeriod,
 } from "@nextin/shared/stats";
@@ -20,11 +25,11 @@ import { Button, IconButton } from "@/components/ui/button";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SelectField } from "@/components/ui/select-field";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { Sheet } from "@/components/ui/sheet";
 import { StatCard } from "@/components/ui/stat-card";
+import { TextField } from "@/components/ui/text-field";
 import { counterName } from "@/lib/desk/counter-name";
 import type { DashboardData, DashboardQuery } from "@/lib/stats/dashboard";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -87,7 +92,33 @@ export function DashboardView({
   const data = result.data;
   const loading = result.key !== JSON.stringify(query);
 
-  const range = useMemo(() => periodRange(query.period, query.anchor), [query.period, query.anchor]);
+  // Période personnalisée (C4) : bornes choisies ; sinon période calculée depuis le jour de référence.
+  const range = useMemo(
+    () => (query.period === "custom" && query.from && query.to ? { from: query.from, to: query.to } : periodRange(query.period, query.anchor)),
+    [query.period, query.anchor, query.from, query.to],
+  );
+  const singleDay = isSingleDay(query.period, range);
+  const [draft, setDraft] = useState<{ from: string; to: string }>(() => ({ from: query.from ?? range.from, to: query.to ?? range.to }));
+  const [draftError, setDraftError] = useState<CustomRangeError | null>(null);
+  const applyDraft = (next: { from: string; to: string }) => {
+    setDraft(next);
+    const error = customRangeError(next.from, next.to, today, history.from);
+    setDraftError(error);
+    if (!error) setQuery((q) => ({ ...q, period: "custom", from: next.from, to: next.to }));
+  };
+  const choosePeriod = (period: StatsPeriod) => {
+    if (period === "custom") {
+      // Point de départ : la période affichée, ramenée aux règles (92 jours, historique).
+      const start = { from: range.from, to: range.to > today ? today : range.to };
+      setDraft(start);
+      const error = customRangeError(start.from, start.to, today, history.from);
+      setDraftError(error);
+      setQuery((q) => ({ ...q, period, ...(error ? { from: undefined, to: undefined } : start) }));
+      return;
+    }
+    // Aujourd'hui, hier : toujours par rapport à aujourd'hui.
+    setQuery((q) => ({ ...q, period, anchor: period === "today" || period === "yesterday" ? today : q.anchor, from: undefined, to: undefined }));
+  };
   const compare = useMemo(() => comparisonRange(query.period, range, today), [query.period, range, today]);
   const live = range.from <= today && today <= range.to;
   const scope = query.branchId ? branches.filter((b) => b.id === query.branchId) : branches;
@@ -152,6 +183,12 @@ export function DashboardView({
   const reference =
     query.period === "last30"
       ? t("vsLast30")
+      : query.period === "today"
+      ? t("vsToday")
+      : query.period === "yesterday"
+      ? t("vsYesterday")
+      : query.period === "custom"
+      ? t("vsCustom")
       : query.period === "day"
       ? t("vsDay", { weekday: longDate(compare.from, { weekday: "long" }) })
       : query.period === "week"
@@ -180,7 +217,15 @@ export function DashboardView({
   ];
 
   const title =
-    query.period === "last30"
+    query.period === "today"
+      ? t("today")
+      : query.period === "yesterday"
+      ? t("yesterday")
+      : query.period === "custom"
+      ? range.from === range.to
+        ? longDate(range.from, { weekday: "long", day: "numeric", month: "long" })
+        : t("rangeOf", { from: longDate(range.from, { day: "numeric", month: "short" }), to: longDate(range.to, { day: "numeric", month: "short" }) })
+      : query.period === "last30"
       ? live
         ? t("last30Title")
         : t("rangeOf", { from: longDate(range.from, { day: "numeric", month: "short" }), to: longDate(range.to, { day: "numeric", month: "short" }) })
@@ -255,32 +300,59 @@ export function DashboardView({
       <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-3 md:px-8 lg:px-10" aria-busy={loading}>
         {/* Période, navigation et agence. */}
         <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <SegmentedControl
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <SelectField
               label={t("periodLabel")}
               value={query.period}
-              onValueChange={(period: StatsPeriod) => setQuery((q) => ({ ...q, period }))}
+              onChange={(e) => choosePeriod(e.target.value as StatsPeriod)}
               options={[
-                { value: "last30", label: t("last30") },
+                { value: "today", label: t("today") },
+                { value: "yesterday", label: t("yesterday") },
+                { value: "last30", label: t("last30Title") },
                 { value: "day", label: t("day") },
                 { value: "week", label: t("week") },
                 { value: "month", label: t("month") },
+                { value: "custom", label: t("custom") },
               ]}
-              className="sm:w-96"
+              className="sm:w-64"
             />
-            <div className="flex items-center gap-1">
-              <IconButton label={t("previous")} icon={<ChevronLeft />} variant="plain" onClick={() => setQuery((q) => ({ ...q, anchor: shiftPeriod(q.period, q.anchor, -1) }))} />
-              <Button variant="gray" onClick={() => setQuery((q) => ({ ...q, anchor: today }))} disabled={live}>
-                {t("current")}
-              </Button>
-              <IconButton
-                label={t("next")}
-                icon={<ChevronRight />}
-                variant="plain"
-                disabled={range.to >= today}
-                onClick={() => setQuery((q) => ({ ...q, anchor: shiftPeriod(q.period, q.anchor, 1) }))}
-              />
-            </div>
+            {isNavigable(query.period) ? (
+              <div className="flex items-center gap-1 sm:self-end">
+                <IconButton label={t("previous")} icon={<ChevronLeft />} variant="plain" onClick={() => setQuery((q) => ({ ...q, anchor: shiftPeriod(q.period, q.anchor, -1) }))} />
+                <Button variant="gray" onClick={() => setQuery((q) => ({ ...q, anchor: today }))} disabled={live}>
+                  {t("current")}
+                </Button>
+                <IconButton
+                  label={t("next")}
+                  icon={<ChevronRight />}
+                  variant="plain"
+                  disabled={range.to >= today}
+                  onClick={() => setQuery((q) => ({ ...q, anchor: shiftPeriod(q.period, q.anchor, 1) }))}
+                />
+              </div>
+            ) : null}
+            {query.period === "custom" ? (
+              // Période personnalisée : 92 jours au plus, dans la limite d'historique de la formule.
+              <div className="grid grid-cols-2 gap-3 sm:w-80">
+                <TextField
+                  type="date"
+                  label={t("customFrom")}
+                  value={draft.from}
+                  min={history.from ?? undefined}
+                  max={today}
+                  onChange={(e) => applyDraft({ ...draft, from: e.target.value })}
+                  error={draftError && draftError !== "range_too_long" && draftError !== "range_history" ? t(`rangeErrors.${draftError}`) : undefined}
+                />
+                <TextField
+                  type="date"
+                  label={t("customTo")}
+                  value={draft.to}
+                  min={history.from ?? undefined}
+                  max={today}
+                  onChange={(e) => applyDraft({ ...draft, to: e.target.value })}
+                />
+              </div>
+            ) : null}
           </div>
           {branches.length > 1 || canViewAll ? (
             <SelectField
@@ -293,6 +365,13 @@ export function DashboardView({
           ) : null}
         </div>
 
+        {query.period === "custom" ? (
+          <p role={draftError ? "alert" : "note"} className={cn("text-footnote", draftError === "range_too_long" || draftError === "range_history" ? "text-red-text" : "text-label-secondary")}>
+            {draftError === "range_too_long" || draftError === "range_history"
+              ? t(`rangeErrors.${draftError}`, { days: MAX_CUSTOM_DAYS, months: history.months ?? 0 })
+              : t("customHint", { days: MAX_CUSTOM_DAYS })}
+          </p>
+        ) : null}
         {history.from && history.months != null && range.from < history.from ? (
           <p role="note" className="text-footnote text-label-secondary">
             {t("historyLimited", { months: history.months, plan: history.plan })}
@@ -306,7 +385,7 @@ export function DashboardView({
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-          {query.period === "day" ? (
+          {singleDay ? (
             hourlyPanel
           ) : (
             <Panel title={t("waitDaily")} aside={t("minutesUnit")}>
@@ -372,7 +451,7 @@ export function DashboardView({
           </Panel>
         </div>
 
-        {query.period !== "day" ? (
+        {!singleDay ? (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {hourlyPanel}
           <Panel title={t("daily")} aside={t("hourlyUnit")}>
