@@ -6,13 +6,20 @@ import { ProgressBar } from "./progress-bar";
  * Héros visuel du parcours client (maquette 03) : service, numéro de ticket en Navy, établissement,
  * « Devant vous » et « Attente estimée », progression et ticket en cours.
  * Le numéro est épelé pour les lecteurs d'écran (« C 0 4 7 »).
+ *
+ * Cartes « Devant vous » et « Attente estimée » : jamais de débordement (testé à 320 et 375 px, FR et EN).
+ * Côte à côte dès 17rem de large, l'une sous l'autre en dessous ; une valeur courte (« ≈ 15 min ») réduit sa
+ * taille à la largeur de la carte (`cqi`), une phrase (« D'un instant à l'autre ») passe sur plusieurs lignes.
  */
+const shortValue = "whitespace-nowrap text-[length:min(1.75rem,18cqi)] leading-tight";
+const phraseValue = "text-[length:clamp(0.9375rem,15cqi,1.25rem)] leading-snug text-balance break-words hyphens-none";
 export function TicketHero({
   code,
   service,
   place,
   aheadLabel,
   ahead,
+  next,
   waitLabel,
   wait,
   progress,
@@ -29,6 +36,8 @@ export function TicketHero({
   place: string;
   aheadLabel: string;
   ahead: number;
+  /** Personne devant : libellé et phrase à la place de « Devant vous : 0 » (« Vous êtes le prochain »). */
+  next?: { label: string; value: string };
   waitLabel: string;
   wait: string;
   /** Avancement dans la file, de 0 à 1. */
@@ -81,16 +90,22 @@ export function TicketHero({
         </div>
       ) : (
         <>
-          <dl className="mt-6 grid grid-cols-2 gap-3 text-left">
-            <div className="squircle rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3.5">
-              <dt className="text-subheadline text-label-secondary">{aheadLabel}</dt>
-              <dd className="mt-0.5 text-title1 font-bold tabular">{ahead}</dd>
-            </div>
-            <div className="squircle rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3.5">
-              <dt className="text-subheadline text-label-secondary">{waitLabel}</dt>
-              <dd className="mt-0.5 text-title1 font-bold whitespace-nowrap tabular">{wait}</dd>
-            </div>
-          </dl>
+          <div className="@container mt-6">
+            <dl className="grid grid-cols-1 gap-3 text-left @min-[17rem]:grid-cols-2">
+              <div className="@container squircle min-w-0 rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3.5">
+                <dt className="text-subheadline text-label-secondary">{ahead === 0 && next ? next.label : aheadLabel}</dt>
+                <dd className={cn("mt-0.5 font-bold", ahead === 0 && next ? phraseValue : cn(shortValue, "tabular"))}>
+                  {ahead === 0 && next ? next.value : ahead}
+                </dd>
+              </div>
+              <div className="@container squircle min-w-0 rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3.5">
+                <dt className="text-subheadline text-label-secondary">{waitLabel}</dt>
+                <dd className={cn("mt-0.5 font-bold", /\d/.test(wait) && wait.length <= 10 ? cn(shortValue, "tabular") : phraseValue)}>
+                  {wait}
+                </dd>
+              </div>
+            </dl>
+          </div>
           <ProgressBar value={progress} label={progressLabel} className="mt-5" />
           {nowServing ? <p className="mt-2 text-left text-subheadline text-label-secondary">{nowServing}</p> : null}
         </>

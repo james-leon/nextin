@@ -1,6 +1,7 @@
 import type { BranchBoard } from "@nextin/shared/queue/live";
 import type { PriorityReason, TicketStatus } from "@nextin/shared/queue/live";
 import type { TicketSource } from "@nextin/shared/ticket";
+import type { BranchHours } from "./branch-hours";
 
 /** Canal du code et des réponses d'une demande de rendez-vous en ligne. */
 export type RequestChannel = "email" | "whatsapp" | "sms";
@@ -20,7 +21,8 @@ export type EntryInfo = {
 };
 
 export type { TicketStatus };
-export type CounterRef = { kind: "cabinet" | "guichet" | "caisse" | "laboratoire" | "accueil"; number: number; label: string | null };
+export type CounterKind = "cabinet" | "guichet" | "caisse" | "laboratoire" | "accueil";
+export type CounterRef = { kind: CounterKind; number: number; label: string | null };
 
 /** Réponse de `get_ticket` / diffusion `ticket:<jeton>` : aucune donnée personnelle. */
 export type TicketView = {
@@ -29,8 +31,29 @@ export type TicketView = {
   status: TicketStatus;
   source: TicketSource;
   priority_reason: PriorityReason | null;
-  service: { id: string; name: string; name_en: string | null; prefix: string; color: string };
-  branch: { id: string; name: string; address?: string | null; city?: string | null; latitude?: number | null; longitude?: number | null };
+  service: {
+    id: string;
+    name: string;
+    name_en: string | null;
+    prefix: string;
+    color: string;
+    /** Au moins un poste ouvert sert le service (comme `branch_board`). */
+    open?: boolean;
+    /** Type de poste le plus courant du service (« Aucun cabinet ouvert »). */
+    counter_kind?: CounterKind | null;
+  };
+  branch: {
+    id: string;
+    name: string;
+    address?: string | null;
+    city?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    /** Agence ouverte maintenant (horaires et fermetures exceptionnelles, calculé en base). */
+    is_open?: boolean;
+    timezone?: string;
+    hours?: BranchHours;
+  };
   organization: { name: string; default_locale: string };
   position: number | null;
   wait_seconds: number | null;

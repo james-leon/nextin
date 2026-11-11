@@ -149,9 +149,14 @@ async function expectNoOverflow(page: Page, label: string) {
       const ownText = Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
       if (ownText) cut.push(`${el.tagName.toLowerCase()} « ${el.textContent?.trim().slice(0, 40)} »`);
     }
-    return { scroll: doc.scrollWidth, client: doc.clientWidth, cut };
+    // Éléments qui dépassent à droite (les plus profonds), pour nommer la cause en cas d'échec.
+    const over = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .filter((el) => el.getBoundingClientRect().right > doc.clientWidth + 1 && !el.querySelector("*:not(svg *)"))
+      .slice(0, 5)
+      .map((el) => `${el.tagName.toLowerCase()}.${el.className.toString().split(" ").slice(0, 4).join(".")} « ${el.textContent?.trim().slice(0, 40)} » (${Math.round(el.getBoundingClientRect().right)} px)`);
+    return { scroll: doc.scrollWidth, client: doc.clientWidth, cut, over };
   });
-  expect(report.scroll, `${label} : débordement horizontal`).toBeLessThanOrEqual(report.client);
+  expect(report.scroll, `${label} : débordement horizontal — ${report.over.join(" ; ")}`).toBeLessThanOrEqual(report.client);
   expect(report.cut, `${label} : texte coupé`).toEqual([]);
 }
 

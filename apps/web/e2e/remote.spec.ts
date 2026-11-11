@@ -37,22 +37,17 @@ async function firstLoadBytes(page: Page, path: string) {
 }
 
 /**
- * La barre d'actions fixée en bas ne recouvre jamais le contenu : une fois la page défilée jusqu'en bas,
- * le dernier bloc du contenu se termine au-dessus du premier bouton de la barre (8 px de marge au moins).
+ * Actions de « Mon ticket » à la fin du contenu, jamais fixées : aucune barre fixe en bas ; une fois la page
+ * défilée jusqu'en bas, « Annuler le ticket » est visible, sous le reste du contenu.
  */
 async function expectBottomBarClear(page: Page) {
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(300);
-  const gap = await page.evaluate(() => {
-    const bar = document.querySelector<HTMLElement>("main .safe-bottom.fixed");
-    const content = bar?.parentElement?.querySelector<HTMLElement>(":scope > div.mx-auto") ?? null;
-    const last = content?.lastElementChild as HTMLElement | null;
-    const firstAction = bar?.querySelector<HTMLElement>("button, a");
-    if (!bar || !last || !firstAction) return null;
-    return firstAction.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
-  });
-  expect(gap, "barre du bas au-dessus du contenu").not.toBeNull();
-  expect(gap!).toBeGreaterThanOrEqual(8);
+  expect(await page.locator("main .safe-bottom.fixed").count(), "aucune barre fixée en bas").toBe(0);
+  const cancel = page.getByRole("button", { name: "Annuler le ticket" }).filter({ visible: true });
+  await expect(cancel).toBeInViewport();
+  const position = await cancel.evaluate((el) => getComputedStyle(el.parentElement!).position);
+  expect(position).toBe("static");
 }
 
 async function takeRemote(page: Page, b: Branch) {

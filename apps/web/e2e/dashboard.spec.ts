@@ -96,6 +96,9 @@ test.describe("M8 — tableau de bord", () => {
     await expectAccessible(page);
     await page.getByRole("radio", { name: "Mois" }).click();
     await expect(page.getByRole("heading", { name: "Ce mois-ci", level: 1 })).toBeVisible();
+    // Chargement terminé et fondu des indicateurs fini : axe mesurerait sinon des couleurs intermédiaires.
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect.poll(() => kpi(page, "Tickets émis").evaluate((el) => getComputedStyle(el.parentElement!).opacity)).toBe("1");
     await expectAccessible(page);
   });
 });

@@ -183,7 +183,7 @@ test.describe("/design — vitrine du design system", () => {
     });
   }
 
-  test("Mon ticket : WhatsApp sous la carte, actions du bas visibles sans défilement", async ({ page }) => {
+  test("Mon ticket : WhatsApp sous la carte, actions à la fin du contenu", async ({ page }) => {
     await openDesign(page);
     const frame = page.locator("#mockups figure").filter({ hasText: "03 · Mon ticket" });
     await frame.scrollIntoViewIfNeeded();
@@ -201,10 +201,12 @@ test.describe("/design — vitrine du design system", () => {
     await expect(frame.getByRole("button", { name: "Je suis en route" })).toHaveCount(0);
     const cancel = frame.getByRole("button", { name: "Annuler le ticket" });
     const phoneBox = (await phone.boundingBox())!;
+    // Actions à la fin du contenu (jamais fixées) : visibles une fois le contenu défilé, sans sortir du téléphone.
     const inside = async (name: string) => {
+      await frame.getByRole("button", { name }).scrollIntoViewIfNeeded();
       const box = (await frame.getByRole("button", { name }).boundingBox())!;
-      expect(box.y).toBeGreaterThanOrEqual(phoneBox.y);
-      expect(box.y + box.height).toBeLessThanOrEqual(phoneBox.y + phoneBox.height);
+      expect(box.y).toBeGreaterThanOrEqual(phoneBox.y - 1);
+      expect(box.y + box.height).toBeLessThanOrEqual(phoneBox.y + phoneBox.height + 1);
     };
     await expect(cancel).toBeVisible();
     await inside("Annuler le ticket");

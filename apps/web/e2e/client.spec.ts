@@ -59,7 +59,8 @@ test.describe("M4 — parcours client", () => {
     const token = page.url().split("/t/")[1]!;
     const hero = page.locator("section[aria-live]").first();
     await expect(hero).toContainText("C-001");
-    await expect(hero).toContainText("Devant vous");
+    // Premier de la file : « Vous êtes le prochain » à la place de « Devant vous : 0 ».
+    await expect(hero).toContainText("Vous êtes le prochain");
     await expect(page.getByText("Gardez cette page ouverte")).toBeVisible();
     await expectAccessible(page);
     await expectTouchTargets(page);
@@ -104,7 +105,7 @@ test.describe("M4 — parcours client", () => {
     await expect(page.getByText("En cours : C-001 · Cabinet 3")).toBeVisible();
     await rpc(staff, "mark_no_show", { p_ticket: first.id });
     await rpc(staff, "call_next", { p_counter: counterId });
-    await expect(ahead).toContainText("0");
+    await expect(ahead).toContainText("Vous êtes le prochain");
   });
 
   test("code court, ticket déjà actif, annulation", async ({ page }) => {

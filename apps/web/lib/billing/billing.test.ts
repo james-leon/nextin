@@ -8,6 +8,9 @@ import { formatXafPlain } from "./format";
 import { invoiceContent } from "./invoice-content";
 import type { InvoiceDocumentData } from "./types";
 
+// Liens des messages du compte (`absoluteUrl`) : adresse de l'application fixée pour le test (absente en CI).
+vi.stubEnv("APP_URL", "http://localhost:3000");
+
 const t = (key: string, v?: Record<string, string | number>) => (v ? `${key}:${Object.values(v).join("|")}` : key);
 
 const invoice: InvoiceDocumentData = {
