@@ -32,11 +32,11 @@ export function TicketBottomActions({
     <div className={cn("flex flex-col items-center gap-2 pt-2", className)}>
       {canSignalOnMyWay(source) && !hideRemote ? (
         onMyWayHref ? (
-          <Button asChild block variant="tinted">
+          <Button asChild block variant="tinted" className="h-auto min-h-[3.125rem] whitespace-normal py-3 text-center text-balance">
             <Link href={onMyWayHref}>{onMyWayLabel}</Link>
           </Button>
         ) : (
-          <Button block variant="tinted" onClick={onMyWay}>
+          <Button block variant="tinted" onClick={onMyWay} className="h-auto min-h-[3.125rem] whitespace-normal py-3 text-center text-balance">
             {onMyWayLabel}
           </Button>
         )

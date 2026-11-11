@@ -26,18 +26,23 @@ async function expectNoOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 }
 
-/** Rien de fixe ou collant ne recouvre le bas de l'écran (ni le haut du contenu sous la barre de titre). */
+/**
+ * Rien de fixe ou collant ne recouvre le bas de la colonne du ticket. La barre latérale des pages client sur
+ * ordinateur (à gauche, hors de la colonne) n'est pas concernée.
+ */
 async function expectNothingFixedAtBottom(page: Page) {
-  const fixed = await page.evaluate(() =>
-    [...document.querySelectorAll("body *")]
+  const fixed = await page.evaluate(() => {
+    const column = document.querySelector("section[aria-live]")!.getBoundingClientRect();
+    return [...document.querySelectorAll("body *")]
       .filter((el) => {
         const style = getComputedStyle(el);
         if (style.position !== "fixed" && style.position !== "sticky") return false;
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && style.visibility !== "hidden" && r.bottom > window.innerHeight - 160;
+        const overColumn = r.right > column.left + 1 && r.left < column.right - 1;
+        return overColumn && r.width > 0 && r.height > 0 && style.visibility !== "hidden" && r.bottom > window.innerHeight - 160;
       })
-      .map((el) => el.outerHTML.slice(0, 80)),
-  );
+      .map((el) => el.outerHTML.slice(0, 80));
+  });
   expect(fixed).toEqual([]);
 }
 
@@ -69,6 +74,13 @@ test.describe("Mon ticket — corrections UX", () => {
       }
     }
     await page.context().clearCookies({ name: "NEXTIN_LOCALE" });
+
+    // Taille de texte à 125 % (réglage du téléphone) : boutons longs sur deux lignes, rien ne déborde.
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.addInitScript(() => document.addEventListener("DOMContentLoaded", () => (document.documentElement.style.fontSize = "125%")));
+    await page.goto(`/t/${token}`);
+    await expect(page.getByRole("link", { name: /WhatsApp/ })).toBeVisible();
+    await expectNoOverflow(page);
 
     // Aucun poste ouvert pour le service : jamais « D'un instant à l'autre ».
     await rpc(b.staff, "close_counter", { p_counter: b.counterId });

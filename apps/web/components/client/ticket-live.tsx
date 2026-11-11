@@ -326,9 +326,9 @@ export function TicketLive({
           </Badge>
         ) : active && whatsappNumber ? (
           <div className="flex flex-col gap-1.5">
-            <Button asChild block variant="tinted">
+            <Button asChild block variant="tinted" className="h-auto min-h-[3.125rem] whitespace-normal py-3 text-center text-balance">
               <a href={optInLink(whatsappNumber, view.display_code, token, locale === "en" ? "en" : "fr")} target="_blank" rel="noopener">
-                <MessageCircle aria-hidden className="size-5" />
+                <MessageCircle aria-hidden className="size-5 shrink-0" />
                 {t("whatsapp")}
               </a>
             </Button>
@@ -383,7 +383,7 @@ export function TicketLive({
         ) : null}
 
         {view.status === "cancelled" || view.status === "no_show" ? (
-          <Button asChild block variant="tinted">
+          <Button asChild block variant="tinted" className="h-auto min-h-[3.125rem] whitespace-normal py-3 text-center text-balance">
             <Link href={entry ? `/q/${entry}` : "/"}>{t("newTicket")}</Link>
           </Button>
         ) : null}
