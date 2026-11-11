@@ -26,6 +26,9 @@ updates:
       # La 1.65 mesure les pages client environ 2 Ko plus lourdes (budget de 200 Ko) : montée à la main (checklist §8).
       - dependency-name: "@playwright/test"
         update-types: [version-update:semver-minor]
+      # lucide-react 1.70 ajoute environ 1 Ko aux pages client (/t à 200 Ko) : montée à la main (checklist §8).
+      - dependency-name: lucide-react
+        update-types: [version-update:semver-minor]
     labels: [dependencies]
 
   - package-ecosystem: github-actions
