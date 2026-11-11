@@ -961,6 +961,9 @@ export const en: Messages = {
     noService: "First create a service in the practitioner's branch.",
   },
   staffMgmt: {
+    withdrawn: "Invitation for {email} cancelled.",
+    undo: "Undo",
+    withdrawLabel: "Cancel the invitation for {email}",
     title: "Staff",
     subtitle: "Team members and their access.",
     members: "Members",

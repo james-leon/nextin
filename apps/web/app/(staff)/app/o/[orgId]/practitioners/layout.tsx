@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Plus, Stethoscope, Trash2 } from "lucide-react";
@@ -62,7 +63,7 @@ export default async function PractitionersLayout({ children, params }: { childr
         </ListSection>
       ) : (
         <>
-          <p className="rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-8 text-center text-body text-label-secondary">{t("empty")}</p>
+          <EmptyState title={t("empty")} icon={<Stethoscope />} />
           {canCreate ? (
             <Button asChild block>
               <Link href={`/app/o/${orgId}/practitioners/new`}>

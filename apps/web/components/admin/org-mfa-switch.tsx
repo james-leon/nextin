@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import { useMfaStepUp } from "@/components/security/use-mfa-step-up";
@@ -18,22 +18,24 @@ export function OrgMfaSwitch({ initial, action }: { initial: boolean; action: (e
   const te = useTranslations("errors");
   const toast = useToast();
   const stepUp = useMfaStepUp();
+  // Valeur enregistrée, et valeur affichée tout de suite (optimiste) : elle revient d'elle-même en cas de refus.
   const [enabled, setEnabled] = useState(initial);
+  const [shown, show] = useOptimistic(enabled);
   const [pending, start] = useTransition();
   const change = (next: boolean) =>
     start(async () => {
-      setEnabled(next);
+      show(next);
       const result = await stepUp.run(() => action(next));
-      if (!result.ok) {
-        setEnabled(!next);
-        toast(te(result.error), <AlertCircle aria-hidden />);
-      } else toast(t("saved"));
+      if (result.ok) {
+        setEnabled(next);
+        toast(t("saved"));
+      } else toast(te(result.error), <AlertCircle aria-hidden />);
     });
   return (
     <>
       {stepUp.dialog}
       <ListSection footer={t("orgAllFooter")}>
-        <ListSwitchRow title={t("orgAll")} checked={enabled} onCheckedChange={change} disabled={pending} />
+        <ListSwitchRow title={t("orgAll")} checked={shown} onCheckedChange={change} disabled={pending} />
       </ListSection>
     </>
   );

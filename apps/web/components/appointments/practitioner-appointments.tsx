@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { CalendarDays } from "lucide-react";
@@ -68,7 +69,7 @@ export function PractitionerAppointments({ branchId, practitionerId, timeZone }:
             ))}
           </ListSection>
         ) : (
-          <p className="px-4 py-8 text-center text-body text-label-secondary">{t("deskEmpty")}</p>
+          <EmptyState title={t("deskEmpty")} icon={<CalendarDays />} className="shadow-none" />
         )}
       </Sheet>
     </>

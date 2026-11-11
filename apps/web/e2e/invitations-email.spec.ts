@@ -33,6 +33,19 @@ test.describe("P2 — invitations par e-mail", () => {
     await resend.click();
     await expect(page.getByText(`Invitation renvoyée à ${memberEmail}.`)).toBeVisible();
 
+    // U1 — « Annuler l'invitation » : masquée aussitôt, « Annuler » pendant 5 s la rétablit.
+    const withdraw = page.getByRole("button", { name: `Annuler l'invitation de ${memberEmail}` }).filter({ visible: true });
+    await withdraw.click();
+    await expect(page.getByText(`Invitation de ${memberEmail} annulée.`)).toBeVisible();
+    await expect(withdraw).toHaveCount(0);
+    await page.getByRole("button", { name: "Annuler", exact: true }).click();
+    await expect(withdraw).toBeVisible();
+    // Sans « Annuler », elle est retirée de la base après 5 s.
+    await withdraw.click();
+    await expect
+      .poll(async () => (await admin.from("invitations").select("id").eq("email", memberEmail)).data?.length ?? -1, { timeout: 12_000 })
+      .toBe(0);
+
     // L'ancien lien ne fonctionne plus.
     const ctx = await browser.newContext({ locale: "fr-FR" });
     const visitor = await ctx.newPage();

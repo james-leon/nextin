@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
-import { UserPlus, UserRound, X } from "lucide-react";
+import { UserPlus, UserRound } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
-import { ConfirmAction } from "@/components/admin/confirm-action";
 import { SavedNotice } from "@/components/admin/saved-notice";
 import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
@@ -14,8 +13,8 @@ import { getOrgContext } from "@/lib/admin/context";
 import { cn } from "@/lib/cn";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { OrgMfaSwitch } from "@/components/admin/org-mfa-switch";
-import { resendInvitation, revokeInvitation, setOrgMfaRequired } from "../_actions/people";
-import { ResendInvitationButton } from "@/components/admin/resend-invitation-button";
+import { setOrgMfaRequired } from "../_actions/people";
+import { PendingInvitations } from "@/components/admin/pending-invitations";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("staffMgmt");
@@ -53,26 +52,6 @@ export default async function StaffPage({
 
   const members_ = members ?? [];
   const expires = (iso: string) => format.dateTime(new Date(iso), { day: "numeric", month: "long" });
-  // Renvoyer (P2, nouveau lien par e-mail) et annuler : les deux actions d'une invitation en attente.
-  const actions = (inv: { id: string; email: string | null }) => (
-    <span className="flex shrink-0 items-center gap-1">
-      {inv.email ? <ResendInvitationButton email={inv.email} action={resendInvitation.bind(null, orgId, inv.id)} /> : null}
-      {revoke(inv)}
-    </span>
-  );
-  const revoke = (inv: { id: string; email: string | null }) => (
-    <ConfirmAction
-      action={revokeInvitation.bind(null, orgId, inv.id)}
-      label={ta("cancel")}
-      title={t("revoke")}
-      body={inv.email ?? ""}
-      confirmLabel={t("revoke")}
-      block={false}
-      size="md"
-      icon={<X aria-hidden className="size-4" />}
-    />
-  );
-
   return (
     <AdminPage title={t("title")} subtitle={t("subtitle")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: ta("nav.overview") }}>
       <SavedNotice show={!!saved} />
@@ -156,54 +135,16 @@ export default async function StaffPage({
 
       {ctx.canManageStaff ? (
         <>
-          <ListSection header={t("invitations")} className={invitations?.length ? "lg:hidden" : undefined}>
-            {invitations?.length ? (
-              invitations.map((inv) => (
-                <li key={inv.id} className="group/row pl-4">
-                  <span className="list-separator flex min-h-11 items-center justify-between gap-3 py-2 pr-2">
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-body">{inv.email}</span>
-                      <span className="line-clamp-2 text-subheadline text-label-secondary">
-                        {[tr(inv.role), scope(inv.branch_id), t("expires", { date: expires(inv.expires_at) })].join(" · ")}
-                      </span>
-                    </span>
-                    {actions(inv)}
-                  </span>
-                </li>
-              ))
-            ) : (
-              <li className="px-4 py-3 text-body text-label-secondary">{t("noInvitations")}</li>
-            )}
-          </ListSection>
-          {invitations?.length ? (
-            <section aria-labelledby="invitations-title" className="hidden flex-col gap-1.5 lg:flex">
-              <h2 id="invitations-title" className="px-4 text-footnote uppercase text-label-secondary">
-                {t("invitations")}
-              </h2>
-              <DataTable
-                label={t("invitations")}
-                head={
-                  <>
-                    <th scope="col" className={th}>{t("colEmail")}</th>
-                    <th scope="col" className={th}>{t("colRole")}</th>
-                    <th scope="col" className={th}>{t("colScope")}</th>
-                    <th scope="col" className={th}>{t("colExpires")}</th>
-                    <th scope="col" className={cn(th, "text-right")}>{t("colActions")}</th>
-                  </>
-                }
-              >
-                {invitations.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className={cn(td, "max-w-80 truncate")}>{inv.email}</td>
-                    <td className={cn(td, "whitespace-nowrap")}>{tr(inv.role)}</td>
-                    <td className={td}>{scope(inv.branch_id)}</td>
-                    <td className={cn(td, "whitespace-nowrap text-label-secondary")}>{expires(inv.expires_at)}</td>
-                    <td className={cn(td, "text-right")}><span className="inline-flex justify-end">{actions(inv)}</span></td>
-                  </tr>
-                ))}
-              </DataTable>
-            </section>
-          ) : null}
+          <PendingInvitations
+            orgId={orgId}
+            invitations={(invitations ?? []).map((inv) => ({
+              id: inv.id,
+              email: inv.email ?? "",
+              role: tr(inv.role),
+              scope: scope(inv.branch_id) ?? "",
+              expires: expires(inv.expires_at),
+            }))}
+          />
           {/* Action principale : en bas sur téléphone et tablette, dans la barre de titre sur ordinateur. */}
           <BottomBar>
             <Button asChild block>

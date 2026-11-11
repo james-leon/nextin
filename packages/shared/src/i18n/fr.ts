@@ -960,6 +960,9 @@ export const fr = {
     noService: "Créez d'abord un service dans l'agence du praticien.",
   },
   staffMgmt: {
+    withdrawn: "Invitation de {email} annulée.",
+    undo: "Annuler",
+    withdrawLabel: "Annuler l'invitation de {email}",
     title: "Personnel",
     subtitle: "Les membres de l'équipe et leurs accès.",
     members: "Membres",

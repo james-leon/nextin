@@ -13,6 +13,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { SearchField } from "@/components/ui/text-field";
 import { getPosition, positionGranted, type GeoPosition } from "@/lib/client/geolocation";
 import { clearRecentBranches, recentBranchesStore } from "@/lib/client/recent-branches";
+import { NEARBY_LIMIT } from "@/lib/client/nearby";
 import { branchPhotoUrl, callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
 import { useMediaQuery } from "@/components/ui/use-media-query";
@@ -67,8 +68,7 @@ function BranchVisual({ branch, variant, photos }: { branch: NearbyBranch; varia
     </span>
   );
 }
-/** Agences rechargées autour du client ou pour une recherche : 10 au plus (grande carte + 9 lignes, réponse légère en 3G). */
-const LIMIT = 10;
+const LIMIT = NEARBY_LIMIT;
 type Locate = "idle" | "locating" | "located" | "denied" | "unavailable";
 
 /**

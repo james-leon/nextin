@@ -359,9 +359,12 @@ html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
   /* Grands titres et titres de section : Sora (titres de liste et légendes restent en Inter). */
   :where(h1, h2) {
     font-family: var(--app-font-display);
-    /* Sora est plus large que la police système : un mot long (« établissements ») ne doit jamais déborder
-       d'un écran de 360 px avec un texte agrandi — césure française, sinon coupure en dernier recours. */
-    hyphens: auto;
+  }
+  /* Titres (U1) : jamais de césure (« Scannez pour com-mencer »), lignes équilibrées ; un mot plus long que
+     l'écran (360 px, texte agrandi) passe à la ligne en dernier recours plutôt que de déborder. */
+  :where(h1, h2, h3) {
+    hyphens: none;
+    text-wrap: balance;
     overflow-wrap: break-word;
   }
   body {

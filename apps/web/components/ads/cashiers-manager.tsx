@@ -1,8 +1,9 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useActionState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { UserRound } from "lucide-react";
+import { UserRound, UsersRound } from "lucide-react";
 import { addCashier, removeCashier } from "@/app/(staff)/ads/actions";
 import { FormError } from "@/components/auth/form-error";
 import { ConfirmAction } from "@/components/admin/confirm-action";
@@ -23,7 +24,8 @@ export function CashiersManager({ advertiserId, cashiers }: { advertiserId: stri
   const day = (iso: string) => new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Douala" }).format(new Date(iso));
   return (
     <div className="grid grid-cols-1 gap-7 lg:grid-cols-2 lg:items-start">
-      <ListSection footer={cashiers.length ? undefined : t("cashiersEmpty")}>
+      <ListSection>
+        {cashiers.length ? null : <EmptyState variant="inline" title={t("cashiersEmpty")} icon={<UsersRound />} />}
         {cashiers.map((c) => (
           <li key={c.user_id} className="group/row flex items-center gap-3 pl-4">
             <ListIcon color="var(--brand-tile)">

@@ -149,7 +149,11 @@ export async function setOrgMfaRequired(orgId: string, enabled: boolean): Promis
   return { ok: true };
 }
 
-export async function revokeInvitation(orgId: string, invitationId: string): Promise<ActionResult> {
+/**
+ * U1 — retrait d'une invitation sans redirection : l'écran l'a déjà masquée (mise à jour optimiste) et l'envoie
+ * après le délai « Annuler » de 5 s ; en cas de refus, la ligne réapparaît.
+ */
+export async function withdrawInvitation(orgId: string, invitationId: string): Promise<ActionResult> {
   check(orgId, invitationId);
   await getOrgContext(orgId);
   const supabase = await getSupabaseServerClient();
@@ -157,7 +161,8 @@ export async function revokeInvitation(orgId: string, invitationId: string): Pro
     .select("id");
   if (error) return { ok: false, error: mapDbError(error) };
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, `/app/o/${orgId}/staff`);
+  revalidatePath(`/app/o/${orgId}/staff`);
+  return { ok: true };
 }
 
 export async function updateMembership(

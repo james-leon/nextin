@@ -22,7 +22,6 @@ import { callRpc } from "@/lib/client/supabase-public";
 import { ticketAvailability, waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
 import { DesktopClientSidebar } from "./desktop-client-sidebar";
-import { PlayCard } from "./games/play-card";
 import { LazyMount } from "./lazy-mount";
 import { QueuePosition } from "./queue-position";
 
@@ -35,6 +34,8 @@ const RemoteTicketCard = dynamic(() => import("./remote-ticket-card").then((m) =
 // Publicité et jeux (M10b) : jamais dans le premier chargement.
 const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
 const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
+// Carte « Jouer en attendant » : montée 3 s après le chargement (LazyMount), son code aussi (budget de 200 Ko).
+const PlayCard = dynamic(() => import("./games/play-card").then((m) => m.PlayCard), { ssr: false });
 
 const aheadKey = (token: string) => `nextin-ahead-${token}`;
 const noSubscribe = () => () => {};

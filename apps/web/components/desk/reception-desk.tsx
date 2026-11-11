@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDown, Ban, CalendarDays, Check, CircleHelp, Eye, EyeOff, Inbox, PenLine, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
@@ -284,7 +285,8 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
               </ul>
             </section>
           ) : null}
-          <ListSection header={t("queueHeader", { count: data.waiting.length })} footer={data.waiting.length ? undefined : t("queueEmpty")}>
+          <ListSection header={t("queueHeader", { count: data.waiting.length })}>
+            {data.waiting.length ? null : <EmptyState variant="inline" title={t("queueEmpty")} icon={<Inbox />} />}
             {data.waiting.map((tk2) => {
               const service = serviceById.get(tk2.serviceId);
               const doctor = practitionerOfCounter(tk2.preferredCounterId);

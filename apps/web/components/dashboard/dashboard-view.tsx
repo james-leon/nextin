@@ -1,8 +1,9 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, Download, FileSpreadsheet, Stethoscope } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, Download, FileSpreadsheet, Stethoscope } from "lucide-react";
 import { staffTopic } from "@nextin/shared/queue/realtime";
 import {
   comparisonRange,
@@ -263,7 +264,7 @@ export function DashboardView({
           }))}
         />
       ) : (
-        <p className="py-16 text-center text-body text-label-secondary">{t("empty")}</p>
+        <EmptyState title={t("empty")} icon={<BarChart3 />} className="bg-transparent py-12 shadow-none" />
       )}
     </Panel>
   );

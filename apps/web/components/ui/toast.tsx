@@ -3,19 +3,24 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type Toast = { id: number; message: string; icon?: ReactNode };
-const ToastContext = createContext<(message: string, icon?: ReactNode) => void>(() => {});
+/** Action dans la bannière (ex. « Annuler » pendant 5 s après une suppression réversible). */
+export type ToastAction = { label: string; onClick: () => void };
+export type ToastOptions = { action?: ToastAction; durationMs?: number };
+type Toast = { id: number; message: string; icon?: ReactNode; action?: ToastAction };
+type Show = (message: string, icon?: ReactNode, options?: ToastOptions) => void;
+const ToastContext = createContext<Show>(() => {});
 
 /** Bannière de notification façon iOS, annoncée aux lecteurs d'écran (aria-live). */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
 
-  const show = useCallback((message: string, icon?: ReactNode) => {
+  const show = useCallback<Show>((message, icon, options) => {
     const id = nextId.current++;
-    setToasts((t) => [...t.slice(-2), { id, message, icon }]);
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+    setToasts((t) => [...t.slice(-2), { id, message, icon, action: options?.action }]);
+    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), options?.durationMs ?? 3500);
   }, []);
+  const dismiss = (id: number) => setToasts((t) => t.filter((x) => x.id !== id));
 
   return (
     <ToastContext.Provider value={show}>
@@ -34,7 +39,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             )}
           >
             {t.icon ? <span className="shrink-0 text-accent-text [&_svg]:size-5">{t.icon}</span> : null}
-            <p className="text-subheadline font-medium">{t.message}</p>
+            <p className="flex-1 text-subheadline font-medium">{t.message}</p>
+            {t.action ? (
+              <button
+                type="button"
+                onClick={() => {
+                  t.action!.onClick();
+                  dismiss(t.id);
+                }}
+                className="pressable -my-2 -mr-2 inline-flex min-h-11 shrink-0 items-center rounded-[10px] px-3 text-subheadline font-semibold text-accent-text"
+              >
+                {t.action.label}
+              </button>
+            ) : null}
           </div>
         ))}
       </div>

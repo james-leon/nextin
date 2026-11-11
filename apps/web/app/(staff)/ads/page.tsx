@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -56,7 +57,8 @@ export default async function AdsHome() {
       }
     >
       <AdsNav variant="inline" role={role} />
-      <ListSection footer={campaigns?.length ? undefined : t("campaignsEmpty")}>
+      <ListSection>
+        {campaigns?.length ? null : <EmptyState variant="inline" title={t("campaignsEmpty")} icon={<Megaphone />} />}
         {(campaigns ?? []).map((c) => (
           <ListRow
             key={c.id}

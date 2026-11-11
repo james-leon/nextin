@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ClientTabBar } from "@/components/client/client-tab-bar";
 import { NearbyExplorer } from "@/components/client/nearby-explorer";
+import { NEARBY_LIMIT } from "@/lib/client/nearby";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
 import { LiteMessages } from "@/lib/i18n/lite-server";
@@ -18,8 +19,8 @@ function runtimeEnv(name: string): string | null {
 
 /** « Établissements à proximité » (M9) : liste par ville au premier affichage, puis autour du client s'il le permet. */
 export default async function NearbyPage() {
-  // Premier affichage léger (page client < 200 Ko) : 12 agences, la recherche ou la position affinent ensuite.
-  const { data } = await callRpc<NearbyBranch[]>("nearby_branches", { p_lat: null, p_lng: null, p_radius_km: 25, p_query: null, p_limit: 10 });
+  // Premier affichage léger (page client < 200 Ko) : 8 agences, la recherche ou la position affinent ensuite.
+  const { data } = await callRpc<NearbyBranch[]>("nearby_branches", { p_lat: null, p_lng: null, p_radius_km: 25, p_query: null, p_limit: NEARBY_LIMIT });
   return (
     <>
       <LiteMessages paths={["client.nearby", "orgTypes"]}>

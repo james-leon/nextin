@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -70,7 +71,8 @@ export default async function PlatformAdsPage({ searchParams }: { searchParams: 
           ))}
         </ul>
       </nav>
-      <ListSection footer={campaigns?.length ? undefined : t("empty")}>
+      <ListSection>
+        {campaigns?.length ? null : <EmptyState variant="inline" title={t("empty")} icon={<Megaphone />} />}
         {(campaigns ?? []).map((c) => {
           const owner = c.organization_id ? `${c.organization?.name ?? ""} · ${ta("house")}` : (c.advertiser?.name ?? "");
           return (
