@@ -66,6 +66,12 @@ async function setSubscription(orgId: string, status: "active" | "read_only" | "
   }
 }
 
+/** Statut de l'établissement (suspension pour impayé : `suspended` + motif `subscription`). */
+async function setOrgStatus(orgId: string, status: "active" | "suspended", reason: string | null) {
+  const { error } = await admin.from("organizations").update({ status, suspended_reason: reason }).eq("id", orgId).select("id");
+  expect(error).toBeNull();
+}
+
 async function expectUnavailable(page: Page, button: string) {
   await expect(page.getByTestId("online-unavailable")).toHaveText(MESSAGE_FR);
   await expect(page.getByRole("button", { name: button }).last()).toBeDisabled();
@@ -98,20 +104,28 @@ test.describe("Prise en ligne indisponible : connue dès l'ouverture de la page"
     await expect(page.getByTestId("online-unavailable")).toHaveText(MESSAGE_EN);
   });
 
-  test("suspendu, puis quota de tickets du mois bloquant ; abonnement actif : prise normale", async ({ page }, info) => {
+  test("suspendu pour impayé, puis quota de tickets du mois bloquant ; abonnement actif : prise normale", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "mêmes écrans que le test précédent ; une taille suffit");
     const b = await availableBranch();
 
+    // Suspendu pour impayé : les pages restent visibles, la prise en ligne est fermée.
     await setSubscription(b.orgId, "suspended");
+    await setOrgStatus(b.orgId, "suspended", "subscription");
     await page.goto(`/q/${b.entryCode}`);
     await expectUnavailable(page, "Prendre mon ticket");
+    await page.goto(`/b/${b.branchId}`);
+    await expectUnavailable(page, "Prendre un ticket à distance");
+    await page.goto(`/b/${b.branchId}/rdv`);
+    await expect(page.getByTestId("online-unavailable")).toHaveText(MESSAGE_FR);
+    await setOrgStatus(b.orgId, "active", null);
 
-    // Quota de tickets épuisé depuis la veille : plus de ticket en ligne, la demande de rendez-vous reste possible.
+    // Quota de tickets épuisé depuis la veille : plus de ticket en ligne, ni de demande de rendez-vous.
     await setSubscription(b.orgId, "active", true);
     await page.goto(`/q/${b.entryCode}`);
     await expectUnavailable(page, "Prendre mon ticket");
     await page.goto(`/b/${b.branchId}/rdv`);
-    await expect(page.getByTestId("online-unavailable")).toHaveCount(0);
+    await expect(page.getByTestId("online-unavailable")).toHaveText(MESSAGE_FR);
+    await expect(page.getByRole("button", { name: "Envoyer la demande" }).last()).toBeDisabled();
 
     // Abonnement actif : temps d'attente affichés, bouton actif, aucun encadré.
     await setSubscription(b.orgId, "active");

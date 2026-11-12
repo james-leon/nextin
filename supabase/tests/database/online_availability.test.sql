@@ -40,7 +40,7 @@ select is(tests.branch() ->> 'online_open', 'true', 'abonnement actif : ticket �
 select is(tests.branch() ->> 'requests_open', 'true', 'abonnement actif : demandes de rendez-vous ouvertes');
 select is(tests.request() ->> 'online_open', 'true', 'formulaire de demande : ouvert');
 
--- Quota de tickets du mois épuisé depuis la veille : plus de ticket en ligne, les demandes restent possibles.
+-- Quota de tickets du mois épuisé depuis la veille : plus de ticket en ligne ni de demande de rendez-vous.
 select set_config('role', 'postgres', true);
 update public.subscriptions set limit_overrides = '{"tickets_per_month": 1}' where organization_id = tests.id('org');
 insert into public.messaging_usage (organization_id, month, tickets_created, tickets_reached_on)
@@ -50,7 +50,7 @@ on conflict (organization_id, month) do update set tickets_created = 5, tickets_
 select set_config('role', 'anon', true);
 select is(tests.entry() ->> 'online_open', 'false', 'quota bloquant : prise de ticket fermée dès l''ouverture de la page');
 select is(tests.branch() ->> 'online_open', 'false', 'quota bloquant : ticket à distance fermé');
-select is(tests.branch() ->> 'requests_open', 'true', 'quota de tickets : les demandes de rendez-vous restent ouvertes');
+select is(tests.branch() ->> 'requests_open', 'false', 'quota de tickets : demandes de rendez-vous fermées aussi');
 
 -- Lecture seule, puis suspension : tout est fermé.
 select set_config('role', 'postgres', true);
