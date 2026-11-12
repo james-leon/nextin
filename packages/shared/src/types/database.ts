@@ -3131,6 +3131,9 @@ isOneToOne: false
 "org_has_open_branch":
 { Args: { "p_org": string }; Returns: boolean
                            },
+"org_is_public":
+{ Args: { "p_reason": string,"p_status": Database["public"]['Enums']["org_status"] }; Returns: boolean
+                           },
 "org_user_count":
 { Args: { "p_org": string }; Returns: number
                            },

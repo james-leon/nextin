@@ -2,9 +2,42 @@
 -- La base distante a reçu une version provisoire de cette migration (« online_intake_status » : fonctions
 -- `org_is_public` et `online_intake_open`, clé `online_available`) ; la CLI ne réapplique jamais un numéro déjà
 -- enregistré. Sans `online_open`, les pages client se croyaient toujours ouvertes.
--- Cette migration réapplique, à l'identique, la définition la plus récente de chaque objet (aucune migration
--- postérieure ne les redéfinit) : fonctions de 20261118090000_online_availability.sql, déclencheur d'écriture de
--- 20261114090000_pricing_v2.sql, droits d'exécution actuels. Sur une base déjà à jour (local, CI), rien ne change.
+-- Cette migration redéfinit chaque objet à partir de sa définition la plus récente (aucune migration postérieure ne
+-- les redéfinit) : fonctions de 20261118090000_online_availability.sql, déclencheur d'écriture de
+-- 20261114090000_pricing_v2.sql, droits d'exécution. Deux règles changent, sur toute base :
+-- 1. Quota de tickets du mois bloquant : les demandes de rendez-vous en ligne sont fermées aussi (`requests_open`,
+--    `request_options.online_open`), et refusées par la base (`monthly_quota_reached`).
+-- 2. Établissement suspendu pour impayé (`suspended`, motif `subscription`) : pages publiques toujours visibles, prise
+--    en ligne fermée ; suspendu par la modération ou en attente de validation : introuvable (`org_is_public`).
+
+-- ─── Établissement visible sur les pages publiques ───────────────────────────
+
+-- La version provisoire avait sa propre `org_is_public` : remplacée si sa signature diffère (nom des paramètres ou
+-- type de retour), ce que `create or replace` ne sait pas faire.
+do $$
+begin
+  if exists (
+    select 1 from pg_proc
+    where oid = to_regprocedure('public.org_is_public(public.org_status, text)')
+      and (prorettype <> 'boolean'::regtype or proargnames is distinct from array['p_status', 'p_reason'])
+  ) then
+    drop function public.org_is_public(public.org_status, text);
+  end if;
+end;
+$$;
+
+/**
+ * Établissement visible sur les pages publiques (QR code, agence, demande de rendez-vous) : actif, ou suspendu pour
+ * impayé (la page s'ouvre, la prise en ligne est fermée). Suspendu par la modération ou en attente : introuvable.
+ */
+create or replace function public.org_is_public(p_status public.org_status, p_reason text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select p_status = 'active' or (p_status = 'suspended' and p_reason = 'subscription');
+$$;
 
 -- ─── Disponibilité de la prise en ligne (20261118090000) ─────────────────────
 
@@ -22,7 +55,10 @@ as $$
   from (select public.org_entitlements(p_org) as e) x;
 $$;
 
-/** Demandes de rendez-vous en ligne ouvertes pour l'établissement (abonnement actif, fonction de la formule). */
+/**
+ * Demandes de rendez-vous en ligne ouvertes pour l'établissement : abonnement actif, fonction de la formule, quota de
+ * tickets du mois non bloquant (même règle que `enforce_subscription_on_write` pour `appointment_requests`).
+ */
 create or replace function public.online_requests_open(p_org uuid)
 returns boolean
 language sql
@@ -30,7 +66,9 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce((e ->> 'can_issue')::boolean, false) and coalesce((e -> 'features' ->> 'appointments')::boolean, false)
+  select coalesce((e ->> 'can_issue')::boolean, false)
+     and coalesce((e -> 'features' ->> 'appointments')::boolean, false)
+     and not coalesce((public.quota_status(p_org) -> 'tickets' ->> 'blocked')::boolean, false)
   from (select public.org_entitlements(p_org) as e) x;
 $$;
 
@@ -60,7 +98,7 @@ as $$
   )
   from public.qr_codes q
   join public.branches b on b.id = q.branch_id and b.active
-  join public.organizations o on o.id = q.organization_id and o.status = 'active'
+  join public.organizations o on o.id = q.organization_id and public.org_is_public(o.status, o.suspended_reason)
   join public.branch_settings bs on bs.branch_id = b.id
   where q.active and (q.token = p_code or q.short_code = upper(trim(p_code)))
   limit 1;
@@ -103,7 +141,7 @@ as $$
     'board', public.branch_board(b.id)
   )
   from public.branches b
-  join public.organizations o on o.id = b.organization_id and o.status = 'active'
+  join public.organizations o on o.id = b.organization_id and public.org_is_public(o.status, o.suspended_reason)
   join public.branch_settings bs on bs.branch_id = b.id and bs.public_listing_enabled
   where b.id = p_branch and b.active;
 $$;
@@ -121,7 +159,15 @@ declare
   v_tz text;
   v_today date;
 begin
-  v_bs := public.assert_requests_open(p_branch);
+  -- Comme `assert_requests_open`, mais visible aussi pour un établissement suspendu pour impayé (formulaire fermé) ;
+  -- `assert_requests_open` garde la règle stricte pour les écritures.
+  select bs.* into v_bs
+  from public.branch_settings bs
+  join public.branches b on b.id = bs.branch_id and b.active
+  join public.organizations o on o.id = b.organization_id and public.org_is_public(o.status, o.suspended_reason)
+  where bs.branch_id = p_branch;
+  if not found then raise exception 'not_found' using errcode = 'P0404'; end if;
+  if not v_bs.appointment_requests_enabled then raise exception 'requests_disabled' using errcode = 'P0422'; end if;
   select timezone into v_tz from public.branches where id = p_branch;
   v_today := (now() at time zone v_tz)::date;
   return jsonb_build_object(
@@ -156,13 +202,14 @@ begin
 end;
 $$;
 
--- ─── Écriture refusée selon l'abonnement (20261114090000_pricing_v2) ─────────
+-- ─── Écriture refusée selon l'abonnement (20261114090000_pricing_v2, + quota pour les demandes) ───
 
 /**
  * Émission de tickets et rendez-vous selon l'abonnement : rien en lecture seule ou suspendu ; ticket à distance et
  * rendez-vous si la formule les comprend ; tickets du mois : jamais de blocage le jour où la limite est atteinte (la
  * file continue jusqu'à la fermeture), refus (`monthly_quota_reached`) à partir du lendemain. Une réorientation ne
- * crée pas de nouvelle demande : jamais refusée.
+ * crée pas de nouvelle demande : jamais refusée. Même refus pour une demande de rendez-vous en ligne (le patient
+ * passerait un ticket à son arrivée) ; un rendez-vous pris par l'accueil reste possible.
  */
 create or replace function public.enforce_subscription_on_write()
 returns trigger
@@ -188,6 +235,10 @@ begin
     end if;
   elsif tg_table_name in ('appointments', 'appointment_requests') then
     perform public.assert_feature(new.organization_id, 'appointments');
+    if tg_table_name = 'appointment_requests'
+       and coalesce((public.quota_status(new.organization_id) -> 'tickets' ->> 'blocked')::boolean, false) then
+      raise exception 'monthly_quota_reached' using errcode = 'P0410', detail = 'tickets';
+    end if;
   end if;
   return new;
 end;
@@ -211,6 +262,8 @@ revoke execute on function public.online_tickets_open(uuid, boolean), public.onl
   public.enforce_subscription_on_write() from public, anon, authenticated;
 grant execute on function public.online_tickets_open(uuid, boolean), public.online_requests_open(uuid),
   public.enforce_subscription_on_write() to service_role;
+revoke execute on function public.org_is_public(public.org_status, text) from public, anon, authenticated;
+grant execute on function public.org_is_public(public.org_status, text) to service_role;
 -- Pages publiques (sans compte) et sessions anonymes des clients.
 revoke execute on function public.resolve_entry(text), public.branch_public(uuid), public.request_options(uuid) from public;
 grant execute on function public.resolve_entry(text), public.branch_public(uuid), public.request_options(uuid)
@@ -218,8 +271,8 @@ grant execute on function public.resolve_entry(text), public.branch_public(uuid)
 
 -- ─── Fonctions de la version provisoire ──────────────────────────────────────
 
--- `org_is_public` et `online_intake_open` (base distante seulement) : supprimées si plus rien ne les appelle
--- (fonctions, vues, policies) ; sinon gardées, avec un avertissement dans le journal de la migration.
+-- `online_intake_open` et les autres variantes d'`org_is_public` (base distante seulement) : supprimées si plus rien
+-- ne les appelle (fonctions, vues, policies) ; sinon gardées, avec un avertissement dans le journal de la migration.
 do $$
 declare
   v_fn record;
@@ -229,12 +282,17 @@ begin
     select p.oid, p.oid::regprocedure as sig, p.proname
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname in ('org_is_public', 'online_intake_open')
+      and p.oid is distinct from to_regprocedure('public.org_is_public(public.org_status, text)')
   loop
     select string_agg(u, ', ') into v_users from (
       select p.oid::regprocedure::text as u
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname not in ('pg_catalog', 'information_schema')
-        and p.proname not in ('org_is_public', 'online_intake_open')
+        and p.oid <> v_fn.oid
+        and p.oid is distinct from to_regprocedure('public.org_is_public(public.org_status, text)')
+        and p.proname <> 'online_intake_open'
+        -- Redéfinies ci-dessus : elles appellent la nouvelle `org_is_public(status, motif)`, pas l'ancienne.
+        and p.proname not in ('resolve_entry', 'branch_public', 'request_options')
         and p.prosrc ~ ('\m' || v_fn.proname || '\M')
       union all
       select c.oid::regclass::text

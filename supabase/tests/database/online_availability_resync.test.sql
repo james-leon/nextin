@@ -1,24 +1,32 @@
 -- pgTAP — Resynchronisation de 20261118090000 (migration 20261129090000) : état final attendu sur toute base,
 -- y compris la base distante qui avait reçu la version provisoire (`org_is_public`, `online_intake_open`,
 -- clé `online_available`). Fonctions présentes, droits, clés renvoyées aux pages client, et valeurs pour un
--- établissement actif, au quota de tickets bloqué, puis en lecture seule.
+-- établissement actif, au quota de tickets bloqué, en lecture seule, suspendu pour impayé (visible, fermé) et
+-- suspendu par la modération (introuvable).
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(25);
+select plan(40);
 alter table public.branch_settings alter column customer_name_mode set default 'off';
 
 -- ─── Structure ───────────────────────────────────────────────────────────────
 select has_function('public', 'online_tickets_open', array['uuid', 'boolean'], 'online_tickets_open présente');
 select has_function('public', 'online_requests_open', array['uuid'], 'online_requests_open présente');
-select hasnt_function('public', 'org_is_public', 'version provisoire : org_is_public absente');
+select has_function('public', 'org_is_public', array['org_status', 'text'], 'org_is_public(statut, motif) présente');
+select is((select count(*)::integer from pg_proc where proname = 'org_is_public'), 1, 'une seule org_is_public (variante provisoire retirée)');
+select ok(public.org_is_public('active', null), 'actif : visible');
+select ok(public.org_is_public('suspended', 'subscription'), 'suspendu pour impayé : visible');
+select ok(not public.org_is_public('suspended', 'moderation: contenu'), 'suspendu par la modération : masqué');
+select ok(not public.org_is_public('pending', null), 'en attente de validation : masqué');
 select hasnt_function('public', 'online_intake_open', 'version provisoire : online_intake_open absente');
 select function_privs_are('public', 'online_tickets_open', array['uuid', 'boolean'], 'anon', array[]::text[],
   'online_tickets_open : jamais appelable par un visiteur');
 select function_privs_are('public', 'online_requests_open', array['uuid'], 'authenticated', array[]::text[],
   'online_requests_open : jamais appelable par une session');
+select function_privs_are('public', 'org_is_public', array['org_status', 'text'], 'anon', array[]::text[],
+  'org_is_public : jamais appelable par un visiteur');
 select function_privs_are('public', 'resolve_entry', array['text'], 'anon', array['EXECUTE'], 'resolve_entry : pages publiques');
 select function_privs_are('public', 'branch_public', array['uuid'], 'anon', array['EXECUTE'], 'branch_public : pages publiques');
 select function_privs_are('public', 'request_options', array['uuid'], 'anon', array['EXECUTE'], 'request_options : pages publiques');
@@ -70,9 +78,15 @@ on conflict (organization_id, month) do update set tickets_created = 5, tickets_
 select set_config('role', 'anon', true);
 select is(tests.entry() -> 'online_open', 'false'::jsonb, 'quota bloqué : resolve_entry fermé');
 select is(tests.branch() -> 'online_open', 'false'::jsonb, 'quota bloqué : branch_public, ticket à distance fermé');
--- Le quota ne porte que sur les tickets : les demandes de rendez-vous restent possibles (règle de 20261118090000).
-select is(tests.branch() -> 'requests_open', 'true'::jsonb, 'quota bloqué : branch_public, demandes toujours ouvertes');
-select is(tests.request() -> 'online_open', 'true'::jsonb, 'quota bloqué : request_options toujours ouvert');
+-- Les demandes de rendez-vous en ligne sont fermées aussi (le patient passerait un ticket à son arrivée).
+select is(tests.branch() -> 'requests_open', 'false'::jsonb, 'quota bloqué : branch_public, demandes fermées');
+select is(tests.request() -> 'online_open', 'false'::jsonb, 'quota bloqué : request_options fermé');
+select set_config('role', 'postgres', true);
+select throws_ok(format($$ insert into public.appointment_requests (organization_id, branch_id, service_id, status)
+  select %L, %L, (select id from public.services where branch_id = %L limit 1), 'pending' $$,
+  tests.id('org'), tests.id('branch'), tests.id('branch')),
+  'P0410', 'monthly_quota_reached', 'quota bloqué : demande refusée par la base aussi');
+select set_config('role', 'anon', true);
 
 -- ─── Lecture seule : tout est fermé ─────────────────────────────────────────
 select set_config('role', 'postgres', true);
@@ -83,6 +97,25 @@ select is(tests.entry() -> 'online_open', 'false'::jsonb, 'lecture seule : resol
 select is(tests.branch() -> 'online_open', 'false'::jsonb, 'lecture seule : branch_public, ticket à distance fermé');
 select is(tests.branch() -> 'requests_open', 'false'::jsonb, 'lecture seule : branch_public, demandes fermées');
 select is(tests.request() -> 'online_open', 'false'::jsonb, 'lecture seule : request_options fermé');
+
+-- ─── Suspendu pour impayé : pages visibles, prise en ligne fermée ───────────
+select set_config('role', 'postgres', true);
+update public.subscriptions set status = 'suspended', suspended_since = now() where organization_id = tests.id('org');
+update public.organizations set status = 'suspended', suspended_reason = 'subscription' where id = tests.id('org');
+select set_config('role', 'anon', true);
+select ok(tests.entry() is not null, 'suspendu pour impayé : /q visible');
+select is(tests.entry() -> 'online_open', 'false'::jsonb, 'suspendu pour impayé : resolve_entry fermé');
+select is(tests.branch() -> 'online_open', 'false'::jsonb, 'suspendu pour impayé : branch_public visible, ticket à distance fermé');
+select is(tests.branch() -> 'requests_open', 'false'::jsonb, 'suspendu pour impayé : branch_public, demandes fermées');
+select is(tests.request() -> 'online_open', 'false'::jsonb, 'suspendu pour impayé : request_options visible et fermé');
+
+-- ─── Suspendu par la modération : introuvable ───────────────────────────────
+select set_config('role', 'postgres', true);
+update public.organizations set suspended_reason = 'moderation: contenu non conforme' where id = tests.id('org');
+select set_config('role', 'anon', true);
+select ok(tests.entry() is null, 'suspendu par la modération : /q introuvable');
+select ok(tests.branch() is null, 'suspendu par la modération : branch_public introuvable');
+select throws_ok('select tests.request()', 'P0404', 'not_found', 'suspendu par la modération : request_options introuvable');
 
 select set_config('role', 'postgres', true);
 select * from finish();
