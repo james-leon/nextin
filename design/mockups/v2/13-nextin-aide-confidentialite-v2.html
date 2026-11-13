@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>NextIn Aide et confidentialité</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 : police système Apple, aplats, une seule couleur d'accent par écran, listes groupées, motif des points du logo */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000000; --label2:rgba(60,60,67,.62); --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFFFFF; --blue:#1A6BB5; --orange:#F58B1F; --orange-text:#B85E00; --green:#15A05A; --tint:#E8F0F9;
+  --bar:rgba(249,249,249,.94); --ticket:#0D2C54; --frame:#1C1C1E;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFFFFF;--label2:rgba(235,235,245,.6);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--orange-text:#FFA94D;--tint:#15263D;--bar:rgba(22,22,24,.94);--ticket:#FFFFFF;--frame:#3A3A3C;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFFFFF;--label2:rgba(235,235,245,.6);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--orange-text:#FFA94D;--tint:#15263D;--bar:rgba(22,22,24,.94);--ticket:#FFFFFF;--frame:#3A3A3C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:17px;letter-spacing:-.01em}
+.page{max-width:1400px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.intro{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;margin-bottom:28px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:52ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;max-width:640px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px;color:var(--label)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px}
+figcaption{font-size:13px;color:var(--label2);text-align:center}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+
+/* Téléphone */
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.body{flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:31px;font-weight:700;letter-spacing:-.025em;margin:4px 0 0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.navbar{display:flex;align-items:center;height:36px;color:var(--blue);font-size:17px;gap:2px;flex:none;padding:0 8px}
+.navbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* Listes groupées iOS */
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -10px 16px}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.pastille{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:600;font-size:15px;flex:none;font-family:var(--num)}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Boutons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.action{background:var(--orange);color:#fff}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.link{color:var(--label2);font-size:15px;text-align:center}
+
+/* Barre d'onglets iOS */
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--bar);border-top:.5px solid var(--sep);padding:6px 4px 22px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:500;color:var(--label2)}
+.tab svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--blue)}
+
+/* Motif des points du logo */
+.dots{display:flex;align-items:flex-end;gap:6px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--fill)}
+.dots i.done{background:var(--label3)}
+.dots i.me{width:14px;height:14px;background:var(--orange)}
+.loader{display:flex;gap:7px;align-items:flex-end;height:16px}
+.loader i{width:9px;height:9px;border-radius:50%;background:var(--blue);animation:hop 1.2s infinite ease-in-out}
+.loader i:nth-child(2){animation-delay:.15s;width:8px;height:8px}.loader i:nth-child(3){animation-delay:.3s;width:7px;height:7px}
+@keyframes hop{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-6px);opacity:1}}
+@media (prefers-reduced-motion:reduce){.loader i{animation:none;opacity:.8}}
+
+/* Ticket */
+.num{font-family:var(--num);font-weight:700;letter-spacing:-.02em}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--green)}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.tk{background:var(--cell);border-radius:16px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px}
+.tk .code{font-size:68px;line-height:1;color:var(--ticket)}
+.stats{display:grid;grid-template-columns:1fr 1fr;border-top:.5px solid var(--sep);padding-top:12px}
+.stats div + div{border-left:.5px solid var(--sep);padding-left:14px}
+.stats b{display:block;font-family:var(--num);font-size:26px;font-weight:700;line-height:1.1}
+.stats small{font-size:13px;color:var(--label2)}
+
+/* Écrans spéciaux */
+.splash{background:var(--cell);align-items:center;justify-content:center;gap:16px}
+.splash .logo{width:92px;height:92px}
+.splash h2{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.splash p{margin:-8px 0 8px;color:var(--label2);font-size:15px}
+.called{background:var(--green);color:#fff}
+.called .status{color:#fff}
+.called .body{justify-content:center;align-items:center;text-align:center;gap:10px}
+.called .btn{background:#fff;color:#0B6B3C;margin-top:28px}
+.photo{height:126px;background:#C9D6E3;position:relative;display:flex;align-items:flex-end;padding:10px}
+.photo svg{position:absolute;inset:0;width:100%;height:100%}
+.feat{background:var(--cell);border-radius:16px;overflow:hidden}
+.feat .in{padding:12px 14px 14px;display:flex;flex-direction:column;gap:2px}
+.feat b{font-size:17px;font-weight:600}
+.feat small{font-size:13px;color:var(--label2)}
+.chips{display:flex;gap:8px;overflow:hidden}
+.chip{flex:none;font-size:14px;font-weight:500;padding:7px 13px;border-radius:999px;background:var(--fill);color:var(--label)}
+.chip.on{background:var(--navy);color:var(--onnavy)}
+.games{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.game{background:var(--cell);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:126px}
+.game b{font-size:16px;font-weight:600}
+.game small{font-size:13px;color:var(--label2);margin-top:-8px}
+.mini{display:flex;align-items:center;gap:10px;background:var(--cell);border-radius:12px;padding:10px 14px}
+.mini .num{font-size:22px;color:var(--ticket);white-space:nowrap}
+.mini .live{white-space:nowrap}
+.mini small{color:var(--label2);font-size:13px}
+.sponsor{font-size:12px;color:var(--label2);text-align:center}
+</style>
+<style>
+.faq{background:var(--cell);border-radius:12px;overflow:hidden}
+.faq details{position:relative}
+.faq details + details::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--sep)}
+.faq summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;font-size:15px;cursor:pointer}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary svg{width:16px;height:16px;stroke:var(--label3);fill:none;stroke-width:2.2;margin-left:auto;flex:none;transition:transform .2s}
+.faq details[open] summary svg{transform:rotate(180deg)}
+.faq details p{margin:-4px 14px 12px;font-size:14px;color:var(--label2);line-height:1.45}
+.contact{background:var(--cell);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.contact .top{display:flex;align-items:center;gap:10px}
+.contact .top b{font-size:16px;font-weight:600;display:block}
+.contact .top small{font-size:13px;color:var(--green);font-weight:600}
+.callbtn{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:12px;background:var(--tint);color:var(--blue);font-weight:600;font-size:16px}
+.callbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hours{font-size:13px;color:var(--label2);line-height:1.5}
+.scroll{overflow:auto}
+.promise{background:var(--cell);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.promise div{display:flex;gap:10px;font-size:14px;line-height:1.4}
+.promise svg{width:18px;height:18px;stroke:var(--green);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px}
+.win{width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--sep);background:var(--bg);margin-top:36px}
+.chrome{height:30px;background:var(--cell);border-bottom:.5px solid var(--sep);display:flex;align-items:center;gap:7px;padding:0 12px}
+.chrome i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.chrome span{margin:0 auto;font-size:12px;color:var(--label2)}
+.legal{display:grid;grid-template-columns:240px minmax(0,1fr);gap:40px;padding:32px 40px 48px;max-width:1100px;margin:0 auto}
+.toc{position:sticky;top:20px;align-self:start;display:flex;flex-direction:column;gap:2px}
+.toc .h{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--label2);margin-bottom:6px}
+.toc a{font-size:14px;color:var(--label);text-decoration:none;padding:5px 8px;border-radius:6px}
+.toc a:hover{background:var(--fill)}
+.docx{min-width:0;max-width:68ch;font-size:16px;line-height:1.6}
+.docx h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.025em}
+.docx .ver{color:var(--label2);font-size:14px;margin:6px 0 20px}
+.docx h2{font-size:21px;font-weight:700;margin:34px 0 8px;letter-spacing:-.01em;scroll-margin-top:16px}
+.docx h3{font-size:16px;font-weight:600;margin:20px 0 6px}
+.docx p{margin:0 0 10px}
+.docx ul{margin:0 0 10px;padding-left:20px}
+.docx li{margin-bottom:6px}
+.docx mark{background:#FFF3C4;color:#7A5A00;border-radius:3px;padding:0 3px}
+.tw{overflow-x:auto;margin:6px 0 14px}
+.docx table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.45}
+.docx th{text-align:left;font-size:12px;color:var(--label2);font-weight:600;padding:8px 10px 8px 0;border-bottom:.5px solid var(--sep)}
+.docx td{padding:9px 10px 9px 0;border-bottom:.5px solid var(--sep);vertical-align:top}
+.brief{background:var(--cell);border-radius:14px;padding:16px 18px;margin:0 0 8px}
+.brief b.t{display:block;font-size:15px;margin-bottom:8px}
+.brief div{display:flex;gap:10px;font-size:15px;line-height:1.45;margin-top:6px}
+.brief svg{width:18px;height:18px;stroke:var(--green);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:3px}
+.cap2{font-size:14px;color:var(--label2);margin:10px 0 0}
+@media (max-width:860px){.legal{grid-template-columns:minmax(0,1fr);padding:20px 16px 32px}.toc{display:none}}
+</style>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-1a2 2 0 0 1 0-4 2 2 0 0 0 0-4V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2"/></symbol>
+  <symbol id="i-keypad" viewBox="0 0 24 24"><path d="M6 5h.01M12 5h.01M18 5h.01M6 11h.01M12 11h.01M18 11h.01M6 17h.01M12 17h.01M18 17h.01" stroke-width="3.2"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5l-5 5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.2-4.4A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/><circle cx="12" cy="12" r="9"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 13l7-2 4-7h2l-1.5 7H20l2 2-2 2h-5.5L16 22h-2l-4-7-7-2z"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="3" y="6" width="9" height="13" rx="2"/><rect x="12" y="4" width="9" height="13" rx="2"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 16.5h.01"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.5"/><rect x="23.5" y="4" width="2" height="4" rx="1" opacity=".4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="intro"><div><h1>NextIn — aide et confidentialité v2</h1><p>L'aide s'ouvre depuis le ticket : d'abord l'établissement à joindre, puis les questions fréquentes. La politique de confidentialité commence par un résumé en clair, puis le texte complet.</p></div></header>
+  <div class="grid">
+    <figure><div class="phone"><div class="screen"><div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+      <div class="navbar"><svg><use href="#i-back"/></svg>Mon ticket</div>
+      <div class="body scroll" style="gap:14px">
+        <h2 class="large">Aide</h2>
+        <div class="ghead">Votre établissement</div>
+        <div class="contact"><div class="top"><div class="sq" style="background:#1A6BB5"><svg><use href="#i-cross"/></svg></div><div><b>Douala Clinic · Makepe</b><small>Ouvert maintenant</small></div></div>
+          <div class="callbtn"><svg><use href="#i-phone"/></svg>Appeler l'accueil</div>
+          <div class="hours">Lun.–ven. 07:30–18:00 · sam. 08:00–13:00 · dim. fermé</div></div>
+        <div class="ghead">Questions fréquentes</div>
+        <div class="faq"><details><summary>Comment prendre un ticket ?<svg><use href="#i-down"/></svg></summary><p>Scannez le QR code affiché dans l'établissement, ou saisissez son code dans l'onglet Scanner. Choisissez le service : votre numéro s'affiche aussitôt.</p></details><details><summary>Faut-il installer une application ?<svg><use href="#i-down"/></svg></summary><p>Non. NextIn s'ouvre dans le navigateur de votre téléphone, sans compte ni mot de passe.</p></details><details open><summary>Comment suis-je prévenu de mon tour ?<svg><use href="#i-down"/></svg></summary><p>La page de votre ticket se met à jour en direct. Vous pouvez aussi recevoir vos alertes sur WhatsApp : touchez « Recevoir mes alertes sur WhatsApp » sous votre ticket.</p></details><details><summary>Puis-je m'éloigner en attendant ?<svg><use href="#i-down"/></svg></summary><p>Oui, gardez la page de votre ticket ouverte ou activez les alertes. Revenez quand il reste peu de personnes devant vous.</p></details><details><summary>Et si je manque mon appel ?<svg><use href="#i-down"/></svg></summary><p>Votre ticket recule de quelques places et vous êtes rappelé. Après un second appel manqué, il est annulé : adressez-vous alors à l'accueil.</p></details><details><summary>Comment annuler mon ticket ?<svg><use href="#i-down"/></svg></summary><p>En bas de la page de votre ticket, touchez « Annuler le ticket ». Cela libère votre place pour les suivants.</p></details><details><summary>Le temps d'attente est-il exact ?<svg><use href="#i-down"/></svg></summary><p>C'est une estimation calculée à partir de la durée réelle des passages du jour. Elle s'ajuste en direct.</p></details><details><summary>Que deviennent mes données ?<svg><use href="#i-down"/></svg></summary><p>Votre nom, si l'établissement le demande, n'est vu que par son personnel : jamais sur l'écran ni dans les annonces. Vos données sont effacées après 30 jours.</p></details></div>
+      </div></div></div>
+      <figcaption><b>Aide</b>Ouverte depuis le ticket : le bon établissement et son numéro d'abord. Les réponses s'ouvrent d'un toucher, sans chargement.</figcaption></figure>
+
+    <figure><div class="phone"><div class="screen"><div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+      <div class="navbar"><svg><use href="#i-back"/></svg>Profil</div>
+      <div class="body scroll" style="gap:14px">
+        <div><div class="over">Version 1.0</div><h2 class="large" style="font-size:28px">Confidentialité</h2></div>
+        <div class="promise"><b style="font-size:15px">En bref</b>
+          <div><svg><use href="#i-check"/></svg><span>Votre nom n'est <b>jamais</b> affiché sur l'écran de la salle ni annoncé.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Vos données ne sont <b>jamais vendues</b>.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Aucune publicité ciblée avec vos données personnelles ou de santé.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Nom et numéro effacés <b>30 jours</b> après votre passage.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Votre position n'est <b>jamais enregistrée</b>.</span></div>
+        </div>
+        <div class="group" style="--inset:14px">
+          <div class="row"><div class="t"><b>1. Qui sommes-nous ?</b></div><svg class="chev"><use href="#i-chev"/></svg></div><div class="row"><div class="t"><b>2. Qui est responsable de vos données ?</b></div><svg class="chev"><use href="#i-chev"/></svg></div><div class="row"><div class="t"><b>3. Quelles données, et pourquoi ?</b></div><svg class="chev"><use href="#i-chev"/></svg></div><div class="row"><div class="t"><b>4. Qui peut voir vos données ?</b></div><svg class="chev"><use href="#i-chev"/></svg></div><div class="row"><div class="t"><b>5. Combien de temps ?</b></div><svg class="chev"><use href="#i-chev"/></svg></div><div class="row"><div class="t"><b>6. Sécurité</b></div><svg class="chev"><use href="#i-chev"/></svg></div><div class="row"><div class="t"><b>7. Vos droits</b></div><svg class="chev"><use href="#i-chev"/></svg></div>
+        </div>
+      </div></div></div>
+      <figcaption><b>Confidentialité sur téléphone</b>Cinq promesses en clair d'abord, puis les sections du texte complet.</figcaption></figure>
+  </div>
+
+  <div class="win">
+    <div class="chrome"><i></i><i></i><i></i><span>nextin.wintekservices.com/confidentialite</span></div>
+    <div class="legal">
+      <nav class="toc" aria-label="Sommaire"><span class="h">Sommaire</span><a href="#s1">1. Qui sommes-nous ?</a><a href="#s2">2. Qui est responsable de vos données ?</a><a href="#s3">3. Quelles données, et pourquoi ?</a><a href="#s4">4. Qui peut voir vos données ?</a><a href="#s5">5. Combien de temps ?</a><a href="#s6">6. Sécurité</a><a href="#s7">7. Vos droits</a><a href="#s8">8. Cookies et stockage sur l'appareil</a><a href="#s9">9. Mineurs</a><a href="#s10">10. Modifications</a><a href="#s11">11. Contact</a></nav>
+      <article class="docx">
+        <h1>Politique de confidentialité</h1>
+        <p class="ver">Version 1.0 · en vigueur le <mark>DATE DE MISE EN LIGNE</mark> · Loi n° 2024/017 du 23 décembre 2024</p>
+        <div class="brief"><b class="t">En bref</b>
+          <div><svg><use href="#i-check"/></svg><span>Votre nom n'est jamais affiché sur l'écran de la salle, jamais annoncé, jamais envoyé par WhatsApp ou SMS.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Vos données ne sont jamais vendues ; les annonceurs ne reçoivent que des statistiques anonymes.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Nom, numéro et commentaires sont effacés automatiquement 30 jours après votre passage.</span></div>
+          <div><svg><use href="#i-check"/></svg><span>Pour toute demande : contact@wintekservices.com · +237 690 72 23 16.</span></div>
+        </div>
+        <h2 id="s1">1. Qui sommes-nous ?</h2>
+<p>NextIn est édité par WINTEK (Winner Teknology), RC/DLA/2021/A/1608, Rond-point Poulenc, Makepe (face EEC), Douala, Cameroun. Contact pour vos données : contact@wintekservices.com — +237 690 72 23 16.</p>
+<p>Cette politique respecte la loi n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun.</p>
+<h2 id="s2">2. Qui est responsable de vos données ?</h2>
+<ul>
+<li><b>Données des visiteurs</b> (ticket, nom, numéro de téléphone, rendez-vous) : l'<b>établissement</b> que vous visitez en est responsable. Wintek les traite <b>pour son compte et selon ses instructions</b>, uniquement pour faire fonctionner le service.</li>
+<li><b>Données des comptes</b> (personnel des établissements, annonceurs) et <b>facturation</b> : Wintek en est responsable.</li>
+</ul>
+<h2 id="s3">3. Quelles données, et pourquoi ?</h2>
+<h3>Visiteurs</h3>
+<div class="tw"><table><thead><tr><th>Donnée</th><th>Pourquoi</th><th>Obligatoire ?</th></tr></thead><tbody>
+<tr><td>Ticket (numéro, service, heures, statut)</td><td>Gérer votre place dans la file</td><td>Oui</td></tr>
+<tr><td>Identifiant technique de l'appareil (session anonyme)</td><td>Retrouver votre ticket sans créer de compte</td><td>Oui</td></tr>
+<tr><td>Nom, et selon l'établissement âge ou numéro de dossier</td><td>Permettre au personnel de savoir qui il reçoit</td><td>Selon le réglage de l'établissement</td></tr>
+<tr><td>Numéro WhatsApp ou de téléphone</td><td>Vous prévenir quand votre tour approche, confirmer un rendez-vous</td><td>Non, seulement si vous le choisissez</td></tr>
+<tr><td>Position du téléphone</td><td>Calculer la distance et le moment de partir pour un ticket à distance</td><td>Non. <b>Jamais enregistrée</b> : seule une durée de trajet estimée est gardée</td></tr>
+<tr><td>Note et commentaire après le passage</td><td>Améliorer le service de l'établissement</td><td>Non</td></tr>
+<tr><td>Parties de jeu, bons de réduction</td><td>Vous proposer un jeu et un bon pendant l'attente</td><td>Non</td></tr>
+</tbody></table></div>
+<h3>Personnel et annonceurs</h3>
+<p>Nom, e-mail, téléphone, rôle, agences attribuées, journal des actions sensibles (sécurité), informations de facturation.</p>
+<h3>Ce que nous ne faisons jamais</h3>
+<ul>
+<li>Votre <b>nom n'est jamais affiché sur l'écran de la salle, jamais annoncé</b> et jamais envoyé par WhatsApp ou SMS. Seul le numéro du ticket est appelé.</li>
+<li>Vos données ne sont <b>jamais vendues</b>.</li>
+<li><b>Aucune publicité n'est ciblée à partir de vos données personnelles ou de santé.</b> Les annonceurs ne reçoivent que des statistiques anonymes (affichages, clics, bons utilisés).</li>
+</ul>
+<h2 id="s4">4. Qui peut voir vos données ?</h2>
+<ul>
+<li>Le <b>personnel de l'établissement</b> que vous visitez, et seulement celui de l'agence concernée.</li>
+<li>Les <b>équipes Wintek</b> pour la maintenance et l'assistance, avec un accès limité et journalisé. La console Wintek n'a pas accès aux noms des visiteurs.</li>
+<li>Nos <b>prestataires techniques</b>, uniquement pour faire fonctionner le service : hébergement et base de données (Supabase, Vercel), messagerie (Meta / WhatsApp, fournisseur SMS <mark>À COMPLÉTER</mark>), paiement Mobile Money (<mark>NOTCH PAY / CINETPAY</mark>), protection anti-robot (Cloudflare).</li>
+<li>Les autorités, si la loi l'exige.</li>
+</ul>
+<p>Certains prestataires hébergent les données hors du Cameroun (<mark>RÉGION D'HÉBERGEMENT À COMPLÉTER</mark>). Ces transferts sont encadrés par des garanties contractuelles et réalisés conformément à la loi.</p>
+<h2 id="s5">5. Combien de temps ?</h2>
+<ul>
+<li><b>Nom, numéro de téléphone, commentaires, lien du ticket</b> : supprimés automatiquement <b>30 jours</b> après le passage (durée réglable par l'établissement, dans les limites de la loi). Il ne reste ensuite que des statistiques anonymes.</li>
+<li><b>Numéros ayant demandé l'arrêt des messages (STOP)</b> : conservés uniquement sous forme d'empreinte irréversible (le numéro lui-même n'est pas lisible), pour respecter ce choix.</li>
+<li><b>Comptes du personnel</b> : pendant la durée de l'abonnement, puis supprimés 30 jours après la suspension de l'établissement.</li>
+<li><b>Factures</b> : conservées pendant la durée exigée par les obligations comptables.</li>
+</ul>
+<h2 id="s6">6. Sécurité</h2>
+<p>Données chiffrées pendant leur transport ; séparation stricte entre établissements (chaque établissement ne voit que ses propres données) ; accès par rôle ; journal des actions sensibles ; limitation des tentatives abusives ; masquage du nom des visiteurs sur l'écran du poste après quelques minutes sans activité.</p>
+<p>En cas d'incident touchant vos données, Wintek prévient sans délai l'établissement concerné et l'autorité compétente, comme la loi le prévoit.</p>
+<h2 id="s7">7. Vos droits</h2>
+<p>Vous pouvez demander à <b>accéder</b> à vos données, les <b>corriger</b>, les <b>supprimer</b>, vous <b>opposer</b> à leur traitement ou <b>retirer votre consentement</b> (par exemple aux messages WhatsApp : répondez STOP).</p>
+<ul>
+<li>Pour une donnée liée à votre visite : adressez-vous à l'établissement, ou écrivez-nous, nous transmettrons.</li>
+<li>Pour un compte du personnel ou d'annonceur : écrivez à contact@wintekservices.com.</li>
+</ul>
+<p>Nous répondons dans le délai prévu par la loi. Vous pouvez aussi saisir l'autorité camerounaise de protection des données.</p>
+<h2 id="s8">8. Cookies et stockage sur l'appareil</h2>
+<p>NextIn utilise uniquement des éléments <b>techniques nécessaires</b> : maintien de la connexion, langue, apparence (clair ou sombre), ticket en cours, nom mémorisé sur votre téléphone si vous l'avez saisi. Aucun cookie publicitaire ni de suivi d'un site à l'autre.</p>
+<h2 id="s9">9. Mineurs</h2>
+<p>NextIn ne demande pas d'informations sur l'âge des visiteurs, sauf si l'établissement l'exige pour son accueil (par exemple une clinique). Les données d'un mineur sont alors saisies et traitées sous la responsabilité de l'établissement et de son représentant légal.</p>
+<h2 id="s10">10. Modifications</h2>
+<p>Cette politique peut évoluer. La version en vigueur est toujours accessible dans l'application, avec sa date.</p>
+<h2 id="s11">11. Contact</h2>
+<p>contact@wintekservices.com — +237 690 72 23 16 — Wintek, Rond-point Poulenc, Makepe (face EEC), Douala.</p>
+      </article>
+    </div>
+  </div>
+  <p class="cap2"><b style="color:var(--label)">Sur ordinateur.</b> Sommaire fixe à gauche, texte en colonne de lecture (68 caractères). Les mentions à compléter avant publication sont surlignées en jaune, comme dans l'app. Le texte est celui du dépôt (docs/NEXTIN_CONFIDENTIALITE.md), à faire relire par un juriste.</p>
+</div>
+
+</html>

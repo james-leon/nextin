@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>NextIn Facture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Modèle de facture A4 : document imprimé, encre bleu nuit sur papier blanc ; mêmes champs que la facture générée par l'app */
+:root{--ink:#0D2C54;--text:#1C2733;--ink2:#5B6878;--line:#DCE3EC;--soft:#F4F6F9;--accent:#D9701A;--green:#0E7A44;--paper:#fff;--desk:#E5E5EA;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--desk:#1C1C1E}}
+:root[data-theme="dark"]{--desk:#1C1C1E}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);font-family:var(--font);-webkit-font-smoothing:antialiased;color:var(--text)}
+.wrap{padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:center;gap:14px}
+.a4{width:100%;max-width:760px;aspect-ratio:210/297;background:var(--paper);container-type:inline-size;box-shadow:0 1px 2px rgba(0,0,0,.12),0 12px 40px rgba(0,0,0,.12)}
+.in{padding:7cqw 7.5cqw 6cqw;display:flex;flex-direction:column;height:100%;font-size:1.75cqw;line-height:1.45}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dates span{white-space:nowrap}
+.r{text-align:right}
+.head{display:flex;justify-content:space-between;gap:4cqw;align-items:flex-start}
+.brand{display:flex;align-items:center;gap:1.6cqw}
+.brand svg{width:6cqw;height:6cqw}
+.brand b{display:block;font-size:2.9cqw;color:var(--ink);letter-spacing:-.01em}
+.brand small{color:var(--ink2);font-size:1.6cqw}
+.title{text-align:right}
+.title h1{margin:0;font-size:5cqw;line-height:1;color:var(--ink);font-weight:800;letter-spacing:-.03em}
+.title .no{font-size:2cqw;font-weight:600;color:var(--ink);margin-top:.8cqw}
+.state{display:inline-block;margin-top:1.2cqw;font-size:1.5cqw;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:.25cqw solid var(--accent);color:var(--accent);border-radius:1cqw;padding:.4cqw 1.2cqw}
+.parties{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3cqw;margin-top:5.5cqw;padding-top:3cqw;border-top:.2cqw solid var(--ink)}
+.lbl{font-size:1.35cqw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:.8cqw}
+.parties b{color:var(--ink);font-size:1.9cqw}
+.parties p{margin:0}
+.dates p{display:flex;justify-content:space-between;gap:2cqw}
+.dates span{color:var(--ink2)}
+table{width:100%;border-collapse:collapse;margin-top:5cqw}
+th{font-size:1.35cqw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:left;padding:0 0 1.2cqw;border-bottom:.15cqw solid var(--line)}
+td{padding:1.8cqw 0;border-bottom:.15cqw solid var(--line);vertical-align:top}
+td b{color:var(--ink);font-weight:600}
+td small{display:block;color:var(--ink2);font-size:1.5cqw}
+th.r,td.r{text-align:right}
+.totals{margin-left:auto;width:48%;margin-top:2cqw}
+.totals p{display:flex;justify-content:space-between;margin:0;padding:.9cqw 0}
+.totals p span:first-child{color:var(--ink2)}
+.totals .grand{border-top:.2cqw solid var(--ink);margin-top:.8cqw;padding-top:1.6cqw}
+.totals .grand span{color:var(--ink)!important;font-weight:700;font-size:2.3cqw}
+.words{text-align:right;font-size:1.5cqw;color:var(--ink2);font-style:italic;margin-top:.6cqw}
+.pay{margin-top:auto;display:grid;grid-template-columns:auto 1fr;gap:3cqw;align-items:center;background:var(--soft);border-radius:2cqw;padding:2.6cqw 3cqw}
+.pay svg{width:13cqw;height:13cqw;display:block;background:#fff;border-radius:1cqw;padding:.8cqw}
+.pay b{display:block;color:var(--ink);font-size:2.1cqw}
+.pay p{margin:.4cqw 0 0;color:var(--ink2)}
+.pay .link{color:var(--ink);font-weight:600}
+.legal{margin-top:3cqw;padding-top:2cqw;border-top:.15cqw solid var(--line);font-size:1.4cqw;color:var(--ink2);display:flex;justify-content:space-between;gap:3cqw}
+.legal .todo{background:#FFF3C4;color:#7A5A00;padding:0 .4em;border-radius:.3em}
+.paid{border-color:var(--green);color:var(--green)}
+.note{max-width:760px;font-size:13px;color:#6B7785;text-align:center;line-height:1.45}
+@page{size:A4;margin:0}
+@media print{body{background:#fff}.wrap{padding:0}.a4{max-width:none;width:210mm;height:297mm;box-shadow:none}.note{display:none}}
+</style>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs><symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol></svg>
+<div class="wrap">
+  <article class="a4" aria-label="Facture FAC-2026-000014"><div class="in">
+    <header class="head">
+      <div class="brand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>by Wintek · Winner Teknology</small></div></div>
+      <div class="title"><h1>Facture</h1><div class="no num">FAC-2026-000014</div><span class="state">À régler</span></div>
+    </header>
+
+    <section class="parties">
+      <div><div class="lbl">Émise par</div><p><b>Winner Teknology (Wintek)</b></p><p>Rond-point Poulenc, Makepe<br>face EEC, Douala</p><p>RC : RC/DLA/2021/A/1608</p><p>NIU : <span class="todo">à compléter</span></p></div>
+      <div><div class="lbl">Facturée à</div><p><b>Douala Clinic</b></p><p>Douala</p><p>+237 6 90 00 00 00</p><p>compta@doualaclinic.cm</p></div>
+      <div class="dates"><div class="lbl">Dates</div><p><span>Émise le</span><span>21 nov. 2026</span></p><p><span>À régler avant le</span><span>28 nov. 2026</span></p><p><span>Période</span><span>21 nov. → 20 déc.</span></p></div>
+    </section>
+
+    <table>
+      <thead><tr><th>Désignation</th><th class="r">Qté</th><th class="r">Prix unitaire</th><th class="r">Montant</th></tr></thead>
+      <tbody>
+        <tr><td><b>Abonnement NextIn Business</b><small>Mensuel · 1 agence (Makepe) · du 21 nov. au 20 déc. 2026</small></td><td class="r num">1</td><td class="r num">59 900</td><td class="r num">59 900</td></tr>
+        <tr><td><b>Pack 500 messages WhatsApp</b><small>Ajouté au quota de novembre 2026</small></td><td class="r num">1</td><td class="r num">7 500</td><td class="r num">7 500</td></tr>
+        <tr><td><b>Remise de lancement</b><small>Établissement pilote · −10 % sur l'abonnement</small></td><td class="r num"></td><td class="r num"></td><td class="r num">−5 990</td></tr>
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <p><span>Sous-total</span><span class="num">61 410 FCFA</span></p>
+      <p><span>TVA (0 %)</span><span class="num">0 FCFA</span></p>
+      <p class="grand"><span>Total à payer</span><span class="num">61 410 FCFA</span></p>
+    </div>
+    <div class="words">Arrêtée à la somme de soixante et un mille quatre cent dix francs CFA.</div>
+
+    <section class="pay">
+      <svg viewBox="-1 -1 31 31" role="img" aria-label="QR code de paiement"><rect x="-1" y="-1" width="31" height="31" fill="#fff"/><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM11 0h1v1h-1zM12 0h1v1h-1zM13 0h1v1h-1zM14 0h1v1h-1zM16 0h1v1h-1zM18 0h1v1h-1zM19 0h1v1h-1zM20 0h1v1h-1zM22 0h1v1h-1zM23 0h1v1h-1zM24 0h1v1h-1zM25 0h1v1h-1zM26 0h1v1h-1zM27 0h1v1h-1zM28 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h1v1h-1zM10 1h1v1h-1zM12 1h1v1h-1zM14 1h1v1h-1zM16 1h1v1h-1zM17 1h1v1h-1zM18 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM13 2h1v1h-1zM14 2h1v1h-1zM16 2h1v1h-1zM18 2h1v1h-1zM22 2h1v1h-1zM24 2h1v1h-1zM25 2h1v1h-1zM26 2h1v1h-1zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM8 3h1v1h-1zM10 3h1v1h-1zM12 3h1v1h-1zM15 3h1v1h-1zM17 3h1v1h-1zM20 3h1v1h-1zM22 3h1v1h-1zM24 3h1v1h-1zM25 3h1v1h-1zM26 3h1v1h-1zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM17 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM25 4h1v1h-1zM26 4h1v1h-1zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM14 5h1v1h-1zM16 5h1v1h-1zM17 5h1v1h-1zM19 5h1v1h-1zM20 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM23 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM13 7h1v1h-1zM14 7h1v1h-1zM17 7h1v1h-1zM19 7h1v1h-1zM20 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM9 8h1v1h-1zM10 8h1v1h-1zM11 8h1v1h-1zM12 8h1v1h-1zM13 8h1v1h-1zM14 8h1v1h-1zM17 8h1v1h-1zM18 8h1v1h-1zM22 8h1v1h-1zM25 8h1v1h-1zM27 8h1v1h-1zM28 8h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM16 9h1v1h-1zM19 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM23 9h1v1h-1zM24 9h1v1h-1zM28 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM22 10h1v1h-1zM23 10h1v1h-1zM26 10h1v1h-1zM27 10h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM13 11h1v1h-1zM14 11h1v1h-1zM15 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM21 11h1v1h-1zM22 11h1v1h-1zM23 11h1v1h-1zM28 11h1v1h-1zM0 12h1v1h-1zM1 12h1v1h-1zM2 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM8 12h1v1h-1zM9 12h1v1h-1zM10 12h1v1h-1zM17 12h1v1h-1zM23 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM1 13h1v1h-1zM2 13h1v1h-1zM5 13h1v1h-1zM8 13h1v1h-1zM9 13h1v1h-1zM10 13h1v1h-1zM12 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM28 13h1v1h-1zM1 14h1v1h-1zM3 14h1v1h-1zM6 14h1v1h-1zM7 14h1v1h-1zM10 14h1v1h-1zM12 14h1v1h-1zM14 14h1v1h-1zM19 14h1v1h-1zM21 14h1v1h-1zM26 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM2 15h1v1h-1zM3 15h1v1h-1zM10 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM16 15h1v1h-1zM20 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM27 15h1v1h-1zM1 16h1v1h-1zM2 16h1v1h-1zM4 16h1v1h-1zM6 16h1v1h-1zM7 16h1v1h-1zM8 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM12 16h1v1h-1zM15 16h1v1h-1zM18 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM27 16h1v1h-1zM2 17h1v1h-1zM5 17h1v1h-1zM8 17h1v1h-1zM10 17h1v1h-1zM11 17h1v1h-1zM13 17h1v1h-1zM15 17h1v1h-1zM20 17h1v1h-1zM23 17h1v1h-1zM25 17h1v1h-1zM26 17h1v1h-1zM27 17h1v1h-1zM0 18h1v1h-1zM2 18h1v1h-1zM3 18h1v1h-1zM6 18h1v1h-1zM11 18h1v1h-1zM12 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM24 18h1v1h-1zM26 18h1v1h-1zM7 19h1v1h-1zM11 19h1v1h-1zM12 19h1v1h-1zM15 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM19 19h1v1h-1zM22 19h1v1h-1zM26 19h1v1h-1zM1 20h1v1h-1zM2 20h1v1h-1zM3 20h1v1h-1zM4 20h1v1h-1zM5 20h1v1h-1zM6 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM22 20h1v1h-1zM23 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM8 21h1v1h-1zM10 21h1v1h-1zM11 21h1v1h-1zM13 21h1v1h-1zM14 21h1v1h-1zM16 21h1v1h-1zM18 21h1v1h-1zM20 21h1v1h-1zM24 21h1v1h-1zM25 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM28 21h1v1h-1zM0 22h1v1h-1zM1 22h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM18 22h1v1h-1zM19 22h1v1h-1zM20 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM25 22h1v1h-1zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM10 23h1v1h-1zM11 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM24 23h1v1h-1zM25 23h1v1h-1zM27 23h1v1h-1zM28 23h1v1h-1zM0 24h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM6 24h1v1h-1zM9 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM15 24h1v1h-1zM17 24h1v1h-1zM20 24h1v1h-1zM21 24h1v1h-1zM22 24h1v1h-1zM23 24h1v1h-1zM24 24h1v1h-1zM26 24h1v1h-1zM0 25h1v1h-1zM2 25h1v1h-1zM3 25h1v1h-1zM4 25h1v1h-1zM6 25h1v1h-1zM8 25h1v1h-1zM9 25h1v1h-1zM14 25h1v1h-1zM15 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM19 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM25 25h1v1h-1zM28 25h1v1h-1zM0 26h1v1h-1zM2 26h1v1h-1zM3 26h1v1h-1zM4 26h1v1h-1zM6 26h1v1h-1zM8 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM13 26h1v1h-1zM14 26h1v1h-1zM16 26h1v1h-1zM17 26h1v1h-1zM19 26h1v1h-1zM20 26h1v1h-1zM21 26h1v1h-1zM23 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM10 27h1v1h-1zM16 27h1v1h-1zM20 27h1v1h-1zM25 27h1v1h-1zM27 27h1v1h-1zM0 28h1v1h-1zM1 28h1v1h-1zM2 28h1v1h-1zM3 28h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM8 28h1v1h-1zM12 28h1v1h-1zM13 28h1v1h-1zM15 28h1v1h-1zM19 28h1v1h-1zM20 28h1v1h-1zM21 28h1v1h-1zM22 28h1v1h-1zM24 28h1v1h-1zM27 28h1v1h-1z" fill="#0D2C54"/></svg>
+      <div><b>Payer par Mobile Money</b><p>Scannez ce code ou ouvrez le lien reçu par e-mail : <span class="link">nextin.wintekservices.com/pay/…</span></p><p>MTN MoMo ou Orange Money. L'abonnement est activé dès la confirmation du paiement, et la facture passe en « Payée ».</p></div>
+    </section>
+
+    <footer class="legal"><span>Wintek · contact@wintekservices.com · +237 690 72 23 16</span><span>Merci de votre confiance.</span></footer>
+  </div></article>
+  <p class="note">Modèle : les mentions de Wintek (raison sociale, RC, NIU, adresse, pied de page) viennent des réglages de la console, et la facture garde une copie figée des informations du jour où elle est émise. La remise est un exemple ; les montants suivent la grille actuelle. Une facture réglée affiche « Payée le … · MTN MoMo · réf. … » à la place de « À régler ».</p>
+</div>
+
+</html>

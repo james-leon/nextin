@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>NextIn Écran TV v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Écran TV v2 : toujours clair (lisible à 3 m), police système, aplats ; flash d'appel vert plein écran */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --pagetext:#000; --pagetext2:rgba(60,60,67,.64);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--pagetext:#fff;--pagetext2:rgba(235,235,245,.62);color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--pagetext:#fff;--pagetext2:rgba(235,235,245,.62);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--pagetext);font-family:var(--font);-webkit-font-smoothing:antialiased}
+.page{max-width:1280px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.page h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em}
+.page > p{margin:-6px 0 10px;color:var(--pagetext2);font-size:15px;max-width:70ch;line-height:1.45}
+.cap{font-size:14px;color:var(--pagetext2);margin:6px 0 22px}
+.cap b{color:var(--pagetext)}
+
+/* Écran 16:9 : toujours clair, tailles relatives à la largeur de l'écran (cqw) */
+.tv{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;container-type:inline-size;border:6px solid #1C1C1E;
+  --bg:#F2F2F7;--cell:#FFFFFF;--sep:rgba(60,60,67,.14);--label:#000;--label2:rgba(60,60,67,.62);--navy:#0D2C54;--blue:#1A6BB5;--orange:#F58B1F;--green:#15A05A;
+  background:var(--bg);color:var(--label);display:grid;grid-template-rows:auto 1fr auto}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;gap:1.4cqw;padding:1.6cqw 2.4cqw;background:var(--navy);color:#fff}
+.top svg{width:3.4cqw;height:3.4cqw}
+.top b{font-size:2.1cqw;font-weight:700}
+.top small{font-size:1.3cqw;opacity:.7;margin-left:.6cqw}
+.top .time{margin-left:auto;font-size:2.4cqw;font-weight:600}
+.content{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:1.6cqw;padding:1.6cqw 2.4cqw;min-height:0}
+.calls{background:var(--cell);border-radius:1.4cqw;padding:1.4cqw 2cqw;display:flex;flex-direction:column;min-height:0}
+.calls h2{margin:0 0 .6cqw;font-size:1.5cqw;font-weight:600;color:var(--label2);display:grid;grid-template-columns:1fr 1fr;text-transform:uppercase;letter-spacing:.04em}
+.call{display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:1cqw 0;border-top:.15cqw solid var(--sep)}
+.call .tk{font-size:6cqw;font-weight:700;color:var(--navy);line-height:1}
+.call .where{font-size:2.9cqw;font-weight:600}
+.call .where small{display:block;font-size:1.4cqw;font-weight:400;color:var(--label2);margin-top:.2cqw}
+.call.new{box-shadow:inset .5cqw 0 0 var(--orange);padding-left:1.4cqw;margin-left:-1.4cqw}
+.call.new .where::after{content:"Appel";display:inline-block;margin-left:1cqw;font-size:1.2cqw;font-weight:700;color:#fff;background:var(--orange);border-radius:99px;padding:.25cqw .9cqw;vertical-align:.6cqw}
+.side{display:flex;flex-direction:column;gap:1.6cqw;min-height:0}
+.ad{flex:1;border-radius:1.4cqw;overflow:hidden;position:relative;background:#0E7A44;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:1.6cqw}
+.ad svg{position:absolute;inset:0;width:100%;height:100%}
+.ad .tag{position:absolute;top:1.2cqw;left:1.2cqw;font-size:1cqw;font-weight:600;background:rgba(0,0,0,.35);border-radius:99px;padding:.3cqw .9cqw}
+.ad b{position:relative;font-size:2.3cqw;line-height:1.15;font-weight:700}
+.ad small{position:relative;font-size:1.3cqw;opacity:.9;margin-top:.4cqw}
+.next{background:var(--cell);border-radius:1.4cqw;padding:1.2cqw 1.6cqw}
+.next h3{margin:0 0 .6cqw;font-size:1.3cqw;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.04em}
+.next .row{display:flex;gap:1.4cqw;font-size:2.4cqw;font-weight:700;color:var(--navy);flex-wrap:wrap}
+.bottom{display:flex;align-items:center;gap:1.6cqw;padding:1cqw 2.4cqw 1.4cqw;font-size:1.4cqw;color:var(--label2)}
+.bottom .dots{display:flex;gap:.5cqw;align-items:flex-end}
+.bottom .dots i{width:.8cqw;height:.8cqw;border-radius:50%;background:var(--blue)}
+.bottom .dots i:nth-child(2){width:.7cqw;height:.7cqw}.bottom .dots i:nth-child(3){width:.6cqw;height:.6cqw}
+.bottom b{color:var(--label);font-weight:600}
+.bottom .code{margin-left:auto;display:flex;align-items:center;gap:.8cqw}
+.bottom .code span{font-family:var(--num);font-size:2cqw;font-weight:700;color:var(--label);letter-spacing:.2cqw;background:var(--cell);border-radius:.8cqw;padding:.2cqw 1cqw}
+
+/* Flash d'appel */
+.flash{background:var(--green);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.8cqw;grid-template-rows:none}
+.flash .k{font-size:2.6cqw;font-weight:600;opacity:.92}
+.flash .big{font-size:17cqw;font-weight:700;line-height:.95;letter-spacing:-.02em}
+.flash .go{font-size:4.6cqw;font-weight:700}
+.flash .svc{font-size:2cqw;opacity:.85}
+.flash .bar{width:30cqw;height:.6cqw;border-radius:99px;background:rgba(255,255,255,.3);margin-top:2cqw;overflow:hidden}
+.flash .bar i{display:block;height:100%;width:62%;background:#fff;border-radius:99px}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+</svg>
+
+<div class="page">
+  <h1>NextIn — écran TV v2</h1>
+  <p>L'écran de la salle d'attente, toujours en clair pour rester lisible de loin. Aucun nom de patient n'y apparaît : seulement les numéros et les postes.</p>
+
+  <div class="tv" role="img" aria-label="Écran TV en état normal">
+    <div class="top"><svg><use href="#logo"/></svg><b>Douala Clinic</b><small>Agence de Makepe</small><span class="time num">10:42</span></div>
+    <div class="content">
+      <section class="calls">
+        <h2><span>Ticket</span><span>Allez au</span></h2>
+        <div class="call new"><span class="tk num">C-051</span><span class="where">Cabinet 2<small>Consultation générale</small></span></div>
+        <div class="call"><span class="tk num">L-022</span><span class="where">Laboratoire<small>Prélèvements</small></span></div>
+        <div class="call"><span class="tk num">P-019</span><span class="where">Pédiatrie<small>Dr Fotso</small></span></div>
+      </section>
+      <div class="side">
+        <div class="ad">
+          <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="400" height="300" fill="#0E7A44"/><circle cx="320" cy="70" r="120" fill="#15A05A"/><rect x="250" y="70" width="90" height="120" rx="14" fill="#fff" opacity=".95"/><path d="M295 100v60M265 130h60" stroke="#15A05A" stroke-width="16" stroke-linecap="round"/></svg>
+          <span class="tag">Publicité</span>
+          <b>Pharmacie de Makepe</b>
+          <small>Ouverte 24 h/24 · -10 % avec votre ticket NextIn</small>
+        </div>
+        <div class="next"><h3>À suivre</h3><div class="row num"><span>C-052</span><span>C-053</span><span>P-020</span><span>L-023</span></div></div>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <span><b>13 personnes</b> en attente · Scannez le QR code de l'accueil pour prendre un ticket</span>
+      <span class="code">Code de présence <span>7K3Q</span></span>
+    </div>
+  </div>
+  <div class="cap"><b>État normal.</b> Le dernier appel est marqué d'un trait et d'une étiquette « Appel » orange (le numéro reste bleu nuit pour être lisible de loin) ; la publicité occupe la colonne de droite quand elle est activée.</div>
+
+  <div class="tv flash" role="img" aria-label="Flash d'appel">
+    <div class="k">Ticket appelé</div>
+    <div class="big num">C-051</div>
+    <div class="go">Allez au Cabinet 2</div>
+    <div class="svc">Consultation générale</div>
+    <div class="bar" aria-hidden="true"><i></i></div>
+  </div>
+  <div class="cap"><b>Flash d'appel.</b> Vert plein écran pendant 4 secondes, avec le carillon et l'annonce vocale, puis retour à l'état normal. La barre indique le temps restant.</div>
+</div>
+
+</html>

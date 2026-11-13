@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Sky Catch v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Mise en page : le jeu au centre dans un cadre de téléphone (9:16), le ticket toujours visible au-dessus, notes de conception à droite */
+:root{
+  --navy:#0D2C54; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --red:#D93B3B;
+  --page:#E9EEF5; --surface:#FFFFFF; --line:#E8EDF4; --fg:#0F1B2D; --muted:#5B6B80; --tint-blue:#EAF2FB; --ticket:#0D2C54;
+  --font-display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#060A11;--surface:#131B28;--line:#223046;--fg:#EAF0F8;--muted:#9FB0C6;--tint-blue:#15263D;--ticket:#FFFFFF;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#060A11;--surface:#131B28;--line:#223046;--fg:#EAF0F8;--muted:#9FB0C6;--tint-blue:#15263D;--ticket:#FFFFFF;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--fg);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.game-col{display:flex;flex-direction:column;gap:12px;width:100%;max-width:420px;margin:0 auto}
+.ticketbar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.ticketbar b{font-family:var(--font-display);font-size:20px;color:var(--ticket)}
+.ticketbar small{color:var(--muted);font-size:13px}
+.ticketbar button{margin-left:auto;border:0;background:var(--tint-blue);color:var(--blue);font-weight:600;font-size:12.5px;padding:8px 12px;border-radius:10px}
+.stage{position:relative;width:100%;aspect-ratio:9/16;max-width:100%;border-radius:28px;overflow:hidden;background:#0B2A55;box-shadow:0 24px 50px rgba(13,44,84,.25);touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:12px;color:#fff;font-weight:700;font-size:14px;pointer-events:none}
+.hud .chip{background:rgba(0,0,0,.28);backdrop-filter:blur(6px);padding:6px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
+.hud .lvl{font-size:12px;font-weight:600}
+.hud .hearts{margin-left:auto;letter-spacing:2px;color:#FF6B6B}
+.snd{position:absolute;right:12px;top:52px;display:flex;flex-direction:column;gap:8px}
+.snd button{width:38px;height:38px;border-radius:12px;border:0;background:rgba(0,0,0,.3);color:#fff;display:grid;place-items:center}
+.snd button[aria-pressed="false"]{opacity:.55}
+.snd svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;color:#fff;background:linear-gradient(180deg,rgba(8,29,56,.55),rgba(8,29,56,.85))}
+.overlay h2{font-size:34px;font-weight:800;letter-spacing:-.02em}
+.overlay p{margin:0;font-size:14.5px;color:rgba(255,255,255,.85);max-width:28ch;line-height:1.45}
+.overlay .big{font-family:var(--font-display);font-size:56px;font-weight:800;line-height:1}
+.play{border:0;background:#fff;color:var(--navy);font-weight:700;font-size:16px;padding:14px 26px;border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.overlay.called{background:#15A05A}
+.legend{display:flex;gap:14px;justify-content:center;font-size:12.5px;color:rgba(255,255,255,.85);flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.coupon{background:rgba(255,255,255,.12);border:1px dashed rgba(255,255,255,.5);border-radius:14px;padding:10px 14px;font-size:13px}
+.info{display:flex;flex-direction:column;gap:18px;min-width:0}
+.info h1{font-size:28px;font-weight:700}
+.info>p{margin:0;color:var(--muted);line-height:1.55;max-width:60ch}
+.levels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.levels{grid-template-columns:minmax(0,1fr)}}
+.lv{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.lv .sw{height:64px}
+.lv div.t{padding:12px 14px;display:flex;flex-direction:column;gap:3px}
+.lv b{font-size:14.5px}
+.lv small{font-size:12.5px;color:var(--muted);line-height:1.4}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card b{font-size:15px}
+.card p,.card li{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+kbd{font-family:var(--font-body);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:var(--page)}
+</style>
+
+<div class="wrap">
+  <div class="game-col">
+    <div class="ticketbar" aria-label="Votre ticket">
+      <b>C-049</b><small>2 devant · ≈ 12 min</small>
+      <button type="button" id="callBtn">Simuler l'appel</button>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="cv" aria-label="Jeu Sky Catch"></canvas>
+      <div class="hud" aria-live="polite">
+        <span class="chip" id="score">0</span>
+        <span class="chip lvl" id="lvl">Niveau 1 · Matin sur Douala</span>
+        <span class="chip hearts" id="hearts">♥♥♥</span>
+      </div>
+      <div class="snd">
+        <button type="button" id="musicBtn" aria-pressed="true" aria-label="Musique"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+        <button type="button" id="sfxBtn" aria-pressed="true" aria-label="Effets sonores"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+        <button type="button" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+      </div>
+      <div class="overlay" id="startOv">
+        <span style="font-size:12px;font-weight:700;letter-spacing:.14em;color:#FFB467">PENDANT L'ATTENTE</span>
+        <h2>Sky Catch</h2>
+        <p>Glissez le doigt pour piloter l'avion. Attrapez les pièces, évitez les obstacles.</p>
+        <div class="legend"><span><i style="background:#FFC23D"></i>Pièce +10</span><span><i style="background:#8FE3FF"></i>Gemme +50</span><span><i style="background:#FF5A5A"></i>Obstacle</span></div>
+        <button class="play" type="button" id="playBtn">Jouer</button>
+        <p style="font-size:12.5px;opacity:.75">Le jeu s'arrête tout seul quand votre tour arrive.</p>
+      </div>
+      <div class="overlay" id="overOv" hidden>
+        <span style="font-size:12px;font-weight:700;letter-spacing:.14em;color:#FFB467">PARTIE TERMINÉE</span>
+        <div class="big" id="finalScore">0</div>
+        <p id="bestLine">Meilleur score : 0</p>
+        <div class="coupon" id="coupon" hidden>Bravo, 500 points : bon de -10 % chez Saveurs du Littoral</div>
+        <button class="play" type="button" id="againBtn">Rejouer</button>
+      </div>
+      <div class="overlay" id="pauseOv" hidden>
+        <h2>Pause</h2>
+        <button class="play" type="button" id="resumeBtn">Reprendre</button>
+      </div>
+      <div class="overlay called" id="calledOv" hidden>
+        <span style="font-size:13px;font-weight:700;letter-spacing:.14em">C'EST VOTRE TOUR</span>
+        <div class="big">C-049</div>
+        <p style="font-size:17px;color:#fff;font-weight:600">Présentez-vous au Cabinet 3</p>
+        <p>Votre partie est enregistrée. Score : <b id="calledScore">0</b></p>
+        <button class="play" type="button" id="calledBtn">J'arrive</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="info">
+    <div>
+      <h1>Sky Catch, version améliorée</h1>
+      <p style="margin-top:8px">Prototype jouable : 4 niveaux qui changent de décor tous les 200 points, musique de fond, sons pour les pièces, les obstacles, le passage de niveau et la fin de partie. Au clavier : <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Espace</kbd> pour la pause.</p>
+    </div>
+    <div class="levels">
+      <div class="lv"><div class="sw" style="background:linear-gradient(180deg,#5FB4F0,#BFE6FF)"></div><div class="t"><b>1. Matin sur Douala</b><small>Ciel bleu, nuages, silhouette de la ville. Obstacles : oiseaux.</small></div></div>
+      <div class="lv"><div class="sw" style="background:linear-gradient(180deg,#F26A4B,#FDB565)"></div><div class="t"><b>2. Coucher de soleil</b><small>Soleil couchant derrière le mont Cameroun. Obstacles : vautours plus rapides.</small></div></div>
+      <div class="lv"><div class="sw" style="background:linear-gradient(180deg,#0A1530,#1C2F63)"></div><div class="t"><b>3. Nuit étoilée</b><small>Lune et étoiles. Obstacles : drones à feux clignotants.</small></div></div>
+      <div class="lv"><div class="sw" style="background:linear-gradient(180deg,#2B323D,#5A6676)"></div><div class="t"><b>4. Orage</b><small>Pluie et éclairs. Obstacles : boules d'éclair. Puis les niveaux recommencent, plus vite.</small></div></div>
+    </div>
+    <div class="card">
+      <b>Sons et musique</b>
+      <ul>
+        <li>Pièce : petit tintement montant ; gemme : carillon à trois notes.</li>
+        <li>Obstacle touché : choc sourd, l'écran tremble et l'avion clignote.</li>
+        <li>Nouveau niveau : courte fanfare ; fin de partie : mélodie descendante.</li>
+        <li>Musique douce en boucle, coupable séparément des effets.</li>
+      </ul>
+      <p>Tous les sons sont générés par le navigateur : aucun fichier à télécharger, donc rien de plus à charger en 3G.</p>
+    </div>
+    <div class="card">
+      <b>L'avion</b>
+      <p>Ici, l'avion est dessiné et animé en code (hélice qui tourne, léger roulis, traînée). Une image générée ailleurs peut le remplacer : voir la réponse dans la conversation.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var W=360,H=640;
+  var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),stage=document.getElementById("stage");
+  function resize(){var r=stage.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);ctx.setTransform(cv.width/W,0,0,cv.height/H,0,0);}
+  resize();window.addEventListener("resize",resize);
+
+  /* ── Sons (Web Audio, rien à télécharger) ── */
+  var ac=null,master,musicGain,sfxGain,musicOn=true,sfxOn=true,musicTimer=null,step=0;
+  // Déblocage du son au premier toucher (iPhone : session « lecture » pour jouer même en mode silencieux, tampon muet pour réveiller l'audio)
+  function audio(){
+    try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}
+    if(!ac){
+      try{ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+      master=ac.createGain();master.gain.value=1;master.connect(ac.destination);
+      musicGain=ac.createGain();musicGain.gain.value=.3;musicGain.connect(master);
+      sfxGain=ac.createGain();sfxGain.gain.value=1;sfxGain.connect(master);
+    }
+    if(ac.state!=="running"){try{ac.resume();}catch(e){}}
+    try{var b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}
+  }
+  ["pointerdown","touchstart","keydown"].forEach(function(ev){document.addEventListener(ev,audio,{capture:true,passive:true});});
+  function tone(freq,dur,type,vol,when,dest,slideTo){
+    if(!ac)return;var t=ac.currentTime+(when||0),o=ac.createOscillator(),g=ac.createGain();
+    o.type=type||"sine";o.frequency.setValueAtTime(freq,t);if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||.3,t+.01);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(dest||sfxGain);o.start(t);o.stop(t+dur+.02);
+  }
+  function noise(dur,vol){
+    if(!ac)return;var len=Math.floor(ac.sampleRate*dur),b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);
+    for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
+    var s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=b;f.type="lowpass";f.frequency.value=900;g.gain.value=vol||.5;
+    s.connect(f);f.connect(g);g.connect(sfxGain);s.start();
+  }
+  var sfx={
+    coin:function(){if(!sfxOn)return;tone(988,.09,"square",.12);tone(1319,.16,"square",.12,.07);},
+    gem:function(){if(!sfxOn)return;[1047,1319,1568].forEach(function(f,i){tone(f,.22,"triangle",.22,i*.07);});},
+    hit:function(){if(!sfxOn)return;noise(.28,.7);tone(180,.35,"sawtooth",.25,0,null,60);},
+    level:function(){if(!sfxOn)return;[523,659,784,1047].forEach(function(f,i){tone(f,.18,"square",.12,i*.1);});tone(1047,.5,"triangle",.2,.4);},
+    over:function(){if(!sfxOn)return;[659,587,523,392].forEach(function(f,i){tone(f,.32,"triangle",.28,i*.22);});tone(196,.8,"sine",.3,.9);}
+  };
+  // Musique : basse et mélodie pentatoniques, tempo selon le niveau
+  var scales=[[262,294,330,392,440],[247,277,330,370,415],[220,247,294,330,392],[196,233,262,294,349]];
+  var melody=[0,2,4,2,3,1,2,0, 4,3,2,4,1,2,0,2];
+  function musicTick(){
+    if(!ac||!musicOn||state!=="play")return;
+    var sc=scales[(level-1)%4],n=melody[step%16];
+    tone(sc[n]*2,.18,"triangle",.5,0,musicGain);
+    if(step%4===0)tone(sc[0]/2,.36,"sine",.7,0,musicGain);
+    if(step%8===6)tone(sc[2]/2,.3,"sine",.5,0,musicGain);
+    step++;
+  }
+  function startMusic(){stopMusic();var bpm=112+(level-1)*10;musicTimer=setInterval(musicTick,60000/bpm/2);}
+  function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null;}}
+
+  /* ── Décors ── */
+  var LEVELS=[
+    {name:"Matin sur Douala",sky:["#4FA6EC","#BFE6FF"],enemy:"bird"},
+    {name:"Coucher de soleil",sky:["#E9563F","#FDB565"],enemy:"vulture"},
+    {name:"Nuit étoilée",sky:["#08122A","#1C2F63"],enemy:"drone"},
+    {name:"Orage",sky:["#232A35","#566273"],enemy:"spark"}
+  ];
+  var clouds=[],stars=[],rain=[],skyline=[],flash=0;
+  function initScenery(){
+    clouds=[];for(var i=0;i<6;i++)clouds.push({x:Math.random()*W,y:Math.random()*H,s:.6+Math.random()*.9,v:.25+Math.random()*.35});
+    stars=[];for(i=0;i<70;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.3,p:Math.random()*6});
+    rain=[];for(i=0;i<90;i++)rain.push({x:Math.random()*W,y:Math.random()*H,v:8+Math.random()*6});
+    skyline=[];var x=0;while(x<W+40){var w=18+Math.random()*30;skyline.push({x:x,w:w,h:30+Math.random()*70});x+=w+2;}
+  }
+  function cloud(x,y,s,a){ctx.fillStyle="rgba(255,255,255,"+a+")";ctx.beginPath();ctx.arc(x,y,18*s,0,7);ctx.arc(x+20*s,y-8*s,22*s,0,7);ctx.arc(x+44*s,y,17*s,0,7);ctx.arc(x+22*s,y+6*s,18*s,0,7);ctx.fill();}
+  function drawBackground(t,dt){
+    var L=LEVELS[(level-1)%4],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,L.sky[0]);g.addColorStop(1,L.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    var k=(level-1)%4,sp=speed();
+    if(k===1){ // soleil et montagne
+      var sg=ctx.createRadialGradient(250,470,10,250,470,120);sg.addColorStop(0,"rgba(255,236,170,1)");sg.addColorStop(.35,"rgba(255,190,90,.9)");sg.addColorStop(1,"rgba(255,160,80,0)");ctx.fillStyle=sg;ctx.fillRect(0,300,W,340);
+      ctx.fillStyle="#7A2E3B";ctx.beginPath();ctx.moveTo(0,640);ctx.lineTo(0,560);ctx.lineTo(90,500);ctx.lineTo(150,450);ctx.lineTo(185,470);ctx.lineTo(230,520);ctx.lineTo(300,540);ctx.lineTo(360,520);ctx.lineTo(360,640);ctx.fill();
+      ctx.fillStyle="#4E1D2B";ctx.beginPath();ctx.moveTo(0,640);ctx.lineTo(0,600);ctx.lineTo(120,575);ctx.lineTo(260,590);ctx.lineTo(360,570);ctx.lineTo(360,640);ctx.fill();
+    }
+    if(k===2){ // étoiles et lune
+      stars.forEach(function(s){var a=.5+.5*Math.sin(t/600+s.p);ctx.fillStyle="rgba(255,255,255,"+a+")";ctx.fillRect(s.x,(s.y+t*.01)%H,s.r,s.r);});
+      ctx.fillStyle="#F4F1D6";ctx.beginPath();ctx.arc(285,95,26,0,7);ctx.fill();ctx.fillStyle=LEVELS[2].sky[0];ctx.beginPath();ctx.arc(297,88,24,0,7);ctx.fill();
+    }
+    clouds.forEach(function(c){c.y+=c.v*sp*dt;if(c.y>H+40){c.y=-40;c.x=Math.random()*W;}cloud(c.x,c.y,c.s,k===2?.08:k===3?.18:.55);});
+    if(k===0){ctx.fillStyle="rgba(13,44,84,.25)";skyline.forEach(function(b){ctx.fillRect(b.x,H-b.h,b.w,b.h);});ctx.fillStyle="rgba(13,44,84,.4)";ctx.fillRect(0,H-14,W,14);}
+    if(k===3){
+      ctx.strokeStyle="rgba(200,220,255,.45)";ctx.lineWidth=1.2;ctx.beginPath();
+      rain.forEach(function(r){r.y+=r.v*dt;r.x-=1.5*dt;if(r.y>H){r.y=-10;r.x=Math.random()*W+40;}ctx.moveTo(r.x,r.y);ctx.lineTo(r.x-3,r.y+12);});ctx.stroke();
+      if(Math.random()<.004)flash=1;
+      if(flash>0){ctx.fillStyle="rgba(255,255,255,"+(flash*.55)+")";ctx.fillRect(0,0,W,H);flash-=.06*dt;}
+    }
+  }
+
+  /* ── Avion (dessiné en code, hélice animée) ── */
+  function drawPlane(x,y,t,tilt,blink){
+    if(blink&&Math.floor(t/90)%2===0)return;
+    ctx.save();ctx.translate(x,y);ctx.rotate(tilt*.25);
+    // traînée
+    ctx.fillStyle="rgba(255,255,255,.35)";for(var i=1;i<=4;i++){ctx.beginPath();ctx.arc(-9,26+i*9,4-i*.7,0,7);ctx.arc(9,26+i*9,4-i*.7,0,7);ctx.fill();}
+    // ailes
+    var sq=1-Math.abs(tilt)*.18;
+    ctx.fillStyle="#F58B1F";ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(-34*sq,10);ctx.lineTo(-34*sq,17);ctx.lineTo(0,12);ctx.lineTo(34*sq,17);ctx.lineTo(34*sq,10);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#D9701A";ctx.fillRect(-34*sq,14,68*sq,3);
+    // empennage
+    ctx.fillStyle="#F58B1F";ctx.beginPath();ctx.moveTo(0,22);ctx.lineTo(-13,32);ctx.lineTo(13,32);ctx.closePath();ctx.fill();
+    // fuselage
+    var fg=ctx.createLinearGradient(-8,0,8,0);fg.addColorStop(0,"#E9EEF5");fg.addColorStop(.5,"#FFFFFF");fg.addColorStop(1,"#C9D5E6");
+    ctx.fillStyle=fg;ctx.beginPath();ctx.ellipse(0,8,8,26,0,0,7);ctx.fill();
+    ctx.fillStyle="#0D2C54";ctx.beginPath();ctx.ellipse(0,-2,4.5,7,0,0,7);ctx.fill(); // cockpit
+    ctx.fillStyle="rgba(140,200,255,.8)";ctx.beginPath();ctx.ellipse(-1.2,-4,1.6,3,0,0,7);ctx.fill();
+    ctx.fillStyle="#1A6BB5";ctx.fillRect(-8,10,16,3); // bande
+    // nez et hélice
+    ctx.fillStyle="#0D2C54";ctx.beginPath();ctx.arc(0,-18,3.5,0,7);ctx.fill();
+    var a=(t/16)%Math.PI;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=2.5;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(-15*Math.cos(a),-18);ctx.lineTo(15*Math.cos(a),-18);ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.18)";ctx.beginPath();ctx.ellipse(0,-18,16,3,0,0,7);ctx.fill();
+    ctx.restore();
+  }
+
+  /* ── Objets ── */
+  function drawCoin(o,t){
+    var sx=Math.abs(Math.cos(t/220+o.p));ctx.save();ctx.translate(o.x,o.y);ctx.scale(Math.max(sx,.15),1);
+    ctx.fillStyle="#E8A317";ctx.beginPath();ctx.arc(0,0,11,0,7);ctx.fill();ctx.fillStyle="#FFC23D";ctx.beginPath();ctx.arc(0,0,8.5,0,7);ctx.fill();
+    ctx.fillStyle="#E8A317";ctx.font="800 11px ui-rounded, -apple-system, system-ui, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("N",0,.5);ctx.restore();
+  }
+  function drawGem(o,t){
+    ctx.save();ctx.translate(o.x,o.y);ctx.rotate(Math.sin(t/300+o.p)*.2);
+    ctx.shadowColor="#8FE3FF";ctx.shadowBlur=12;ctx.fillStyle="#8FE3FF";ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(11,-3);ctx.lineTo(0,13);ctx.lineTo(-11,-3);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.fillStyle="rgba(255,255,255,.7)";ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(4,-3);ctx.lineTo(-4,-3);ctx.closePath();ctx.fill();ctx.restore();
+  }
+  function drawEnemy(o,t){
+    var k=o.kind;ctx.save();ctx.translate(o.x,o.y);
+    if(k==="bird"||k==="vulture"){
+      var s=k==="vulture"?1.5:1,f=Math.sin(t/80+o.p)*7*s;
+      ctx.strokeStyle=k==="vulture"?"#3B1A22":"#22324A";ctx.lineWidth=3*s;ctx.lineCap="round";
+      ctx.beginPath();ctx.moveTo(-14*s,-f);ctx.quadraticCurveTo(-6*s,-4*s,0,0);ctx.quadraticCurveTo(6*s,-4*s,14*s,-f);ctx.stroke();
+      ctx.fillStyle="#FF5A5A";ctx.beginPath();ctx.arc(0,1,2.2*s,0,7);ctx.fill();
+    }else if(k==="drone"){
+      ctx.fillStyle="#3A4660";ctx.fillRect(-12,-4,24,8);ctx.strokeStyle="#8A97A8";ctx.lineWidth=2;
+      [-14,14].forEach(function(dx){ctx.beginPath();ctx.moveTo(dx-8,-8);ctx.lineTo(dx+8,-8);ctx.stroke();});
+      ctx.fillStyle=Math.floor(t/250+o.p)%2?"#FF5A5A":"#5A1A1A";ctx.beginPath();ctx.arc(0,4,3,0,7);ctx.fill();
+    }else{
+      var r=11+Math.sin(t/90+o.p)*2;ctx.shadowColor="#FFE66B";ctx.shadowBlur=18;ctx.fillStyle="#FFE66B";ctx.beginPath();ctx.arc(0,0,r*.55,0,7);ctx.fill();
+      ctx.strokeStyle="#FFFFFF";ctx.lineWidth=2;ctx.beginPath();for(var i=0;i<6;i++){var a=i/6*Math.PI*2+t/200;ctx.moveTo(Math.cos(a)*r*.5,Math.sin(a)*r*.5);ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.stroke();ctx.shadowBlur=0;
+    }
+    ctx.restore();
+  }
+
+  /* ── État du jeu ── */
+  var state="menu",score=0,lives=3,level=1,objs=[],parts=[],plane,inv=0,shake=0,spawnT=0,last=0,best=0,banner=0,target=null,keys={};
+  try{best=parseInt(localStorage.getItem("skycatch.best")||"0",10)||0;}catch(e){}
+  function speed(){return 1+(level-1)*.22;}
+  function reset(){score=0;lives=3;level=1;objs=[];parts=[];inv=0;shake=0;spawnT=0;banner=120;plane={x:W/2,y:H-130,vx:0};target=null;initScenery();updateHud();}
+  var $=function(id){return document.getElementById(id);};
+  function updateHud(){$("score").textContent=score+" pts";$("lvl").textContent="Niveau "+level+" · "+LEVELS[(level-1)%4].name;$("hearts").textContent="♥".repeat(Math.max(lives,0))+"♡".repeat(Math.max(3-lives,0));}
+  function spawn(){
+    var r=Math.random(),sp=speed(),x=24+Math.random()*(W-48);
+    if(r<.55)objs.push({type:"coin",x:x,y:-20,vy:2.4*sp,vx:0,p:Math.random()*6,r:12});
+    else if(r<.62)objs.push({type:"gem",x:x,y:-20,vy:2.8*sp,vx:0,p:Math.random()*6,r:13});
+    else{var kind=LEVELS[(level-1)%4].enemy;objs.push({type:"enemy",kind:kind,x:x,y:-20,vy:(2.6+Math.random()*1.4)*sp*(kind==="vulture"?1.15:1),vx:(kind==="bird"||kind==="vulture")?(Math.random()-.5)*1.6:kind==="drone"?Math.sin(Math.random()*6)*1.2:0,p:Math.random()*6,r:kind==="vulture"?16:12});}
+  }
+  function burst(x,y,col,n){for(var i=0;i<n;i++){var a=Math.random()*7,v=1+Math.random()*3;parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:30,c:col});}}
+  function floatText(x,y,txt,col){parts.push({x:x,y:y,vx:0,vy:-1,l:40,c:col,txt:txt});}
+
+  function update(dt,t){
+    // pilotage
+    var ax=0,ay=0;
+    if(keys.ArrowLeft)ax-=1;if(keys.ArrowRight)ax+=1;if(keys.ArrowUp)ay-=1;if(keys.ArrowDown)ay+=1;
+    if(ax||ay){plane.x+=ax*6*dt;plane.y+=ay*6*dt;plane.vx=ax*4;}
+    else if(target){var dx=target.x-plane.x,dy=target.y-plane.y;plane.vx=dx*.18;plane.x+=dx*.18*dt;plane.y+=dy*.18*dt;}
+    else plane.vx*=.9;
+    plane.x=Math.max(30,Math.min(W-30,plane.x));plane.y=Math.max(H*.42,Math.min(H-50,plane.y));
+    // apparition
+    spawnT-=dt;if(spawnT<=0){spawn();spawnT=Math.max(14,34-level*3)+Math.random()*16;}
+    for(var i=objs.length-1;i>=0;i--){
+      var o=objs[i];o.y+=o.vy*dt;o.x+=o.vx*dt;if(o.x<12||o.x>W-12)o.vx*=-1;
+      if(o.y>H+30){objs.splice(i,1);continue;}
+      var dx2=o.x-plane.x,dy2=o.y-(plane.y+4),hitR=o.r+16;
+      if(dx2*dx2+dy2*dy2<hitR*hitR){
+        if(o.type==="coin"){score+=10;sfx.coin();burst(o.x,o.y,"#FFC23D",8);floatText(o.x,o.y,"+10","#FFE08A");objs.splice(i,1);}
+        else if(o.type==="gem"){score+=50;sfx.gem();burst(o.x,o.y,"#8FE3FF",14);floatText(o.x,o.y,"+50","#BFF0FF");objs.splice(i,1);}
+        else if(inv<=0){lives--;sfx.hit();shake=14;inv=90;burst(o.x,o.y,"#FF5A5A",16);objs.splice(i,1);if(navigator.vibrate)try{navigator.vibrate(80);}catch(e){}
+          if(lives<=0){gameOver();return;}}
+        var nl=Math.floor(score/200)+1;if(nl>level){level=nl;sfx.level();banner=120;startMusic();}
+        updateHud();
+      }
+    }
+    if(inv>0)inv-=dt;if(shake>0)shake-=dt;if(banner>0)banner-=dt;
+    for(i=parts.length-1;i>=0;i--){var p=parts[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt;if(p.l<=0)parts.splice(i,1);}
+  }
+  function render(t,dt){
+    ctx.save();
+    if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+    drawBackground(t,state==="play"?dt:0);
+    objs.forEach(function(o){if(o.type==="coin")drawCoin(o,t);else if(o.type==="gem")drawGem(o,t);else drawEnemy(o,t);});
+    if(plane)drawPlane(plane.x,plane.y,t,Math.max(-1,Math.min(1,plane.vx/5)),inv>0);
+    parts.forEach(function(p){ctx.globalAlpha=Math.max(p.l/40,0);if(p.txt){ctx.fillStyle=p.c;ctx.font="800 16px ui-rounded, -apple-system, system-ui, sans-serif";ctx.textAlign="center";ctx.fillText(p.txt,p.x,p.y);}else{ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,3,3);}ctx.globalAlpha=1;});
+    if(banner>0&&state==="play"){
+      var a=Math.min(1,banner/30);ctx.globalAlpha=a;ctx.fillStyle="rgba(8,29,56,.55)";ctx.fillRect(0,250,W,90);
+      ctx.fillStyle="#FFB467";ctx.font="700 12px -apple-system, system-ui, sans-serif";ctx.textAlign="center";ctx.fillText("NIVEAU "+level,W/2,283);
+      ctx.fillStyle="#fff";ctx.font="800 26px ui-rounded, -apple-system, system-ui, sans-serif";ctx.fillText(LEVELS[(level-1)%4].name,W/2,318);ctx.globalAlpha=1;
+    }
+    ctx.restore();
+  }
+  function loop(ts){
+    var dt=last?Math.min((ts-last)/16.67,3):1;last=ts;
+    if(state==="play")update(dt,ts);
+    render(ts,dt);
+    requestAnimationFrame(loop);
+  }
+  function show(id,on){$(id).hidden=!on;}
+  function start(){audio();if(ac&&ac.state==="suspended")ac.resume();reset();state="play";["startOv","overOv","pauseOv","calledOv"].forEach(function(id){show(id,false);});step=0;startMusic();}
+  function gameOver(){state="over";stopMusic();sfx.over();if(score>best){best=score;try{localStorage.setItem("skycatch.best",String(best));}catch(e){}}
+    $("finalScore").textContent=score;$("bestLine").textContent="Meilleur score : "+best;show("coupon",score>=500);show("overOv",true);}
+  function pause(){if(state!=="play")return;state="pause";stopMusic();show("pauseOv",true);}
+  function resume(){if(state!=="pause")return;state="play";show("pauseOv",false);startMusic();}
+
+  $("playBtn").addEventListener("click",start);
+  $("againBtn").addEventListener("click",start);
+  $("pauseBtn").addEventListener("click",function(){state==="play"?pause():resume();});
+  $("resumeBtn").addEventListener("click",resume);
+  $("musicBtn").addEventListener("click",function(){musicOn=!musicOn;this.setAttribute("aria-pressed",musicOn);});
+  $("sfxBtn").addEventListener("click",function(){sfxOn=!sfxOn;this.setAttribute("aria-pressed",sfxOn);});
+  $("callBtn").addEventListener("click",function(){
+    var was=state;if(state==="play"){state="called";stopMusic();}
+    $("calledScore").textContent=score;show("calledOv",true);
+    audio();if(ac){if(ac.state==="suspended")ac.resume();[784,988,1175].forEach(function(f,i){tone(f,.35,"sine",.3,i*.18);});}
+    if(navigator.vibrate)try{navigator.vibrate([200,100,200]);}catch(e){}
+  });
+  $("calledBtn").addEventListener("click",function(){show("calledOv",false);state="menu";show("startOv",true);});
+
+  function pointer(e){var r=stage.getBoundingClientRect(),p=e.touches?e.touches[0]:e;target={x:(p.clientX-r.left)/r.width*W,y:(p.clientY-r.top)/r.height*H-40};}
+  stage.addEventListener("pointerdown",function(e){if(state==="play"){pointer(e);}});
+  stage.addEventListener("pointermove",function(e){if(state==="play"&&(e.buttons||e.pointerType!=="mouse"))pointer(e);});
+  stage.addEventListener("pointerup",function(){target=null;});
+  window.addEventListener("keydown",function(e){
+    if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].indexOf(e.key)>=0){keys[e.key]=true;if(state==="play")e.preventDefault();}
+    if(e.key===" "&&state!=="menu"&&state!=="over"){e.preventDefault();state==="play"?pause():resume();}
+  });
+  window.addEventListener("keyup",function(e){keys[e.key]=false;});
+  document.addEventListener("visibilitychange",function(){if(document.hidden)pause();});
+
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</html>
