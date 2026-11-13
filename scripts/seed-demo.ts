@@ -97,24 +97,110 @@ type BranchSeed = {
   counters: CounterSeed[];
 };
 
-async function must<T>(p: PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> {
+async function must<T>(p: PromiseLike<{ data: T; error: { message: string; details?: string | null } | null }>): Promise<T> {
   const { data, error } = await p;
-  if (error) throw new Error(error.message);
+  if (error) throw Object.assign(new Error(error.message), { details: error.details ?? null });
   return data;
 }
 
-/** Agence complète (idempotent) : réglages, horaires, spécialités, praticiens, services, guichets, QR code. */
-async function ensureBranch(client: Db, orgId: string, seed: BranchSeed) {
-  let branch = await must(client.from("branches").select("id").eq("organization_id", orgId).eq("name", seed.name).maybeSingle());
+// ─── Limites de la formule ────────────────────────────────────────────────────
+
+const LIMIT_LABELS: Record<string, string> = {
+  branches: "agences",
+  services: "services",
+  counters: "guichets et cabinets",
+  displays: "écrans",
+  users: "utilisateurs",
+};
+
+/** Refus `plan_limit` de la base (seul l'ajout est refusé, `enforce_plan_limits`) : quelle limite. */
+function planLimit(e: unknown): string | null {
+  if (!(e instanceof Error) || !e.message.includes("plan_limit")) return null;
+  return String((e as Error & { details?: string | null }).details ?? "");
+}
+
+function warnPlanLimit(limit: string, what: string) {
+  console.warn(
+    `⚠ Limite de la formule atteinte (${LIMIT_LABELS[limit] ?? (limit || "inconnue")}) : ${what} non créé(e). ` +
+      "Le reste du seed continue. Pour l'ajouter : relevez la limite de l'établissement dans la console Wintek " +
+      "(Abonnements → limites sur mesure) ou passez à une formule supérieure, puis relancez le seed.",
+  );
+}
+
+/** Insertion tolérante : une limite de la formule est signalée clairement (et `null` renvoyé), le reste continue. */
+async function insertOrWarn<T>(what: string, insert: () => Promise<T>): Promise<T | null> {
+  try {
+    return await insert();
+  } catch (e) {
+    const limit = planLimit(e);
+    if (limit === null) throw e;
+    warnPlanLimit(limit, what);
+    return null;
+  }
+}
+
+type Existing = { id: string; created_at: string };
+
+/**
+ * Objets du seed retrouvés dans la base sans dépendre de leur nom actuel : d'abord par leur clé (nom, préfixe…),
+ * puis, pour ceux qui n'existent plus sous ce nom (renommés à la main), parmi les objets existants non rattachés,
+ * dans l'ordre de création. `undefined` = à créer (l'établissement en a moins que le seed n'en prévoit).
+ */
+function matchSeeds<S, R extends Existing>(seeds: S[], rows: R[], seedKey: (s: S) => string, rowKey: (r: R) => string): Map<S, R | undefined> {
+  const sorted = [...rows].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const claimed = new Set<string>();
+  const out = new Map<S, R | undefined>();
+  for (const s of seeds) {
+    const hit = sorted.find((r) => !claimed.has(r.id) && rowKey(r) === seedKey(s));
+    if (hit) claimed.add(hit.id);
+    out.set(s, hit);
+  }
+  for (const s of seeds) {
+    if (out.get(s)) continue;
+    const spare = sorted.find((r) => !claimed.has(r.id) && !seeds.some((x) => seedKey(x) === rowKey(r)));
+    if (spare) {
+      claimed.add(spare.id);
+      console.log(`  « ${seedKey(s)} » retrouvé(e) sous son nom actuel « ${rowKey(spare)} » (conservé).`);
+    }
+    out.set(s, spare);
+  }
+  return out;
+}
+
+type DemoBranch = {
+  branchId: string;
+  name: string;
+  /** Créée par cette exécution : ses réglages de démo sont appliqués ; jamais sur une agence existante. */
+  created: boolean;
+  serviceIds: Map<string, string>;
+  practitionerIds: Map<string, string>;
+};
+
+/**
+ * Agence de démo (idempotent). Retrouvée par son nom, sinon parmi les agences existantes de l'établissement dans
+ * l'ordre de création (renommée à la main) ; créée seulement si l'établissement n'en a aucune à reprendre. Le seed
+ * complète ce qui manque (QR code, spécialités, praticiens, services, guichets) et ne modifie jamais un objet
+ * existant : nom, adresse, horaires, photo, praticiens, réglages et affectations des guichets restent tels quels.
+ */
+async function ensureBranch(client: Db, orgId: string, seed: BranchSeed): Promise<DemoBranch | null> {
+  const branches = await must(client.from("branches").select("id, name, created_at").eq("organization_id", orgId)) ?? [];
+  let branch: { id: string; name: string } | undefined = matchSeeds([seed], branches, (s) => s.name, (r) => r.name).get(seed);
+  let created = false;
   if (!branch) {
-    branch = await must(
-      client
-        .from("branches")
-        .insert({ organization_id: orgId, name: seed.name, address: seed.address, city: seed.city, location: `SRID=4326;POINT(${seed.lng} ${seed.lat})` })
-        .select("id")
-        .single(),
+    const inserted = await insertOrWarn(`agence « ${seed.name} »`, () =>
+      must(
+        client
+          .from("branches")
+          .insert({ organization_id: orgId, name: seed.name, address: seed.address, city: seed.city, location: `SRID=4326;POINT(${seed.lng} ${seed.lat})` })
+          .select("id, name")
+          .single(),
+      ),
     );
-    await must(client.from("branch_settings").insert({ branch_id: branch.id, organization_id: orgId }));
+    if (!inserted) return null;
+    branch = inserted;
+    created = true;
+    const settings = await must(client.from("branch_settings").select("branch_id").eq("branch_id", branch.id).maybeSingle());
+    if (!settings) await must(client.from("branch_settings").insert({ branch_id: branch.id, organization_id: orgId }));
     await must(
       client.from("opening_hours").insert([
         ...[1, 2, 3, 4, 5].map((weekday) => ({ organization_id: orgId, branch_id: branch!.id, weekday, opens_at: "07:30", closes_at: "17:00" })),
@@ -127,71 +213,91 @@ async function ensureBranch(client: Db, orgId: string, seed: BranchSeed) {
   if (!active.length) await must(client.rpc("issue_qr_code", { p_branch: branchId }));
 
   const specialtyIds = new Map<string, string>();
-  for (const sp of seed.specialties) {
-    let row = await must(client.from("specialties").select("id").eq("organization_id", orgId).eq("name", sp.name).maybeSingle());
-    row ??= await must(client.from("specialties").insert({ organization_id: orgId, name: sp.name, name_en: sp.nameEn }).select("id").single());
-    specialtyIds.set(sp.name, row.id);
+  const specialties = await must(client.from("specialties").select("id, name, created_at").eq("organization_id", orgId)) ?? [];
+  for (const [sp, row] of matchSeeds(seed.specialties, specialties, (s) => s.name, (r) => r.name)) {
+    const id =
+      row?.id ??
+      (await insertOrWarn(`spécialité « ${sp.name} »`, () =>
+        must(client.from("specialties").insert({ organization_id: orgId, name: sp.name, name_en: sp.nameEn }).select("id").single()),
+      ))?.id;
+    if (id) specialtyIds.set(sp.name, id);
   }
 
   const practitionerIds = new Map<string, string>();
-  for (const p of seed.practitioners) {
-    let row = await must(client.from("practitioners").select("id").eq("branch_id", branchId).eq("display_name", p.name).maybeSingle());
-    row ??= await must(
-      client
-        .from("practitioners")
-        .insert({ organization_id: orgId, branch_id: branchId, title: p.title, display_name: p.name, specialty_id: specialtyIds.get(p.specialty) ?? null })
-        .select("id")
-        .single(),
-    );
-    practitionerIds.set(p.name, row.id);
+  const practitioners = await must(client.from("practitioners").select("id, display_name, created_at").eq("branch_id", branchId)) ?? [];
+  for (const [p, row] of matchSeeds(seed.practitioners, practitioners, (s) => s.name, (r) => r.display_name)) {
+    const id =
+      row?.id ??
+      (await insertOrWarn(`praticien « ${p.name} »`, () =>
+        must(
+          client
+            .from("practitioners")
+            .insert({ organization_id: orgId, branch_id: branchId, title: p.title, display_name: p.name, specialty_id: specialtyIds.get(p.specialty) ?? null })
+            .select("id")
+            .single(),
+        ),
+      ))?.id;
+    if (id) practitionerIds.set(p.name, id);
   }
 
   const serviceIds = new Map<string, string>();
-  for (const [i, sv] of seed.services.entries()) {
-    let row = await must(client.from("services").select("id").eq("branch_id", branchId).eq("prefix", sv.prefix).maybeSingle());
-    row ??= await must(
-      client
-        .from("services")
-        .insert({
-          organization_id: orgId,
-          branch_id: branchId,
-          prefix: sv.prefix,
-          name: sv.name,
-          name_en: sv.nameEn,
-          color: sv.color,
-          default_service_seconds: sv.minutes * 60,
-          specialty_id: sv.specialty ? (specialtyIds.get(sv.specialty) ?? null) : null,
-          sort_order: i + 1,
-        })
-        .select("id")
-        .single(),
-    );
-    serviceIds.set(sv.prefix, row.id);
+  const services = await must(client.from("services").select("id, prefix, created_at").eq("branch_id", branchId)) ?? [];
+  for (const [sv, row] of matchSeeds(seed.services, services, (s) => s.prefix, (r) => r.prefix)) {
+    const i = seed.services.indexOf(sv);
+    const id =
+      row?.id ??
+      (await insertOrWarn(`service « ${sv.name} » (${sv.prefix})`, () =>
+        must(
+          client
+            .from("services")
+            .insert({
+              organization_id: orgId,
+              branch_id: branchId,
+              prefix: sv.prefix,
+              name: sv.name,
+              name_en: sv.nameEn,
+              color: sv.color,
+              default_service_seconds: sv.minutes * 60,
+              specialty_id: sv.specialty ? (specialtyIds.get(sv.specialty) ?? null) : null,
+              sort_order: i + 1,
+            })
+            .select("id")
+            .single(),
+        ),
+      ))?.id;
+    if (id) serviceIds.set(sv.prefix, id);
   }
 
-  for (const c of seed.counters) {
-    let row = await must(client.from("counters").select("id").eq("branch_id", branchId).eq("kind", c.kind).eq("number", c.number).maybeSingle());
-    row ??= await must(
-      client
-        .from("counters")
-        .insert({
-          organization_id: orgId,
-          branch_id: branchId,
-          kind: c.kind,
-          number: c.number,
-          default_practitioner_id: c.practitioner ? (practitionerIds.get(c.practitioner) ?? null) : null,
-        })
-        .select("id")
-        .single(),
-    );
-    await must(
-      client.from("counter_services").upsert(
-        c.services.map((prefix) => ({ organization_id: orgId, counter_id: row!.id, service_id: serviceIds.get(prefix)! })),
-        { onConflict: "counter_id,service_id", ignoreDuplicates: true },
+  const counters = await must(client.from("counters").select("id, kind, number, created_at").eq("branch_id", branchId)) ?? [];
+  const counterKey = (c: { kind: string; number: number }) => `${c.kind} ${c.number}`;
+  for (const [c, row] of matchSeeds(seed.counters, counters, counterKey, counterKey)) {
+    if (row) continue; // Guichet existant : ses services et son praticien restent ceux choisis dans l'application.
+    const inserted = await insertOrWarn(`${c.kind} ${c.number}`, () =>
+      must(
+        client
+          .from("counters")
+          .insert({
+            organization_id: orgId,
+            branch_id: branchId,
+            kind: c.kind,
+            number: c.number,
+            default_practitioner_id: c.practitioner ? (practitionerIds.get(c.practitioner) ?? null) : null,
+          })
+          .select("id")
+          .single(),
       ),
     );
+    const links = c.services.flatMap((prefix) => (serviceIds.has(prefix) ? [serviceIds.get(prefix)!] : []));
+    if (inserted && links.length) {
+      await must(
+        client.from("counter_services").upsert(
+          links.map((serviceId) => ({ organization_id: orgId, counter_id: inserted.id, service_id: serviceId })),
+          { onConflict: "counter_id,service_id", ignoreDuplicates: true },
+        ),
+      );
+    }
   }
-  return { branchId, serviceIds };
+  return { branchId, name: branch.name, created, serviceIds, practitionerIds };
 }
 
 /**
@@ -213,6 +319,7 @@ async function ensureDemoQueue(
   if (active.length) return;
   let k = 0;
   for (const [prefix, count] of Object.entries(perService)) {
+    if (!branch.serviceIds.has(prefix)) continue; // Service absent (limite de la formule) : rien à créer.
     for (let i = 0; i < count; i++) {
       const reason = prefix === "C" && i === 2 ? "pregnancy" : null;
       const patient = patients.length ? patients[k++ % patients.length]! : null;
@@ -229,30 +336,33 @@ async function ensureDemoQueue(
 }
 
 /**
- * Rendez-vous (M5b) : horaires de consultation des médecins d'Akwa (lundi au vendredi, matin et après-midi,
- * créneaux de 20 min), puis quelques rendez-vous sur les sept prochains jours, pris par l'accueil, seulement
- * si aucun rendez-vous n'est à venir. Repères de patient fictifs (initiales), jamais de nom.
+ * Rendez-vous (M5b) : horaires de consultation des médecins de l'agence de démo (lundi au vendredi, matin et
+ * après-midi, créneaux de 20 min) pour ceux qui n'en ont aucun, puis quelques rendez-vous sur les sept prochains
+ * jours, pris par l'accueil, seulement si aucun rendez-vous n'est à venir. Médecins retrouvés par le seed (quel que
+ * soit leur nom actuel).
  */
-async function ensureDemoAppointments(staffEmail: string, orgId: string, branch: { branchId: string; serviceIds: Map<string, string> }) {
-  const doctors = await must(db.from("practitioners").select("id, display_name").eq("branch_id", branch.branchId));
+async function ensureDemoAppointments(staffEmail: string, orgId: string, branch: DemoBranch) {
   const plan: Record<string, { service: string; ranges: [string, string][] }> = {
     "Paul Mbarga": { service: "C", ranges: [["08:00", "12:00"], ["14:00", "17:00"]] },
     "Samuel Nkeng": { service: "C", ranges: [["08:00", "12:00"]] },
     "Aline Ngo Biyong": { service: "P", ranges: [["08:30", "12:30"], ["14:00", "16:00"]] },
   };
+  const doctors = Object.entries(plan).flatMap(([name, p]) => {
+    const id = branch.practitionerIds.get(name);
+    const serviceId = branch.serviceIds.get(p.service);
+    return id && serviceId ? [{ id, serviceId, ranges: p.ranges }] : [];
+  });
   for (const d of doctors) {
-    const p = plan[d.display_name];
-    if (!p) continue;
     const existing = await must(db.from("practitioner_schedules").select("id").eq("practitioner_id", d.id).limit(1));
     if (existing.length) continue;
     await must(
       db.from("practitioner_schedules").insert(
         [1, 2, 3, 4, 5].flatMap((weekday) =>
-          p.ranges.map(([starts_at, ends_at]) => ({
+          d.ranges.map(([starts_at, ends_at]) => ({
             organization_id: orgId,
             branch_id: branch.branchId,
             practitioner_id: d.id,
-            service_id: branch.serviceIds.get(p.service)!,
+            service_id: d.serviceId,
             weekday,
             starts_at,
             ends_at,
@@ -275,7 +385,7 @@ async function ensureDemoAppointments(staffEmail: string, orgId: string, branch:
   const ages = [34, 52, 27, 61, 45, 70, 38, 19];
   let n = 0;
   const today = new Date().toISOString().slice(0, 10);
-  for (const d of doctors.filter((x) => plan[x.display_name])) {
+  for (const d of doctors) {
     const slots = (await must(staff.rpc("available_slots", { p_practitioner: d.id, p_from: today, p_days: 7 }))) as unknown as { starts_at: string }[];
     // Deux à trois rendez-vous par jour et par médecin, pour un agenda réaliste sur la semaine.
     const byDay = new Map<string, { starts_at: string }[]>();
@@ -300,42 +410,46 @@ async function ensureDemoAppointments(staffEmail: string, orgId: string, branch:
 }
 
 /**
- * M9 : ticket à distance et demandes de rendez-vous activés sur les agences de démo (la caisse reste sur place),
- * et deux demandes de patients en attente à l'accueil d'Akwa (numéros fictifs, déjà vérifiés).
+ * M9 : ticket à distance et demandes de rendez-vous activés sur les agences de démo créées par cette exécution (la
+ * caisse reste sur place ; jamais sur une agence existante, dont les réglages sont ceux de l'application), et deux
+ * demandes de patients en attente à l'accueil de l'agence de la clinique (numéros fictifs, déjà vérifiés).
  */
-async function ensureDemoRemote(
-  akwa: { branchId: string; serviceIds: Map<string, string> },
-  bonanjo: { branchId: string; serviceIds: Map<string, string> },
-  requester: string,
-) {
-  await must(
-    db
-      .from("branch_settings")
-      .update({ remote_tickets_enabled: true, remote_max_distance_km: 15, appointment_requests_enabled: true, customer_name_extra: "age" })
-      .eq("branch_id", akwa.branchId)
-      .select("branch_id"),
-  );
-  await must(db.from("services").update({ allow_remote: false }).eq("id", akwa.serviceIds.get("K")!).select("id"));
-  await must(db.from("branch_settings").update({ remote_tickets_enabled: true }).eq("branch_id", bonanjo.branchId).select("branch_id"));
+async function ensureDemoRemote(akwa: DemoBranch, bonanjo: DemoBranch | null, requester: string) {
+  if (akwa.created) {
+    await must(
+      db
+        .from("branch_settings")
+        .update({ remote_tickets_enabled: true, remote_max_distance_km: 15, appointment_requests_enabled: true, customer_name_extra: "age" })
+        .eq("branch_id", akwa.branchId)
+        .select("branch_id"),
+    );
+    const cashier = akwa.serviceIds.get("K");
+    if (cashier) await must(db.from("services").update({ allow_remote: false }).eq("id", cashier).select("id"));
+  }
+  if (bonanjo?.created) {
+    await must(db.from("branch_settings").update({ remote_tickets_enabled: true }).eq("branch_id", bonanjo.branchId).select("branch_id"));
+  }
 
   const existing = await must(db.from("appointment_requests").select("id").eq("branch_id", akwa.branchId).limit(1));
   if (existing.length) return;
   const today = new Date().toISOString().slice(0, 10);
-  const mbarga = (await must(db.from("practitioners").select("id").eq("branch_id", akwa.branchId).eq("display_name", "Paul Mbarga")))[0]!;
-  const slots = (await must(db.rpc("practitioner_free_slots", { p_practitioner: mbarga.id, p_from: today, p_days: 7 }))) as unknown as {
-    starts_at: string;
-  }[];
+  const mbarga = akwa.practitionerIds.get("Paul Mbarga") ?? null;
+  const consultation = akwa.serviceIds.get("C");
+  if (!consultation) return;
+  const slots = mbarga
+    ? ((await must(db.rpc("practitioner_free_slots", { p_practitioner: mbarga, p_from: today, p_days: 7 }))) as unknown as { starts_at: string }[])
+    : [];
   const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
   const requests = [
     // Demandes vérifiées par e-mail (canal par défaut) ; téléphone facultatif, pour l'accueil.
-    { practitioner: mbarga.id, startsAt: slots[3]?.starts_at ?? null, day: null, period: null, phone: "+237699001201", email: "estelle.manga@exemple.cm", label: "Estelle Manga", age: 29 },
+    { practitioner: mbarga, startsAt: slots[3]?.starts_at ?? null, day: slots[3] ? null : day(1), period: slots[3] ? null : "morning", phone: "+237699001201", email: "estelle.manga@exemple.cm", label: "Estelle Manga", age: 29 },
     { practitioner: null, startsAt: null, day: day(2), period: "morning", phone: null, email: "daniel.nkoa@exemple.cm", label: "Daniel Nkoa", age: 47 },
   ];
   for (const r of requests) {
     const created = (await must(
       db.rpc("create_appointment_request", {
         p_branch: akwa.branchId,
-        p_service: akwa.serviceIds.get("C")!,
+        p_service: consultation,
         p_practitioner: r.practitioner as string,
         p_starts_at: r.startsAt as string,
         p_day: r.day as string,
@@ -637,6 +751,7 @@ async function main() {
   await ensureMember(eneo, ids.eneoAdmin, "org_admin");
   await ensureMember(eneo, ids.eneoAgent, "agent");
 
+  // Une agence de démo par établissement, retrouvée même renommée dans l'application.
   const akwa = await ensureBranch(db, clinic, {
     name: "Akwa",
     address: "Boulevard de la Liberté",
@@ -697,44 +812,72 @@ async function main() {
     ],
   });
 
-  await ensureDemoSubscription(clinic, "paid", "+237677000101", USERS.clinicAdmin.email);
-  await ensureDemoSubscription(eneo, "trial", "+237699000202", USERS.eneoAdmin.email);
+  await step("abonnement de DOUALA CLINIC", () => ensureDemoSubscription(clinic, "paid", "+237677000101", USERS.clinicAdmin.email));
+  await step("abonnement d'Eneo", () => ensureDemoSubscription(eneo, "trial", "+237699000202", USERS.eneoAdmin.email));
 
-  // Nom du patient et âge demandés à Akwa (clinique : nom obligatoire par défaut).
-  await must(db.from("branch_settings").update({ customer_name_extra: "age" }).eq("branch_id", akwa.branchId).select("branch_id"));
-  await ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 }, [
-    { name: "Aminatou Bello", age: 31 },
-    { name: "Jean-Paul Mbida", age: 58 },
-    { name: "Odile Fouda", age: 26 },
-    { name: "Samuel Ekotto", age: 44 },
-    { name: "Brigitte Ngo Ndjock", age: 67 },
-    { name: "Paul Atangana", age: 72 },
-    { name: "Hortense Mvondo", age: 8 },
-    { name: "Rodrigue Tchakounté", age: 12 },
-    { name: "Clarisse Nkoulou", age: 39 },
-    { name: "Yannick Essomba", age: 23 },
-    { name: "Félicité Abena", age: 50 },
-  ]);
-  await ensureDemoAppointments(USERS.clinicReception.email, clinic, akwa);
-  await ensureDemoHistory(clinic, akwa, { C: 38, P: 22, L: 30, K: 45 }, 2026);
-  await ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237);
-  await ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 });
-  await ensureDemoRemote(akwa, bonanjo, ids.clinicAdmin);
-  // Photo de l'agence d'Akwa (« À proximité ») ; Eneo garde l'icône du secteur. PNG de démo sous les noms fixes
-  // du bucket (le type MIME envoyé est le bon ; l'application, elle, téléverse du WebP).
-  await upload("branch-photos", `${clinic}/${akwa.branchId}/cover.webp`, facadePng(640, 360), "image/png");
-  await upload("branch-photos", `${clinic}/${akwa.branchId}/thumb.webp`, facadePng(160, 160), "image/png");
-  await must(db.from("branches").update({ photo_updated_at: new Date().toISOString() }).eq("id", akwa.branchId).select("id"));
-  await ensureDemoAds(clinic);
-  // Publicité sur les écrans TV de démo (T1) : activée pour les écrans déjà appairés des deux établissements (les
-  // nouveaux écrans l'ont par défaut à l'appairage).
-  await must(db.from("displays").update({ show_ads: true }).in("organization_id", [clinic, eneo]).select("id"));
+  if (akwa) {
+    // Nom du patient et âge demandés à l'accueil (clinique : nom obligatoire par défaut) : réglage de démo appliqué
+    // seulement à la création de l'agence, jamais par-dessus un choix fait dans l'application.
+    if (akwa.created) {
+      await must(db.from("branch_settings").update({ customer_name_extra: "age" }).eq("branch_id", akwa.branchId).select("branch_id"));
+    }
+    await step("file du jour de la clinique", () =>
+      ensureDemoQueue(USERS.clinicReception.email, akwa, { C: 5, P: 3, L: 2, K: 1 }, [
+        { name: "Aminatou Bello", age: 31 },
+        { name: "Jean-Paul Mbida", age: 58 },
+        { name: "Odile Fouda", age: 26 },
+        { name: "Samuel Ekotto", age: 44 },
+        { name: "Brigitte Ngo Ndjock", age: 67 },
+        { name: "Paul Atangana", age: 72 },
+        { name: "Hortense Mvondo", age: 8 },
+        { name: "Rodrigue Tchakounté", age: 12 },
+        { name: "Clarisse Nkoulou", age: 39 },
+        { name: "Yannick Essomba", age: 23 },
+        { name: "Félicité Abena", age: 50 },
+      ]),
+    );
+    await step("rendez-vous de la clinique", () => ensureDemoAppointments(USERS.clinicReception.email, clinic, akwa));
+    await step("historique de la clinique", () => ensureDemoHistory(clinic, akwa, { C: 38, P: 22, L: 30, K: 45 }, 2026));
+    await step("ticket à distance et demandes en ligne", () => ensureDemoRemote(akwa, bonanjo, ids.clinicAdmin));
+    // Photo de l'agence (« À proximité ») seulement si elle n'en a pas : jamais par-dessus une photo téléversée.
+    // PNG de démo sous les noms fixes du bucket (le type MIME envoyé est le bon ; l'application téléverse du WebP).
+    await step("photo de l'agence de la clinique", async () => {
+      const photo = await must(db.from("branches").select("photo_updated_at").eq("id", akwa.branchId).single());
+      if (photo.photo_updated_at) return;
+      await upload("branch-photos", `${clinic}/${akwa.branchId}/cover.webp`, facadePng(640, 360), "image/png");
+      await upload("branch-photos", `${clinic}/${akwa.branchId}/thumb.webp`, facadePng(160, 160), "image/png");
+      await must(db.from("branches").update({ photo_updated_at: new Date().toISOString() }).eq("id", akwa.branchId).select("id"));
+    });
+  }
+  if (bonanjo) {
+    await step("historique d'Eneo", () => ensureDemoHistory(eneo, bonanjo, { F: 70, R: 25, A: 18 }, 237));
+    await step("file du jour d'Eneo", () => ensureDemoQueue(USERS.eneoAdmin.email, bonanjo, { F: 6, R: 3, A: 2 }));
+  }
+  await step("publicité", () => ensureDemoAds(clinic));
+  // Les écrans TV gardent leur réglage « publicité » (activée par défaut à l'appairage, modifiable dans l'application).
 
-  console.log("✓ Démo prête : DOUALA CLINIC (agence Akwa, Pro payé) et Eneo — Douala (agence Bonanjo, essai Pro)");
+  console.log(
+    `✓ Démo prête : DOUALA CLINIC (agence ${akwa ? `« ${akwa.name} »` : "non créée"}, Business payé) et Eneo — Douala ` +
+      `(agence ${bonanjo ? `« ${bonanjo.name} »` : "non créée"}, essai Business)`,
+  );
   console.log("  Console Wintek : /admin avec superadmin@nextin.demo");
   console.log("  Espace annonceur : /ads avec marketing@saveurs-littoral.demo (campagne Or diffusée)");
   for (const u of Object.values(USERS)) console.log(`  ${u.email}`);
   console.log("  (mot de passe : valeur de SEED_DEMO_PASSWORD)");
+}
+
+/**
+ * Étape du seed : une limite de la formule (`plan_limit`) est expliquée clairement et le reste du seed continue ;
+ * toute autre erreur arrête le seed.
+ */
+async function step(what: string, run: () => Promise<unknown>) {
+  try {
+    await run();
+  } catch (e) {
+    const limit = planLimit(e);
+    if (limit === null) throw e;
+    warnPlanLimit(limit, what);
+  }
 }
 
 main().catch((e) => {

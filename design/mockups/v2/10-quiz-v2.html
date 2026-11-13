@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Quiz NextIn v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Mise en page : quiz dans un cadre de téléphone ; carte bleu nuit, étiquette de question en onglet, réponses en pilules, explication en tiroir, bouton orange */
+:root{
+  --navy:#0D2C54; --navy-2:#163E73; --navy-deep:#0A2240; --blue:#1A6BB5; --orange:#F58B1F; --orange-deep:#D9701A;
+  --green:#15A05A; --red:#D93B3B;
+  --page:#E9EEF5; --bg:#F1F4F9; --surface:#FFFFFF; --line:#E8EDF4; --fg:#0F1B2D; --muted:#5B6B80; --tint-blue:#EAF2FB; --ticket:#0D2C54;
+  --font-display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#060A11;--bg:#0B111B;--surface:#131B28;--line:#223046;--fg:#EAF0F8;--muted:#9FB0C6;--tint-blue:#15263D;--ticket:#FFFFFF;--navy:#163A68;--navy-2:#1E4C86;--navy-deep:#0E2647;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#060A11;--bg:#0B111B;--surface:#131B28;--line:#223046;--fg:#EAF0F8;--muted:#9FB0C6;--tint-blue:#15263D;--ticket:#FFFFFF;--navy:#163A68;--navy-2:#1E4C86;--navy-deep:#0E2647;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--fg);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.game-col{display:flex;flex-direction:column;gap:12px;width:100%;max-width:420px;margin:0 auto}
+.ticketbar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.ticketbar b{font-family:var(--font-display);font-size:20px;color:var(--ticket)}
+.ticketbar small{color:var(--muted);font-size:13px}
+.ticketbar button{margin-left:auto;border:0;background:var(--tint-blue);color:var(--blue);font-weight:600;font-size:12.5px;padding:8px 12px;border-radius:10px}
+
+.stage{position:relative;width:100%;min-height:760px;border-radius:28px;background:var(--bg);border:1px solid var(--line);box-shadow:0 24px 50px rgba(13,44,84,.16);padding:18px 16px 18px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.topline{display:flex;align-items:center;gap:10px}
+.topline .score{font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--fg)}
+.topline .snd{margin-left:auto;width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.topline .snd svg{width:17px;height:17px;fill:none;stroke:var(--fg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.topline .snd[aria-pressed="false"]{opacity:.45}
+.hearts{display:flex;gap:6px;flex:1}.hearts svg{width:24px;height:24px}.hearts svg.lost{opacity:.22;filter:grayscale(1)}
+.dots{display:flex;gap:5px;flex:1}
+.dots i{flex:1;height:6px;border-radius:6px;background:var(--line)}
+.dots i.ok{background:var(--green)}.dots i.ko{background:var(--red)}.dots i.cur{background:var(--orange)}
+
+.qcard{position:relative;margin-top:22px;background:var(--navy);border-radius:24px;padding:44px 16px 18px;color:#fff}
+.tab{position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:#fff;color:var(--navy);font-family:var(--font-display);font-weight:800;font-size:14px;letter-spacing:.12em;padding:10px 22px;border-radius:999px;white-space:nowrap;box-shadow:0 6px 16px rgba(13,44,84,.18);transition:background .25s,color .25s}
+:root[data-theme="dark"] .tab{color:#0D2C54}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tab{color:#0D2C54}}
+.tab.ok{background:var(--green);color:#fff!important}.tab.ko{background:var(--red);color:#fff!important}
+.cat{display:block;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#FFB467;margin-bottom:8px}
+.question{font-family:var(--font-display);font-weight:700;font-size:21px;line-height:1.3;text-align:center;margin:0 6px 16px}
+.pic{width:62%;max-width:240px;margin:0 auto 18px;background:#fff;border-radius:20px;padding:7px;transform:rotate(-1.5deg);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.pic svg{display:block;width:100%;height:auto;border-radius:14px}
+.answers{display:flex;flex-direction:column;gap:10px}
+.ans{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;padding:8px 18px 8px 8px;border-radius:999px;border:0;background:#fff;color:#0D2C54;text-align:left;font-weight:600;font-size:16.5px;transition:transform .12s,background .2s,color .2s,box-shadow .2s}
+.ans:active{transform:scale(.98)}
+.ans .l{width:42px;height:42px;border-radius:50%;background:#0D2C54;color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:16px;flex:none}
+.ans.sel{box-shadow:0 0 0 4px var(--orange)}
+.ans.sel .l{background:var(--orange)}
+.ans.ok{background:var(--green);color:#fff}
+.ans.ok .l,.ans.ko .l{background:#fff}
+.ans.ko{background:var(--red);color:#fff}
+.ans .l svg{width:20px;height:20px;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.ans.dim{opacity:.55}
+.explain{margin:18px -16px -18px;padding:0 0 18px;display:none}
+.explain.show{display:block}
+.explain .etab{display:block;width:max-content;margin:0 auto;background:var(--navy-deep);color:#fff;font-weight:800;font-size:13px;letter-spacing:.16em;padding:8px 22px 6px;border-radius:14px 14px 0 0}
+.explain .ebody{background:var(--navy-deep);padding:14px 20px 4px;font-size:15px;line-height:1.5;font-style:italic;text-align:center;color:rgba(255,255,255,.92)}
+.cta{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:64px;border:0;border-radius:22px;background:var(--orange);color:#fff;font-family:var(--font-display);font-weight:800;font-size:21px;transition:transform .1s,opacity .2s}
+.cta:active{transform:scale(.98)}
+.cta[disabled]{opacity:.45;cursor:not-allowed}
+.cta svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.sponsor{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;color:var(--fg)}
+.sponsor small{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;background:var(--bg)}
+.overlay h2{font-size:30px;font-weight:800}
+.overlay p{margin:0;font-size:15px;color:var(--muted);max-width:30ch;line-height:1.45}
+.ring{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) var(--p,0%),var(--line) 0)}
+.ring div{width:118px;height:118px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:38px}
+.ring small{display:block;font-size:13px;font-weight:600;color:var(--muted);font-family:var(--font-body)}
+.coupon{background:#FEF1E3;border:1.5px dashed var(--orange);border-radius:16px;padding:12px 16px;font-size:14px;color:#0F1B2D}
+.btn2{border:1px solid var(--line);background:var(--surface);color:var(--fg);font-weight:600;font-size:15px;padding:13px 20px;border-radius:14px}
+.called{background:#15A05A;color:#fff}
+.called p{color:rgba(255,255,255,.9)}
+.called .big{font-family:var(--font-display);font-size:56px;font-weight:800;line-height:1}
+.called .cta{background:#fff;color:#0D2C54;box-shadow:0 6px 0 rgba(0,0,0,.15)}
+
+.info{display:flex;flex-direction:column;gap:18px;min-width:0}
+.info h1{font-size:28px;font-weight:700}
+.info>div>p{margin:8px 0 0;color:var(--muted);line-height:1.55;max-width:60ch}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.note b{font-size:15px}
+.note li,.note p{font-size:13.5px;color:var(--muted);line-height:1.5;margin:0}
+.note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="game-col">
+    <div class="ticketbar" aria-label="Votre ticket">
+      <b>C-051</b><small>4 devant · ≈ 22 min</small>
+      <button type="button" id="callBtn">Simuler l'appel</button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="topline">
+        <span class="score num" id="score">0 bonne réponse</span>
+        <div class="hearts" id="dots" role="img" aria-label="3 vies restantes"></div>
+        <button class="snd" type="button" id="sndBtn" aria-pressed="true" aria-label="Sons"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button>
+      </div>
+      <section class="qcard" aria-live="polite">
+        <span class="tab num" id="tab">QUESTION 1</span>
+        <span class="cat" id="cat">Cameroun</span>
+        <h2 class="question" id="question"></h2>
+        <div class="pic" id="pic" hidden></div>
+        <div class="answers" id="answers" role="radiogroup" aria-labelledby="question"></div>
+        <div class="explain" id="explain"><span class="etab">EXPLICATION</span><div class="ebody" id="ebody"></div></div>
+      </section>
+      <button class="cta" type="button" id="cta" disabled><span id="ctaText">Valider</span><svg id="ctaIco" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></button>
+      <div class="sponsor"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F58B1F" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7"/></svg><div><small>Quiz offert par</small>Pharmacie de Makepe · un bon de -10 % dès 8 bonnes réponses</div></div>
+
+      <div class="overlay" id="endOv" hidden>
+        <span style="font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--orange)">RÉSULTAT</span>
+        <div class="ring" id="ring"><div style="text-align:center;line-height:1.05"><span id="endScore" class="num">0</span><small>bonnes réponses</small></div></div>
+        <h2 id="endTitle">Bien joué !</h2>
+        <p id="endText"></p>
+        <div class="coupon" id="coupon" hidden>8 bonnes réponses : votre bon de -10 % à la Pharmacie de Makepe</div>
+        <button class="cta" type="button" id="againBtn" style="max-width:300px">Rejouer<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+      </div>
+      <div class="overlay called" id="calledOv" hidden>
+        <span style="font-size:13px;font-weight:700;letter-spacing:.14em">C'EST VOTRE TOUR</span>
+        <div class="big">C-051</div>
+        <p style="font-size:17px;color:#fff;font-weight:600">Présentez-vous au Cabinet 1</p>
+        <p>Votre quiz est gardé : vous pourrez le finir plus tard.</p>
+        <button class="cta" type="button" id="calledBtn" style="max-width:260px">J'arrive</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="info">
+    <div>
+      <h1>Quiz v2 : la série sans fin</h1>
+      <p>Les questions s'enchaînent sans fin, tirées au hasard, avec 3 vies : chaque erreur en coûte une. Le score est le nombre de bonnes réponses, avec un record gardé sur le téléphone. Dès 8 bonnes réponses, le bon de l'annonceur se débloque. Ici, 10 questions de démonstration tournent en boucle ; la vraie banque en comptera environ 300.</p>
+    </div>
+    <div class="note">
+      <b>Repris de la référence</b>
+      <ul>
+        <li>La question dans une grande carte, avec son numéro en onglet qui devient vert ou rouge après la réponse.</li>
+        <li>Les réponses en pilules avec une lettre dans un rond ; la bonne en vert, la mauvaise en rouge.</li>
+        <li>L'explication en tiroir sous les réponses, et un gros bouton « Valider » puis « Question suivante ».</li>
+      </ul>
+    </div>
+    <div class="note">
+      <b>Propre à NextIn</b>
+      <ul>
+        <li>Bleu nuit, orange et vert de NextIn, polices Sora et Inter.</li>
+        <li>Illustrations dessinées, sans photo : légères en 3G et sans droits d'image à payer.</li>
+        <li>Questions utiles en salle d'attente (santé, prévention) mêlées au Cameroun et à la culture générale.</li>
+        <li>Barre de progression, sons de bonne et mauvaise réponse, ticket toujours visible et arrêt à l'appel.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <b>Contenu</b>
+      <p>Les questions viennent d'une banque modifiable depuis la console Wintek, en français et en anglais. Un annonceur peut proposer ses propres questions, validées par Wintek, comme pour les publicités. Les questions de santé sont relues avant publication.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // Illustrations originales, dessinées en SVG
+  var PIC={
+    mont:'<svg viewBox="0 0 160 120"><rect width="160" height="120" fill="#BFE6FF"/><circle cx="125" cy="28" r="12" fill="#FFD36B"/><path d="M0 120L52 46l18 18 22-34 68 90z" fill="#5C4A3D"/><path d="M78 40l14-10 12 16-8-2-6 6-6-6z" fill="#fff"/><path d="M0 120l40-30 30 12 40-18 50 36z" fill="#3E9B4F"/><path d="M0 120l60-14 50 6 50-10v18z" fill="#2E7D3E"/></svg>',
+    eau:'<svg viewBox="0 0 160 120"><rect width="160" height="120" fill="#EAF6FF"/><path d="M80 18c18 26 30 42 30 58a30 30 0 0 1-60 0c0-16 12-32 30-58z" fill="#3FA2F0"/><path d="M68 70a14 14 0 0 0 10 16" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/><g fill="#1A6BB5"><rect x="22" y="78" width="14" height="22" rx="3"/><rect x="124" y="78" width="14" height="22" rx="3"/></g></svg>',
+    fleuve:'<svg viewBox="0 0 160 120"><rect width="160" height="120" fill="#CFEAFF"/><path d="M0 70h160v50H0z" fill="#2D7FC7"/><path d="M0 84c20-6 40 6 60 0s40 6 60 0 30 4 40 2" stroke="#8CC8F5" stroke-width="3" fill="none"/><rect x="0" y="58" width="160" height="7" fill="#5B6B80"/><g fill="#5B6B80"><rect x="18" y="64" width="6" height="22"/><rect x="58" y="64" width="6" height="22"/><rect x="98" y="64" width="6" height="22"/><rect x="138" y="64" width="6" height="22"/></g><path d="M0 58c26-18 54-18 80 0s54 18 80 0" stroke="#0D2C54" stroke-width="3" fill="none"/></svg>',
+    moustique:'<svg viewBox="0 0 160 120"><rect width="160" height="120" fill="#FFF4E6"/><ellipse cx="82" cy="62" rx="26" ry="7" fill="#5A4636" transform="rotate(-20 82 62)"/><circle cx="56" cy="72" r="8" fill="#3E3128"/><path d="M50 76l-22 12" stroke="#3E3128" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="82" cy="44" rx="20" ry="9" fill="#BFD9F2" opacity=".85" transform="rotate(-35 82 44)"/><ellipse cx="96" cy="48" rx="18" ry="8" fill="#D6E8F8" opacity=".85" transform="rotate(-10 96 48)"/><g stroke="#3E3128" stroke-width="2" stroke-linecap="round"><path d="M70 66l-8 22M80 64l-2 26M90 60l8 24M100 56l18 18"/></g></svg>',
+    mains:'<svg viewBox="0 0 160 120"><rect width="160" height="120" fill="#E7F6EE"/><g fill="#F2C59B" stroke="#C98A5B" stroke-width="2"><path d="M40 90c-6-20 0-44 14-52l20 10c8 4 6 14-2 14l-12-2 6 30z"/><path d="M120 90c6-20 0-44-14-52l-20 10c-8 4-6 14 2 14l12-2-6 30z"/></g><g fill="#fff" stroke="#9AD7B3" stroke-width="2"><circle cx="72" cy="30" r="8"/><circle cx="92" cy="22" r="6"/><circle cx="104" cy="36" r="5"/><circle cx="60" cy="44" r="5"/></g></svg>',
+    trophee:'<svg viewBox="0 0 160 120"><rect width="160" height="120" fill="#13874E"/><path d="M0 0h54v120H0z" fill="#15A05A"/><path d="M106 0h54v120h-54z" fill="#E8C53A"/><path d="M60 22h40v20a20 20 0 0 1-40 0z" fill="#F5C842" stroke="#B8901A" stroke-width="2"/><path d="M60 28H48a10 10 0 0 0 12 14M100 28h12a10 10 0 0 1-12 14" stroke="#B8901A" stroke-width="3" fill="none"/><rect x="74" y="62" width="12" height="14" fill="#E0A81C"/><rect x="62" y="76" width="36" height="10" rx="2" fill="#7A4E2B"/></svg>'
+  };
+  var CHECK='<svg viewBox="0 0 24 24" style="stroke:#15A05A"><path d="M5 12l5 5 9-10"/></svg>';
+  var CROSS='<svg viewBox="0 0 24 24" style="stroke:#D93B3B"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var Q=[
+    {c:"Cameroun",q:"Quel est le plus haut sommet du Cameroun ?",pic:"mont",a:["Mont Manengouba","Mont Cameroun","Mont Oku","Monts Mandara"],ok:1,e:"Le mont Cameroun, volcan encore actif près de Buea, dépasse 4 000 mètres. C'est le plus haut sommet d'Afrique de l'Ouest et centrale."},
+    {c:"Santé",q:"Quelle quantité d'eau un adulte devrait-il boire par jour en moyenne ?",pic:"eau",a:["2 à 3 verres","6 à 8 verres","15 verres","Seulement quand on a soif"],ok:1,e:"Environ 1,5 à 2 litres par jour, soit 6 à 8 verres, davantage quand il fait chaud ou après un effort."},
+    {c:"Cameroun",q:"Quelle ville est la capitale politique du Cameroun ?",a:["Douala","Bafoussam","Yaoundé","Garoua"],ok:2,e:"Yaoundé est la capitale politique, siège des institutions. Douala est la capitale économique, avec le principal port du pays."},
+    {c:"Santé",q:"Comment le paludisme se transmet-il à l'être humain ?",pic:"moustique",a:["Par l'eau du robinet","Par la piqûre d'un moustique","Par une poignée de main","Par la nourriture"],ok:1,e:"Le parasite est transmis par la piqûre de moustiques anophèles femelles. Dormir sous une moustiquaire imprégnée protège efficacement."},
+    {c:"Cameroun",q:"Quel fleuve traverse la ville de Douala ?",pic:"fleuve",a:["La Sanaga","Le Nyong","Le Logone","Le Wouri"],ok:3,e:"Le Wouri se jette dans l'océan Atlantique à Douala. Le pont sur le Wouri relie le centre-ville à Bonabéri."},
+    {c:"Santé",q:"Combien de temps faut-il au minimum se laver les mains avec du savon ?",pic:"mains",a:["5 secondes","20 secondes","Une seconde suffit","Ce n'est pas utile"],ok:1,e:"Au moins 20 secondes avec du savon, en frottant les paumes, le dos des mains, entre les doigts et sous les ongles."},
+    {c:"Cameroun",q:"Quelles sont les deux langues officielles du Cameroun ?",a:["Français et anglais","Français et allemand","Anglais et espagnol","Français et portugais"],ok:0,e:"Le Cameroun est officiellement bilingue : le français et l'anglais sont tous deux langues officielles."},
+    {c:"Cuisine",q:"Avec quelles feuilles prépare-t-on traditionnellement le ndolé ?",a:["Feuilles de manioc","Feuilles amères","Feuilles de patate","Feuilles de gombo"],ok:1,e:"Le ndolé, plat emblématique du Littoral, se prépare avec des feuilles amères bien lavées, des arachides et souvent de la viande ou des crevettes."},
+    {c:"Santé",q:"Un enfant a la diarrhée. Que faut-il lui donner en priorité ?",a:["Rien à boire","Une solution de réhydratation orale","Du soda","Du café"],ok:1,e:"La solution de réhydratation orale (SRO) remplace l'eau et les sels perdus. Consultez si la diarrhée dure ou si l'enfant est très fatigué."},
+    {c:"Sport",q:"En quelle année le Cameroun a-t-il gagné sa première Coupe d'Afrique des Nations ?",pic:"trophee",a:["1972","1984","1990","2002"],ok:1,e:"Les Lions Indomptables ont remporté leur première CAN en 1984, puis à nouveau en 1988, 2000, 2002 et 2017."}
+  ];
+
+  /* Sons */
+  var ac=null,sndOn=true;
+  function audio(){try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}}if(ac.state!=="running"){try{ac.resume();}catch(e){}}try{var b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}}
+  ["pointerdown","touchstart","keydown"].forEach(function(ev){document.addEventListener(ev,audio,{capture:true,passive:true});});
+  function tone(f,d,type,v,w,to){if(!ac||!sndOn)return;var t=ac.currentTime+(w||0),o=ac.createOscillator(),g=ac.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v||.4,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.02);}
+  var sfx={
+    pick:function(){tone(660,.06,"triangle",.25);},
+    ok:function(){tone(784,.12,"sine",.5);tone(1047,.14,"sine",.5,.1);tone(1568,.3,"sine",.4,.2);},
+    ko:function(){tone(196,.32,"sawtooth",.28,0,110);},
+    end:function(good){var n=good?[523,659,784,1047,1319]:[523,494,440];n.forEach(function(f,i){tone(f,.24,"triangle",.4,i*.13);});}
+  };
+
+  /* Jeu : série sans fin, 3 vies */
+  var $=function(id){return document.getElementById(id);};
+  var HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3 1.6-1.8 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z" fill="#E5484D"/></svg>';
+  var order=[],pos=0,n=0,sel=-1,answered=false,good=0,lives=3,best=0,q=null;
+  try{best=+(localStorage.getItem("nextin.quiz.best")||0);}catch(e){}
+  function shuffle(a){for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1)),x=a[k];a[k]=a[j];a[j]=x;}return a;}
+  function nextQ(){if(pos>=order.length){order=shuffle(Q.map(function(_,k){return k;}));pos=0;}return Q[order[pos++]];}
+  function hearts(){$("dots").innerHTML=[0,1,2].map(function(k){return k<lives?HEART:HEART.replace('<svg','<svg class="lost"');}).join("");$("dots").setAttribute("aria-label",lives+(lives>1?" vies restantes":" vie restante"));}
+  function scoreText(){$("score").textContent=good+(good>1?" bonnes réponses":" bonne réponse");}
+  function render(){
+    q=nextQ();n++;sel=-1;answered=false;
+    $("tab").textContent="QUESTION "+n;$("tab").className="tab num";
+    $("cat").textContent=q.c;$("question").textContent=q.q;
+    if(q.pic){$("pic").hidden=false;$("pic").innerHTML=PIC[q.pic];$("pic").setAttribute("role","img");$("pic").setAttribute("aria-label","Illustration");}else{$("pic").hidden=true;$("pic").innerHTML="";}
+    $("answers").innerHTML=q.a.map(function(t,k){return '<button class="ans" type="button" role="radio" aria-checked="false" data-k="'+k+'"><span class="l">'+"ABCD"[k]+'</span><span>'+t+'</span></button>';}).join("");
+    $("explain").classList.remove("show");$("ebody").textContent=q.e;
+    $("ctaText").textContent="Valider";$("ctaIco").innerHTML='<path d="M5 12l5 5 9-10"/>';$("cta").disabled=true;
+    hearts();
+  }
+  $("answers").addEventListener("click",function(e){
+    var b=e.target.closest(".ans");if(!b||answered)return;sel=+b.dataset.k;sfx.pick();
+    Array.prototype.forEach.call(document.querySelectorAll(".ans"),function(x){var on=x===b;x.classList.toggle("sel",on);x.setAttribute("aria-checked",on);});
+    $("cta").disabled=false;
+  });
+  $("cta").addEventListener("click",function(){
+    if(!answered){
+      if(sel<0)return;answered=true;var right=sel===q.ok;if(right)good++;else lives--;
+      Array.prototype.forEach.call(document.querySelectorAll(".ans"),function(x){
+        var k=+x.dataset.k;x.classList.remove("sel");
+        if(k===q.ok){x.classList.add("ok");x.querySelector(".l").innerHTML=CHECK;}
+        else if(k===sel){x.classList.add("ko");x.querySelector(".l").innerHTML=CROSS;}
+        else x.classList.add("dim");
+      });
+      $("tab").classList.add(right?"ok":"ko");right?sfx.ok():sfx.ko();
+      if(!right&&navigator.vibrate)try{navigator.vibrate(60);}catch(e){}
+      $("explain").classList.add("show");scoreText();hearts();
+      $("ctaText").textContent=lives>0?"Question suivante":"Voir mon résultat";$("ctaIco").innerHTML='<path d="M5 12h14M13 6l6 6-6 6"/>';
+    }else{
+      if(lives<=0){end();return;}
+      render();$("stage").scrollIntoView({block:"nearest"});
+    }
+  });
+  function end(){
+    var record=good>best;if(record){best=good;try{localStorage.setItem("nextin.quiz.best",String(best));}catch(e){}}
+    $("ring").style.setProperty("--p",Math.min(good/8,1)*100+"%");$("endScore").textContent=good;
+    $("endTitle").textContent=good>=8?"Excellent !":good>=4?"Bien joué !":"Continuez !";
+    $("endText").textContent=record&&good>0?"Nouveau record sur ce téléphone !":"Votre record : "+best+(best>1?" bonnes réponses.":" bonne réponse.");
+    $("coupon").hidden=good<8;$("endOv").hidden=false;sfx.end(good>=4);
+  }
+  $("againBtn").addEventListener("click",function(){n=0;good=0;lives=3;scoreText();$("endOv").hidden=true;render();});
+  $("sndBtn").addEventListener("click",function(){sndOn=!sndOn;this.setAttribute("aria-pressed",sndOn);});
+  $("callBtn").addEventListener("click",function(){$("calledOv").hidden=false;var was=sndOn;sndOn=true;[784,988,1175].forEach(function(f,k){tone(f,.35,"sine",.4,k*.18);});sndOn=was;if(navigator.vibrate)try{navigator.vibrate([200,100,200]);}catch(e){}});
+  $("calledBtn").addEventListener("click",function(){$("calledOv").hidden=true;});
+  render();
+})();
+</script>
+
+</html>

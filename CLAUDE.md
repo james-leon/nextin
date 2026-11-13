@@ -18,7 +18,7 @@ Production : site en ligne sur Vercel depuis `main`. Travail uniquement sur la b
 - `packages/shared` — types (dont `src/types/database.ts` généré), schémas Zod, logique métier pure, i18n FR/EN.
 - `packages/payments` — contrat `PaymentProvider` des agrégateurs Mobile Money et faux fournisseur (M10a), côté serveur uniquement.
 - `supabase/` — `migrations/` (SQL horodaté `YYYYMMDDHHMMSS_mX_sujet.sql`), `tests/database/*.test.sql` (pgTAP).
-- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent, images générées par `demo-images.ts`), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`, `e2e-cleanup.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
+- `scripts/` — Node uniquement (compatibles Windows) : `seed-demo.ts` (idempotent ; supporte les données démo modifiées à la main : objets retrouvés par leur nom puis par ordre de création, jamais recréés ni remis à l'origine, limite de la formule signalée sans arrêter le seed ; test `supabase/tests/integration/seed-demo.test.ts` ; images générées par `demo-images.ts`), `local-env.mjs`, `db-reset.mjs`, `db-test.mjs`, `db-integration.mjs`, `db-types.mjs`, `supabase-remote.mjs`, `dev-lan.mjs`, `screenshots.mjs`, `generate-voices.ts`, `e2e-cleanup.mjs`. Jamais de `bash`, `env -u` ni `$VAR` dans les scripts `package.json`.
 - Identifiants (tables, colonnes, code) en **anglais** ; interface en **français** par défaut, anglais en bascule ; commentaires en français.
 
 ## Commandes

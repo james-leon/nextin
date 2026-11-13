@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>NextIn Connexion v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 : police système Apple, aplats, une seule couleur d'accent par écran, listes groupées, motif des points du logo */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000000; --label2:rgba(60,60,67,.62); --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFFFFF; --blue:#1A6BB5; --orange:#F58B1F; --orange-text:#B85E00; --green:#15A05A; --tint:#E8F0F9;
+  --bar:rgba(249,249,249,.94); --ticket:#0D2C54; --frame:#1C1C1E;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFFFFF;--label2:rgba(235,235,245,.6);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--orange-text:#FFA94D;--tint:#15263D;--bar:rgba(22,22,24,.94);--ticket:#FFFFFF;--frame:#3A3A3C;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFFFFF;--label2:rgba(235,235,245,.6);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--orange-text:#FFA94D;--tint:#15263D;--bar:rgba(22,22,24,.94);--ticket:#FFFFFF;--frame:#3A3A3C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:17px;letter-spacing:-.01em}
+.page{max-width:1400px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.intro{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;margin-bottom:28px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:52ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;max-width:640px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px;color:var(--label)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px}
+figcaption{font-size:13px;color:var(--label2);text-align:center}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+
+/* Téléphone */
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.body{flex:1;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:31px;font-weight:700;letter-spacing:-.025em;margin:4px 0 0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.navbar{display:flex;align-items:center;height:36px;color:var(--blue);font-size:17px;gap:2px;flex:none;padding:0 8px}
+.navbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* Listes groupées iOS */
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -10px 16px}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.pastille{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:600;font-size:15px;flex:none;font-family:var(--num)}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Boutons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.action{background:var(--orange);color:#fff}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.link{color:var(--label2);font-size:15px;text-align:center}
+
+/* Barre d'onglets iOS */
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--bar);border-top:.5px solid var(--sep);padding:6px 4px 22px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:500;color:var(--label2)}
+.tab svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--blue)}
+
+/* Motif des points du logo */
+.dots{display:flex;align-items:flex-end;gap:6px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--fill)}
+.dots i.done{background:var(--label3)}
+.dots i.me{width:14px;height:14px;background:var(--orange)}
+.loader{display:flex;gap:7px;align-items:flex-end;height:16px}
+.loader i{width:9px;height:9px;border-radius:50%;background:var(--blue);animation:hop 1.2s infinite ease-in-out}
+.loader i:nth-child(2){animation-delay:.15s;width:8px;height:8px}.loader i:nth-child(3){animation-delay:.3s;width:7px;height:7px}
+@keyframes hop{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-6px);opacity:1}}
+@media (prefers-reduced-motion:reduce){.loader i{animation:none;opacity:.8}}
+
+/* Ticket */
+.num{font-family:var(--num);font-weight:700;letter-spacing:-.02em}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--green)}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.tk{background:var(--cell);border-radius:16px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px}
+.tk .code{font-size:68px;line-height:1;color:var(--ticket)}
+.stats{display:grid;grid-template-columns:1fr 1fr;border-top:.5px solid var(--sep);padding-top:12px}
+.stats div + div{border-left:.5px solid var(--sep);padding-left:14px}
+.stats b{display:block;font-family:var(--num);font-size:26px;font-weight:700;line-height:1.1}
+.stats small{font-size:13px;color:var(--label2)}
+
+/* Écrans spéciaux */
+.splash{background:var(--cell);align-items:center;justify-content:center;gap:16px}
+.splash .logo{width:92px;height:92px}
+.splash h2{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.splash p{margin:-8px 0 8px;color:var(--label2);font-size:15px}
+.called{background:var(--green);color:#fff}
+.called .status{color:#fff}
+.called .body{justify-content:center;align-items:center;text-align:center;gap:10px}
+.called .btn{background:#fff;color:#0B6B3C;margin-top:28px}
+.photo{height:126px;background:#C9D6E3;position:relative;display:flex;align-items:flex-end;padding:10px}
+.photo svg{position:absolute;inset:0;width:100%;height:100%}
+.feat{background:var(--cell);border-radius:16px;overflow:hidden}
+.feat .in{padding:12px 14px 14px;display:flex;flex-direction:column;gap:2px}
+.feat b{font-size:17px;font-weight:600}
+.feat small{font-size:13px;color:var(--label2)}
+.chips{display:flex;gap:8px;overflow:hidden}
+.chip{flex:none;font-size:14px;font-weight:500;padding:7px 13px;border-radius:999px;background:var(--fill);color:var(--label)}
+.chip.on{background:var(--navy);color:var(--onnavy)}
+.games{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.game{background:var(--cell);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:126px}
+.game b{font-size:16px;font-weight:600}
+.game small{font-size:13px;color:var(--label2);margin-top:-8px}
+.mini{display:flex;align-items:center;gap:10px;background:var(--cell);border-radius:12px;padding:10px 14px}
+.mini .num{font-size:22px;color:var(--ticket);white-space:nowrap}
+.mini .live{white-space:nowrap}
+.mini small{color:var(--label2);font-size:13px}
+.sponsor{font-size:12px;color:var(--label2);text-align:center}
+</style>
+<style>
+.lead{margin:-6px 0 0;font-size:15px;color:var(--label2);line-height:1.4}
+.fine{font-size:12px;color:var(--label2);text-align:center}
+.scan{background:#000;color:#fff}
+.scan .status{color:#fff;position:absolute;top:0;left:0;right:0;z-index:2}
+.scanview{position:absolute;inset:0}
+.scanview > svg{width:100%;height:100%;filter:blur(1.2px) brightness(.8)}
+.frame{position:absolute;left:50%;top:51%;width:46%;aspect-ratio:1;transform:translate(-50%,-50%)}
+.frame i{position:absolute;width:26%;height:26%;border:4px solid #fff;border-radius:4px}
+.frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-top-left-radius:18px}
+.frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-top-right-radius:18px}
+.frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-bottom-left-radius:18px}
+.frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-bottom-right-radius:18px}
+.scanbottom{position:absolute;left:0;right:0;bottom:0;padding:18px 18px 30px;display:flex;flex-direction:column;gap:6px;text-align:center;background:rgba(0,0,0,.55)}
+.scanbottom b{font-size:17px;font-weight:600}
+.scanbottom small{font-size:13px;color:rgba(255,255,255,.75)}
+.scanacts{display:flex;gap:10px;justify-content:center;margin-top:10px}
+.glass{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:22px;background:rgba(255,255,255,.18);font-size:15px;font-weight:600}
+.glass.round{width:44px;padding:0;justify-content:center}
+.glass svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.otp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.otp span{height:62px;border-radius:12px;background:var(--cell);display:grid;place-items:center;font-family:var(--num);font-size:30px;font-weight:700;color:var(--ticket)}
+.otp span.cur{box-shadow:inset 0 0 0 2px var(--blue)}
+.hint{font-size:13px;color:var(--label2);margin-top:-6px}
+.keys{flex:none;background:#D1D3D9;padding:8px 3px 26px;display:flex;flex-direction:column;gap:9px}
+.krow{display:flex;gap:4px;justify-content:center}
+.krow span{flex:1;max-width:26px;height:38px;border-radius:5px;background:#fff;display:grid;place-items:center;font-size:17px;color:#000;box-shadow:0 1px 0 rgba(0,0,0,.3)}
+.krow span.w{max-width:40px;background:#ABB0BA;font-size:14px}
+.selrow{background:var(--tint)}
+.row.dis .t b,.row.dis .t small{color:var(--label3)}
+.form{display:flex;flex-direction:column}
+.field{display:flex;flex-direction:column;gap:2px;padding:9px 14px;position:relative}
+.field + .field::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--sep)}
+.field span{font-size:12px;color:var(--label2)}
+.field input{border:0;background:transparent;font:inherit;font-size:17px;color:var(--label);padding:0;outline:0}
+.check{display:flex;align-items:center;gap:10px;font-size:15px}
+.box{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--label3);display:grid;place-items:center;flex:none}
+.box.on{background:var(--navy);border-color:var(--navy)}
+.box svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.done{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center}
+.done svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.notice{display:flex;gap:10px;background:var(--cell);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.4}
+.notice svg{width:20px;height:20px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px}
+</style>
+<style>
+.win{width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--sep);background:var(--bg);margin-bottom:10px}
+.chrome{height:30px;background:var(--cell);border-bottom:.5px solid var(--sep);display:flex;align-items:center;gap:7px;padding:0 12px}
+.chrome i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.chrome span{margin:0 auto;font-size:12px;color:var(--label2)}
+.auth{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:560px}
+.brandside{background:#0D2C54;color:#fff;padding:32px 36px;display:flex;flex-direction:column;gap:24px}
+.bl{display:flex;align-items:center;gap:10px}
+.bl svg{width:36px;height:36px}.bl b{font-size:19px}.bl small{font-size:12px;opacity:.65;margin-top:4px}
+.pitch{margin:auto 0;display:flex;flex-direction:column;gap:14px}
+.ov{font-size:13px;font-weight:600;color:#FFB467;letter-spacing:.02em}
+.pitch h2{margin:0;font-size:34px;line-height:1.12;font-weight:700;letter-spacing:-.025em;text-wrap:balance;max-width:16ch}
+.pitch ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:15px;color:rgba(255,255,255,.85)}
+.pitch li{display:flex;gap:10px;align-items:center}
+.dotk{width:8px;height:8px;border-radius:50%;background:#fff;flex:none}
+.copy{font-size:12px;opacity:.55}
+.formside{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
+.lang{position:absolute;top:16px;right:18px;display:flex;background:var(--fill);border-radius:8px;padding:2px}
+.lang span{font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;color:var(--label2)}
+.lang span.on{background:var(--cell);color:var(--label)}
+.formbox{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+.formbox h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em}
+.between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.a{color:var(--blue);font-size:14px;font-weight:500;cursor:pointer}
+.legal{position:absolute;bottom:16px;display:flex;gap:16px;font-size:12px;color:var(--label2)}
+.cap{font-size:14px;color:var(--label2);margin:0 0 26px}
+.cap b{color:var(--label)}
+.otp.six{grid-template-columns:repeat(6,1fr);gap:7px}
+.otp.six span{height:52px;font-size:24px}
+.shield{width:60px;height:60px;border-radius:16px;background:var(--tint);display:grid;place-items:center;margin:0 auto}
+.shield svg{width:32px;height:32px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.steps i{height:4px;border-radius:2px;background:var(--fill)}
+.steps i.on{background:var(--navy)}
+.sectors{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sectors span{display:flex;align-items:center;gap:8px;background:var(--cell);border-radius:12px;padding:11px 12px;font-size:14px;font-weight:500}
+.sectors span.on{box-shadow:inset 0 0 0 2px var(--navy)}
+.sectors svg{width:18px;height:18px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.invav{width:64px;height:64px;border-radius:16px;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700;margin:0 auto}
+@media (max-width:800px){.auth{grid-template-columns:minmax(0,1fr)}.brandside{display:none}}
+</style>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-1a2 2 0 0 1 0-4 2 2 0 0 0 0-4V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2"/></symbol>
+  <symbol id="i-keypad" viewBox="0 0 24 24"><path d="M6 5h.01M12 5h.01M18 5h.01M6 11h.01M12 11h.01M18 11h.01M6 17h.01M12 17h.01M18 17h.01" stroke-width="3.2"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5l-5 5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.2-4.4A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/><circle cx="12" cy="12" r="9"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 13l7-2 4-7h2l-1.5 7H20l2 2-2 2h-5.5L16 22h-2l-4-7-7-2z"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="3" y="6" width="9" height="13" rx="2"/><rect x="12" y="4" width="9" height="13" rx="2"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 16.5h.01"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.5"/><rect x="23.5" y="4" width="2" height="4" rx="1" opacity=".4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="intro">
+    <div>
+      <h1>NextIn — connexion et inscription v2</h1>
+      <p>La première impression d'un directeur. Sur ordinateur, un panneau de marque bleu nuit à gauche et le formulaire à droite ; sur téléphone, le formulaire seul.</p>
+    </div>
+    <div class="changes"><span>Connexion</span><span>Code par e-mail</span><span>Double authentification</span><span>Inscription en 3 étapes</span><span>Invitation</span></div>
+  </header>
+
+  <!-- Connexion ordinateur -->
+  <div class="win">
+    <div class="chrome"><i></i><i></i><i></i><span>nextin.wintekservices.com/login</span></div>
+    <div class="auth">
+      <aside class="brandside">
+        <div class="bl"><svg><use href="#logo"/></svg><b>NextIn</b><small>by Wintek</small></div>
+        <div class="pitch">
+          <span class="ov">Pour les cliniques, banques et agences</span>
+          <h2>Vos patients attendent ailleurs que dans la salle.</h2>
+          <ul>
+            <li><span class="dotk"></span>Ticket par QR code, sans application à installer</li>
+            <li><span class="dotk"></span>Alerte WhatsApp quand le tour approche</li>
+            <li><span class="dotk"></span>Écran TV et statistiques en direct</li>
+          </ul>
+        </div>
+        <small class="copy">© 2026 Wintek · Douala, Cameroun</small>
+      </aside>
+      <section class="formside">
+        <div class="lang"><span class="on">FR</span><span>EN</span></div>
+        <div class="formbox">
+          <h1>Connexion</h1>
+          <p class="lead" style="margin:0">Espace du personnel et des directeurs.</p>
+          <div class="group form">
+            <label class="field"><span>Adresse e-mail</span><input value="j.ekwalla@doualaclinic.cm" readonly aria-label="Adresse e-mail"></label>
+            <label class="field"><span>Mot de passe</span><input value="••••••••••" readonly aria-label="Mot de passe"></label>
+          </div>
+          <div class="between"><label class="check" style="font-size:14px"><span class="box on"><svg><use href="#i-check"/></svg></span>Se souvenir de moi</label><a class="a">Mot de passe oublié ?</a></div>
+          <button class="btn primary">Se connecter</button>
+          <button class="btn tinted">Recevoir un code par e-mail</button>
+          <p class="fine" style="text-align:left">Nouveau sur NextIn ? <a class="a">Créer l'espace de mon établissement</a></p>
+        </div>
+        <div class="legal"><span>Connexion sécurisée</span><span>Conditions</span><span>Confidentialité</span></div>
+      </section>
+    </div>
+  </div>
+  <div class="cap"><b>Connexion sur ordinateur.</b> Un seul bouton bleu nuit, « Se connecter ». Le code par e-mail sert aussi au mot de passe oublié.</div>
+
+  <div class="grid">
+    <!-- Code e-mail -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="navbar"><svg><use href="#i-back"/></svg>Connexion</div>
+        <div class="body" style="gap:16px">
+          <h2 class="large">Vérifiez vos e-mails</h2>
+          <p class="lead">Saisissez le code envoyé à <b style="color:var(--label);font-weight:600">j.e…@doualaclinic.cm</b>. Il expire dans 1 heure.</p>
+          <div class="otp six"><span>4</span><span>7</span><span>7</span><span>4</span><span class="cur"></span><span></span></div>
+          <button class="btn primary" style="opacity:.4">Continuer</button>
+          <p class="fine">Rien reçu ? Regardez dans les indésirables.<br><a class="a">Renvoyer le code</a> dans 0:42</p>
+        </div>
+      </div></div>
+      <figcaption><b>Code par e-mail</b>6 chiffres, collage du code et remplissage automatique sur iPhone.</figcaption>
+    </figure>
+
+    <!-- MFA -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="gap:16px;padding-top:30px">
+          <div class="shield"><svg><use href="#i-shield"/></svg></div>
+          <h2 class="large" style="text-align:center">Double authentification</h2>
+          <p class="lead" style="text-align:center">Ouvrez votre application d'authentification (Google Authenticator, Authy) et saisissez le code NextIn.</p>
+          <div class="otp six"><span>2</span><span>9</span><span>1</span><span></span><span></span><span></span></div>
+          <button class="btn primary" style="opacity:.4">Vérifier</button>
+          <p class="fine">Téléphone perdu ? Contactez Wintek au +237 690 72 23 16.</p>
+        </div>
+      </div></div>
+      <figcaption><b>Double authentification</b>Pour les directeurs et la console Wintek.</figcaption>
+    </figure>
+
+    <!-- Inscription 1 -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="navbar"><svg><use href="#i-back"/></svg>Connexion</div>
+        <div class="body" style="gap:14px">
+          <div class="steps" aria-label="Étape 1 sur 3"><i class="on"></i><i></i><i></i></div>
+          <div><div class="over">Étape 1 sur 3</div><h2 class="large">Votre compte</h2></div>
+          <p class="lead">14 jours d'essai gratuit de la formule Business. Sans carte, sans engagement.</p>
+          <div class="group form">
+            <label class="field"><span>Nom et prénom</span><input value="Joseph Ekwalla" readonly aria-label="Nom et prénom"></label>
+            <label class="field"><span>Adresse e-mail</span><input value="j.ekwalla@doualaclinic.cm" readonly aria-label="Adresse e-mail"></label>
+            <label class="field"><span>Téléphone</span><input value="+237 6 90 00 00 00" readonly aria-label="Téléphone"></label>
+            <label class="field"><span>Mot de passe</span><input value="••••••••••" readonly aria-label="Mot de passe"></label>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn primary">Recevoir le code</button>
+          <p class="fine" style="margin-bottom:10px">En continuant, vous acceptez les conditions d'utilisation.</p>
+        </div>
+      </div></div>
+      <figcaption><b>Inscription · 1</b>Le compte du directeur. L'essai est annoncé dès le début.</figcaption>
+    </figure>
+
+    <!-- Inscription 3 -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="navbar"><svg><use href="#i-back"/></svg>Code</div>
+        <div class="body" style="gap:14px">
+          <div class="steps" aria-label="Étape 3 sur 3"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <div><div class="over">Étape 3 sur 3</div><h2 class="large">Votre établissement</h2></div>
+          <div class="group form">
+            <label class="field"><span>Nom de l'établissement</span><input value="Douala Clinic" readonly aria-label="Nom de l'établissement"></label>
+            <label class="field"><span>Première agence</span><input value="Makepe" readonly aria-label="Première agence"></label>
+            <label class="field"><span>Ville</span><input value="Douala" readonly aria-label="Ville"></label>
+          </div>
+          <div class="ghead" style="margin-bottom:-6px">Secteur</div>
+          <div class="sectors">
+            <span class="on"><svg><use href="#i-cross"/></svg>Clinique</span><span><svg><use href="#i-bank"/></svg>Banque</span><span><svg><use href="#i-bolt"/></svg>Service public</span><span><svg><use href="#i-msg"/></svg>Télécoms</span>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn primary" style="margin-bottom:12px">Créer mon espace</button>
+        </div>
+      </div></div>
+      <figcaption><b>Inscription · 3</b>Le secteur prépare les bons services (Consultation, Laboratoire…) et les bons réglages.</figcaption>
+    </figure>
+
+    <!-- Invitation -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="gap:14px;padding-top:26px">
+          <div class="invav">DC</div>
+          <div style="text-align:center"><div class="over">Invitation</div><h2 class="large" style="font-size:26px">Rejoindre Douala Clinic</h2></div>
+          <p class="lead" style="text-align:center">Dr Ekwalla vous invite comme <b style="color:var(--label);font-weight:600">agent d'accueil</b> à l'agence de Makepe.</p>
+          <div class="group form">
+            <label class="field"><span>Adresse e-mail</span><input value="accueil.makepe@doualaclinic.cm" readonly aria-label="Adresse e-mail"></label>
+            <label class="field"><span>Choisissez un mot de passe</span><input value="••••••••••" readonly aria-label="Mot de passe"></label>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn primary">Accepter l'invitation</button>
+          <p class="fine" style="margin-bottom:10px">Lien valable 7 jours, une seule fois.</p>
+        </div>
+      </div></div>
+      <figcaption><b>Invitation</b>Le lien reçu par e-mail ou WhatsApp. Le rôle et l'agence sont dits clairement.</figcaption>
+    </figure>
+  </div>
+</div>
+
+</html>

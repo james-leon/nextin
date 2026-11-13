@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>NextIn Postes v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Postes v2 : poste médecin (ordinateur et téléphone) et accueil ; police système, aplats, un seul bouton principal */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.16); --label:#000; --label2:rgba(60,60,67,.64); --label3:rgba(60,60,67,.3); --fill:rgba(118,118,128,.12);
+  --navy:#0D2C54; --blue:#1A6BB5; --orange:#F58B1F; --orange-text:#B85E00; --orange-tint:#FEF1E3; --green:#15A05A; --green-text:#0E7A44; --green-tint:#E4F5EC; --red:#D93B3B; --tint:#E8F0F9; --ticket:#0D2C54; --frame:#1C1C1E;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.55);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--orange-text:#FFA94D;--orange-tint:#3A2610;--green-text:#4CD38A;--green-tint:#10301F;--tint:#15263D;--ticket:#FFF;--frame:#3A3A3C;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.55);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--orange-text:#FFA94D;--orange-tint:#3A2610;--green-text:#4CD38A;--green-tint:#10301F;--tint:#15263D;--ticket:#FFF;--frame:#3A3A3C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.tk{font-family:var(--num);font-weight:700;color:var(--ticket)}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.page{max-width:1320px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.page > h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em}
+.page > p{margin:-6px 0 8px;color:var(--label2);font-size:15px;max-width:72ch;line-height:1.45}
+.cap{font-size:14px;color:var(--label2);margin:4px 0 26px;max-width:80ch;line-height:1.45}
+.cap b{color:var(--label)}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+@media (max-width:1000px){.row2{grid-template-columns:minmax(0,1fr);justify-items:center}}
+
+/* Fenêtre d'ordinateur */
+.win{width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--sep);background:var(--bg);box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.chrome{height:30px;background:var(--cell);border-bottom:.5px solid var(--sep);display:flex;align-items:center;gap:7px;padding:0 12px}
+.chrome i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.chrome span{margin:0 auto;font-size:12px;color:var(--label2)}
+.bar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--cell);border-bottom:.5px solid var(--sep);flex-wrap:wrap}
+.bar b{font-size:17px;font-weight:700}
+.bar small{color:var(--label2);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:99px;padding:4px 10px}
+.pill.ok{background:var(--green-tint);color:var(--green-text)}
+.pill.ok::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.pill.sync{background:var(--fill);color:var(--label2)}
+.pill.warn{background:var(--orange-tint);color:var(--orange-text)}
+.bar .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* Poste médecin */
+.desk{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;padding:18px 20px}
+.cur{background:var(--cell);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.cur .over{font-size:13px;color:var(--label2);font-weight:500;display:flex;align-items:center;gap:8px}
+.cur .big{font-size:76px;line-height:1}
+.who{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:600}
+.who small{font-size:14px;font-weight:400;color:var(--label2)}
+.mask{margin-left:auto;font-size:13px;font-weight:500;color:var(--blue)}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);border-top:.5px solid var(--sep);padding-top:14px}
+.meta div + div{border-left:.5px solid var(--sep);padding-left:14px}
+.meta b{display:block;font-family:var(--num);font-size:24px;font-weight:700}
+.meta small{font-size:12px;color:var(--label2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%;background:var(--navy);color:#fff}
+.btn.sm{height:40px;font-size:14px;width:auto;padding:0 14px}
+.sec-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ghost{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:var(--fill);font-size:14px;font-weight:500;color:var(--label)}
+.kbd{font-family:var(--font);font-size:11px;color:var(--label2);border:.5px solid var(--sep);border-radius:5px;padding:1px 5px;margin-left:4px}
+.panel{background:var(--cell);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.panel h3{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel h3 small{font-weight:400;color:var(--label2);font-size:13px}
+.li{display:flex;align-items:center;gap:12px;padding:9px 0;position:relative}
+.li + .li::before{content:"";position:absolute;top:0;left:0;right:0;border-top:.5px solid var(--sep)}
+.li .tk{font-size:19px;width:62px;white-space:nowrap;flex:none}
+.li .t{flex:1;min-width:0}
+.li .t b{display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .t small{font-size:12px;color:var(--label2)}
+.tag{font-size:11px;font-weight:600;border-radius:6px;padding:2px 7px}
+.tag.prio{background:var(--orange-tint);color:var(--orange-text)}
+.tag.rdv{background:var(--tint);color:var(--blue)}
+.tag.dist{background:var(--fill);color:var(--label2)}
+.wait{font-size:13px;color:var(--label2);white-space:nowrap}
+
+/* Téléphone */
+.phone{width:100%;max-width:300px;aspect-ratio:300/620;border-radius:44px;background:var(--frame);padding:9px}
+.screen{width:100%;height:100%;border-radius:36px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 24px 0 28px;font-size:14px;font-weight:600;flex:none}
+.pbody{flex:1;padding:4px 14px 14px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.ptop{display:flex;align-items:center;justify-content:space-between}
+.ptop b{font-size:15px;font-weight:600}
+.pcur{background:var(--cell);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.pcur .big{font-size:54px;line-height:1}
+
+/* Accueil */
+.recep{display:grid;grid-template-columns:200px minmax(0,1fr) 280px;gap:16px;padding:18px 20px;min-height:520px}
+.filters{display:flex;flex-direction:column;gap:2px}
+.filters a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:14px;color:var(--label)}
+.filters a.on{background:var(--cell);font-weight:600}
+.filters a .n{margin-left:auto;font-size:12px;color:var(--label2);font-family:var(--num)}
+.filters .h{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--label2);padding:12px 10px 4px}
+.pastille{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;font-weight:600;font-size:12px;flex:none;font-family:var(--num)}
+.qlist{background:var(--cell);border-radius:16px;padding:6px 16px;min-width:0}
+.qhead{display:flex;align-items:center;gap:10px;padding:10px 0 6px}
+.search{flex:1;display:flex;align-items:center;gap:8px;height:34px;border-radius:9px;background:var(--fill);padding:0 10px;font-size:14px;color:var(--label2)}
+.li.sel{background:var(--tint);margin:0 -10px;padding-left:10px;padding-right:10px;border-radius:10px}
+.li.sel::before{display:none}
+.li.sel + .li::before{display:none}
+.help{background:var(--orange-tint);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.help b{color:var(--orange-text);font-weight:600}
+.help .acts{display:flex;gap:8px}
+.help .acts span{font-size:13px;font-weight:600;background:var(--cell);border-radius:8px;padding:6px 10px}
+.detail{display:flex;flex-direction:column;gap:12px;min-width:0}
+.dcard{background:var(--cell);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.dcard .big{font-size:44px;line-height:1}
+.drow{display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-top:.5px solid var(--sep)}
+.drow span:first-child{color:var(--label2)}
+.alist{display:flex;flex-direction:column;background:var(--cell);border-radius:14px;overflow:hidden}
+.alist div{display:flex;align-items:center;gap:10px;padding:11px 14px;font-size:14px;position:relative}
+.alist div + div::before{content:"";position:absolute;top:0;left:42px;right:0;border-top:.5px solid var(--sep)}
+.alist svg{color:var(--blue)}
+.alist .danger{color:var(--red)}
+.alist .danger svg{color:var(--red)}
+@media (max-width:1100px){.recep{grid-template-columns:minmax(0,1fr)}.desk{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><path d="M4 7h11a4 4 0 0 1 0 8H8M8 15l3-3M8 15l3 3"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v7H7z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 17h.01"/></symbol>
+</svg>
+
+<div class="page">
+  <h1>NextIn — postes v2</h1>
+  <p>Les écrans du personnel. Le nom du patient n'est visible qu'ici, jamais sur l'écran TV ; il se masque d'un clic ou après 2 minutes sans activité.</p>
+
+  <!-- Poste médecin : ordinateur + téléphone -->
+  <div class="row2">
+    <div class="win">
+      <div class="chrome"><i></i><i></i><i></i><span>nextin.wintekservices.com/desk</span></div>
+      <div class="bar"><b>Cabinet 1</b><small>Dr Ekwalla · Consultation générale</small><span class="pill ok">Ouvert</span><div class="r"><span class="pill sync">Synchronisé</span><span class="ghost">Fermer le poste</span></div></div>
+      <div class="desk">
+        <section class="cur">
+          <div class="over">En consultation <span class="pill ok" style="padding:2px 8px">Admis à 10:31</span></div>
+          <div class="big tk">C-047</div>
+          <div class="who">Mme Ngo Nkot <small>· 34 ans</small><span class="mask"><svg class="i" style="vertical-align:-4px;width:16px;height:16px"><use href="#i-eye"/></svg> Masquer le nom</span></div>
+          <div class="meta"><div><b>08:42</b><small>Durée</small></div><div><b>12 min</b><small>Durée moyenne</small></div><div><b>14</b><small>Servis aujourd'hui</small></div></div>
+          <button class="btn"><svg class="i" style="width:20px;height:20px"><use href="#i-check"/></svg>Terminer et alerter le suivant <span class="kbd" style="color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3)">Espace</span></button>
+          <div class="sec-actions"><span class="ghost"><svg class="i"><use href="#i-route"/></svg>Réorienter</span><span class="ghost"><svg class="i"><use href="#i-more"/></svg>Plus</span></div>
+        </section>
+        <section class="panel">
+          <h3>À suivre <small>4 en attente · ≈ 22 min</small></h3>
+          <div class="li"><span class="tk">C-048</span><div class="t"><b>M. Tchoua</b><small>Attend depuis 18 min</small></div><span class="tag prio">Prioritaire</span></div>
+          <div class="li"><span class="tk">C-049</span><div class="t"><b>Mme Ebode</b><small>Rendez-vous 10:45</small></div><span class="tag rdv">RDV</span></div>
+          <div class="li"><span class="tk">C-050</span><div class="t"><b>M. Kamga</b><small>Attend depuis 9 min</small></div></div>
+          <div class="li"><span class="tk">C-051</span><div class="t"><b>Mme Ngo Biyong</b><small>Ticket à distance · en route</small></div><span class="tag dist">Distance</span></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="status"><span>10:39</span><span>●●●</span></div>
+      <div class="pbody">
+        <div class="ptop"><b>Cabinet 1</b><span class="pill ok">Ouvert</span></div>
+        <div class="pcur">
+          <div style="font-size:12px;color:var(--label2);font-weight:500">En consultation · 08:42</div>
+          <div class="big tk">C-047</div>
+          <div style="font-size:16px;font-weight:600">Mme Ngo Nkot <span style="font-weight:400;color:var(--label2);font-size:13px">· 34 ans</span></div>
+          <button class="btn" style="height:48px;font-size:15px">Terminer et alerter le suivant</button>
+          <div class="sec-actions"><span class="ghost" style="flex:1;justify-content:center">Réorienter</span><span class="ghost">Plus</span></div>
+        </div>
+        <div class="panel" style="padding:10px 14px">
+          <h3 style="font-size:14px">À suivre <small>4 · ≈ 22 min</small></h3>
+          <div class="li"><span class="tk" style="font-size:17px;width:54px">C-048</span><div class="t"><b>M. Tchoua</b><small>18 min</small></div><span class="tag prio">Prio.</span></div>
+          <div class="li"><span class="tk" style="font-size:17px;width:54px">C-049</span><div class="t"><b>Mme Ebode</b><small>RDV 10:45</small></div></div>
+          <div class="li"><span class="tk" style="font-size:17px;width:54px">C-050</span><div class="t"><b>M. Kamga</b><small>9 min</small></div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  <div class="cap"><b>Poste médecin.</b> Un seul bouton principal, dont le libellé suit l'étape : Ouvrir → Alerter le suivant → Admettre → Terminer et alerter le suivant. Raccourci clavier sur ordinateur. Les étiquettes Prioritaire (orange), RDV et Distance aident à comprendre l'ordre de passage.</div>
+
+  <!-- Accueil -->
+  <div class="win">
+    <div class="chrome"><i></i><i></i><i></i><span>nextin.wintekservices.com/desk/reception</span></div>
+    <div class="bar"><b>Accueil</b><small>Douala Clinic · Makepe</small><span class="pill ok">13 en attente</span><div class="r"><span class="pill warn">1 demande d'aide</span><button class="btn sm"><svg class="i"><use href="#i-plus"/></svg>Nouveau ticket</button></div></div>
+    <div class="recep">
+      <nav class="filters" aria-label="Services">
+        <a class="on">Tous les services<span class="n">13</span></a>
+        <span class="h">Services</span>
+        <a><span class="pastille" style="background:#1A6BB5">C</span>Consultation<span class="n">4</span></a>
+        <a><span class="pastille" style="background:#15A05A">P</span>Pédiatrie<span class="n">2</span></a>
+        <a><span class="pastille" style="background:#7A4FD6">L</span>Laboratoire<span class="n">7</span></a>
+        <a><span class="pastille" style="background:#C2410C">O</span>Ophtalmologie<span class="n">0</span></a>
+        <span class="h">Aujourd'hui</span>
+        <a>Rendez-vous<span class="n">6</span></a>
+        <a>Demandes en ligne<span class="n">2</span></a>
+      </nav>
+
+      <section class="qlist">
+        <div class="qhead"><div class="search"><svg class="i"><use href="#i-search"/></svg>Rechercher un numéro ou un nom</div></div>
+        <div class="li"><span class="tk">C-048</span><div class="t"><b>M. Tchoua</b><small>Consultation · 18 min</small></div><span class="tag prio">Prioritaire</span></div>
+        <div class="li"><span class="tk">L-023</span><div class="t"><b>Mme Atangana</b><small>Laboratoire · 16 min</small></div></div>
+        <div class="li sel"><span class="tk">C-050</span><div class="t"><b>M. Kamga</b><small>Consultation · 9 min</small></div><span class="tag" style="background:#B85E00;color:#fff">Aide</span></div>
+        <div class="li"><span class="tk">P-020</span><div class="t"><b>Nom à compléter</b><small>Pédiatrie · 7 min</small></div></div>
+        <div class="li"><span class="tk">C-049</span><div class="t"><b>Mme Ebode</b><small>Consultation · rendez-vous 10:45</small></div><span class="tag rdv">RDV</span></div>
+        <div class="li"><span class="tk">L-024</span><div class="t"><b>M. Nana</b><small>Laboratoire · 5 min</small></div></div>
+        <div class="li"><span class="tk">C-051</span><div class="t"><b>Mme Ngo Biyong</b><small>Consultation · à distance, en route</small></div><span class="tag dist">Distance</span></div>
+      </section>
+
+      <aside class="detail">
+        <div class="help"><span><b>Aide demandée</b> par C-050 il y a 2 min : « Je ne trouve pas le laboratoire. »</span><div class="acts"><span>Traité</span><span>Appeler le patient</span></div></div>
+        <div class="dcard">
+          <div style="font-size:12px;color:var(--label2);font-weight:500">Ticket sélectionné</div>
+          <div class="big tk">C-050</div>
+          <div class="drow"><span>Patient</span><span>M. Kamga</span></div>
+          <div class="drow"><span>Service</span><span>Consultation générale</span></div>
+          <div class="drow"><span>Position</span><span>3ᵉ · ≈ 16 min</span></div>
+          <div class="drow"><span>WhatsApp</span><span>Alertes activées</span></div>
+        </div>
+        <div class="alist">
+          <div><svg class="i"><use href="#i-star"/></svg>Rendre prioritaire</div>
+          <div><svg class="i"><use href="#i-user"/></svg>Modifier le nom</div>
+          <div><svg class="i"><use href="#i-print"/></svg>Imprimer le ticket</div>
+          <div class="danger"><svg class="i"><use href="#i-x"/></svg>Annuler le ticket</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <div class="cap"><b>Accueil.</b> Une seule action principale : « Nouveau ticket ». Les actions d'un ticket se trouvent dans le panneau du ticket sélectionné, jamais un bouton par ligne. Les demandes d'aide des patients arrivent en orange en haut du panneau, avec « Traité ».</div>
+</div>
+
+</html>
