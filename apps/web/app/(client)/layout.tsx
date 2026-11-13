@@ -1,7 +1,6 @@
 import { getLocale, getMessages } from "next-intl/server";
 import { LiteIntlProvider } from "@/lib/i18n/lite";
 import { pickMessages } from "@/lib/i18n/lite-server";
-import { FontsAfterLoad } from "@/components/client/fonts-after-load";
 
 /**
  * Pages client (scan, choix du service, ticket) : légères, rendues côté serveur.
@@ -15,7 +14,6 @@ export default async function ClientLayout({ children }: { children: React.React
   return (
     // Textes communs : seules les clés utilisées par les composants client partent (budget de 200 Ko).
     <LiteIntlProvider locale={locale} messages={pickMessages(m, [...CLIENT_COMMON_KEYS.map((k) => `common.${k}`), "client.tabs"])}>
-      <FontsAfterLoad />
       {children}
     </LiteIntlProvider>
   );

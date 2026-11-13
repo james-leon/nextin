@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
 /*
- * NextIn design system — Apple Human Interface Guidelines.
- * Les couleurs sémantiques sont des variables CSS : le thème clair/sombre est porté par
- * <html data-theme="light|dark"> (résolu avant le premier rendu par un script inline),
- * avec repli sur prefers-color-scheme si JavaScript est indisponible.
+ * NextIn design system v2 (design/mockups/v2) — Apple Human Interface Guidelines.
+ * Police système, aplats (aucun dégradé ni ombre dans l'interface), listes groupées iOS, une seule couleur d'accent
+ * par écran. Les couleurs sémantiques sont des variables CSS : le thème clair/sombre est porté par
+ * <html data-theme="light|dark"> (résolu avant le premier rendu par un script inline), avec repli sur
+ * prefers-color-scheme si JavaScript est indisponible.
+ * Écarts volontaires avec les maquettes (contraste AA) : gris secondaire #6C6C70 (au lieu de 62 % d'opacité),
+ * texte orange #A3550A (au lieu de #B85E00), vert « C'est votre tour » #187A31 (au lieu de #15A05A).
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -13,10 +16,10 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  /* Fonds (style A : fond plus clair, cartes blanches) */
-  --bg-grouped: #f7f9fc;
+  /* Fonds iOS : fond groupé gris, cellules blanches. */
+  --bg-grouped: #f2f2f7;
   --bg-grouped-secondary: #ffffff;
-  --bg-grouped-tertiary: #f7f9fc;
+  --bg-grouped-tertiary: #f2f2f7;
   --bg-elevated: #ffffff;
 
   /* Libellés */
@@ -27,16 +30,15 @@
   --label-tertiary: rgb(60 60 67 / 0.3);
   --label-on-accent: #ffffff;
 
-  /* Séparateurs et remplissages */
-  /* Bordures de SchoolMaster (#E8EDF4). */
-  --separator: #e8edf4;
-  --separator-opaque: #e8edf4;
+  /* Séparateurs fins iOS et remplissages */
+  --separator: rgb(60 60 67 / 0.18);
+  --separator-opaque: #c6c6c8;
   --fill: rgb(120 120 128 / 0.2);
   --fill-secondary: rgb(120 120 128 / 0.16);
   --fill-tertiary: rgb(118 118 128 / 0.12);
 
   /* Matériaux translucides (barres) */
-  --material-bar: rgb(249 249 249 / 0.78);
+  --material-bar: rgb(249 249 249 / 0.94);
   --material-sheet: rgb(255 255 255 / 0.92);
   --overlay: rgb(0 0 0 / 0.4);
 
@@ -49,14 +51,15 @@
   --accent-fill: #1a6bb5;
   --accent-fill-pressed: #155894;
   --accent-text: #1a6bb5;
-  --accent-tint: rgb(26 107 181 / 0.12);
+  /* Teinte unie (aplat) des boutons « tinted » et des lignes choisies. */
+  --accent-tint: #e8f0f9;
   --accent-on-tint: #155894;
   --orange-fill: #f58b1f;
   --orange-text: #a3550a;
-  --orange-tint: rgb(245 139 31 / 0.15);
+  --orange-tint: #fef1e3;
   --green-fill: #15a05a;
-  --green-text: #176b2c;
-  --green-tint: rgb(21 160 90 / 0.14);
+  --green-text: #0e7a44;
+  --green-tint: #e4f5ec;
   --red-fill: #d70015;
   --red-text: #d70015;
   --red-tint: rgb(255 59 48 / 0.12);
@@ -88,11 +91,15 @@
   --game-storm: #4b5563;
   --game-bolt: #f58b1f;
 
-  /* Ombre de carte très douce, teintée Navy (style A). */
-  --elev-card: 0 8px 30px rgb(13 44 84 / 0.06);
-  --elev-floating: 0 12px 36px rgb(13 44 84 / 0.14), 0 2px 8px rgb(13 44 84 / 0.06);
-  /* Barre d'onglets flottante (pilule) : blanc translucide. */
-  --material-pill: rgb(255 255 255 / 0.82);
+  /* Aplats : aucune ombre sur les cartes ; ombre réservée aux éléments qui flottent (feuilles, menus, toasts). */
+  --elev-card: none;
+  --elev-floating: 0 12px 36px rgb(0 0 0 / 0.14), 0 2px 8px rgb(0 0 0 / 0.06);
+
+  /* Barre latérale bleu nuit (back-office, console, espace annonceur). */
+  --sidebar-bg: #0d2c54;
+  /* Graphiques : barres, prévision atténuée (pic en orange). */
+  --chart-bar: #0d2c54;
+  --chart-bar-dim: #c7d3e2;
 }
 
 [data-theme="dark"] {
@@ -109,7 +116,7 @@
   --fill: rgb(120 120 128 / 0.36);
   --fill-secondary: rgb(120 120 128 / 0.32);
   --fill-tertiary: rgb(118 118 128 / 0.24);
-  --material-bar: rgb(22 22 24 / 0.78);
+  --material-bar: rgb(22 22 24 / 0.94);
   --material-sheet: rgb(28 28 30 / 0.94);
   --overlay: rgb(0 0 0 / 0.6);
   --accent-fill: #1a6bb5;
@@ -117,13 +124,13 @@
   /* En sombre, le bleu nuit disparaît sur le noir : bleu plus clair (texte blanc 5,2:1, bord 3,3:1 sur les cartes). */
   --primary-fill: #2a6fb5;
   --primary-fill-pressed: #245f9c;
-  --accent-text: #5ea8f0;
-  --accent-tint: rgb(94 168 240 / 0.18);
+  --accent-text: #4a9be8;
+  --accent-tint: #15263d;
   --accent-on-tint: #6fb2f2;
-  --orange-text: #ffaa55;
-  --orange-tint: rgb(245 139 31 / 0.22);
-  --green-text: #5fd97a;
-  --green-tint: rgb(21 160 90 / 0.24);
+  --orange-text: #ffa94d;
+  --orange-tint: #3a2610;
+  --green-text: #4cd38a;
+  --green-tint: #10301f;
   --red-fill: #d70015;
   --red-text: #ff6961;
   --red-tint: rgb(255 69 58 / 0.2);
@@ -139,7 +146,9 @@
   --game-storm: #8b95a5;
   --elev-card: none;
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
-  --material-pill: rgb(44 44 46 / 0.82);
+  --sidebar-bg: #0b1a2e;
+  --chart-bar: #4a9be8;
+  --chart-bar-dim: #2c3a4d;
 }
 
 /* Repli sans JavaScript */
@@ -154,7 +163,7 @@
     --label: #ffffff;
     --label-secondary: rgb(235 235 245 / 0.6);
     --separator: rgb(84 84 88 / 0.65);
-    --accent-text: #5ea8f0;
+    --accent-text: #4a9be8;
   }
 }
 
@@ -164,25 +173,32 @@
   --logo-tagline: #b8c4d6;
 }
 
-/* Piles de polices : Inter / Sora (next/font, classes sur <html>), police système en repli. */
-:root {
-  --system-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
-  --app-font-sans: var(--font-inter), var(--system-font);
-  --app-font-display: var(--font-sora), var(--font-inter), var(--system-font);
-}
-/* Pages client : police système au premier affichage, Inter et Sora une fois la page chargée
-   (`FontsAfterLoad` pose data-fonts-ready) — le premier chargement reste sous 200 Ko. */
-html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
-  --app-font-sans: var(--system-font);
-  --app-font-display: var(--system-font);
+/*
+ * Barre latérale bleu nuit : les jetons sont redéfinis dans le panneau, ses composants (liens, logo, listes) gardent
+ * leurs classes habituelles. Contrastes AA sur #0D2C54 : texte 72 % (7,9:1), en-têtes 60 %, lien bleu clair 7,8:1.
+ */
+[data-surface="navy"] {
+  color-scheme: dark;
+  --label: #ffffff;
+  --label-secondary: rgb(255 255 255 / 0.72);
+  --label-tertiary: rgb(255 255 255 / 0.45);
+  --bg-grouped-secondary: rgb(255 255 255 / 0.08);
+  --separator: rgb(255 255 255 / 0.14);
+  --fill-tertiary: rgb(255 255 255 / 0.08);
+  --accent-text: #9fc6ee;
+  --accent-tint: rgb(255 255 255 / 0.12);
+  --accent-on-tint: #ffffff;
+  --logo-name: #ffffff;
+  --logo-tagline: #b8c4d6;
+  background: var(--sidebar-bg);
+  color: var(--label);
 }
 
 @theme inline {
-  /* Texte courant en Inter, grands titres et titres de section en Sora (polices de SchoolMaster, next/font).
-     Variables résolues à l'exécution : les pages client affichent d'abord la police système (budget). */
-  --font-sans: var(--app-font-sans);
-  --font-display: var(--app-font-display);
-  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+  /* Police du téléphone (SF Pro sur Apple, Segoe UI sur Windows, Roboto sur Android) : aucun fichier à charger. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Numéros de ticket et grands chiffres : chiffres arrondis (SF Rounded), police système sinon. */
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --color-grouped: var(--bg-grouped);
   --color-grouped-secondary: var(--bg-grouped-secondary);
@@ -199,7 +215,6 @@ html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
   --color-fill-tertiary: var(--fill-tertiary);
   --color-bar: var(--material-bar);
   --color-sheet: var(--material-sheet);
-  --color-pill: var(--material-pill);
   --color-overlay: var(--overlay);
   --color-navy: var(--navy);
   --color-navy-deep: var(--navy-deep);
@@ -211,6 +226,9 @@ html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
   --color-scanner-control: var(--scanner-control);
   --color-tv: var(--tv-bg);
   --color-tv-surface: var(--tv-surface);
+  --color-sidebar: var(--sidebar-bg);
+  --color-chart-bar: var(--chart-bar);
+  --color-chart-bar-dim: var(--chart-bar-dim);
   --color-on-navy-control: var(--on-navy-control);
   --color-accent: var(--accent-fill);
   --color-accent-pressed: var(--accent-fill-pressed);
@@ -268,13 +286,13 @@ html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
   --text-display--line-height: 1;
   --text-display--letter-spacing: -0.03em;
 
-  /* Rayons continus */
+  /* Rayons iOS : 8 (pastilles, icônes), 12 (champs, boutons, listes groupées), 16 (cartes héros : ticket,
+     établissement à la une, client en cours). */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  /* Cartes héros (ticket, établissement à la une, client en cours). */
-  --radius-2xl: 28px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
 
   --shadow-card: var(--elev-card);
   --shadow-floating: var(--elev-floating);
@@ -303,6 +321,21 @@ html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
   --animate-fade-in: fade-in 200ms var(--ease-ios);
   --animate-banner-in: banner-in 480ms var(--ease-spring);
   --animate-slide-in-left: slide-in-left 360ms var(--ease-spring);
+  /* Points du logo qui sautent (chargement). */
+  --animate-hop: hop 1.2s ease-in-out infinite;
+
+  @keyframes hop {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.45;
+    }
+    30% {
+      transform: translateY(-6px);
+      opacity: 1;
+    }
+  }
 
   @keyframes pop-in {
     from {
@@ -356,9 +389,9 @@ html:not([data-fonts-ready]) body:has([data-defer-fonts]) {
     -webkit-tap-highlight-color: transparent;
     background: var(--bg-grouped);
   }
-  /* Grands titres et titres de section : Sora (titres de liste et légendes restent en Inter). */
-  :where(h1, h2) {
-    font-family: var(--app-font-display);
+  /* Numéros de ticket et grands chiffres : chiffres arrondis (jamais tabulaires pour un numéro : le tiret s'élargirait). */
+  :where(.text-ticket-number, .text-hero, .text-display) {
+    font-family: var(--font-rounded);
   }
   /* Titres (U1) : jamais de césure (« Scannez pour com-mencer »), lignes équilibrées ; un mot plus long que
      l'écran (360 px, texte agrandi) passe à la ligne en dernier recours plutôt que de déborder. */

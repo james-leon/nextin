@@ -325,7 +325,7 @@ export function AgentDesk({
       </div>
 
       <header className="pt-3 pb-5">
-        <h1 className="font-display text-large-title font-bold">{title}</h1>
+        <h1 className="text-large-title font-bold">{title}</h1>
         <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p>
       </header>
 

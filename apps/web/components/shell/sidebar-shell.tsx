@@ -48,8 +48,10 @@ export function SidebarShell({
 }
 
 /**
- * Colonne de la barre latérale : pleine hauteur, contenu collant à la fenêtre (défilement propre).
- * Sur tablette portrait, panneau par-dessus le contenu quand il est ouvert (voile, Échap, fermeture en naviguant).
+ * Colonne de la barre latérale : bleu nuit uni (maquettes v2, `data-surface="navy"` redéfinit les jetons de couleur :
+ * texte blanc, rubrique active sur fond blanc translucide, logo en version sombre), pleine hauteur, contenu collant à
+ * la fenêtre (défilement propre). Sur tablette portrait, panneau par-dessus le contenu quand il est ouvert (voile,
+ * Échap, fermeture en naviguant).
  */
 export function SidebarPanel({ children }: { children: ReactNode }) {
   const shell = useContext(ShellContext);
@@ -82,14 +84,15 @@ export function SidebarPanel({ children }: { children: ReactNode }) {
       ) : null}
       <aside
         ref={panel}
+        data-surface="navy"
         // Un lien suivi dans le panneau le referme (la page change sous le panneau).
         onClick={(e) => {
           if (open && (e.target as HTMLElement).closest("a")) shell?.setOpen(false);
         }}
         className={cn(
-          "w-64 shrink-0 bg-grouped-secondary shadow-[inset_-0.5px_0_0_var(--separator)] lg:block",
+          "w-64 shrink-0 bg-sidebar lg:block",
           open
-            ? "fixed inset-y-0 left-0 z-50 block overflow-y-auto shadow-[0_0_40px_rgb(0_0_0/0.25)] motion-safe:animate-slide-in-left lg:static lg:z-auto lg:shadow-[inset_-0.5px_0_0_var(--separator)]"
+            ? "fixed inset-y-0 left-0 z-50 block overflow-y-auto shadow-[0_0_40px_rgb(0_0_0/0.25)] motion-safe:animate-slide-in-left lg:static lg:z-auto lg:shadow-none"
             : "hidden",
         )}
       >

@@ -8,21 +8,25 @@ import {
   ArrowRight,
   Bell,
   Building2,
+  CalendarDays,
   Check,
   CheckCircle2,
   Clock,
   DoorOpen,
   Keyboard,
+  LayoutGrid,
   MessageCircle,
   MapPin,
   MoreHorizontal,
   QrCode,
   ScanLine,
+  Settings,
   Share,
   Stethoscope,
   Ticket,
   TrendingDown,
   UserRound,
+  Users,
   WifiOff,
 } from "lucide-react";
 import {
@@ -36,7 +40,8 @@ import { cn } from "@/lib/cn";
 import { useThemePreference, type ThemePreference } from "@/components/theme/theme";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
 import { AlertDialog } from "@/components/ui/alert-dialog";
-import { Badge, StatusDot } from "@/components/ui/badge";
+import { Badge, LiveIndicator, StatusDot } from "@/components/ui/badge";
+import { DotsLoader, QueueDots } from "@/components/ui/queue-dots";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -73,6 +78,8 @@ const SECTIONS = [
   "fields",
   "navigation",
   "tabbar",
+  "sidebar",
+  "dots",
   "sheet",
   "alerts",
   "badges",
@@ -135,6 +142,8 @@ export function DesignShowcase() {
           <FieldsSection />
           <NavigationSection />
           <TabBarSection />
+          <SidebarSection />
+          <DotsSection />
           <SheetSection />
           <AlertsSection />
           <BadgesSection />
@@ -263,9 +272,9 @@ function TypographySection() {
         <li className="flex flex-col gap-0.5 px-4 py-3 hairline-b">
           <span className="flex items-baseline justify-between gap-3">
             <span className="text-footnote font-semibold text-label-secondary">{t("typography.display")}</span>
-            <span className="text-caption text-label-secondary tabular">font-display</span>
+            <span className="text-caption text-label-secondary tabular">font-rounded</span>
           </span>
-          <span className="font-display text-large-title font-bold tracking-tight">{t("typography.sample")}</span>
+          <span className="font-rounded text-large-title font-bold tracking-tight tabular">86 · 18 min · 09:30</span>
           <span className="text-footnote text-label-secondary">{t("typography.displayNote")}</span>
         </li>
         {styles.map((s) => (
@@ -331,7 +340,7 @@ function ColorsSection() {
         <Card>
           <CardTitle className="pb-3">{t("system")}</CardTitle>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Swatch name={t("groupedBg")} value="#F7F9FC · #000000" bg="var(--bg-grouped)" ring />
+            <Swatch name={t("groupedBg")} value="#F2F2F7 · #000000" bg="var(--bg-grouped)" ring />
             <Swatch name={t("card")} value="#FFFFFF · #1C1C1E" bg="var(--bg-grouped-secondary)" ring />
             <Swatch name={t("label")} value="#000000 · #FFFFFF" bg="var(--label)" />
             <Swatch name={t("secondaryLabel")} value="#6C6C70 · 60%" bg="var(--label-secondary)" />
@@ -740,8 +749,10 @@ function TabBarSection() {
   return (
     <Section id="tabbar" title={t("tabbar")}>
       <div className="flex flex-col gap-4">
-        <div className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
-          <div aria-hidden className="h-24 bg-[linear-gradient(135deg,var(--accent-tint),var(--orange-tint))]" />
+        {/* Barre native iOS (pages client) : pleine largeur, icône et libellé, onglet actif en bleu. */}
+        <p className="px-4 text-footnote text-label-secondary uppercase">{ts("floating")}</p>
+        <div className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped">
+          <div aria-hidden className="h-20" />
           <TabBar label={t("tabbar")} items={tabs} active={tab} onSelect={setTab} position="static" />
         </div>
         <div className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-scanner" data-theme="dark">
@@ -755,12 +766,98 @@ function TabBarSection() {
             className="bg-scanner-surface/90"
           />
         </div>
-        {/* Style A : pilule flottante des pages client sur téléphone (onglet actif en pilule bleue). */}
-        <p className="px-4 text-footnote text-label-secondary uppercase">{ts("floating")}</p>
-        <div className="squircle relative h-28 overflow-hidden rounded-[var(--radius-xl)] bg-grouped lg:hidden">
-          <TabBar label={t("tabbar")} items={tabs} active={tab} onSelect={setTab} floating className="absolute" />
-        </div>
       </div>
+    </Section>
+  );
+}
+
+/** Barre latérale bleu nuit du back-office (maquette v2 05) : rubriques en blanc, rubrique active sur fond translucide. */
+function SidebarSection() {
+  const t = useTranslations("design.v2");
+  const tn = useTranslations("design.nav");
+  const items = [
+    { key: "overview", icon: LayoutGrid, active: true },
+    { key: "appointments", icon: CalendarDays, count: 3 },
+    { key: "staff", icon: Users },
+    { key: "settings", icon: Settings },
+  ] as const;
+  return (
+    <Section id="sidebar" title={tn("sidebar")}>
+      <div data-surface="navy" className="squircle flex max-w-xs flex-col gap-5 rounded-[var(--radius-md)] px-3 py-5">
+        <div className="px-3">
+          <Logo className="h-9" />
+        </div>
+        <div className="flex items-center gap-3 rounded-[10px] bg-grouped-secondary p-2.5">
+          <span aria-hidden className="flex size-8 items-center justify-center rounded-[8px] bg-white text-footnote font-bold text-navy">
+            DC
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-subheadline font-semibold">DOUALA CLINIC</span>
+            <span className="text-footnote text-label-secondary">{t("orgPlan")}</span>
+          </span>
+        </div>
+        <ul role="list" className="flex flex-col gap-0.5">
+          {items.map(({ key, icon: Icon, ...rest }) => (
+            <li key={key}>
+              <span
+                aria-current={"active" in rest ? "page" : undefined}
+                className={cn(
+                  "flex min-h-11 items-center gap-3 rounded-[8px] px-3 text-subheadline font-medium",
+                  "active" in rest ? "bg-accent-tint text-label" : "text-label-secondary",
+                )}
+              >
+                <Icon aria-hidden className="size-5 stroke-[1.75]" />
+                {t(`items.${key}`)}
+                {"count" in rest ? (
+                  <span className="ml-auto rounded-full bg-orange px-2 text-caption font-semibold text-navy">{rest.count}</span>
+                ) : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="px-4 pt-2 text-footnote text-label-secondary">{t("sidebarNote")}</p>
+    </Section>
+  );
+}
+
+/** Motif des points du logo : la file (le client = point orange), le chargement, les pastilles d'état. */
+function DotsSection() {
+  const t = useTranslations("design.v2");
+  const tn = useTranslations("design.nav");
+  const tc = useTranslations("common");
+  return (
+    <Section id="dots" title={tn("dots")}>
+      <Card className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <span className="text-headline">{t("ahead", { count: 4 })}</span>
+          <QueueDots ahead={4} done={3} />
+        </div>
+        <div className="flex items-center gap-4">
+          <DotsLoader label={tc("loading")} />
+          <span className="text-footnote text-label-secondary">{t("loader")}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <LiveIndicator label={t("live")} />
+          <Badge shape="pill" tone="green" dot>
+            {t("open")}
+          </Badge>
+          <Badge shape="pill" tone="orange">
+            {t("pending")}
+          </Badge>
+          <Badge shape="pill" dot>
+            {t("synced")}
+          </Badge>
+          <Badge tone="orange">{t("priority")}</Badge>
+          <Badge tone="accent">{t("appointment")}</Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-5">
+          <StatusDot tone="blue" label={t("busy")} />
+          <StatusDot tone="orange" label={t("calledState")} />
+          <StatusDot tone="green" label={t("free")} />
+          <StatusDot tone="neutral" label={t("closed")} />
+        </div>
+      </Card>
     </Section>
   );
 }
