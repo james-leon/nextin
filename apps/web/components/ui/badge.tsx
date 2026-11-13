@@ -7,7 +7,7 @@ const badgeVariants = cva(
   {
     variants: {
       tone: {
-        neutral: "bg-fill-tertiary text-label-secondary",
+        neutral: "bg-fill-tertiary text-label",
         accent: "bg-accent-tint text-accent-on-tint",
         orange: "bg-orange-tint text-orange-text",
         green: "bg-green-tint text-green-text",
