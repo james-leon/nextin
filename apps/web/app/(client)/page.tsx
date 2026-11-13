@@ -20,7 +20,7 @@ export default async function ScannerPage() {
       <main className="flex flex-1 flex-col items-center px-6 pt-[max(env(safe-area-inset-top),3.5rem)] pb-32 text-center lg:justify-center lg:px-10 lg:py-12">
         <div className="flex w-full flex-1 flex-col items-center squircle lg:max-w-[40rem] lg:flex-none lg:rounded-[var(--radius-xl)] lg:bg-scanner-surface lg:px-12 lg:py-12 lg:shadow-card">
           <p className="text-footnote font-semibold tracking-[0.12em] text-white/70 uppercase">{t("eyebrow")}</p>
-          <h1 className="mt-1 font-display text-large-title leading-tight font-bold">{t("title")}</h1>
+          <h1 className="mt-1 text-large-title leading-tight font-bold">{t("title")}</h1>
           <p className="mt-2 max-w-sm text-subheadline text-white/75">{t("body")}</p>
           <div className="mt-10 flex w-full flex-1 flex-col items-center justify-center lg:flex-none">
             <LiteMessages paths={["client.scanner"]}>

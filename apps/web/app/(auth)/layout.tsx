@@ -35,7 +35,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           <Logo tone="inverse" className="relative h-12 self-start" />
           <div className="relative flex max-w-lg flex-col">
             <p className="text-footnote font-semibold tracking-[0.14em] text-orange uppercase">{t("panelEyebrow")}</p>
-            <h2 className="mt-4 font-display text-[2.75rem] leading-[1.06] font-extrabold tracking-tight whitespace-pre-line xl:text-[3.25rem]">
+            <h2 className="mt-4 text-[2.75rem] leading-[1.06] font-extrabold tracking-tight whitespace-pre-line xl:text-[3.25rem]">
               {t("panelTitle")}
             </h2>
             <p className="mt-5 text-body text-white/80">{t("panelBody")}</p>

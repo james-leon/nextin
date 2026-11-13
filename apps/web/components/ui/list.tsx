@@ -3,7 +3,10 @@ import Link from "next/link";
 import { Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-/** Section de liste groupée en encart (inset grouped) avec en-tête et pied facultatifs. */
+/**
+ * Section de liste groupée iOS en encart (inset grouped) : cellules blanches sur fond gris, rayon 12 px, séparateurs
+ * fins alignés sur le texte, en-tête en petites capitales et pied explicatif facultatifs.
+ */
 export function ListSection({
   header,
   footer,
@@ -40,12 +43,12 @@ export function ListSection({
   );
 }
 
-/** Pictogramme carré coloré façon Réglages iOS. */
+/** Pictogramme dans un carré de couleur (30 px, rayon 8 px), façon Réglages iOS : une couleur par rubrique. */
 export function ListIcon({ children, color = "var(--accent-fill)" }: { children: ReactNode; color?: string }) {
   return (
     <span
       aria-hidden
-      className="squircle flex size-[1.875rem] shrink-0 items-center justify-center rounded-[7px] text-white [&_svg]:size-[1.125rem] [&_svg]:stroke-2"
+      className="squircle flex size-[1.875rem] shrink-0 items-center justify-center rounded-[8px] text-white [&_svg]:size-[1.125rem] [&_svg]:stroke-2"
       style={{ background: color }}
     >
       {children}
@@ -106,7 +109,7 @@ export function ListRow({
         <span className="flex min-w-0 flex-1 flex-col">
           <span className={cn("truncate text-body", destructive && "text-red-text", current && "font-semibold text-accent-on-tint")}>{title}</span>
           {/* Sous-titre : deux lignes au plus, coupé avec des points de suspension (adresses e-mail comprises). */}
-          {subtitle ? <span className={cn("line-clamp-2 text-subheadline [overflow-wrap:anywhere]", current ? "text-label" : "text-label-secondary")}>{subtitle}</span> : null}
+          {subtitle ? <span className={cn("line-clamp-2 text-footnote [overflow-wrap:anywhere]", current ? "text-label" : "text-label-secondary")}>{subtitle}</span> : null}
         </span>
         {detail !== undefined ? <span className="shrink-0 text-body text-label-secondary">{detail}</span> : null}
         {accessory === "chevron" ? (

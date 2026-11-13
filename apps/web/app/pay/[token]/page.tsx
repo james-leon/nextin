@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { FontsAfterLoad } from "@/components/client/fonts-after-load";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { PayView } from "@/components/pay/pay-view";
 import { callRpc } from "@/lib/client/supabase-public";
@@ -30,7 +29,6 @@ export default async function PayPage({ params }: Params) {
   const [view, locale, m] = await Promise.all([load(token), getLocale(), getMessages()]);
   return (
     <LiteIntlProvider locale={locale} messages={{ common: m.common, errors: m.errors, pay: m.pay, channels: m.channels }}>
-      <FontsAfterLoad />
       <PayView
         token={token}
         initial={view}

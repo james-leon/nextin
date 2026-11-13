@@ -33,21 +33,27 @@ export function TicketSkeleton({ label }: { label: string }) {
   return (
     <Frame label={label}>
       <Title />
-      <Skeleton className="h-80 rounded-[var(--radius-2xl)]" />
+      <Skeleton className="h-72 rounded-[var(--radius-xl)]" />
       <Skeleton className="mt-4 h-[3.125rem] rounded-[12px]" />
     </Frame>
   );
 }
 
-/** Liste de cartes ou de lignes (choix du service, agence, « À proximité »). */
+/** Liste groupée iOS (choix du service, agence, « À proximité ») : pastille carrée, deux lignes de texte, filets fins. */
 export function ListSkeleton({ label, rows = 4, hero = false }: { label: string; rows?: number; hero?: boolean }) {
   return (
     <Frame label={label}>
       <Title />
-      {hero ? <Skeleton className="mb-4 aspect-[16/9] rounded-[var(--radius-2xl)]" /> : null}
-      <div className="squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card">
+      {hero ? <Skeleton className="mb-4 aspect-[16/9] rounded-[var(--radius-xl)]" /> : null}
+      <div className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
         {Array.from({ length: rows }, (_, i) => (
-          <Skeleton key={i} className="h-11 rounded-[12px]" />
+          <div key={i} className="flex items-center gap-3 py-2.5 pl-4">
+            <Skeleton className="size-[1.875rem] shrink-0 rounded-[8px]" />
+            <div className={i < rows - 1 ? "flex flex-1 flex-col gap-1.5 pr-4 pb-2.5 hairline-b" : "flex flex-1 flex-col gap-1.5 pr-4"}>
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
         ))}
       </div>
       <Skeleton className="mt-5 h-[3.125rem] rounded-[12px]" />
@@ -65,7 +71,7 @@ export function DeskSkeleton({ label }: { label: string }) {
           <Skeleton className="h-56 rounded-[var(--radius-2xl)]" />
           <Skeleton className="h-[3.125rem] rounded-[12px]" />
         </div>
-        <div className="squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card">
+        <div className="squircle flex flex-col gap-3 rounded-[var(--radius-md)] bg-grouped-secondary p-4">
           {Array.from({ length: 5 }, (_, i) => (
             <Skeleton key={i} className="h-11 rounded-[10px]" />
           ))}
@@ -82,7 +88,7 @@ export function ReceptionSkeleton({ label }: { label: string }) {
       <Title />
       <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }, (_, c) => (
-          <div key={c} className="squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card">
+          <div key={c} className="squircle flex flex-col gap-3 rounded-[var(--radius-md)] bg-grouped-secondary p-4">
             {Array.from({ length: 5 }, (_, i) => (
               <Skeleton key={i} className="h-11 rounded-[10px]" />
             ))}

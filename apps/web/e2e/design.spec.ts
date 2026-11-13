@@ -13,6 +13,8 @@ const SECTIONS = [
   "Champs",
   "Navigation",
   "Barre d'onglets",
+  "Barre latérale",
+  "Points et états",
   "Feuille modale",
   "Alertes",
   "Badges et états",
@@ -42,7 +44,7 @@ test.describe("/design — vitrine du design system", () => {
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await page.getByRole("radio", { name: "Clair" }).click();
-    await expect(page.locator("body")).toHaveCSS("background-color", "rgb(247, 249, 252)");
+    await expect(page.locator("body")).toHaveCSS("background-color", "rgb(242, 242, 247)");
   });
 
   test("le mode Auto suit le réglage du système", async ({ browser }) => {
