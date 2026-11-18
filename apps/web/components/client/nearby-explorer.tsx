@@ -168,6 +168,14 @@ export function NearbyExplorer({
     const minutes = b.min_wait_seconds != null ? waitMinutes(b.min_wait_seconds) : null;
     return minutes == null ? "—" : minutes === 0 ? t("noWait") : t("wait", { minutes });
   };
+  // Carte à la une : « Pas d'attente » seul, sinon « Attente ≈ 15 min » ; puis « Ticket à distance » si proposé.
+  const featuredWait = (b: NearbyBranch) => {
+    const minutes = b.min_wait_seconds != null ? waitMinutes(b.min_wait_seconds) : null;
+    return minutes == null ? null : minutes === 0 ? t("noWait") : t("waitLine", { wait: t("wait", { minutes }) });
+  };
+  const featuredLine = featured
+    ? [featuredWait(featured), featured.remote_enabled ? t("remote") : null].filter(Boolean).join(" · ")
+    : "";
   const distanceText = (b: NearbyBranch) => (b.distance_m != null ? formatDistance(b.distance_m, locale) : null);
   const linkProps = (b: NearbyBranch) => ({
     href: `/b/${b.id}`,
@@ -270,14 +278,12 @@ export function NearbyExplorer({
                   {featured.organization.name}
                   <span className="sr-only"> · {to(featured.organization.type)}</span>
                 </span>
+                {/* « Ouvert » / « Fermé » est déjà sur la photo : pas de doublon dans le sous-titre. */}
                 <span className="block truncate text-footnote text-label-secondary">
-                  {[featured.name, distanceText(featured) ?? featured.city, featured.is_open ? t("open") : t("closed")].filter(Boolean).join(" · ")}
+                  {[featured.name, distanceText(featured) ?? featured.city].filter(Boolean).join(" · ")}
                 </span>
-                {featured.is_open ? (
-                  <span className="block text-footnote font-semibold text-green-text tabular">
-                    {t("waitLine", { wait: waitText(featured) })}
-                    {featured.remote_enabled ? ` · ${t("remote")}` : ""}
-                  </span>
+                {featured.is_open && featuredLine ? (
+                  <span className="block text-footnote font-semibold text-green-text tabular">{featuredLine}</span>
                 ) : null}
               </span>
             </Link>

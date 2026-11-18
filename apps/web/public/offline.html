@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>NextIn — Hors ligne</title>
+    <title>NextIn — Connexion</title>
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <style>
       :root { color-scheme: light dark; --bg: #f2f2f7; --card: #fff; --label: #000; --secondary: rgb(60 60 67 / 0.6); --accent: #1a6bb5; }
       @media (prefers-color-scheme: dark) { :root { --bg: #000; --card: #1c1c1e; --label: #fff; --secondary: rgb(235 235 245 / 0.6); --accent: #5ea8f0; } }
@@ -26,10 +28,16 @@
         <path d="M12 20h.01" /><path d="M8.5 16.43a5 5 0 0 1 7 0" /><path d="M5 12.86a10 10 0 0 1 5.17-2.69" />
         <path d="M19 12.86a10 10 0 0 0-2-1.43" /><path d="M2 8.82a15 15 0 0 1 4.18-2.65" /><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76" /><path d="m2 2 20 20" />
       </svg>
-      <h1>Vous êtes hors ligne</h1>
-      <p>Vérifiez votre connexion. Votre ticket reste valable : la page se mettra à jour dès le retour du réseau.</p>
-      <p class="en" lang="en">You're offline. Your ticket is still valid.</p>
+      <h1>Connexion lente ou absente</h1>
+      <p>Votre ticket reste valable. La page se recharge seule dès que le réseau répond.</p>
+      <p class="en" lang="en">Slow or no connection. Your ticket is still valid; the page reloads by itself.</p>
       <button type="button" onclick="location.reload()">Réessayer</button>
     </main>
+    <script>
+      // Servie après 3 s sans réponse du réseau (service worker) : la page demandée continue de se charger en
+      // arrière-plan. Nouvel essai automatique quelques secondes plus tard, et dès que le réseau revient.
+      addEventListener("online", function () { location.reload(); });
+      setTimeout(function () { if (navigator.onLine) location.reload(); }, 8000);
+    </script>
   </body>
 </html>

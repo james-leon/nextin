@@ -289,7 +289,7 @@ test.describe("PWA", () => {
     await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
     await context.setOffline(true);
     await page.goto("/jamais-visitee").catch(() => {});
-    await expect(page.getByRole("heading", { name: "Vous êtes hors ligne" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Connexion lente ou absente" })).toBeVisible();
     await context.setOffline(false);
   });
 });

@@ -546,3 +546,10 @@
     transition-duration: 1ms !important;
   }
 }
+
+/* Logo de démarrage du gabarit (CSS en ligne, `splashStyle` de app/layout.tsx) : masqué dès que cette feuille est
+   appliquée, donc jamais téléchargé. Hors de toute couche (@layer) : une règle en couche perdrait contre le style en
+   ligne, qui n'en a pas, et le logo serait chargé sur chaque page (budget). */
+html body::before {
+  content: none;
+}

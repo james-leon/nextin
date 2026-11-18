@@ -71,12 +71,25 @@ test.describe("M9 — ticket à distance", () => {
     await expect(page.getByText("Autour de vous")).toBeVisible();
     await page.getByRole("searchbox", { name: "Établissement ou ville" }).fill(name);
     const row = page.getByRole("link", { name: new RegExp(name) });
-    // v2 : seul résultat = grande carte (agence · distance · ouvert, puis attente et ticket à distance possible).
+    // v2 : seul résultat = grande carte. « Ouvert » une seule fois (pastille sur la photo), puis la ligne verte
+    // « Pas d'attente · Ticket à distance » (jamais « Attente Pas d'attente »).
     await expect(row).toContainText("2 km");
     await expect(row).toContainText("Ouvert");
-    await expect(row).toContainText("Ticket à distance");
+    expect((await row.innerText()).match(/Ouvert/g)).toHaveLength(1);
+    await expect(row.locator(".text-green-text")).toHaveText("Pas d'attente · Ticket à distance");
     await expectTouchTargets(page);
     await expectAccessible(page);
+    // Anglais : mêmes règles (« No wait · Remote ticket »), puis retour en français pour la suite du parcours.
+    const origin = new URL(page.url()).origin;
+    await page.context().addCookies([{ name: "NEXTIN_LOCALE", value: "en", url: origin }]);
+    await page.reload();
+    await page.getByRole("searchbox", { name: "Facility or city" }).fill(name);
+    await expect(row.locator(".text-green-text")).toHaveText("No wait · Remote ticket");
+    expect((await row.innerText()).match(/\bOpen\b/g)).toHaveLength(1);
+    await page.context().addCookies([{ name: "NEXTIN_LOCALE", value: "fr", url: origin }]);
+    await page.reload();
+    await page.getByRole("searchbox", { name: "Établissement ou ville" }).fill(name);
+    await expect(row).toContainText("Ouvert");
     await page.getByRole("button", { name: "Carte" }).click();
     await expect(page.getByRole("region", { name: "Carte des établissements à proximité" })).toBeVisible();
     await expect(page.getByRole("img", { name: "Vous" })).toBeVisible();
