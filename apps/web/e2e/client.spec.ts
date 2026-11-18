@@ -15,6 +15,9 @@ async function emulate3G(page: Page) {
 }
 
 /** Octets transférés (compressés) pendant le premier chargement d'une page. */
+const IPHONE_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+
 async function firstLoadBytes(page: Page, path: string) {
   let total = 0;
   const onDone = async (request: import("@playwright/test").Request) => {
@@ -212,6 +215,15 @@ test.describe("M4 — parcours client", () => {
       const bytes = await firstLoadBytes(page, path);
       console.log(`${path.replace(/\/[A-Za-z0-9]{20,}$/, "/…")} : ${Math.round(bytes / 1024)} Ko`);
       expect(bytes, path).toBeLessThan(200 * 1024);
+      await context.close();
+    }
+    // iPhone (Safari) : la page porte en plus les écrans de démarrage iOS de l'iPhone ; même budget.
+    for (const path of ["/", `/q/${entryCode}`, `/t/${created.public_token}`]) {
+      const context = await browser.newContext({ userAgent: IPHONE_UA });
+      const page = await context.newPage();
+      const bytes = await firstLoadBytes(page, path);
+      console.log(`iPhone ${path.replace(/\/[A-Za-z0-9]{20,}$/, "/…")} : ${Math.round(bytes / 1024)} Ko`);
+      expect(bytes, `iPhone ${path}`).toBeLessThan(200 * 1024);
       await context.close();
     }
   });

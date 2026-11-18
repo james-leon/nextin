@@ -1,9 +1,13 @@
 /* NextIn service worker — app shell, page hors ligne, cache des ressources statiques, web push. */
-const VERSION = "nextin-v1";
+const VERSION = "nextin-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGES_CACHE = `${VERSION}-pages`;
 const ADS_CACHE = `${VERSION}-ads`;
 const ADS_MAX = 40;
+// Navigations : au plus ce délai d'attente du réseau, puis dernière version en cache (ou page hors ligne). Le réseau
+// continue en arrière-plan et met le cache à jour pour la prochaine ouverture (jamais d'écran blanc en 4G faible).
+const NAVIGATION_TIMEOUT_MS = 3000;
+const OFFLINE_URL = "/offline.html";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -79,21 +83,75 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Pages : réseau d'abord, dernière version en cache, puis page hors ligne.
+  // Pages : réseau d'abord, mais au plus NAVIGATION_TIMEOUT_MS ; au-delà, dernière version en cache (si tous ses fichiers
+  // /_next/static sont en cache), sinon page hors ligne. La réponse du réseau met le cache à jour en arrière-plan.
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok && response.type === "basic") {
-            const copy = response.clone();
-            caches.open(PAGES_CACHE).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match("/offline.html"))),
-    );
+    event.respondWith(navigate(event, request));
   }
 });
+
+/** Fichiers /_next/static référencés par une page (scripts, styles, préchargements). */
+function staticAssets(html) {
+  const found = new Set();
+  for (const match of html.matchAll(/["'(](\/_next\/static\/[^"'()\s\\]+)/g)) found.add(match[1]);
+  return [...found];
+}
+
+/** Page à mettre en cache : réponse complète de la même origine, sans redirection (Safari refuse une navigation servie
+ * depuis une réponse redirigée : page blanche). */
+function cacheable(response) {
+  return response.ok && response.type === "basic" && !response.redirected && (response.headers.get("content-type") || "").includes("text/html");
+}
+
+/** Met la page en cache, puis ses fichiers statiques encore absents (pour pouvoir la resservir hors ligne). */
+async function storePage(request, response) {
+  const html = await response.clone().text();
+  const pages = await caches.open(PAGES_CACHE);
+  await pages.put(request, response);
+  const statics = await caches.open(STATIC_CACHE);
+  await Promise.all(
+    staticAssets(html).map(async (path) => {
+      if (await statics.match(path)) return;
+      try {
+        const asset = await fetch(path);
+        if (asset.ok) await statics.put(path, asset);
+      } catch {
+        // Hors ligne entre-temps : la page ne sera pas resservie (vérification à la lecture).
+      }
+    }),
+  );
+}
+
+/** Dernière version de la page, seulement si tous ses fichiers statiques sont en cache ; sinon null (page blanche évitée). */
+async function cachedPage(request) {
+  const cached = await caches.match(request, { cacheName: PAGES_CACHE });
+  if (!cached) return null;
+  const html = await cached.clone().text();
+  const statics = await caches.open(STATIC_CACHE);
+  const present = await Promise.all(staticAssets(html).map((path) => statics.match(path)));
+  return present.every(Boolean) ? cached : null;
+}
+
+async function fallback(request) {
+  return (await cachedPage(request)) || (await caches.match(OFFLINE_URL)) || Response.error();
+}
+
+function navigate(event, request) {
+  const network = fetch(request).then((response) => {
+    if (cacheable(response)) event.waitUntil(storePage(request, response.clone()).catch(() => {}));
+    return response;
+  });
+  // Le réseau termine même si la page en cache est servie entre-temps (mise à jour pour la prochaine ouverture).
+  event.waitUntil(network.catch(() => {}));
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(null), NAVIGATION_TIMEOUT_MS);
+  });
+  return Promise.race([network.catch(() => null), timeout]).then((response) => {
+    clearTimeout(timer);
+    return response || fallback(request);
+  });
+}
 
 self.addEventListener("push", (event) => {
   let data = {};
