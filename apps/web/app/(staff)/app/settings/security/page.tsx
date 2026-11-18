@@ -3,27 +3,46 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { safeNextPath } from "@nextin/shared";
 import { AdminPage } from "@/components/admin/admin-page";
+import { KeyRound } from "lucide-react";
 import { MfaSetup } from "@/components/security/mfa-setup";
+import { ConnectedDevices } from "@/components/settings/connected-devices";
+import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { requireStaffSession } from "@/lib/auth/session";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("mfa");
-  return { title: t("title") };
+  const t = await getTranslations("settings");
+  return { title: t("security") };
 }
 
-/** Double authentification du compte (B5) : configuration, état, désactivation si le rôle le permet. */
+/**
+ * Sécurité du compte (maquette v2 07) : mot de passe, double authentification (B5 : configuration, état,
+ * désactivation si le rôle le permet) et appareils connectés.
+ */
 export default async function SecurityPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { next } = await searchParams;
   const target = next ? safeNextPath(next) : null;
   const session = await requireStaffSession("/app/settings/security", { mfa: false });
   // Facteur enregistré mais code pas encore saisi dans cette session : le code d'abord.
   if (session.mfa.enrolled && session.mfa.aal !== "aal2") redirect("/mfa?next=%2Fapp%2Fsettings%2Fsecurity");
-  const t = await getTranslations("mfa");
-  const tc = await getTranslations("common");
+  const t = await getTranslations("settings");
   return (
     <main className="pb-24">
-      <AdminPage narrow title={t("title")} back={{ href: "/app/settings", label: tc("back") }}>
+      <AdminPage narrow title={t("security")} back={{ href: "/app/settings", label: t("myAccount") }}>
+        <ListSection>
+          <ListRow
+            href="/reset-password?next=%2Fapp%2Fsettings%2Fsecurity"
+            icon={
+              <ListIcon color="var(--icon-gray)">
+                <KeyRound />
+              </ListIcon>
+            }
+            title={t("password")}
+            subtitle={t("passwordHint")}
+            accessory="chevron"
+          />
+        </ListSection>
         <MfaSetup enrolled={session.mfa.enrolled} required={session.mfa.required} next={target} />
+        <ConnectedDevices />
       </AdminPage>
     </main>
   );

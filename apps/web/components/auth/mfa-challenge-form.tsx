@@ -4,10 +4,11 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { signOut } from "@/app/(auth)/actions";
-import { TotpCodeField } from "@/components/security/totp-code-field";
+import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CodeBoxes } from "@/components/ui/code-boxes";
 import { verifyTotpCode } from "@/lib/auth/mfa-client";
-import { AuthHeader } from "./auth-header";
+import { AuthHeader, AuthIcon } from "./auth-header";
 import { FormError } from "./form-error";
 
 /**
@@ -30,14 +31,23 @@ export function MfaChallengeForm({ next }: { next: string }) {
   }, null);
   return (
     <div className="flex flex-col gap-6">
-      <AuthHeader title={t("challengeTitle")} subtitle={t("challengeBody")} />
+      <AuthHeader
+        title={t("challengeTitle")}
+        subtitle={t("challengeBody")}
+        icon={
+          <AuthIcon>
+            <ShieldCheck aria-hidden />
+          </AuthIcon>
+        }
+      />
       <form action={action} className="flex flex-col gap-5" noValidate>
-        <FormError message={error ? te(error) : null} />
-        <TotpCodeField label={t("codeLabel")} error={error === "mfa_code_invalid" ? te(error) : undefined} autoFocus />
+        <FormError message={error && error !== "mfa_code_invalid" ? te(error) : null} />
+        <CodeBoxes label={t("codeLabel")} error={error === "mfa_code_invalid" ? te(error) : undefined} autoFocus />
         <Button type="submit" block loading={pending} loadingLabel={t("verifying")}>
           {t("verify")}
         </Button>
       </form>
+      <p className="text-center text-footnote text-label-secondary">{t("lostPhone")}</p>
       <form action={signOut}>
         <Button type="submit" block variant="plain">
           {t("signOut")}

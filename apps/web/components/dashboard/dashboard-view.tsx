@@ -29,7 +29,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { SelectField } from "@/components/ui/select-field";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { Sheet } from "@/components/ui/sheet";
-import { StatCard } from "@/components/ui/stat-card";
+import { StatCard, StatGroup } from "@/components/ui/stat-card";
 import { TextField } from "@/components/ui/text-field";
 import { counterName } from "@/lib/desk/counter-name";
 import type { DashboardData, DashboardQuery } from "@/lib/stats/dashboard";
@@ -379,11 +379,11 @@ export function DashboardView({
           </p>
         ) : null}
 
-        <div className={cn("grid grid-cols-2 gap-3 transition-opacity lg:grid-cols-4 lg:gap-5", loading && "opacity-60")}>
+        <StatGroup className={cn("transition-opacity", loading && "opacity-60")}>
           {kpis.map((k) => (
             <StatCard key={k.label} label={k.label} value={k.value} trend={trend(k.d)} trendTone={k.d?.tone ?? "neutral"} className="lg:px-6 lg:py-5" />
           ))}
-        </div>
+        </StatGroup>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
           {singleDay ? (

@@ -6,7 +6,7 @@ import { expectAccessible } from "./helpers";
 // invitation et page introuvable — en clair et en sombre. Titres sans césure (U1).
 
 const PAGES = [
-  { path: "/login", heading: "Bon retour" },
+  { path: "/login", heading: "Connexion" },
   { path: "/signup" },
   { path: "/cgu" },
   { path: "/confidentialite" },

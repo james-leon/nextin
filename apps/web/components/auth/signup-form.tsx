@@ -3,10 +3,10 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Lock, Mail, MailCheck, User } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { signUp } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import { Turnstile } from "@/components/security/turnstile";
 import { AuthHeader } from "./auth-header";
 import { FormError } from "./form-error";
@@ -36,53 +36,63 @@ export function SignupForm({ next, siteKey }: { next: string; siteKey: string | 
     return code ? te(code) : undefined;
   };
   const topError = state && !state.ok && !state.fieldErrors ? te(state.error) : null;
+  // Invitation : simple compte pour rejoindre une équipe ; sinon début de l'inscription d'un établissement (essai).
+  const joining = next.startsWith("/invite/");
 
   return (
     <div className="flex flex-col gap-6">
-      <AuthHeader title={t("signupTitle")} subtitle={t("signupSubtitle")} />
-      <form action={action} className="flex flex-col gap-5" noValidate>
+      {joining ? (
+        <AuthHeader title={t("signupTitle")} subtitle={t("signupSubtitle")} />
+      ) : (
+        <AuthHeader title={t("signupAccountTitle")} subtitle={t("signupTrial")} />
+      )}
+      <form action={action} className="flex flex-col gap-4" noValidate>
         <FormError message={topError} />
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="locale" value={locale} />
-        <TextField
-          name="fullName"
-          label={t("fullName")}
-          placeholder={t("fullNamePlaceholder")}
-          autoComplete="name"
-          leading={<User />}
-          required
-          error={field("fullName")}
-        />
-        <TextField
-          name="email"
-          type="email"
-          label={t("email")}
-          placeholder={t("emailPlaceholder")}
-          autoComplete="email"
-          inputMode="email"
-          leading={<Mail />}
-          required
-          error={field("email")}
-        />
-        <PasswordField
-          label={t("password")}
-          showLabel={t("showPassword")}
-          hideLabel={t("hidePassword")}
-          hint={t("passwordHint")}
-          leading={<Lock />}
-          autoComplete="new-password"
-          error={field("password")}
-        />
+        <div className="flex flex-col gap-1.5">
+          <FormGroup>
+            <TextField
+              grouped
+              name="fullName"
+              label={t("fullName")}
+              placeholder={t("fullNamePlaceholder")}
+              autoComplete="name"
+              required
+              error={field("fullName")}
+            />
+            <TextField
+              grouped
+              name="email"
+              type="email"
+              label={t("email")}
+              placeholder={t("emailPlaceholder")}
+              autoComplete="email"
+              inputMode="email"
+              required
+              error={field("email")}
+            />
+            <PasswordField
+              grouped
+              label={t("password")}
+              showLabel={t("showPassword")}
+              hideLabel={t("hidePassword")}
+              autoComplete="new-password"
+              error={field("password")}
+            />
+          </FormGroup>
+          <p className="px-4 text-footnote text-label-secondary">{t("passwordHint")}</p>
+        </div>
         <Turnstile key={String(pending)} siteKey={siteKey} action="signup" />
         <Button type="submit" block loading={pending} loadingLabel={t("signingUp")}>
           {t("signUp")}
         </Button>
       </form>
-      <p className="text-center text-subheadline text-label-secondary">
+      <p className="text-subheadline text-label-secondary">
         {t("haveAccount")}{" "}
         <Link
           href={`/login${next !== "/app" ? `?next=${encodeURIComponent(next)}` : ""}`}
-          className="inline-flex min-h-11 items-center font-semibold text-accent-text"
+          className="inline-flex min-h-11 items-center text-accent-text"
         >
           {t("signIn")}
         </Link>

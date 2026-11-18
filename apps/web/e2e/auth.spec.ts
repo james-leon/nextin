@@ -6,7 +6,7 @@ test.describe("M1 — authentification et établissements", () => {
   test("un espace du personnel exige une connexion et revient à la page demandée", async ({ page }) => {
     await page.goto("/app/new");
     await expect(page).toHaveURL(/\/login\?next=%2Fapp%2Fnew$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Connexion" })).toBeVisible();
   });
 
   test("inscription → création d'établissement → liste, puis déconnexion et reconnexion", async ({ page }) => {
@@ -145,7 +145,7 @@ test.describe("M1 — authentification et établissements", () => {
     await guest.getByRole("link", { name: "Créer un compte" }).click();
     await signUpViaUi(guest, { name: "Mireille Ekambi", email: receptionistEmail, next: `/invite/${token}` });
     await expect(guest).toHaveURL(new RegExp(`/invite/${token}$`));
-    await guest.getByRole("button", { name: "Rejoindre l'équipe" }).click();
+    await guest.getByRole("button", { name: "Accepter l'invitation" }).click();
     await expect(guest).toHaveURL(/\/app\?joined=/);
     await expect(guest.getByRole("status").filter({ hasText: "Vous avez rejoint Clinique Invitation." })).toBeVisible();
     await expect(guest.getByText("Clinique · Réceptionniste")).toBeVisible();
@@ -168,9 +168,9 @@ test.describe("M1 — authentification et établissements", () => {
     await page.getByRole("button", { name: "Recevoir un code par e-mail" }).click();
     await expect(page.getByRole("button", { name: "Envoyer le code" })).toBeVisible();
     await page.getByRole("button", { name: "English" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
     await page.getByRole("button", { name: "Français" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Bon retour" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Connexion" })).toBeVisible();
   });
 
   test("se souvenir de moi : décoché, cookies de session seulement", async ({ page, context }) => {
@@ -229,7 +229,7 @@ test.describe("M1 — authentification et établissements", () => {
 
   test("CGU et politique de confidentialité : version, articles numérotés, tableaux, mentions à compléter", async ({ page }) => {
     await page.goto("/login");
-    await page.getByRole("link", { name: "CGU" }).click();
+    await page.getByRole("link", { name: "Conditions" }).click();
     await expect(page).toHaveURL(/\/cgu$/);
     await expect(page.getByRole("heading", { level: 1, name: "Conditions générales d'utilisation" })).toBeVisible();
     await expect(page.locator("[data-legal-version]")).toHaveText("Version 1.0 — en vigueur le [DATE DE MISE EN LIGNE]");

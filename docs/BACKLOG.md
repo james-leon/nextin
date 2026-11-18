@@ -6,6 +6,21 @@ Le premier lot (vue ordinateur du poste médecin, menu latéral, actions de la b
 
 ## En attente
 
+### Notifications du personnel (refonte v2, maquette 07)
+La maquette prévoit des notifications que l'application n'envoie pas encore : nouvelle demande de rendez-vous et
+attente trop longue (sur le téléphone), résumé de la journée et factures par e-mail. Seule la demande d'aide d'un patient
+est réglable aujourd'hui (son et vibration à l'accueil, par appareil). Chaque ajout demande un envoi réel (base →
+expéditeur M7) avant d'afficher son interrupteur.
+
+### Moyeu des réglages de l'établissement (refonte v2, maquette 07)
+La maquette montre une page de réglages avec une liste de rubriques à gauche (Informations, Agences, File d'attente,
+Rendez-vous, Messages, Publicité, Sécurité, Données personnelles). Les rubriques existent dans le back-office, chacune à
+sa place ; un moyeu unique avec recherche reste à concevoir. L'enregistrement automatique est déjà en place.
+
+### Appareils connectés : lieu approximatif
+La maquette affiche la ville de chaque appareil (« Douala · il y a 2 h »). Il faudrait une géolocalisation de l'adresse
+IP (donnée personnelle) : non fait, à décider avec la politique de confidentialité.
+
 ### Application de caisse dédiée
 Les caissiers valident aujourd'hui les bons depuis `/ads/redeem` dans le navigateur. Une application installable (PWA dédiée ou écran du M11) éviterait la connexion par e-mail sur le téléphone de la caisse.
 

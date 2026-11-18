@@ -73,7 +73,7 @@ export function AdsNav({ variant, advertiser, role }: { variant: "sidebar" | "in
                     aria-current={active === item.key ? "page" : undefined}
                     className={cn(
                       "pressable flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-body",
-                      active === item.key ? "bg-accent-tint font-semibold text-accent-on-tint" : "text-label hover:bg-fill-tertiary",
+                      active === item.key ? "bg-accent-tint font-semibold text-accent-on-tint" : "text-label-secondary hover:bg-fill-tertiary hover:text-label",
                     )}
                   >
                     <Icon aria-hidden className="size-5 stroke-[1.75]" />

@@ -40,7 +40,7 @@ export function StaffSidebar({ isPlatformAdmin }: { isPlatformAdmin: boolean }) 
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={cn(link, active ? "bg-accent-tint font-semibold text-accent-on-tint" : "text-label hover:bg-fill-tertiary")}
+                  className={cn(link, active ? "bg-accent-tint font-semibold text-accent-on-tint" : "text-label-secondary hover:bg-fill-tertiary hover:text-label")}
                 >
                   <Icon aria-hidden className="size-5 stroke-[1.75]" />
                   {item.key === "desks" ? td("title") : t(`nav.${item.key}`)}

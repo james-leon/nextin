@@ -39,8 +39,8 @@ test.describe("Absent automatique après l'appel", () => {
     await expect(page.getByText("4 places", { exact: true }).first()).toBeVisible();
     await expectAccessible(page);
     await expectTouchTargets(page);
-    await page.locator("button[type=submit]:visible").filter({ hasText: "Enregistrer" }).first().click();
-    await expect(page).toHaveURL(/saved=1/);
+    // Enregistrement automatique (refonte v2).
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
     const { data } = await b.staff
       .from("branch_settings")
       .select("auto_no_show_enabled, no_show_grace_seconds, no_show_move_back_places")

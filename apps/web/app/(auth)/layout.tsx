@@ -1,6 +1,5 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
-import { BellRing, ChartNoAxesColumnIncreasing, MessageCircle, type LucideIcon } from "lucide-react";
 import { LocaleSwitch } from "@/components/auth/locale-switch";
 import { Logo } from "@/components/ui/logo";
 
@@ -10,60 +9,44 @@ function currentYear(): string {
 }
 
 /**
- * Écrans d'authentification (style aligné sur SchoolMaster, autre produit Wintek).
- * Ordinateur : panneau de marque bleu nuit à gauche (dégradé très léger), formulaire sur fond gris clair à droite.
- * Téléphone et tablette : panneau du formulaire seul. Bascule FR / EN en haut à droite.
+ * Écrans d'authentification (maquette v2 04), partagés par la connexion, l'inscription, l'invitation, la double
+ * authentification et « Nouveau mot de passe ».
+ * Ordinateur : panneau de marque bleu nuit uni à gauche (sur-titre orange, grand titre, trois avantages, copyright),
+ * formulaire sur fond `bg-grouped` à droite. Téléphone et tablette : formulaire seul. Bascule FR / EN en haut à droite.
  */
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const m = await getMessages();
   const t = await getTranslations("auth");
-  const benefits: { icon: LucideIcon; title: string; body: string }[] = [
-    { icon: BellRing, title: t("benefitCallTitle"), body: t("benefitCallBody") },
-    { icon: MessageCircle, title: t("benefitWhatsappTitle"), body: t("benefitWhatsappBody") },
-    { icon: ChartNoAxesColumnIncreasing, title: t("benefitStatsTitle"), body: t("benefitStatsBody") },
-  ];
+  const benefits = [t("benefitQr"), t("benefitWhatsapp"), t("benefitTv")];
   return (
     <NextIntlClientProvider messages={{ common: m.common, auth: m.auth, errors: m.errors, mfa: m.mfa }}>
-      <div className="min-h-dvh bg-grouped lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        {/* Panneau de marque : bleu nuit dans les deux apparences (couleur de marque, texte blanc). */}
+      <div className="min-h-dvh bg-grouped lg:grid lg:grid-cols-[minmax(0,9fr)_minmax(0,11fr)]">
+        {/* Panneau de marque : bleu nuit uni dans les deux apparences (couleur de marque, texte blanc). */}
         <aside
           aria-label={t("panelLabel")}
-          className="relative hidden overflow-hidden bg-linear-to-br from-navy to-navy-deep text-white lg:flex lg:min-h-dvh lg:flex-col lg:justify-between lg:gap-12 lg:px-12 lg:py-12 xl:px-16 xl:py-14"
+          className="hidden bg-navy text-white lg:flex lg:min-h-dvh lg:flex-col lg:justify-between lg:gap-12 lg:px-12 lg:py-10 xl:px-16 xl:py-12"
         >
-          {/* Halo décoratif très discret (profondeur, sans détourner du contenu). */}
-          <span aria-hidden className="pointer-events-none absolute -top-40 -right-40 size-[28rem] rounded-full bg-white/[0.04]" />
-          <Logo tone="inverse" className="relative h-12 self-start" />
-          <div className="relative flex max-w-lg flex-col">
-            <p className="text-footnote font-semibold tracking-[0.14em] text-orange uppercase">{t("panelEyebrow")}</p>
-            <h2 className="mt-4 text-[2.75rem] leading-[1.06] font-extrabold tracking-tight whitespace-pre-line xl:text-[3.25rem]">
-              {t("panelTitle")}
-            </h2>
-            <p className="mt-5 text-body text-white/80">{t("panelBody")}</p>
-            <ul className="mt-10 flex flex-col gap-5">
-              {benefits.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="flex items-start gap-4">
-                  <span
-                    aria-hidden
-                    className="squircle flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-white/10 ring-1 ring-white/15"
-                  >
-                    <Icon className="size-5 stroke-[1.75]" />
-                  </span>
-                  <span className="flex flex-col pt-0.5">
-                    <span className="text-headline">{title}</span>
-                    <span className="text-subheadline text-white/75">{body}</span>
-                  </span>
+          <Logo tone="inverse" className="h-10 self-start" />
+          <div className="flex max-w-md flex-col">
+            <p className="text-subheadline font-semibold text-orange">{t("panelEyebrow")}</p>
+            <h2 className="mt-3 text-[2.25rem] leading-[1.1] font-bold tracking-tight text-balance xl:text-[2.625rem]">{t("panelTitle")}</h2>
+            <ul className="mt-8 flex flex-col gap-3 text-body text-white/85">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="flex items-baseline gap-3">
+                  <span aria-hidden className="size-1.5 shrink-0 translate-y-[-0.15em] rounded-full bg-white" />
+                  {benefit}
                 </li>
               ))}
             </ul>
           </div>
-          <p className="relative text-footnote text-white/75">{t("copyright", { year: currentYear() })}</p>
+          <p className="text-footnote text-white/75">{t("copyright", { year: currentYear() })}</p>
         </aside>
         <main className="flex min-h-dvh flex-col px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)] sm:px-8 lg:px-12">
           <div className="flex justify-end">
             <LocaleSwitch />
           </div>
-          <div className="flex flex-1 items-start justify-center pt-6 sm:items-center sm:pt-0">
-            <div className="w-full max-w-md py-6">{children}</div>
+          <div className="flex flex-1 items-start justify-center pt-4 sm:items-center sm:pt-0">
+            <div className="w-full max-w-[22.5rem] py-6 sm:max-w-sm">{children}</div>
           </div>
         </main>
       </div>

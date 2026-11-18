@@ -4,34 +4,31 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 
-const linkClass = "inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-semibold text-accent-text";
+const linkClass = "inline-flex min-h-11 items-center px-2 text-label-secondary underline-offset-2 hover:underline";
 
-/** Mention de sécurité et pied de page légal des écrans de connexion et d'inscription. */
-export function SecureNotice() {
-  const t = useTranslations("auth");
-  return (
-    <p className="flex items-center justify-center gap-1.5 text-footnote text-label-secondary">
-      <ShieldCheck aria-hidden className="size-4 shrink-0 stroke-[2] text-green" />
-      {t("secureNotice")}
-    </p>
-  );
-}
-
+/**
+ * Pied des écrans de connexion et d'inscription (maquette v2 04) : une ligne discrète « Connexion sécurisée ·
+ * Conditions · Confidentialité », puis l'acceptation des conditions et la conformité à la loi camerounaise.
+ */
 export function LegalFooter() {
   const t = useTranslations("auth");
   return (
-    <footer className="flex flex-col items-center gap-0.5 text-center text-footnote text-label-secondary">
-      <p>{t("legalConsent")}</p>
+    <footer className="flex flex-col items-center gap-1 text-center text-footnote text-label-secondary">
       <nav aria-label={t("legalLinks")} className="flex flex-wrap items-center justify-center">
+        <span className="inline-flex min-h-11 items-center gap-1.5 px-2">
+          <ShieldCheck aria-hidden className="size-4 shrink-0 stroke-[2] text-green-text" />
+          {t("secureNotice")}
+        </span>
         <Link href="/cgu" prefetch={false} className={linkClass}>
-          {t("terms")}
+          {t("termsShort")}
         </Link>
-        <span aria-hidden>·</span>
         <Link href="/confidentialite" prefetch={false} className={linkClass}>
-          {t("privacy")}
+          {t("privacyShort")}
         </Link>
       </nav>
-      <p>{t("lawCompliance")}</p>
+      <p className="text-caption">
+        {t("legalConsent")} {t("lawCompliance")}
+      </p>
     </footer>
   );
 }

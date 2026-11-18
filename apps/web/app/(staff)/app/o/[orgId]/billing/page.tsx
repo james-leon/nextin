@@ -67,7 +67,6 @@ export default async function BillingPage({
     const p = o.plans.find((x) => x.code === code);
     return p ? (locale === "en" ? (p.name_en ?? p.name) : p.name) : code;
   };
-  const limit = (used: number, max: number | null) => (max == null ? `${used} · ${t("unlimited")}` : t("ofLimit", { used, limit: max }));
 
   return (
     <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: `/app/o/${orgId}`, label: to("title") }}>
@@ -82,8 +81,8 @@ export default async function BillingPage({
         </CalloutCard>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-7">
+      {/* Maquette v2 06 : une seule colonne pleine largeur (statut, utilisation et extensions, formules, factures). */}
+      <div className="flex min-w-0 flex-col gap-7">
           <section aria-labelledby="sub-title" className="squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <h2 id="sub-title" className="min-w-0 text-title2 font-bold">
@@ -114,6 +113,20 @@ export default async function BillingPage({
             ) : null}
           </section>
 
+          <QuotaPanel
+            quota={o.usage.quota}
+            alertPercent={o.settings.quota_alert_percent}
+            limits={[
+              { label: t("usageBranches"), used: o.usage.branches, limit: e.extra_branch_price_xaf != null ? null : e.included_branches },
+              { label: t("usageServices"), used: o.usage.services, limit: e.max_services },
+              { label: t("usageCounters"), used: o.usage.counters, limit: e.max_counters },
+              { label: t("usageDisplays"), used: o.usage.displays, limit: e.max_displays },
+              { label: t("usageUsers"), used: o.usage.users, limit: e.max_users },
+            ]}
+          >
+            {s ? <ExtensionList orgId={orgId} packs={o.packs} /> : null}
+          </QuotaPanel>
+
           {s ? (
             <PlanPicker
               orgId={orgId}
@@ -128,18 +141,6 @@ export default async function BillingPage({
               contact={{ email: o.settings.contact_email, phone: o.settings.contact_phone }}
             />
           ) : null}
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-7">
-          <QuotaPanel quota={o.usage.quota} alertPercent={o.settings.quota_alert_percent} />
-          {s ? <ExtensionList orgId={orgId} packs={o.packs} /> : null}
-          <ListSection header={t("usageTitle")}>
-            <ListRow title={t("usageBranches")} detail={<span className="tabular">{limit(o.usage.branches, e.extra_branch_price_xaf != null ? null : e.included_branches)}</span>} />
-            <ListRow title={t("usageServices")} detail={<span className="tabular">{limit(o.usage.services, e.max_services)}</span>} />
-            <ListRow title={t("usageCounters")} detail={<span className="tabular">{limit(o.usage.counters, e.max_counters)}</span>} />
-            <ListRow title={t("usageDisplays")} detail={<span className="tabular">{limit(o.usage.displays, e.max_displays)}</span>} />
-            <ListRow title={t("usageUsers")} detail={<span className="tabular">{limit(o.usage.users, e.max_users)}</span>} />
-          </ListSection>
 
           <ListSection header={t("invoicesTitle")} footer={o.invoices.length ? undefined : t("invoicesEmpty")}>
             {o.invoices.map((i) => (
@@ -159,7 +160,6 @@ export default async function BillingPage({
               />
             ))}
           </ListSection>
-        </div>
       </div>
     </AdminPage>
   );
