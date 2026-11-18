@@ -387,17 +387,17 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
     await visit(desktop.page, serviceNew.path);
     const create = desktop.page.getByRole("button", { name: "Créer le service" }).filter({ visible: true });
     await expect(create).toHaveCount(1);
-    const newTitle = (await desktop.page.getByRole("heading", { level: 1 }).boundingBox())!;
+    const newTitle = (await desktop.page.getByRole("heading", { level: 1, name: "Nouveau service" }).boundingBox())!;
     const createBox = (await create.boundingBox())!;
     expect(createBox.y).toBeLessThan(newTitle.y + newTitle.height);
     expect(createBox.y + createBox.height).toBeGreaterThan(newTitle.y);
     await desktop.context.close();
 
     const tablet = await open(browser, TABLET_PORTRAIT, "owner");
-    await visit(tablet.page, staff.path);
+    await visit(tablet.page, serviceNew.path);
     const bar = tablet.page.locator(".safe-bottom").filter({ visible: true }).first();
-    const content = (await tablet.page.getByRole("heading", { level: 1 }).boundingBox())!;
-    const barBox = (await bar.locator("a").boundingBox())!;
+    const content = (await tablet.page.getByRole("heading", { level: 1, name: "Nouveau service" }).boundingBox())!;
+    const barBox = (await bar.getByRole("button", { name: "Créer le service" }).boundingBox())!;
     expect(Math.abs(barBox.x - content.x)).toBeLessThanOrEqual(2);
     await tablet.context.close();
   });

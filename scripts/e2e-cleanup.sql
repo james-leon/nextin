@@ -21,6 +21,8 @@ begin
     select id from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers));
   delete from public.payments where invoice_id in (
     select id from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers));
+  delete from public.manual_payments where invoice_id in (
+    select id from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers));
   alter table public.invoices disable trigger invoices_guard;
   delete from public.invoices where organization_id = any (v_orgs) or advertiser_id = any (v_advertisers);
   alter table public.invoices enable trigger invoices_guard;
