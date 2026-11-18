@@ -39,7 +39,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
   if (grouped) {
     return (
       <div className={cn("relative flex flex-col gap-0.5 px-3.5 py-2.5 focus-within:shadow-[inset_0_0_0_2px_var(--accent-text)]", className)}>
-        <label htmlFor={id} className="text-caption text-label-secondary">
+        {/* Libellé au-dessus du champ (z-index) : le fond du remplissage automatique ne le masque jamais. */}
+        <label htmlFor={id} className="relative z-[1] text-caption text-label-secondary">
           {label}
         </label>
         <div className="flex items-center gap-2">
