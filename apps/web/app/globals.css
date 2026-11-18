@@ -95,6 +95,9 @@
   --elev-card: none;
   --elev-floating: 0 12px 36px rgb(0 0 0 / 0.14), 0 2px 8px rgb(0 0 0 / 0.06);
 
+  /* Carrés d'icône des listes de réglages (rubriques neutres et apparence), comme Réglages iOS. */
+  --icon-gray: #8e8e93;
+  --icon-indigo: #5856d6;
   /* Barre latérale bleu nuit (back-office, console, espace annonceur). */
   --sidebar-bg: #0d2c54;
   /* Graphiques : barres, prévision atténuée (pic en orange). */

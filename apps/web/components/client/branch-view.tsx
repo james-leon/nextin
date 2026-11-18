@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarPlus,
-  Clock,
   Info,
   MapPinned,
   Navigation,
@@ -16,7 +15,6 @@ import {
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import type { BoardService, BranchBoard } from "@nextin/shared/queue/live";
 import { directionsUrl } from "@nextin/shared/remote";
-import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -39,7 +37,6 @@ import type { BranchPublic } from "@/lib/client/types";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { branchHoursStatus } from "@/lib/client/branch-hours";
 import { cn } from "@/lib/cn";
-import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 
 /**
  * Page publique d'une agence (M9) : état d'ouverture, itinéraire, files en direct ; ticket à distance si l'agence
@@ -226,26 +223,21 @@ export function BranchView({
       <NavigationBar
         title={branch.organization.name}
         eyebrow={branch.name}
-        back={{ href: "/nearby", label: t("back") }}
+        back={{ href: "/nearby", label: t("back"), prefetch: false }}
         contentClassName="max-w-lg lg:max-w-6xl lg:px-8"
       >
         <p className="mt-1 text-subheadline text-label-secondary">
-          {[branch.address, branch.city].filter(Boolean).join(", ")}
+          {[to(branch.organization.type), [branch.address, branch.city].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
         </p>
       </NavigationBar>
 
       <div className="mx-auto flex max-w-lg flex-col gap-6 px-4 pt-3 lg:grid lg:max-w-6xl lg:grid-cols-[1fr_22rem] lg:items-start lg:gap-8 lg:px-8">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center gap-2" role="status">
-            <Badge shape="pill">
-              <OrgTypeIcon type={branch.organization.type} />
-              {to(branch.organization.type)}
-            </Badge>
-            <Badge shape="pill" tone={hours.open ? "green" : "neutral"}>
-              <Clock aria-hidden />
-              {hoursText}
-            </Badge>
-          </div>
+          {/* État d'ouverture (maquette v2 03) : point vert « Ouvert » et l'heure de fermeture, sinon la prochaine ouverture. */}
+          <p className="flex items-center gap-2 text-subheadline text-label-secondary" role="status">
+            <span aria-hidden className={cn("size-[7px] shrink-0 rounded-full", hours.open ? "bg-green" : "bg-label-tertiary")} />
+            <span className={hours.open ? "font-semibold text-green-text" : undefined}>{hoursText}</span>
+          </p>
           {showUnavailable ? (
             <CalloutCard
               icon={<Info />}
@@ -430,7 +422,7 @@ export function BranchView({
 
         {/* Ordinateur : carte d'action à droite, toujours visible. */}
         {remoteOn || branch.requests_enabled ? (
-          <aside className="squircle hidden flex-col gap-3 rounded-[var(--radius-lg)] bg-grouped-secondary p-5 shadow-card lg:sticky lg:top-6 lg:flex">
+          <aside className="squircle hidden flex-col gap-3 rounded-[var(--radius-md)] bg-grouped-secondary p-5 lg:sticky lg:top-6 lg:flex">
             {remoteOn ? (
               <>
                 <h2 className="text-headline">{t("remoteHeader")}</h2>

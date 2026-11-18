@@ -6,7 +6,7 @@ set search_path = public, extensions;
 -- M10a : `create_organization` réservé à l'inscription ; appel direct permis dans ce test (annulé au rollback).
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(54);
+select plan(55);
 
 create schema tests;
 create function tests.create_user(p_id uuid, p_email text) returns uuid language sql as $$
@@ -208,7 +208,15 @@ select is((select status::text from public.appointments where id = tests.id('a4'
 -- ─── Vue du jour, « en attente », droits ─────────────────────────────────────
 select tests.login_as('d5b00000-0000-0000-0000-00000000000d');
 insert into vals select 'today', public.list_appointments(tests.id('akwa'), (tests.v('today_date') #>> '{}')::date, (tests.v('today_date') #>> '{}')::date);
-select is((select jsonb_array_length(v) from vals where name = 'today'), 5, 'rendez-vous du jour');
+-- Rendez-vous du jour : ceux dont l'heure locale (fuseau de l'agence) tombe aujourd'hui. Les rendez-vous créés
+-- relativement à now() (« il y a 2 heures ») changent de jour entre minuit et 2 h à Douala : la liste attendue est
+-- relue dans la table plutôt que comptée en dur (5 en journée).
+select is(
+  (select array_agg(a ->> 'id' order by a ->> 'id') from vals, jsonb_array_elements(v) a where name = 'today'),
+  (select array_agg(a.id::text order by a.id::text) from public.appointments a join public.branches b on b.id = a.branch_id
+    where a.branch_id = tests.id('akwa') and (a.starts_at at time zone b.timezone)::date = (tests.v('today_date') #>> '{}')::date),
+  'rendez-vous du jour');
+select ok((select jsonb_array_length(v) > 0 from vals where name = 'today'), 'rendez-vous du jour : liste non vide');
 select ok((select bool_and(not (a ? 'name')) from vals, jsonb_array_elements(v) a where name = 'today'), 'aucun nom de patient');
 select public.declare_practitioner_absence(tests.id('nkeng'), 'late', now() + interval '30 minutes');
 select tests.logout();

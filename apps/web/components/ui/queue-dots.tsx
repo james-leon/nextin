@@ -3,13 +3,16 @@ import { cn } from "@/lib/cn";
 /**
  * Motif des points du logo (maquettes v2) appliqué à la file : un point par personne, les passages déjà terminés en
  * gris, les personnes qui attendent en gris clair, et le client lui-même en point orange plus gros, à la fin.
- * Au-delà de `max` personnes devant, la file est résumée (les premiers points seulement). Purement décoratif pour les
- * lecteurs d'écran : la phrase « 4 personnes devant vous » est toujours affichée à côté.
+ * Au-delà de `max` personnes devant, la file est résumée (les premiers points seulement). La phrase « 4 personnes
+ * devant vous » est toujours écrite à côté ; avec `progress` et `label`, les points portent aussi la progression dans
+ * la file pour les lecteurs d'écran (rôle `progressbar`, de 0 à 100).
  */
 export function QueueDots({
   ahead,
   done = 0,
   max = 8,
+  progress,
+  label,
   className,
 }: {
   /** Personnes devant le client. */
@@ -18,12 +21,21 @@ export function QueueDots({
   done?: number;
   /** Nombre maximal de points (client compris). */
   max?: number;
+  /** Avancement dans la file, de 0 à 1 (« Mon ticket »). */
+  progress?: number;
+  label?: string;
   className?: string;
 }) {
   const waiting = Math.max(0, Math.min(ahead, max - 1));
   const served = Math.max(0, Math.min(done, max - 1 - waiting));
   return (
-    <span aria-hidden className={cn("flex items-end gap-1.5", className)} data-testid="queue-dots">
+    <span
+      {...(progress !== undefined && label
+        ? { role: "progressbar", "aria-label": label, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": Math.round(progress * 100) }
+        : { "aria-hidden": true })}
+      className={cn("flex items-end gap-1.5", className)}
+      data-testid="queue-dots"
+    >
       {Array.from({ length: served }, (_, i) => (
         <i key={`d${i}`} className="size-2.5 rounded-full bg-label-tertiary" />
       ))}

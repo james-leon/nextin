@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { QrCode } from "lucide-react";
+import { ClientTabs } from "@/components/client/client-tabs";
 import { ServiceChooser } from "@/components/client/service-chooser";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -42,27 +43,33 @@ export default async function EntryPage({ params, searchParams }: Params & { sea
   if (!entry) {
     return (
       <main className="min-h-dvh pb-40">
-        <NavigationBar title={t("notFoundTitle")} back={{ href: "/", label: t("back") }} contentClassName="max-w-lg" />
+        <NavigationBar title={t("notFoundTitle")} back={{ href: "/", label: t("back"), prefetch: false }} contentClassName="max-w-lg" />
         <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3">
           <CalloutCard icon={<QrCode />} tone="red" role="alert">
             {t("notFoundBody")}
           </CalloutCard>
           <Button asChild block variant="tinted">
-            <Link href="/">{t("rescan")}</Link>
+            <Link href="/scan" prefetch={false}>
+              {t("rescan")}
+            </Link>
           </Button>
         </div>
+        <ClientTabs active="home" mobile={false} />
       </main>
     );
   }
 
   return (
-    <LiteMessages paths={["client.service", "errors", "identity"]}>
-      <ServiceChooser
-        entry={entry}
-        presenceCode={presenceCode}
-        captchaSiteKey={captchaConfig().siteKey}
-        identityRules={await fetchIdentityRules(entry.branch.id)}
-      />
-    </LiteMessages>
+    <>
+      <LiteMessages paths={["client.service", "errors", "identity"]}>
+        <ServiceChooser
+          entry={entry}
+          presenceCode={presenceCode}
+          captchaSiteKey={captchaConfig().siteKey}
+          identityRules={await fetchIdentityRules(entry.branch.id)}
+        />
+      </LiteMessages>
+      <ClientTabs active="home" mobile={false} />
+    </>
   );
 }

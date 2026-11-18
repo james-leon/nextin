@@ -101,6 +101,8 @@ export function RequestForm({
   const slots = (perDay.get(day) ?? []).slice().sort();
   const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { timeZone: tz, ...o });
   const dayLabel = (d: string) => fmt({ weekday: "short", day: "numeric", month: "short" }).format(new Date(`${d}T12:00:00Z`));
+  const weekdayLabel = (d: string) => fmt({ weekday: "short" }).format(new Date(`${d}T12:00:00Z`));
+  const dayNumber = (d: string) => fmt({ day: "numeric" }).format(new Date(`${d}T12:00:00Z`));
   const timeLabel = (iso: string) => fmt({ hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
   const serviceName = (s: RequestOptions["services"][number]) => (locale === "en" && s.name_en ? s.name_en : s.name);
   const when = slot
@@ -336,7 +338,7 @@ export function RequestForm({
             <h2 id="request-day" className="px-4 text-footnote text-label-secondary uppercase">
               {t("dayHeader")}
             </h2>
-            <div role="radiogroup" aria-labelledby="request-day" className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+            <div role="radiogroup" aria-labelledby="request-day" className="-mx-4 flex gap-1.5 scroll-fade-x px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
               {days.map((d) => {
                 const count = perDay.get(d)?.length ?? 0;
                 const active = d === day;
@@ -351,13 +353,18 @@ export function RequestForm({
                       setSlot(null);
                     }}
                     className={cn(
-                      "pressable squircle flex min-h-14 min-w-[4.75rem] shrink-0 flex-col items-center justify-center rounded-[var(--radius-md)] px-2 py-1.5",
-                      active ? "bg-accent text-on-accent" : "bg-grouped-secondary text-label",
+                      "pressable squircle flex min-h-16 min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] px-2 py-2",
+                      active ? "bg-primary text-on-accent" : "bg-grouped-secondary text-label",
                     )}
                   >
-                    <span className="text-subheadline font-semibold first-letter:uppercase">{dayLabel(d)}</span>
-                    <span className={cn("text-caption tabular", active ? "text-on-accent" : "text-label-secondary")}>
-                      {count ? t("daySlots", { count }) : t("dayFull")}
+                    <span className={cn("text-caption", active ? "text-on-accent" : "text-label-secondary")}>
+                      {weekdayLabel(d)}
+                    </span>
+                    <span className={cn("font-rounded text-title3 font-bold", !active && !count && "text-label-secondary")}>
+                      {dayNumber(d)}
+                    </span>
+                    <span className="sr-only">
+                      {dayLabel(d)} · {count ? t("daySlots", { count }) : t("dayFull")}
                     </span>
                   </button>
                 );
@@ -370,7 +377,7 @@ export function RequestForm({
               {t("slotHeader")}
             </h2>
             {slots.length ? (
-              <div role="radiogroup" aria-labelledby="request-slot" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              <div role="radiogroup" aria-labelledby="request-slot" className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
                 {slots.map((s) => (
                   <button
                     key={s}
@@ -382,8 +389,8 @@ export function RequestForm({
                       setPeriod(null);
                     }}
                     className={cn(
-                      "pressable squircle h-11 rounded-[var(--radius-sm)] text-callout font-semibold tabular",
-                      slot === s ? "bg-accent text-on-accent" : "bg-grouped-secondary text-accent-text",
+                      "pressable squircle h-11 rounded-[var(--radius-md)] font-rounded text-callout font-semibold",
+                      slot === s ? "bg-primary text-on-accent" : "bg-grouped-secondary text-accent-text",
                     )}
                   >
                     {timeLabel(s)}
@@ -417,7 +424,7 @@ export function RequestForm({
 
         {/* Coordonnées : sous les choix sur téléphone, à droite avec le récapitulatif sur ordinateur. */}
         <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
-          <div className="squircle hidden flex-col gap-1 rounded-[var(--radius-lg)] bg-grouped-secondary p-5 shadow-card lg:flex">
+          <div className="squircle hidden flex-col gap-1 rounded-[var(--radius-lg)] bg-grouped-secondary p-5 lg:flex">
             <p className="text-footnote text-label-secondary uppercase">{t("title")}</p>
             <p className="text-headline">{service ? serviceName(service) : ""}</p>
             <p className="text-subheadline text-label-secondary">{when ?? t("summaryEmpty")}</p>

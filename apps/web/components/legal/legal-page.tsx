@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
-import { FileText, Languages } from "lucide-react";
+import { Ban, EyeOff, FileText, Languages, MapPinOff, ShieldCheck, Trash2 } from "lucide-react";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import {
   LEGAL_DOCUMENTS,
@@ -142,9 +142,9 @@ export async function LegalPage({ docKey }: { docKey: LegalDocKey }) {
   const draft = isLegalDraft(doc);
   return (
     <div className="min-h-dvh bg-grouped">
-      <NavigationBar title={doc.title} back={{ href: "/login", label: t("backToLogin"), prefetch: false }} contentClassName="max-w-3xl" />
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),2.5rem)] sm:px-8">
-        <section aria-label={doc.version} className="squircle flex items-start gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
+      <NavigationBar title={doc.title} back={{ href: "/login", label: t("backToLogin"), prefetch: false }} contentClassName="max-w-3xl lg:max-w-6xl" />
+      <main className="mx-auto flex w-full max-w-3xl lg:max-w-6xl flex-col gap-6 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),2.5rem)] sm:px-8">
+        <section aria-label={doc.version} className="squircle flex items-start gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5">
           <span className="squircle flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-accent-tint text-accent-on-tint">
             <FileText aria-hidden className="size-6 stroke-[1.75]" />
           </span>
@@ -157,6 +157,30 @@ export async function LegalPage({ docKey }: { docKey: LegalDocKey }) {
           </div>
         </section>
 
+        {docKey === "privacy" ? (
+          <section aria-labelledby="legal-brief" className="squircle rounded-[var(--radius-xl)] bg-accent-tint p-5">
+            <h2 id="legal-brief" className="text-headline font-semibold text-accent-on-tint">
+              {t("privacyBrief.title")}
+            </h2>
+            <ul className="mt-3 flex flex-col gap-3">
+              {(
+                [
+                  ["name", EyeOff],
+                  ["sold", Ban],
+                  ["ads", ShieldCheck],
+                  ["retention", Trash2],
+                  ["location", MapPinOff],
+                ] as const
+              ).map(([key, Icon]) => (
+                <li key={key} className="flex items-start gap-3 text-callout text-label">
+                  <Icon aria-hidden className="mt-0.5 size-5 shrink-0 stroke-[1.75] text-accent-on-tint" />
+                  {typo(t(`privacyBrief.${key}`))}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         {doc.translationNote ? (
           <p className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-fill-tertiary px-4 py-3 text-subheadline text-label-secondary">
             <Languages aria-hidden className="mt-0.5 size-5 shrink-0 stroke-[1.75] text-label-tertiary" />
@@ -164,11 +188,12 @@ export async function LegalPage({ docKey }: { docKey: LegalDocKey }) {
           </p>
         ) : null}
 
-        <nav aria-labelledby="legal-toc" className="squircle rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <nav aria-labelledby="legal-toc" className="squircle rounded-[var(--radius-xl)] bg-grouped-secondary p-5 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
           <h2 id="legal-toc" className="text-headline font-semibold">
             {t("legalContents")}
           </h2>
-          <ol className="mt-2 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+          <ol className="mt-2 grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-1">
             {doc.sections.map((s, i) => (
               <li key={s.title}>
                 <a href={`#article-${i + 1}`} className="pressable flex min-h-11 items-center gap-3 text-subheadline text-accent-text">
@@ -180,7 +205,7 @@ export async function LegalPage({ docKey }: { docKey: LegalDocKey }) {
           </ol>
         </nav>
 
-        <article className="squircle flex flex-col rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-2 shadow-card sm:px-8">
+        <article className="squircle flex flex-col rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-2 sm:px-8">
           {doc.sections.map((s, i) => {
             const id = `article-${i + 1}`;
             const blocks = parseLegalBody(s.body);
@@ -202,6 +227,7 @@ export async function LegalPage({ docKey }: { docKey: LegalDocKey }) {
             );
           })}
         </article>
+        </div>
       </main>
     </div>
   );

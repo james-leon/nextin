@@ -71,10 +71,10 @@ test.describe("M9 — ticket à distance", () => {
     await expect(page.getByText("Autour de vous")).toBeVisible();
     await page.getByRole("searchbox", { name: "Établissement ou ville" }).fill(name);
     const row = page.getByRole("link", { name: new RegExp(name) });
-    // Style A : seul résultat = grande carte (distance sur la photo, tuile « À distance »).
+    // v2 : seul résultat = grande carte (agence · distance · ouvert, puis attente et ticket à distance possible).
     await expect(row).toContainText("2 km");
-    await expect(row).toContainText("À distance");
-    await expect(row).toContainText("Possible");
+    await expect(row).toContainText("Ouvert");
+    await expect(row).toContainText("Ticket à distance");
     await expectTouchTargets(page);
     await expectAccessible(page);
     await page.getByRole("button", { name: "Carte" }).click();

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ClientTabBar } from "@/components/client/client-tab-bar";
-import { MyTicketRedirect } from "@/components/client/my-ticket-redirect";
-import { NavigationBar } from "@/components/ui/navigation-bar";
+import { ClientTabs } from "@/components/client/client-tabs";
+import { MyTickets } from "@/components/client/my-tickets";
 import { LiteMessages } from "@/lib/i18n/lite-server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,18 +9,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
-/** Onglet « Mon ticket ». */
-export default async function MyTicketPage() {
+/** Onglet « Tickets » (maquette v2 01) : en cours et historique de cet appareil. */
+export default async function MyTicketsPage() {
   const t = await getTranslations("client.myTickets");
   return (
     <main className="flex min-h-dvh flex-col pb-28">
-      <NavigationBar title={t("title")} contentClassName="max-w-lg" />
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-3">
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 pt-[max(env(safe-area-inset-top),1.25rem)] lg:max-w-[40rem] lg:pt-12">
+        <h1 className="text-large-title font-bold">{t("title")}</h1>
         <LiteMessages paths={["client.myTickets"]}>
-          <MyTicketRedirect />
+          <MyTickets />
         </LiteMessages>
       </div>
-      <ClientTabBar active="ticket" />
+      <ClientTabs active="tickets" />
     </main>
   );
 }

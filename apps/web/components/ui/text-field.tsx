@@ -12,16 +12,59 @@ type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   trailing?: ReactNode;
   /** Icône décorative à gauche dans le champ (enveloppe, cadenas…). */
   leading?: ReactNode;
+  /**
+   * Champ d'une liste groupée iOS (maquettes v2) : petit libellé et saisie dans la même cellule, à placer dans un
+   * `FormGroup` (cellules blanches séparées par un filet fin). Le contour bleu signale le champ actif.
+   */
+  grouped?: boolean;
 };
+
+/** Cellule blanche (rayon 12 px) qui regroupe des champs `grouped`, séparés par un filet fin. */
+export function FormGroup({ children, className, label }: { children: ReactNode; className?: string; label?: string }) {
+  return (
+    <div role={label ? "group" : undefined} aria-label={label} className={cn("squircle flex flex-col overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary [&>*+*]:hairline-t", className)}>
+      {children}
+    </div>
+  );
+}
 
 /** Champ de saisie iOS : libellé au-dessus, aide ou erreur en dessous, reliés par aria-describedby. */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, hint, error, trailing, leading, className, id: idProp, ...props },
+  { label, hint, error, trailing, leading, grouped, className, id: idProp, ...props },
   ref,
 ) {
   const autoId = useId();
   const id = idProp ?? autoId;
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+  if (grouped) {
+    return (
+      <div className={cn("relative flex flex-col gap-0.5 px-3.5 py-2.5 focus-within:shadow-[inset_0_0_0_2px_var(--accent-text)]", className)}>
+        <label htmlFor={id} className="text-caption text-label-secondary">
+          {label}
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            ref={ref}
+            id={id}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
+            className="-my-2 h-11 min-w-0 flex-1 bg-transparent text-body text-label outline-none placeholder:text-label-tertiary focus-visible:outline-none"
+            {...props}
+          />
+          {trailing}
+        </div>
+        {error ? (
+          <p id={`${id}-error`} className="text-footnote text-red-text">
+            {error}
+          </p>
+        ) : hint ? (
+          <p id={`${id}-hint`} className="text-footnote text-label-secondary">
+            {hint}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
   return (
     <div className={cn("flex w-full flex-col gap-1.5", className)}>
       <label htmlFor={id} className="px-4 text-footnote uppercase text-label-secondary">

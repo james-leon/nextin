@@ -30,8 +30,11 @@ async function firstLoadBytes(page: Page, path: string) {
 
 async function takeTicket(page: Page, entry: string, service = /Consultation/) {
   await page.goto(`/q/${entry}`);
-  await page.getByRole("radio", { name: service }).click();
+  // v2 : toucher un service ouvre l'étape « Votre nom » (nom demandé ou facultatif), puis « Ticket pris » mène au ticket.
+  await page.getByRole("button", { name: service }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Votre nom" })).toBeVisible();
   await page.getByRole("button", { name: "Prendre mon ticket" }).click();
+  await page.getByRole("button", { name: "Voir mon ticket" }).click();
   await page.waitForURL(/\/t\/[A-Za-z0-9]{22}$/);
   return page.url().split("/t/")[1]!;
 }
@@ -44,17 +47,23 @@ test.describe("M4 — parcours client", () => {
     await emulate3G(page);
 
     await page.goto(`/q/${entryCode}`);
-    await expect(page.getByRole("heading", { level: 1, name: "Choisir un service" })).toBeVisible();
-    await expect(page.getByText("QR code reconnu")).toBeVisible();
-    await expect(page.getByRole("radio", { name: /Consultation/ })).toHaveAttribute("aria-checked", "true");
-    await expect(page.getByRole("radio", { name: /Consultation/ })).toContainText("Pas d'attente");
+    await expect(page.getByRole("heading", { level: 1, name: "Choisissez un service" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Consultation/ })).toBeEnabled();
+    await expect(page.getByRole("button", { name: /Consultation/ })).toContainText("Pas d'attente");
     await expectAccessible(page);
     await expectTouchTargets(page);
 
     // Accès prioritaire : plus demandé par le client ; une ligne d'information renvoie vers l'accueil.
     await expect(page.getByText("Enceinte, âgée ou en situation de handicap ? Signalez-vous à l'accueil.")).toBeVisible();
     await expect(page.getByRole("switch")).toHaveCount(0);
+    await page.getByRole("button", { name: /Consultation/ }).click();
+    // Nom facultatif dans cette agence : l'étape « Votre nom » se passe sans saisie.
+    await expect(page.getByLabel("Votre nom (facultatif)")).toBeVisible();
+    await expectAccessible(page);
     await page.getByRole("button", { name: "Prendre mon ticket" }).click();
+    // « Ticket pris » : numéro et file, puis ouverture automatique de « Mon ticket ».
+    await expect(page.getByRole("heading", { level: 1, name: "Ticket pris" })).toBeVisible();
+    await expect(page.getByText("C-001")).toBeVisible();
     await page.waitForURL(/\/t\/[A-Za-z0-9]{22}$/);
     const token = page.url().split("/t/")[1]!;
     const hero = page.locator("section[aria-live]").first();
@@ -74,7 +83,8 @@ test.describe("M4 — parcours client", () => {
     // « Alerter le suivant » : la page passe en « C'est votre tour » sans rechargement.
     const called = await rpc<{ id: string }>(staff, "call_next", { p_counter: counterId });
     await expect(page.getByText("C'est votre tour")).toBeVisible();
-    await expect(page.getByText("Présentez-vous · Cabinet 3")).toBeVisible();
+    // Plein écran vert : où aller, en toutes lettres.
+    await expect(page.getByRole("alertdialog")).toContainText("Allez au cabinet 3");
     await expect(page).toHaveTitle(/C'est votre tour · C-001/);
     // Carte « C'est votre tour » : contraste AA vérifié (fond vert profond, texte blanc), une fois la transition de couleur terminée.
     await page.waitForTimeout(700);
@@ -98,11 +108,14 @@ test.describe("M4 — parcours client", () => {
     await rpc(staff, "reception_create_ticket", { p_service: serviceId });
     await rpc(staff, "reception_create_ticket", { p_service: serviceId });
     await takeTicket(page, entryCode);
-    const ahead = page.locator("dl > div").first();
-    await expect(ahead).toContainText("2");
+    // v2 : « 2 personnes devant vous » sous le numéro, avec la file en points.
+    const ahead = page.locator("section[aria-live]").first();
+    await expect(ahead).toContainText("2 personnes devant vous");
     const first = await rpc<{ id: string }>(staff, "call_next", { p_counter: counterId });
-    await expect(ahead).toContainText("1");
-    await expect(page.getByText("En cours : C-001 · Cabinet 3")).toBeVisible();
+    await expect(ahead).toContainText("1 personne devant vous");
+    // À côté de l'attente : le numéro en cours et son cabinet.
+    await expect(ahead.locator("dl")).toContainText("C-001");
+    await expect(ahead.locator("dl")).toContainText("En cours · Cabinet 3");
     await rpc(staff, "mark_no_show", { p_ticket: first.id });
     await rpc(staff, "call_next", { p_counter: counterId });
     await expect(ahead).toContainText("Vous êtes le prochain");
@@ -117,17 +130,19 @@ test.describe("M4 — parcours client", () => {
     await page.getByLabel("Code").fill(` ${shortCode.toLowerCase()} `);
     await page.getByRole("button", { name: "Continuer" }).click();
     await page.waitForURL(new RegExp(`/q/${shortCode}$`));
-    await expect(page.getByText("Code reconnu")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Choisissez un service" })).toBeVisible();
 
     const token = await takeTicket(page, shortCode);
     // Deuxième demande dans la même agence : le ticket en cours est rendu.
     await page.goto(`/q/${shortCode}`);
-    await page.getByRole("radio", { name: /Pédiatrie/ }).click();
+    await page.getByRole("button", { name: /Pédiatrie/ }).click();
     await page.getByRole("button", { name: "Prendre mon ticket" }).click();
     await page.waitForURL(new RegExp(`/t/${token}$`));
 
-    // Onglet « Mon ticket » : retrouve le ticket en cours.
+    // Onglet « Tickets » : le ticket en cours est listé et s'ouvre d'un toucher.
     await page.goto("/t");
+    await expect(page.getByRole("heading", { level: 1, name: "Tickets" })).toBeVisible();
+    await page.getByRole("link", { name: /C-001/ }).click();
     await page.waitForURL(new RegExp(`/t/${token}$`));
 
     await page.getByRole("button", { name: "Annuler le ticket" }).click();
@@ -135,10 +150,11 @@ test.describe("M4 — parcours client", () => {
     await expect(page.getByText("Ticket annulé")).toBeVisible();
     await page.getByRole("link", { name: "Prendre un nouveau ticket" }).click();
     await page.waitForURL(/\/q\/[A-Za-z0-9]{22}$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Choisir un service" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Choisissez un service" })).toBeVisible();
 
+    // Ticket annulé : rangé dans l'historique.
     await page.goto("/t");
-    await expect(page.getByText("Aucun ticket en cours")).toBeVisible();
+    await expect(page.getByRole("link", { name: /C-001/ })).toContainText("Annulé");
   });
 
   test("code inconnu et lien de ticket invalide", async ({ page }) => {
@@ -148,23 +164,28 @@ test.describe("M4 — parcours client", () => {
     await expect(page.getByText("Ticket introuvable.")).toBeVisible();
   });
 
-  test("scanner, profil : langue et apparence, accessibles en clair et en sombre", async ({ page }) => {
+  test("accueil, scanner, profil : langue et apparence, accessibles en clair et en sombre", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1, name: "Scannez pour commencer" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Navigation" }).getByRole("link", { name: "Scanner" })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("heading", { level: 1, name: "Bonjour" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Navigation" }).getByRole("link", { name: "Accueil" })).toHaveAttribute("aria-current", "page");
     await expectAccessible(page);
     await expectTouchTargets(page);
+    await expect(page.getByRole("link", { name: "Saisir le code" })).toHaveAttribute("href", "/c");
+    await page.getByRole("link", { name: "Scanner le QR code" }).click();
+    await page.waitForURL(/\/scan$/);
+    await expectTouchTargets(page);
+    await page.goto("/");
 
     await page.getByRole("link", { name: "Profil" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Profil" })).toBeVisible();
     await expectAccessible(page);
-    await page.getByRole("radio", { name: "Sombre" }).click();
+    await page.getByLabel("Apparence").selectOption("dark");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expectAccessible(page);
-    await page.getByRole("radio", { name: "English" }).click();
+    await page.getByLabel("Langue").selectOption("en");
     await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible();
-    await page.getByRole("link", { name: "Scan" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Scan to get started" })).toBeVisible();
+    await page.getByRole("link", { name: "Home" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Hello" })).toBeVisible();
   });
 
   test("pages client sombres accessibles", async ({ browser }) => {
@@ -184,7 +205,7 @@ test.describe("M4 — parcours client", () => {
   test("budget : chaque page client pèse moins de 200 Ko au premier chargement", async ({ browser }) => {
     const { entryCode, staff, serviceId } = await setUpBranch();
     const created = await rpc<{ public_token: string }>(staff, "reception_create_ticket", { p_service: serviceId });
-    for (const path of ["/", `/q/${entryCode}`, `/t/${created.public_token}`]) {
+    for (const path of ["/", "/scan", "/c", "/t", "/profile", `/q/${entryCode}`, `/t/${created.public_token}`]) {
       // Contexte neuf : aucun fichier en cache.
       const context = await browser.newContext();
       const page = await context.newPage();

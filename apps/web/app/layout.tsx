@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { getLocale } from "next-intl/server";
 import { themeInitScript } from "@/components/theme/theme";
+import { startupImages } from "@/lib/pwa/startup-images";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
 
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   title: { default: "NextIn", template: "%s · NextIn" },
   description: "Prenez un ticket virtuel et attendez où vous voulez.",
   applicationName: "NextIn",
-  appleWebApp: { capable: true, title: "NextIn", statusBarStyle: "default" },
+  // Écrans de démarrage clair et sombre : jamais d'écran blanc à l'ouverture de la PWA sur iPhone et iPad.
+  appleWebApp: { capable: true, title: "NextIn", statusBarStyle: "default", startupImage: startupImages() },
   formatDetection: { telephone: false },
   icons: {
     // Favicon : N seul (SVG pour les navigateurs récents, PNG 32 et 16 en repli). Icône pleine pour iOS.

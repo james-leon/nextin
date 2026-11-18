@@ -15,6 +15,8 @@ export function useQrCamera(accept: (text: string) => boolean) {
   const stream = useRef<MediaStream | null>(null);
   const acceptRef = useRef(accept);
   const [phase, setPhase] = useState<QrCameraPhase>("idle");
+  /** Lampe de l'appareil photo : null si le navigateur ne la propose pas (iPhone notamment). */
+  const [torch, setTorch] = useState<boolean | null>(null);
 
   useEffect(() => {
     acceptRef.current = accept;
@@ -23,6 +25,7 @@ export function useQrCamera(accept: (text: string) => boolean) {
   const stop = () => {
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
+    setTorch(null);
   };
   useEffect(() => stop, []);
 
@@ -34,6 +37,9 @@ export function useQrCamera(accept: (text: string) => boolean) {
       return setPhase((e as DOMException)?.name === "NotAllowedError" ? "denied" : "unavailable");
     }
     setPhase("scanning");
+    const track = stream.current.getVideoTracks()[0];
+    const caps = (track?.getCapabilities?.() ?? {}) as { torch?: boolean };
+    if (caps.torch) setTorch(false);
     const el = video.current!;
     el.srcObject = stream.current;
     await el.play().catch(() => undefined);
@@ -76,6 +82,15 @@ export function useQrCamera(accept: (text: string) => boolean) {
     phase,
     scanning: phase === "scanning" || phase === "invalid",
     start,
+    torch,
+    toggleTorch: async () => {
+      const track = stream.current?.getVideoTracks()[0];
+      if (!track || torch === null) return;
+      const next = !torch;
+      await track
+        .applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] })
+        .then(() => setTorch(next), () => setTorch(null));
+    },
     stop: () => {
       stop();
       setPhase("idle");

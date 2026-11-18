@@ -106,7 +106,8 @@ test.beforeAll(async () => {
         primary: (p) => p.getByRole("button", { name: "Enregistrer le paiement" }),
       },
       // Pages client (visiteur anonyme), barre d'onglets latérale à partir de 1024 px (R5).
-      { name: "client-scanner", path: "/", user: "visitor" },
+      { name: "client-home", path: "/", user: "visitor" },
+      { name: "client-scanner", path: "/scan", user: "visitor" },
       { name: "client-code", path: "/c", user: "visitor" },
       { name: "client-service", path: `/q/${b.entryCode}`, user: "visitor" },
       { name: "client-ticket", path: `/t/${tickets[13]!.public_token}`, user: "visitor" },

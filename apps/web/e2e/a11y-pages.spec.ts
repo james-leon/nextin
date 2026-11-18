@@ -12,6 +12,7 @@ const PAGES = [
   { path: "/confidentialite" },
   { path: "/help", heading: "Aide" },
   { path: "/c" },
+  { path: "/scan" },
   { path: "/tv" },
   { path: "/pay/AbCdEfGhIjKlMnOpQrStUvWxYz012345" },
   { path: "/invite/JetonInconnuJetonInconnu" },

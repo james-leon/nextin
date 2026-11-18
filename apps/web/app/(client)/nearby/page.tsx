@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ClientTabBar } from "@/components/client/client-tab-bar";
+import { ClientTabs } from "@/components/client/client-tabs";
 import { NearbyExplorer } from "@/components/client/nearby-explorer";
 import { NEARBY_LIMIT } from "@/lib/client/nearby";
 import { callRpc } from "@/lib/client/supabase-public";
@@ -30,7 +30,7 @@ export default async function NearbyPage() {
           attribution={runtimeEnv("NEXT_PUBLIC_MAP_ATTRIBUTION")}
         />
       </LiteMessages>
-      <ClientTabBar active="nearby" />
+      <ClientTabs active="nearby" />
     </>
   );
 }

@@ -34,7 +34,12 @@ for (const theme of ["light", "dark"] as const) {
     await shot("01b-code");
     await page.goto(`/q/${entryCode}`);
     await shot("02-choose-service");
+    await page.getByRole("button", { name: /Consultation/ }).click();
+    await shot("02b-name");
     await page.getByRole("button", { name: "Prendre mon ticket" }).click();
+    await page.getByRole("button", { name: "Voir mon ticket" }).waitFor();
+    await shot("02c-ticket-taken");
+    await page.getByRole("button", { name: "Voir mon ticket" }).click();
     await page.waitForURL(/\/t\/[A-Za-z0-9]{22}$/);
     await shot("03-my-ticket", 1500);
 

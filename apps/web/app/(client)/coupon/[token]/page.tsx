@@ -55,12 +55,12 @@ export default async function CouponPage({ params }: { params: Promise<{ token: 
     <main className="min-h-dvh pb-16">
       <NavigationBar variant="inline" title={t("title")} contentClassName="max-w-lg" />
       <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3">
-        <section className="squircle flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-7 text-center shadow-card">
+        <section className="squircle flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-7 text-center">
           <p className="text-subheadline text-label-secondary">{t("by", { advertiser: coupon.advertiser })}</p>
           <h1 className="text-title1 font-bold">{reward}</h1>
           <QrImage value={absoluteUrl(`/coupon/${token}`)} label={t("title")} className="size-52 rounded-[12px]" />
           <p className="text-footnote uppercase text-label-secondary">{t("code")}</p>
-          <p className="font-mono text-title1 font-bold tracking-widest">{formatCouponCode(coupon.code)}</p>
+          <p className="font-rounded text-title1 font-bold tracking-widest text-ticket-number">{formatCouponCode(coupon.code)}</p>
         </section>
         {coupon.redeemed_at ? (
           <CalloutCard tone="green" icon={<CheckCircle2 />} role="status">
