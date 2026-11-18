@@ -104,7 +104,12 @@ export function NavigationBar({
   children?: ReactNode;
 }) {
   const sentinel = useRef<HTMLDivElement>(null);
+  const top = useRef<HTMLDivElement>(null);
+  // Grand titre passé sous la barre : petit titre et filet affichés.
   const [scrolled, setScrolled] = useState(false);
+  // Contenu sous la barre (dès le premier pixel de défilement, rebond iOS compris) : barre en matière translucide
+  // presque opaque, sinon le sur-titre et le grand titre apparaîtraient par transparence sous le bouton retour.
+  const [under, setUnder] = useState(false);
   const inline = variant === "inline";
 
   useEffect(() => {
@@ -118,6 +123,17 @@ export function NavigationBar({
     observer.observe(el);
     return () => observer.disconnect();
   }, [scrollRoot]);
+
+  useEffect(() => {
+    const el = top.current;
+    if (!el || !sticky) return;
+    const observer = new IntersectionObserver(([entry]) => setUnder(!entry?.isIntersecting), {
+      root: scrollRoot?.current ?? null,
+      threshold: 0,
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scrollRoot, sticky]);
 
   const showBarTitle = inline || scrolled;
   const desktop = useMediaQuery("(min-width: 1024px)");
@@ -135,17 +151,22 @@ export function NavigationBar({
 
   return (
     <>
+      {/* Repère du haut de page : quitte l'écran dès que le contenu défile sous la barre. */}
+      <div ref={top} aria-hidden className="h-px -mb-px" />
       <div
+        data-nav-bar
+        data-under={under || scrolled ? "" : undefined}
         className={cn(
           "safe-top z-30 transition-[background-color,box-shadow] duration-200",
           sticky && "sticky top-0",
-          scrolled ? "material-blur bg-bar hairline-b" : "bg-transparent",
+          under || scrolled ? "material-blur bg-bar" : "bg-transparent",
+          scrolled && "hairline-b",
           className,
         )}
       >
         {/* Retour et actions à leur largeur naturelle (une action longue n'est jamais tronquée) ; le titre réduit se rétrécit. */}
         <div data-nav-grid className={cn("mx-auto grid h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4", contentClassName)}>
-          <div className="-ml-2 flex min-w-0 items-center justify-start">
+          <div data-nav-leading className="-ml-2 flex min-w-0 items-center justify-start">
             {toggle ? (
               <span data-nav-toggle className="contents">
                 {toggle}
@@ -180,7 +201,9 @@ export function NavigationBar({
       ) : (
         <div className={cn("mx-auto px-4 pt-2 pb-2", contentClassName)}>
           {eyebrow ? (
-            <p className="text-footnote font-semibold tracking-[0.06em] text-label-secondary uppercase">{eyebrow}</p>
+            <p data-nav-eyebrow className="text-footnote font-semibold tracking-[0.06em] text-label-secondary uppercase">
+              {eyebrow}
+            </p>
           ) : null}
           {/* Un mot très long (nom, numéro) passe à la ligne plutôt que de déborder de l'écran. */}
           {trailingInHeader ? (
