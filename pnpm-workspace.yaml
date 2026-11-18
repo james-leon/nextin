@@ -7,3 +7,11 @@ onlyBuiltDependencies:
   - supabase
   - esbuild
   - unrs-resolver
+
+# Audit : avis ignorés un par un, avec raison dans docs/BACKLOG.md (« Audit des dépendances »).
+# GHSA-fc5q-39xc-vjpf : picomatch <= 4.0.7 (ReDoS), aucune version corrigée publiée ; chemin
+# apps/web > next-intl > @parcel/watcher > picomatch, aucune entrée utilisateur ne l'atteint.
+# À retirer dès qu'une version corrigée existe — réexaminer le 1er décembre 2026.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
