@@ -110,7 +110,7 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
         />
       ) : null}
 
-      <div role="radiogroup" aria-labelledby="plans-title" className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4">
+      <div role="radiogroup" aria-labelledby="plans-title" className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((p) => {
           const q = p[period];
           // Sur devis : pas de prix ni de paiement en ligne, un contact.

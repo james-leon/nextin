@@ -916,7 +916,6 @@ export const en: Messages = {
     addLeave: "Add leave",
     sheetTitle: "Details",
     onLeaveUntil: "On leave until {date}",
-    specialtiesCount: "{count, plural, =0 {None} one {# specialty} other {# specialties}}",
     noSpecialty: "No specialty",
     practitionersCount: "{count, plural, =0 {no practitioner} one {# practitioner} other {# practitioners}}",
   },
@@ -2093,6 +2092,7 @@ export const en: Messages = {
     },
   },
   billing: {
+    trialProgress: "Day {day} of {total}",
     title: "Subscription",
     eyebrow: "Organization",
     status: {

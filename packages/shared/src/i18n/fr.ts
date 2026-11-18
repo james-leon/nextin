@@ -915,7 +915,6 @@ export const fr = {
     addLeave: "Ajouter un congé",
     sheetTitle: "Fiche",
     onLeaveUntil: "En congé jusqu'au {date}",
-    specialtiesCount: "{count, plural, =0 {Aucune} one {# spécialité} other {# spécialités}}",
     noSpecialty: "Sans spécialité",
     practitionersCount: "{count, plural, =0 {aucun praticien} one {# praticien} other {# praticiens}}",
   },
@@ -2092,6 +2091,7 @@ export const fr = {
     },
   },
   billing: {
+    trialProgress: "Jour {day} sur {total}",
     title: "Abonnement",
     eyebrow: "Établissement",
     status: {

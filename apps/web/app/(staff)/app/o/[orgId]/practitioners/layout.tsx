@@ -80,8 +80,7 @@ export default async function PractitionersLayout({ children, params }: { childr
                     icon={
                       <span
                         aria-hidden
-                        className="flex size-9 shrink-0 items-center justify-center rounded-full text-footnote font-semibold text-white"
-                        style={{ background: p.active ? "var(--accent-fill)" : "var(--icon-gray)" }}
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-full text-footnote font-semibold ${p.active ? "bg-accent text-white" : "bg-fill-secondary text-label"}`}
                       >
                         {initialsOf(full)}
                       </span>

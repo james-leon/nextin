@@ -15,7 +15,7 @@ import { initialsOf } from "@/lib/text/initials";
 import { setOrgMfaRequired } from "../_actions/people";
 
 /** Couleurs des initiales : tirées du nom, toujours les mêmes pour une personne. */
-const AVATAR = ["var(--brand-tile)", "var(--accent-fill)", "var(--green-fill)", "var(--icon-indigo)", "var(--icon-gray)"];
+const AVATAR = ["var(--brand-tile)", "var(--accent-fill)", "var(--called-fill)", "var(--icon-indigo)"];
 const avatarColor = (seed: string) => AVATAR[[...seed].reduce((n, c) => n + c.charCodeAt(0), 0) % AVATAR.length]!;
 
 /**
@@ -75,8 +75,8 @@ export default async function StaffLayout({ children, params }: { children: Reac
                   icon={
                     <span
                       aria-hidden
-                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-footnote font-semibold text-white"
-                      style={{ background: m.active ? avatarColor(name) : "var(--icon-gray)" }}
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-full text-footnote font-semibold ${m.active ? "text-white" : "bg-fill-secondary text-label"}`}
+                      style={m.active ? { background: avatarColor(name) } : undefined}
                     >
                       {initialsOf(name)}
                     </span>
