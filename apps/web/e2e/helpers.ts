@@ -12,6 +12,21 @@ export async function expectAccessible(page: Page) {
   // Transitions et animations finies (fondus, titre réduit de la barre) : axe mesurerait des couleurs intermédiaires.
   // Les animations infinies (pastille « En direct », chargement) sont ignorées.
   // Attente plafonnée à 1 s : une animation en pause ne se termine jamais.
+  // D'abord, défilement terminé (ancre en défilement doux) : le titre réduit de la barre ne commence son fondu qu'après.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const deadline = performance.now() + 1000;
+        let last = -1;
+        const tick = () => {
+          const y = window.scrollY;
+          if ((y === last && y !== -1) || performance.now() > deadline) return requestAnimationFrame(() => resolve());
+          last = y;
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
   await page.evaluate(() =>
     Promise.race([
       Promise.all(

@@ -3,15 +3,14 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { BadgeCheck, Bell, Check, CheckCircle2, CircleHelp, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Check, CheckCircle2, ChevronLeft, CircleHelp, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
 import { optInLink } from "@nextin/shared/notifications/opt-in";
 import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
-import { Badge } from "@/components/ui/badge";
+import { Badge, LiveIndicator } from "@/components/ui/badge";
 import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
-import { NavigationBar } from "@/components/ui/navigation-bar";
 import { TicketHero } from "@/components/ui/ticket-hero";
 import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
@@ -21,13 +20,13 @@ import { onRealtimeStatus, subscribeBroadcast, type RealtimeStatus } from "@/lib
 import { callRpc } from "@/lib/client/supabase-public";
 import { ticketAvailability, waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
-import { DesktopClientSidebar } from "./desktop-client-sidebar";
 import { LazyMount } from "./lazy-mount";
-import { QueuePosition } from "./queue-position";
 
 // Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
 const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
 const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
+// « C'est votre tour » plein écran : chargé seulement à l'appel (budget de la page).
+const CalledScreen = dynamic(() => import("./called-screen").then((m) => m.CalledScreen));
 const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
 // Ticket à distance seulement : rendu côté serveur s'il sert, jamais téléchargé pour un ticket pris sur place.
 const RemoteTicketCard = dynamic(() => import("./remote-ticket-card").then((m) => m.RemoteTicketCard));
@@ -49,7 +48,12 @@ function readMaxAhead(token: string): number {
   }
 }
 
-/** Écran 03 « Mon ticket » : numéro et attente en héros, suivi en temps réel, appel, fin de passage. */
+/**
+ * « Mon ticket » (maquette v2 01) : établissement et « En direct » en tête, carte du ticket (numéro en chiffres
+ * arrondis, personnes devant et file en points, attente estimée), alertes WhatsApp juste dessous, jeux, puis les
+ * actions en bas du contenu. À l'appel : écran vert plein (« C'est votre tour », poste, « J'arrive »), avec la
+ * vibration et le son d'appel.
+ */
 export function TicketLive({
   token,
   initial,
@@ -79,6 +83,8 @@ export function TicketLive({
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [copied, setCopied] = useState(false);
   const [playing, setPlaying] = useState(false);
+  // Écran plein « C'est votre tour » : refermé par « J'arrive », rouvert à chaque rappel.
+  const [calledSeen, setCalledSeen] = useState<string | null>(null);
   const lastAlert = useRef<string | null>(null);
   // Données gardées sur l'appareil, lues sans décalage d'hydratation (null / 0 côté serveur).
   const entry = useSyncExternalStore(noSubscribe, () => savedTicket(token)?.entry ?? null, () => null);
@@ -144,17 +150,10 @@ export function TicketLive({
 
   const serviceName = locale === "en" && view.service.name_en ? view.service.name_en : view.service.name;
   const place = view.organization.name;
-  // Pas de préchargement de la page de retour : chaque octet compte en 3G (budget < 200 Ko).
-  const back = entry
-    ? { href: `/q/${entry}`, label: t("back"), prefetch: false }
-    : view.remote
-      ? { href: `/b/${view.branch.id}`, label: t("back"), prefetch: false }
-      : { href: "/", label: t("home"), prefetch: false };
+  const goTo = (c: CounterRef) =>
+    c.label ? t("goToLabel", { counter: c.label }) : t(`goTo.${c.kind}`, { number: c.number });
+  const callKey = view.status === "called" ? `${view.called_at}:${call?.recall_count ?? 0}` : null;
   const nowServing = board?.calls.find((c) => isActiveCall(c) && c.service_id === view.service.id && c.code !== view.display_code);
-  // Numéros devant le client dans sa file (publics, comme sur l'écran TV) ; null si le tableau n'est pas encore là.
-  const queueWaiting = board?.services.find((s) => s.id === view.service.id)?.waiting ?? null;
-  const myIndex = queueWaiting ? queueWaiting.indexOf(view.display_code) : -1;
-  const queueAhead = queueWaiting && myIndex >= 0 ? queueWaiting.slice(0, myIndex) : null;
 
   async function share() {
     const url = window.location.href;
@@ -210,23 +209,32 @@ export function TicketLive({
   const closeGame = useCallback(() => setPlaying(false), []);
   const heroCommon = {
     code: view.display_code,
-    service: serviceName,
-    place,
-    aheadLabel: t("ahead"),
+    service: view.remote ? `${serviceName} · ${t("remoteShort")}` : serviceName,
     waitLabel: t("wait"),
     progressLabel: t("progress"),
   };
 
   return (
-    <main className="min-h-dvh pb-[calc(2.5rem+env(safe-area-inset-bottom))] lg:pb-12">
-      <NavigationBar
-        variant="inline"
-        title={t("title")}
-        back={back}
-        trailing={<IconButton label={copied ? t("copied") : t("share")} icon={<Share />} variant="plain" onClick={share} />}
-        contentClassName="max-w-lg lg:max-w-5xl"
-      />
-      <DesktopClientSidebar active="ticket" />
+    <main className="min-h-dvh pb-12">
+      <h1 className="sr-only">{t("title")}</h1>
+      <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-4 pt-[max(env(safe-area-inset-top),0.75rem)] lg:max-w-5xl lg:pt-8">
+        {/* Retour à la liste des tickets : pas de barre d'onglets sur le ticket (rien ne le masque, budget de la page). */}
+        <Link
+          href="/t"
+          prefetch={false}
+          aria-label={t("allTickets")}
+          className="pressable -ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-accent-text"
+        >
+          <ChevronLeft aria-hidden className="size-6 stroke-[2.25]" />
+        </Link>
+        <p className="min-w-0 flex-1 truncate text-footnote font-medium text-label-secondary uppercase">
+          {place} · {view.branch.name}
+        </p>
+        <div className="flex shrink-0 items-center gap-1">
+          {status !== "offline" && active ? <LiveIndicator label={t("live")} /> : null}
+          <IconButton label={copied ? t("copied") : t("share")} icon={<Share />} variant="plain" onClick={share} />
+        </div>
+      </div>
       {/* Ordinateur : le ticket à gauche (héros, attente), alertes et actions à droite. */}
       <div className="mx-auto grid max-w-lg grid-cols-1 gap-4 px-4 pt-3 lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:gap-8">
         <div className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-16">
@@ -241,32 +249,30 @@ export function TicketLive({
           <TicketHero
             {...heroCommon}
             ahead={progress.ahead}
-            next={{ label: t("nextPlace"), value: t("youAreNext") }}
+            aheadText={progress.ahead === 0 ? t("youAreNext") : t("aheadCount", { count: progress.ahead })}
             wait={wait}
             progress={progress.progress}
-            nowServing={nowServing ? t("nowServing", { code: nowServing.code, counter: counterName(nowServing) }) : undefined}
-            live={status === "offline" ? undefined : t("live")}
+            side={
+              nowServing
+                ? { value: nowServing.code, label: t("nowServingAt", { counter: counterName(nowServing) }) }
+                : { value: String(progress.ahead), label: t("ahead") }
+            }
           />
         ) : view.status === "called" || view.status === "serving" ? (
           <TicketHero
             {...heroCommon}
             ahead={0}
+            aheadText=""
             wait=""
             progress={1}
             state="called"
             calledTitle={view.status === "called" ? t("calledTitle") : t("servingTitle")}
-            calledBody={
-              view.counter
-                ? view.status === "called"
-                  ? t("calledBody", { counter: counterName(view.counter) })
-                  : t("servingBody", { counter: counterName(view.counter) })
-                : undefined
-            }
+            calledBody={view.counter ? (view.status === "called" ? goTo(view.counter) : counterName(view.counter)) : undefined}
           />
         ) : (
           <section
             aria-live="polite"
-            className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center shadow-card"
+            className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center"
           >
             {view.status === "served" ? (
               <CheckCircle2 aria-hidden className="size-10 stroke-[1.5] text-green" />
@@ -290,7 +296,7 @@ export function TicketLive({
 
         {/* Appel manqué (absent automatique) : le client est replacé ; au suivant, le ticket est annulé. */}
         {view.status === "waiting" && (view.missed_calls ?? 0) > 0 ? (
-          <CalloutCard icon={<Bell />} role="status" className="shadow-card" data-testid="missed-call">
+          <CalloutCard icon={<Bell />} role="status" data-testid="missed-call">
             <span className="block font-semibold">{t("missedCallTitle")}</span>
             {t("missedCallBody")}
           </CalloutCard>
@@ -304,20 +310,6 @@ export function TicketLive({
           </Badge>
         ) : null}
 
-        {view.status === "waiting" && queueAhead ? (
-          <QueuePosition
-            title={t("positionTitle")}
-            current={nowServing ? { code: nowServing.code, counter: counterName(nowServing) } : null}
-            ahead={queueAhead}
-            me={view.display_code}
-            labels={{
-              now: (counter) => t("positionNow", { counter }),
-              idle: t("positionIdle"),
-              more: (count) => t("positionMore", { count }),
-              you: t("positionYou"),
-            }}
-          />
-        ) : null}
 
         {view.status === "called" && call && call.recall_count > 0 ? (
           <Badge shape="pill" tone="orange" className="self-center">
@@ -352,6 +344,7 @@ export function TicketLive({
             token={token}
             view={view}
             waitSeconds={progress ? (progress.imminent ? 0 : progress.minutes * 60) : view.wait_seconds}
+            now={now}
             onChange={setView}
           />
         ) : null}
@@ -443,6 +436,18 @@ export function TicketLive({
           call={view.status === "called" ? { counter: view.counter ? counterName(view.counter) : "" } : null}
           couponBaseUrl={couponBaseUrl}
           onClose={closeGame}
+        />
+      ) : null}
+
+      {/* C'est votre tour : écran vert plein, par-dessus tout (y compris le jeu), jusqu'à « J'arrive ». */}
+      {callKey && calledSeen !== callKey ? (
+        <CalledScreen
+          title={t("calledTitle")}
+          code={view.display_code}
+          counter={view.counter ? goTo(view.counter) : null}
+          service={serviceName}
+          action={t("onMyWayToCounter")}
+          onDismiss={() => setCalledSeen(callKey)}
         />
       ) : null}
 

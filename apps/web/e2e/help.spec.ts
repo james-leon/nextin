@@ -41,7 +41,7 @@ test.describe("C2 — page Aide", () => {
 
   test("depuis le profil : questions seules ; budget < 200 Ko", async ({ page, browser }, info) => {
     await page.goto("/profile");
-    await page.getByRole("link", { name: "Aide et questions fréquentes" }).click();
+    await page.getByRole("link", { name: "Aide", exact: true }).click();
     await page.waitForURL(/\/help$/);
     await expect(page.getByText("Pour joindre un établissement, ouvrez l'aide depuis votre ticket.")).toBeVisible();
     await expect(page.getByText("Faut-il installer une application ?")).toBeVisible();

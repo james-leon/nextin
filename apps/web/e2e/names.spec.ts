@@ -17,10 +17,12 @@ test.describe("Nom du client", () => {
   test("demandé à la prise de ticket, visible au poste (masquable), jamais sur l'écran TV", async ({ browser, page, request }) => {
     const b = await setUpBranch("Clinique Noms", { nameMode: "required", nameExtra: "age" });
 
-    // Client : nom obligatoire avant « Prendre mon ticket », gardé sur l'appareil pour la fois suivante.
+    // Client : service choisi, puis nom obligatoire avant « Prendre mon ticket », gardé sur l'appareil pour la fois suivante.
     const clientContext = await browser.newContext({ locale: "fr-FR" });
     const client = await clientContext.newPage();
     await client.goto(`/q/${b.entryCode}`);
+    await client.getByRole("button", { name: /Consultation/ }).click();
+    await expect(client.getByRole("heading", { level: 1, name: "Votre nom" })).toBeVisible();
     await client.getByRole("button", { name: "Prendre mon ticket" }).click();
     await expect(client.getByText("Indiquez votre nom.")).toBeVisible();
     await expect(client.getByLabel("Votre nom")).toBeFocused();
@@ -28,9 +30,11 @@ test.describe("Nom du client", () => {
     await client.getByLabel("Votre âge (facultatif)").fill("42");
     await expectAccessible(client);
     await client.getByRole("button", { name: "Prendre mon ticket" }).click();
+    await client.getByRole("button", { name: "Voir mon ticket" }).click();
     await client.waitForURL(/\/t\/[A-Za-z0-9]{22}$/);
     await expect(client.getByText(NAME)).toHaveCount(0);
     await client.goto(`/q/${b.entryCode}`);
+    await client.getByRole("button", { name: /Consultation/ }).click();
     await expect(client.getByLabel("Votre nom")).toHaveValue(NAME);
 
     // Poste : nom sous le numéro dans « À suivre », puis sous le patient en cours.

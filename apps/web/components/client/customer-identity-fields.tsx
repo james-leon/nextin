@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { IDENTITY_STORAGE_KEY, NAME_MAX, FILE_NUMBER_MAX, type IdentityRules } from "@nextin/shared/identity";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import { useLiteT } from "@/lib/i18n/lite";
 
 export type IdentityValue = { name: string; age: string; fileNumber: string };
@@ -56,8 +56,8 @@ export function saveIdentity(value: IdentityValue) {
 }
 
 /**
- * Nom du client (et âge ou numéro de dossier) selon les règles de l'agence, avant « Prendre mon ticket ».
- * Rien n'est affiché si l'agence ne demande pas le nom.
+ * Nom du client (et âge ou numéro de dossier) selon les règles de l'agence, avant « Prendre mon ticket » : champs
+ * d'une liste groupée iOS (maquette v2 02). Rien n'est affiché si l'agence ne demande pas le nom.
  */
 export function CustomerIdentityFields({
   rules,
@@ -73,8 +73,10 @@ export function CustomerIdentityFields({
   const t = useLiteT("identity");
   if (rules.mode === "off") return null;
   return (
-    <section aria-label={t("header")} className="flex flex-col gap-3">
+    <section aria-label={t("header")} className="flex flex-col gap-2">
+      <FormGroup>
       <TextField
+        grouped
         name="customerName"
         label={rules.mode === "required" ? t("name") : t("nameOptional")}
         placeholder={t("namePlaceholder")}
@@ -88,6 +90,7 @@ export function CustomerIdentityFields({
       />
       {rules.extra === "age" ? (
         <TextField
+          grouped
           name="customerAge"
           label={t("age")}
           inputMode="numeric"
@@ -99,6 +102,7 @@ export function CustomerIdentityFields({
       ) : null}
       {rules.extra === "file_number" ? (
         <TextField
+          grouped
           name="customerFileNumber"
           label={t("fileNumber")}
           placeholder={t("fileNumberPlaceholder")}
@@ -108,6 +112,7 @@ export function CustomerIdentityFields({
           onChange={(e) => onChange({ ...value, fileNumber: e.target.value })}
         />
       ) : null}
+      </FormGroup>
       <p className="px-4 text-footnote text-label-secondary">{t("clientFooter")}</p>
     </section>
   );

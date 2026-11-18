@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { ClientTabs } from "@/components/client/client-tabs";
 import { CodeForm } from "@/components/client/code-form";
-import { DesktopClientSidebar } from "@/components/client/desktop-client-sidebar";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { LiteMessages } from "@/lib/i18n/lite-server";
 
@@ -10,19 +10,20 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
-/** Saisie du code de l'établissement (lien « Saisir le code » de l'écran 01). */
+/** Saisie du code de l'établissement (maquette v2 02), si la caméra ne marche pas. */
 export default async function CodePage() {
-  const t = await getTranslations("client");
+  const t = await getTranslations("client.code");
   return (
-    <main className="min-h-dvh pb-40 md:pb-8">
-      <NavigationBar title={t("code.title")} back={{ href: "/", label: t("service.back"), prefetch: false }} contentClassName="max-w-lg lg:max-w-[40rem]" />
-      <DesktopClientSidebar active="scan" />
-      {/* Ordinateur : carte centrée d'environ 640 px, « Continuer » juste sous le champ. */}
+    <main className="min-h-dvh pb-12">
+      <NavigationBar title={t("title")} back={{ href: "/scan", label: t("back"), prefetch: false }} contentClassName="max-w-lg lg:max-w-[40rem]">
+        <p className="mt-1 text-subheadline text-label-secondary">{t("body")}</p>
+      </NavigationBar>
       <div className="mx-auto max-w-lg px-4 pt-4 lg:max-w-[40rem]">
         <LiteMessages paths={["client.code"]}>
           <CodeForm />
         </LiteMessages>
       </div>
+      <ClientTabs active="home" mobile={false} />
     </main>
   );
 }

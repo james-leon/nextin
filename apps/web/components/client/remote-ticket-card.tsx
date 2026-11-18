@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Car, Navigation, ScanLine } from "lucide-react";
+import { Car, Footprints, Info, Navigation, ScanLine } from "lucide-react";
 import { TRAVEL_CHOICES, directionsUrl, leaveAdvice } from "@nextin/shared/remote";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { TicketView } from "@/lib/client/types";
-import { useLiteT } from "@/lib/i18n/lite";
+import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { cn } from "@/lib/cn";
 
 /**
@@ -19,15 +19,19 @@ export function RemoteTicketCard({
   token,
   view,
   waitSeconds,
+  now,
   onChange,
 }: {
   token: string;
   view: TicketView;
   /** Attente estimée à jour (secondes). */
   waitSeconds: number | null;
+  /** Heure actuelle (rafraîchie par « Mon ticket ») : base de « Partez vers 10:05 ». */
+  now: Date;
   onChange: (view: TicketView) => void;
 }) {
-  const t = useLiteT("client.ticket");
+  const t = useLiteT("client.ticketRemote");
+  const locale = useLiteLocale();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState<number | null>(null);
   const remote = view.remote!;
@@ -56,7 +60,7 @@ export function RemoteTicketCard({
 
   return (
     <>
-      <section aria-labelledby="leave-title" className="squircle flex flex-col gap-3 rounded-[var(--radius-lg)] bg-grouped-secondary p-4 shadow-card">
+      <section aria-labelledby="leave-title" className="squircle flex flex-col gap-3 rounded-[var(--radius-md)] bg-grouped-secondary p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 id="leave-title" className="text-footnote text-label-secondary uppercase">
             {t("leaveHeader")}
@@ -68,24 +72,28 @@ export function RemoteTicketCard({
             </Badge>
           ) : null}
         </div>
-        <p
-          aria-live="polite"
-          className={cn(
-            "text-title2 font-bold tabular",
-            advice.state === "now" && "text-orange-text",
-            advice.state === "late" && "text-red-text",
-            advice.state === "later" && "text-accent-text",
-          )}
-        >
-          {advice.state === "later"
-            ? t("leaveLater", { minutes: advice.minutes })
-            : advice.state === "now"
-              ? t("leaveNow")
-              : advice.state === "late"
-                ? t("leaveLate")
-                : t("leaveUnknown")}
-        </p>
-        <p className="text-subheadline text-label-secondary">{t("leaveHint", { margin: Math.round(remote.leave_margin_seconds / 60) })}</p>
+        {/* « Partez vers 10:05 » (maquette v2 03) : heure de départ calculée avec le trajet, sur fond teinté. */}
+        <div aria-live="polite" className="squircle flex items-center gap-3 rounded-[var(--radius-md)] bg-accent-tint px-3 py-2.5">
+          <Footprints aria-hidden className="size-6 shrink-0 stroke-2 text-accent-on-tint" />
+          <div className="min-w-0">
+            <p className={cn("text-headline tabular", advice.state === "late" ? "text-red-text" : advice.state === "now" ? "text-orange-text" : "text-label")}>
+              {advice.state === "later"
+                ? t("leaveAt", {
+                    time: new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }).format(
+                      new Date(now.getTime() + advice.minutes * 60_000),
+                    ),
+                  })
+                : advice.state === "now"
+                  ? t("leaveNow")
+                  : advice.state === "late"
+                    ? t("leaveLate")
+                    : t("leaveUnknown")}
+            </p>
+            <p className="text-footnote text-label-secondary">
+              {t("leaveHint", { margin: Math.round(remote.leave_margin_seconds / 60) })}
+            </p>
+          </div>
+        </div>
         <div className="flex items-center justify-between gap-3 hairline-t pt-3">
           <span className="text-callout tabular">{travelMinutes ? t("travel", { minutes: travelMinutes }) : t("travelUnknown")}</span>
           <Button variant="plain" size="md" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
@@ -123,7 +131,7 @@ export function RemoteTicketCard({
         ) : null}
       </section>
 
-      <CalloutCard icon={<ScanLine />} tone="orange">
+      <CalloutCard icon={<Info />}>
         <strong className="font-semibold">{t("presenceTitle")}.</strong> {t("presenceBody", { places: remote.penalty_places })}
       </CalloutCard>
       {remote.delay_count > 0 ? (

@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
@@ -11,6 +9,9 @@ export type TabItem = { key: string; label: string; icon: ReactNode; href?: stri
  * sûre incluse ; chaque onglet = icône (25 px, trait fin) et libellé de 10 px, l'onglet actif en bleu.
  * `sidebar` : à partir de 1024 px, la barre devient une barre latérale façon Mac (marque en tête, onglets en liste) ;
  * le contenu de la page se décale de sa largeur (`data-tab-sidebar`, règle dans `globals.css`).
+ * Sans « use client » : rendue par le serveur sur les pages client (aucun JavaScript à télécharger) quand chaque
+ * onglet est un lien ; `onSelect` (boutons) seulement depuis un composant client.
+ * `mobile={false}` : masquée sur téléphone et tablette (pages d'un parcours, avec retour en haut à gauche).
  */
 export function TabBar({
   items,
@@ -20,6 +21,7 @@ export function TabBar({
   position = "fixed",
   prefetch,
   sidebar,
+  mobile = true,
   className,
 }: {
   items: readonly TabItem[];
@@ -31,6 +33,7 @@ export function TabBar({
   prefetch?: boolean;
   /** Barre latérale sur ordinateur, avec cet en-tête (marque). */
   sidebar?: ReactNode;
+  mobile?: boolean;
   className?: string;
 }) {
   return (
@@ -41,6 +44,7 @@ export function TabBar({
         "material-blur safe-bottom z-30 bg-bar hairline-t",
         position === "fixed" && "fixed inset-x-0 bottom-0",
         position === "sticky" && "sticky bottom-0",
+        !mobile && "max-lg:hidden",
         sidebar &&
           "lg:top-0 lg:right-auto lg:w-60 lg:px-3 lg:py-5 lg:shadow-[inset_-0.5px_0_0_var(--separator)]",
         className,

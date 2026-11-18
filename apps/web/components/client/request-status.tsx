@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { CalendarCheck2, CalendarClock, CalendarX2, Clock, Mail, MessageCircle, MessageSquareText, Navigation } from "lucide-react";
+import { CalendarCheck2, CalendarX2, Check, Clock, Mail, MessageCircle, MessageSquareText, Navigation } from "lucide-react";
 import { directionsUrl } from "@nextin/shared/remote";
+import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -126,9 +127,9 @@ export function RequestStatusView({
       case "pending":
         return { icon: <Clock />, tone: "accent", title: t("pendingTitle"), body: t(pendingBody, { place }) };
       case "accepted":
-        return { icon: <CalendarCheck2 />, tone: "green", title: t("acceptedTitle"), body: null };
+        return { icon: <Check />, tone: "green", title: t("acceptedTitle"), body: null };
       case "modified":
-        return { icon: <CalendarClock />, tone: "orange", title: t("modifiedTitle"), body: t("modifiedBody") };
+        return { icon: <Check />, tone: "green", title: t("modifiedTitle"), body: t("modifiedBody") };
       case "declined":
         return {
           icon: <CalendarX2 />,
@@ -164,7 +165,7 @@ export function RequestStatusView({
       <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3 lg:grid lg:max-w-5xl lg:grid-cols-[1fr_22rem] lg:items-start lg:gap-8 lg:px-8">
         <div className="flex flex-col gap-5">
           {view.status === "unverified" ? (
-            <section className="squircle flex flex-col gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card" aria-labelledby="verify-title">
+            <section className="squircle flex flex-col gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-5" aria-labelledby="verify-title">
               <span
                 aria-hidden
                 className={cn(
@@ -216,13 +217,13 @@ export function RequestStatusView({
           ) : hero ? (
             <section
               aria-live="polite"
-              className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center shadow-card"
+              className="flex flex-col items-center gap-2 px-2 pt-4 pb-1 text-center"
             >
               <span
                 aria-hidden
                 className={cn(
-                  "flex size-14 items-center justify-center rounded-full [&_svg]:size-7 [&_svg]:stroke-[1.75]",
-                  hero.tone === "green" && "bg-green-tint text-green-text",
+                  "flex size-16 items-center justify-center rounded-full [&_svg]:size-8 [&_svg]:stroke-[1.75]",
+                  hero.tone === "green" && "bg-green text-white",
                   hero.tone === "orange" && "bg-orange-tint text-orange-text",
                   hero.tone === "accent" && "bg-accent-tint text-accent-on-tint",
                   hero.tone === "neutral" && "bg-fill-tertiary text-label-secondary",
@@ -230,18 +231,41 @@ export function RequestStatusView({
               >
                 {hero.icon}
               </span>
-              <h1 className="text-title2 font-bold">{hero.title}</h1>
-              {appointment && (view.status === "accepted" || view.status === "modified") ? (
-                <>
-                  <p className="text-title1 font-bold text-ticket-number capitalize">{dateLong(appointment.starts_at)}</p>
-                  <p className="text-hero leading-none font-extrabold text-ticket-number tabular">{hour(appointment.starts_at)}</p>
-                  <p className="text-callout text-label-secondary">
-                    {t("with", { name: appointment.practitioner })} · {place}
-                  </p>
-                </>
-              ) : null}
-              {hero.body ? <p className="text-body text-label-secondary">{hero.body}</p> : null}
+              <h1 className="text-title1 font-bold text-balance">{hero.title}</h1>
+              {hero.body ? <p className="text-callout text-label-secondary text-balance">{hero.body}</p> : null}
             </section>
+          ) : null}
+
+          {appointment && (view.status === "accepted" || view.status === "modified") ? (
+            <div className="squircle flex items-center gap-4 rounded-[var(--radius-xl)] bg-grouped-secondary p-4" data-testid="request-appointment">
+              <div aria-hidden className="flex w-16 shrink-0 flex-col items-center rounded-[var(--radius-md)] bg-grouped py-1.5 text-center">
+                <span className="text-[0.625rem] font-bold text-red-text uppercase">{fmt({ weekday: "short" }, appointment.starts_at)}</span>
+                <span className="font-rounded text-title1 leading-tight font-bold">{fmt({ day: "numeric" }, appointment.starts_at)}</span>
+                <span className="text-[0.625rem] font-bold text-label-secondary uppercase">{fmt({ month: "short" }, appointment.starts_at)}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="sr-only first-letter:uppercase">{dateLong(appointment.starts_at)}</p>
+                <p className="font-rounded text-title3 font-bold text-ticket-number">{hour(appointment.starts_at)}</p>
+                {view.status === "modified" && view.preferred_starts_at ? (
+                  <p className="text-subheadline text-label-secondary">{t("insteadOf", { time: hour(view.preferred_starts_at) })}</p>
+                ) : null}
+                <p className="mt-1 text-subheadline">
+                  {serviceName} · {t("with", { name: appointment.practitioner })}
+                </p>
+                <p className="text-subheadline text-label-secondary">{place}</p>
+              </div>
+            </div>
+          ) : null}
+          {view.status === "pending" ? (
+            <div className="squircle flex items-center justify-between gap-3 rounded-[var(--radius-lg)] bg-grouped-secondary px-4 py-3">
+              <p className="min-w-0 text-subheadline">
+                <span className="block text-label-secondary">{t("replyTo")}</span>
+                <span className="block truncate tabular">{view.email_masked ?? view.phone_masked ?? ""}</span>
+              </p>
+              <Badge tone="orange" shape="pill">
+                {t("pendingBadge")}
+              </Badge>
+            </div>
           ) : null}
 
           {appointment && (view.status === "accepted" || view.status === "modified") ? (

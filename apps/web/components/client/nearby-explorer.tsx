@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ChevronRight, History, LocateFixed, MapPin } from "lucide-react";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
 import { formatDistance } from "@nextin/shared/remote";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
@@ -18,7 +17,8 @@ import { branchPhotoUrl, callRpc } from "@/lib/client/supabase-public";
 import type { NearbyBranch } from "@/lib/client/types";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
-import { OrgTypeIcon } from "@/components/ui/org-type-icon";
+import { OrgTypeIcon, sectorColor } from "@/components/ui/org-type-icon";
+import { ListIcon } from "@/components/ui/list";
 import { useAfterFirstLoad } from "./lazy-mount";
 import { cn } from "@/lib/cn";
 
@@ -59,9 +59,10 @@ function BranchVisual({ branch, variant, photos }: { branch: NearbyBranch; varia
   return (
     <span
       aria-hidden
+      style={variant === "thumb" ? { background: sectorColor(branch.organization.type) } : undefined}
       className={cn(
-        "absolute inset-0 flex items-center justify-center bg-accent-tint text-accent-on-tint",
-        variant === "cover" ? "[&_svg]:size-14 [&_svg]:stroke-[1.25]" : "[&_svg]:size-7 [&_svg]:stroke-[1.5]",
+        "absolute inset-0 flex items-center justify-center",
+        variant === "cover" ? "bg-accent-tint text-accent-on-tint [&_svg]:size-14 [&_svg]:stroke-[1.25]" : "text-white [&_svg]:size-[1.125rem] [&_svg]:stroke-2",
       )}
     >
       <OrgTypeIcon type={branch.organization.type} />
@@ -189,7 +190,7 @@ export function NearbyExplorer({
               {t("recentClear")}
             </Button>
           </div>
-          <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
+          <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
             {recents.slice(0, 4).map((r) => (
               <li key={r.id} className="group/row">
                 <Link
@@ -197,16 +198,13 @@ export function NearbyExplorer({
                   prefetch={false}
                   className="flex w-full items-center gap-3 pl-4 text-left transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary"
                 >
-                  <span
-                    aria-hidden
-                    className="squircle flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-tint text-accent-on-tint [&_svg]:size-5 [&_svg]:stroke-[1.75]"
-                  >
+                  <ListIcon color={sectorColor(r.type)}>
                     <OrgTypeIcon type={r.type} />
-                  </span>
-                  <span className="relative flex min-h-14 min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 list-separator">
+                  </ListIcon>
+                  <span className="relative flex min-h-12 min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 list-separator">
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-body">{r.organization}</span>
-                      <span className="truncate text-subheadline text-label-secondary">{[r.name, r.city].filter(Boolean).join(" · ")}</span>
+                      <span className="truncate text-footnote text-label-secondary">{[r.name, r.city].filter(Boolean).join(" · ")}</span>
                     </span>
                     <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
                   </span>
@@ -226,7 +224,7 @@ export function NearbyExplorer({
             onClick={() => setCategory(c)}
             className={cn(
               "pressable h-11 shrink-0 rounded-full px-4 text-subheadline font-semibold whitespace-nowrap transition-colors",
-              category === c ? "bg-accent text-on-accent" : "bg-grouped-secondary text-label shadow-card",
+              category === c ? "bg-primary text-on-accent" : "bg-fill-tertiary text-label",
             )}
           >
             {t(`categories.${c}`)}
@@ -248,7 +246,7 @@ export function NearbyExplorer({
             <Link
               {...linkProps(featured)}
               className={cn(
-                "pressable squircle block overflow-hidden rounded-[var(--radius-2xl)] bg-grouped-secondary shadow-card",
+                "pressable squircle block overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary",
                 selected === featured.id && wide && "ring-2 ring-accent",
               )}
             >
@@ -266,32 +264,28 @@ export function NearbyExplorer({
                   ) : null}
                 </span>
               </span>
-              <span className="block p-5">
-                {position ? <span className="block text-footnote font-semibold text-accent-text uppercase">{t("nearest")}</span> : null}
-                <span className="relative block truncate text-title3 font-semibold">
+              <span className="flex flex-col gap-0.5 px-3.5 pt-3 pb-3.5">
+                {position ? <span className="text-caption font-semibold text-accent-text uppercase">{t("nearest")}</span> : null}
+                <span className="relative block truncate text-headline">
                   {featured.organization.name}
                   <span className="sr-only"> · {to(featured.organization.type)}</span>
                 </span>
-                <span className="block truncate text-subheadline text-label-secondary">{[featured.name, featured.city].filter(Boolean).join(" · ")}</span>
-                <span className="mt-4 grid grid-cols-3 gap-2">
-                  {[
-                    { label: t("tileWaiting"), value: featured.is_open ? String(featured.waiting) : "—" },
-                    { label: t("tileWait"), value: featured.is_open ? waitText(featured) : "—" },
-                    { label: t("tileRemote"), value: featured.remote_enabled ? t("remoteYes") : t("remoteNo") },
-                  ].map((tile) => (
-                    <span key={tile.label} className="squircle flex min-w-0 flex-col rounded-[var(--radius-lg)] bg-fill-tertiary px-3 py-2.5">
-                      <span className="truncate text-footnote text-label-secondary">{tile.label}</span>
-                      <span className="truncate text-headline tabular">{tile.value}</span>
-                    </span>
-                  ))}
+                <span className="block truncate text-footnote text-label-secondary">
+                  {[featured.name, distanceText(featured) ?? featured.city, featured.is_open ? t("open") : t("closed")].filter(Boolean).join(" · ")}
                 </span>
+                {featured.is_open ? (
+                  <span className="block text-footnote font-semibold text-green-text tabular">
+                    {t("waitLine", { wait: waitText(featured) })}
+                    {featured.remote_enabled ? ` · ${t("remote")}` : ""}
+                  </span>
+                ) : null}
               </span>
             </Link>
           </li>
           {/* Les suivants en lignes compactes avec vignette. */}
           {others.length ? (
             <li className={cn(!mapOnDesktop && "lg:col-span-1 xl:col-span-2")}>
-              <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
+              <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
                 {others.map((b) => (
                   <li key={b.id} ref={(el) => {
                       if (el) rows.current.set(b.id, el);
@@ -304,25 +298,22 @@ export function NearbyExplorer({
                         selected === b.id && wide && "bg-accent-tint/60",
                       )}
                     >
-                      <span className="relative my-3 block size-14 shrink-0 overflow-hidden rounded-[14px]">
+                      <span className="relative my-2.5 block size-[1.875rem] shrink-0 overflow-hidden rounded-[8px]">
                         <BranchVisual branch={b} variant="thumb" photos={photos} />
                       </span>
-                      <span className="relative flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 list-separator">
-                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                          <span className="relative truncate text-headline">
+                      <span className="relative flex min-h-12 min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 list-separator">
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="relative truncate text-body">
                             {b.organization.name}
                             <span className="sr-only"> · {to(b.organization.type)}</span>
                           </span>
-                          <span className="truncate text-subheadline text-label-secondary">
-                            {[b.name, distanceText(b) ? t("distance", { distance: distanceText(b)! }) : b.city].filter(Boolean).join(" · ")}
-                          </span>
-                          <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                            <Badge tone={b.is_open ? "green" : "neutral"}>{b.is_open ? t("open") : t("closed")}</Badge>
-                            {b.is_open ? (
-                              <span className="text-footnote text-label-secondary tabular">
-                                {t("waiting", { count: b.waiting })} · {waitText(b)}
-                              </span>
-                            ) : null}
+                          <span className="truncate text-footnote text-label-secondary tabular">
+                            {[
+                              distanceText(b) ?? b.name,
+                              b.is_open ? waitText(b) : t("closed"),
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </span>
                         </span>
                         <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
@@ -341,14 +332,14 @@ export function NearbyExplorer({
 
   return (
     <main className="min-h-dvh pb-28">
-      <NavigationBar title={t("title")} eyebrow={t("eyebrow")} contentClassName="max-w-lg lg:max-w-none lg:px-8" />
+      <NavigationBar title={t("title")} contentClassName="max-w-lg lg:max-w-none lg:px-8" />
       <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 pt-3 lg:max-w-none lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:max-w-[26rem]">
           <SearchField label={t("search")} clearLabel={t("clear")} value={query} onValueChange={setQuery} className="flex-1" />
         </div>
         {locate === "idle" || locate === "locating" ? (
           // Invitation à activer la position (P3) : expliquée avant que le navigateur ne la demande.
-          <section aria-labelledby="nearby-locate" className="squircle flex items-start gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card lg:max-w-[26rem]">
+          <section aria-labelledby="nearby-locate" className="squircle flex items-start gap-3 rounded-[var(--radius-md)] bg-grouped-secondary p-4 lg:max-w-[26rem]">
             <span aria-hidden className="squircle flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-tint text-accent-on-tint">
               <LocateFixed className="size-5 stroke-[1.75]" />
             </span>
@@ -377,7 +368,7 @@ export function NearbyExplorer({
                   className={cn(
                     // Cible tactile de 44 px : la zone cliquable déborde de 3 px (comme le SegmentedControl).
                     "relative rounded-[8px] text-subheadline font-semibold text-label transition-colors before:absolute before:inset-x-0 before:-inset-y-[3px] before:content-['']",
-                    view === v ? "bg-grouped-secondary shadow-card" : "",
+                    view === v ? "bg-grouped-secondary shadow-[0_1px_3px_rgb(0_0_0/0.12)]" : "",
                   )}
                 >
                   {v === "list" ? t("list") : t("map")}
@@ -409,7 +400,7 @@ export function NearbyExplorer({
                 <Link
                   href={`/b/${chosen.id}`}
                   prefetch={false}
-                  className="pressable squircle flex min-h-14 items-center gap-3 rounded-[var(--radius-lg)] bg-grouped-secondary px-4 py-3 shadow-card"
+                  className="pressable squircle flex min-h-14 items-center gap-3 rounded-[var(--radius-md)] bg-grouped-secondary px-4 py-3"
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-headline">{chosen.organization.name}</span>

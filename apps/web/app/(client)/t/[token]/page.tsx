@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getMessages, getTranslations } from "next-intl/server";
 import { absoluteUrl } from "@nextin/shared";
 import { Ticket } from "lucide-react";
+import { ClientTabs } from "@/components/client/client-tabs";
 import { TicketLive } from "@/components/client/ticket-live";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -48,6 +49,8 @@ export default async function TicketPage({ params }: Params) {
         // Seules les erreurs possibles sur cette page (note du passage) : le dictionnaire entier alourdirait la page.
         paths={[
           "client.ticket",
+          // Textes du ticket à distance : seulement pour un ticket à distance.
+          ...(view.remote ? ["client.ticketRemote"] : []),
           "counterKinds",
           "errors.generic",
           "errors.network",
@@ -67,15 +70,18 @@ export default async function TicketPage({ params }: Params) {
   const t = await getTranslations("client.ticket");
   return (
     <main className="min-h-dvh pb-40">
-      <NavigationBar variant="inline" title={t("title")} back={{ href: "/", label: t("home") }} contentClassName="max-w-lg" />
+      <NavigationBar variant="inline" title={t("title")} back={{ href: "/t", label: t("allTickets"), prefetch: false }} contentClassName="max-w-lg" />
       <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3">
         <CalloutCard icon={<Ticket />} tone="red" role="alert">
           <strong className="font-semibold">{t("notFoundTitle")}.</strong> {t("notFoundBody")}
         </CalloutCard>
         <Button asChild block variant="tinted">
-          <Link href="/">{t("newTicket")}</Link>
+          <Link href="/" prefetch={false}>
+            {t("newTicket")}
+          </Link>
         </Button>
       </div>
+      <ClientTabs active="tickets" />
     </main>
   );
 }

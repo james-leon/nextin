@@ -72,7 +72,7 @@ async function setOrgStatus(orgId: string, status: "active" | "suspended", reaso
   expect(error).toBeNull();
 }
 
-async function expectUnavailable(page: Page, button: string) {
+async function expectUnavailable(page: Page, button: string | RegExp) {
   await expect(page.getByTestId("online-unavailable")).toHaveText(MESSAGE_FR);
   await expect(page.getByRole("button", { name: button }).last()).toBeDisabled();
   // Services affichés, sans temps d'attente.
@@ -87,7 +87,7 @@ test.describe("Prise en ligne indisponible : connue dès l'ouverture de la page"
     await setSubscription(b.orgId, "read_only");
 
     await page.goto(`/q/${b.entryCode}`);
-    await expectUnavailable(page, "Prendre mon ticket");
+    await expectUnavailable(page, /Consultation/);
     await expectAccessible(page);
 
     await page.goto(`/b/${b.branchId}`);
@@ -112,7 +112,7 @@ test.describe("Prise en ligne indisponible : connue dès l'ouverture de la page"
     await setSubscription(b.orgId, "suspended");
     await setOrgStatus(b.orgId, "suspended", "subscription");
     await page.goto(`/q/${b.entryCode}`);
-    await expectUnavailable(page, "Prendre mon ticket");
+    await expectUnavailable(page, /Consultation/);
     await page.goto(`/b/${b.branchId}`);
     await expectUnavailable(page, "Prendre un ticket à distance");
     await page.goto(`/b/${b.branchId}/rdv`);
@@ -122,7 +122,7 @@ test.describe("Prise en ligne indisponible : connue dès l'ouverture de la page"
     // Quota de tickets épuisé depuis la veille : plus de ticket en ligne, ni de demande de rendez-vous.
     await setSubscription(b.orgId, "active", true);
     await page.goto(`/q/${b.entryCode}`);
-    await expectUnavailable(page, "Prendre mon ticket");
+    await expectUnavailable(page, /Consultation/);
     await page.goto(`/b/${b.branchId}/rdv`);
     await expect(page.getByTestId("online-unavailable")).toHaveText(MESSAGE_FR);
     await expect(page.getByRole("button", { name: "Envoyer la demande" }).last()).toBeDisabled();
@@ -132,6 +132,6 @@ test.describe("Prise en ligne indisponible : connue dès l'ouverture de la page"
     await page.goto(`/q/${b.entryCode}`);
     await expect(page.getByTestId("online-unavailable")).toHaveCount(0);
     await expect(page.getByText(/≈ \d+ min/).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Prendre mon ticket" }).last()).toBeEnabled();
+    await expect(page.getByRole("button", { name: /Consultation/ }).last()).toBeEnabled();
   });
 });

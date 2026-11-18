@@ -987,23 +987,21 @@ function BadgesSection() {
 
 function DemoTicketHero({ called = false }: { called?: boolean }) {
   const t = useTranslations("design.ticket");
-  const ts = useTranslations("design.styleA");
+  const tv = useTranslations("design.v2");
   return (
     <TicketHero
       code={formatTicketCode("C", 47)}
       service={t("service")}
-      place={t("place")}
-      aheadLabel={t("ahead")}
+      aheadText={tv("ahead", { count: 4 })}
       ahead={4}
       waitLabel={t("wait")}
       wait={t("waitValue")}
       progress={0.64}
       progressLabel={t("progress")}
-      nowServing={t("nowServing", { code: formatTicketCode("C", 43), counter: "Guichet 2" })}
+      side={{ value: formatTicketCode("C", 43), label: "Guichet 2" }}
       state={called ? "called" : "waiting"}
       calledTitle={t("calledTitle")}
       calledBody={t("calledBody")}
-      live={ts("live")}
     />
   );
 }
