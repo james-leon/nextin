@@ -32,7 +32,7 @@ describe("verifyTurnstile", () => {
   it("rejette une action inattendue, une erreur HTTP et une panne réseau", async () => {
     expect(
       await verifyTurnstile("tok", { secret: "s", expectedAction: "take_ticket", fetchImpl: fakeFetch({ success: true, action: "login" }) }),
-    ).toEqual({ ok: false, reason: "action-mismatch" });
+    ).toEqual({ ok: false, reason: "action-mismatch", action: "login" });
     expect(await verifyTurnstile("tok", { secret: "s", fetchImpl: fakeFetch({}, 500) })).toEqual({ ok: false, reason: "http-500" });
     const broken = vi.fn(async () => {
       throw new TypeError("offline");
@@ -42,7 +42,7 @@ describe("verifyTurnstile", () => {
 
   it("refuse une action différente avec une vraie clé", async () => {
     const r = await verifyTurnstile("tok", { secret: "0x4AAAAAAAreal", expectedAction: "take_ticket", fetchImpl: fakeFetch({ success: true, action: "login" }) });
-    expect(r).toEqual({ ok: false, reason: "action-mismatch" });
+    expect(r).toEqual({ ok: false, reason: "action-mismatch", action: "login" });
   });
 
   it("n'exige pas l'action avec les clés de test Cloudflare", async () => {
@@ -52,5 +52,13 @@ describe("verifyTurnstile", () => {
     expect(isTurnstileTestSecret("0x4AAAAAAAreal")).toBe(false);
     const r = await verifyTurnstile("tok", { secret, expectedAction: "take_ticket", fetchImpl: fakeFetch({ success: true, action: "" }) });
     expect(r).toEqual({ ok: true });
+  });
+
+  it("transmet le domaine et l'action du jeton refusé (diagnostic)", async () => {
+    const r = await verifyTurnstile("tok", {
+      secret: "0x4AAAAAAAreal",
+      fetchImpl: fakeFetch({ success: false, "error-codes": ["invalid-input-response"], hostname: "preview.example.app", action: "take_ticket" }),
+    });
+    expect(r).toEqual({ ok: false, reason: "invalid-input-response", hostname: "preview.example.app", action: "take_ticket" });
   });
 });

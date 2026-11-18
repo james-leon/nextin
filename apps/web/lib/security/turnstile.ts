@@ -18,7 +18,7 @@ export function isTurnstileTestSecret(secret: string): boolean {
   return /^[123]x0{31}AA$/.test(secret);
 }
 
-export type TurnstileResult = { ok: true } | { ok: false; reason: string };
+export type TurnstileResult = { ok: true } | { ok: false; reason: string; hostname?: string; action?: string };
 
 /**
  * Vérifie côté serveur un jeton Cloudflare Turnstile (widget invisible).
@@ -45,9 +45,11 @@ export async function verifyTurnstile(
 
   const parsed = responseSchema.safeParse(json);
   if (!parsed.success) return { ok: false, reason: "invalid-response" };
-  if (!parsed.data.success) return { ok: false, reason: parsed.data["error-codes"][0] ?? "rejected" };
+  if (!parsed.data.success) {
+    return { ok: false, reason: parsed.data["error-codes"][0] ?? "rejected", hostname: parsed.data.hostname, action: parsed.data.action };
+  }
   if (options.expectedAction && !isTurnstileTestSecret(options.secret) && parsed.data.action !== options.expectedAction) {
-    return { ok: false, reason: "action-mismatch" };
+    return { ok: false, reason: "action-mismatch", hostname: parsed.data.hostname, action: parsed.data.action };
   }
   return { ok: true };
 }

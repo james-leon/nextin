@@ -41,10 +41,19 @@ export async function verifyCaptchaToken(
 ): Promise<TurnstileResult> {
   const env = options.env ?? process.env;
   if (!captchaConfig(env).enabled) return { ok: true };
-  return verifyTurnstile(token, {
+  const result = await verifyTurnstile(token, {
     secret: env.TURNSTILE_SECRET_KEY!,
     remoteIp: options.remoteIp,
     expectedAction: options.expectedAction,
     fetchImpl: options.fetchImpl,
   });
+  // Diagnostic (journaux du serveur) : raison donnée par Cloudflare, action attendue et reçue, domaine du jeton.
+  // Jamais le jeton, l'adresse IP ni une donnée de la personne.
+  if (!result.ok) {
+    console.warn(
+      "[captcha] refus serveur",
+      JSON.stringify({ expected: options.expectedAction ?? null, reason: result.reason, action: result.action ?? null, hostname: result.hostname ?? null }),
+    );
+  }
+  return result;
 }

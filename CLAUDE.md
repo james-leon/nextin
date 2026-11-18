@@ -50,7 +50,7 @@ Tests et dev **contre le Supabase local** : préfixer par `node scripts/local-en
 - Journal d'audit append-only (`public.audit(...)`) pour toute action sensible. Rate limiting : `public.check_rate_limit(key, max, window)`.
 - Session du personnel vérifiée par `auth.getUser()` **partout** (proxy et `requireStaffSession`) ; une session refusée par Supabase est effacée localement par le proxy (jamais de boucle /login ↔ /app, test `e2e/session.spec.ts`).
 - Redirections après connexion uniquement via `safeNextPath` (jamais de redirection ouverte). Server actions : Zod puis `ActionResult` avec des codes d'erreur du dictionnaire `errors`.
-- Validation Zod côté client **et** serveur (schémas dans `@nextin/shared/schemas`). Turnstile vérifié côté serveur (`lib/security/turnstile.ts`).
+- Validation Zod côté client **et** serveur (schémas dans `@nextin/shared/schemas`). Turnstile vérifié côté serveur (`lib/security/turnstile.ts`). Diagnostic d'un refus (« The anti-bot check failed ») : journaux du serveur `[captcha] refus serveur` (raison Cloudflare, action, domaine du jeton) et `[captcha] échec navigateur` (code Turnstile envoyé par `lib/client/captcha-report.ts` à `/api/diagnostics/captcha` ; 110200 = domaine non autorisé pour la clé du site), sans donnée personnelle.
 - Données personnelles purgées après `organizations.data_retention_days` (défaut 30 j) — statistiques anonymisées uniquement.
 - Chaque nouvelle table : RLS + policies + test pgTAP d'isolation entre deux organisations.
 - Tables rattachées à une agence : `organization_id` + clé étrangère composite `(organization_id, branch_id)` vers `branches(organization_id, id)` (cohérence multi-tenant garantie par la base).
