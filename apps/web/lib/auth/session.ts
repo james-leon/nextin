@@ -16,6 +16,8 @@ export type MfaStatus = { required: boolean; enrolled: boolean; aal: "aal1" | "a
 export type StaffSession = {
   userId: string;
   email: string | null;
+  /** Nom saisi à l'inscription (métadonnées du compte), affiché en bas de la barre latérale. */
+  fullName: string | null;
   isPlatformAdmin: boolean;
   memberships: StaffMembership[];
   mfa: MfaStatus;
@@ -39,6 +41,7 @@ export const getStaffSession = cache(async (): Promise<StaffSession | null> => {
   return {
     userId: user.id,
     email: user.email ?? null,
+    fullName: typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim() ? user.user_metadata.full_name.trim() : null,
     isPlatformAdmin: isAdmin === true,
     memberships: (memberships ?? []).map((m) => ({
       organizationId: m.organization_id,

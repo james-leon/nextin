@@ -1,17 +1,15 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Minus, Plus } from "lucide-react";
 import type { ActionResult } from "@/lib/auth/errors";
-import { FormError } from "@/components/auth/form-error";
-import { BottomBar } from "@/components/ui/bottom-bar";
-import { Button, IconButton } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/button";
 import { CUSTOMER_NAME_EXTRAS, CUSTOMER_NAME_MODES, type CustomerNameExtra, type CustomerNameMode } from "@nextin/shared/identity";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { useFormErrors } from "./use-form-errors";
+import { AutoSaveStatus, useAutoSave } from "./use-auto-save";
 
 type Settings = {
   remote: boolean;
@@ -105,9 +103,10 @@ export function BranchSettingsForm({
 }) {
   const t = useTranslations("branchSettings");
   const ta = useTranslations("admin");
-  const [state, formAction, pending] = useActionState(action, null);
-  const { top } = useFormErrors(state);
   const [v, setV] = useState(initial);
+  // Enregistrement automatique (maquette v2 07) : plus de bouton « Enregistrer ».
+  const formRef = useRef<HTMLFormElement>(null);
+  const saveState = useAutoSave(formRef, action, !disabled);
   const graceLabel = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const rest = seconds % 60;
@@ -116,8 +115,8 @@ export function BranchSettingsForm({
   };
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-6">
-      <FormError message={top} />
+    <form ref={formRef} onSubmit={(e) => e.preventDefault()} noValidate className="flex flex-col gap-6">
+      {disabled ? null : <AutoSaveStatus state={saveState} className="sticky top-2 z-10 -mb-2 self-end" />}
       {/* Ordinateur : deux colonnes — file et rendez-vous à gauche, distance et demandes à droite. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
         <div className="flex min-w-0 flex-col gap-6">
@@ -370,13 +369,6 @@ export function BranchSettingsForm({
       <input type="hidden" name="noShowMoveBackPlaces" value={v.noShowPlaces} />
       <input type="hidden" name="customerNameMode" value={v.nameMode} />
       <input type="hidden" name="customerNameExtra" value={v.nameExtra} />
-      {disabled ? null : (
-        <BottomBar>
-          <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>
-            {ta("save")}
-          </Button>
-        </BottomBar>
-      )}
     </form>
   );
 }

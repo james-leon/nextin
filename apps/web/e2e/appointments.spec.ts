@@ -173,8 +173,7 @@ test.describe("M5b — rendez-vous", () => {
     await page.getByRole("radio", { name: "À l'heure" }).click();
     await page.getByRole("button", { name: /Augmenter · Tolérance de retard/ }).click();
     await expectTouchTargets(page);
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\?saved=1$/);
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
     const { data } = await b.staff.from("branch_settings").select("appointment_mode, appointment_late_grace_minutes").eq("branch_id", b.branchId).single();
     expect(data).toEqual({ appointment_mode: "strict", appointment_late_grace_minutes: 15 });
   });

@@ -10,7 +10,19 @@ import { cn } from "@/lib/cn";
  * Consommation du mois (tickets, messages WhatsApp) : jauge, extensions comprises, et ce qui se passe à la limite
  * (la file continue jusqu'à la fermeture du jour, blocage seulement à partir du lendemain).
  */
-export async function QuotaPanel({ quota, alertPercent }: { quota: QuotaStatus; alertPercent: number }) {
+export async function QuotaPanel({
+  quota,
+  alertPercent,
+  limits = [],
+  children,
+}: {
+  quota: QuotaStatus;
+  alertPercent: number;
+  /** Autres limites de la formule (agences, services, postes, écrans, utilisateurs), en jauges sous les quotas. */
+  limits?: { label: string; used: number; limit: number | null }[];
+  /** Pied de la carte (extensions de quota). */
+  children?: React.ReactNode;
+}) {
   const t = await getTranslations("billing");
   const current = await getLocale();
   const locale = current === "en" ? "en" : "fr";
@@ -33,6 +45,8 @@ export async function QuotaPanel({ quota, alertPercent }: { quota: QuotaStatus; 
       <h2 id="quota-title" className="text-headline">
         {t("quotaTitle")}
       </h2>
+      {/* Maquette v2 06 : une jauge par limite, trois colonnes sur ordinateur, deux sur tablette. */}
+      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
       {rows.map(({ key, label, icon, item }) => {
         const state = quotaState(item, alertPercent);
         const text = message(key, state, item);
@@ -60,6 +74,19 @@ export async function QuotaPanel({ quota, alertPercent }: { quota: QuotaStatus; 
           </div>
         );
       })}
+      {limits.map(({ label, used, limit }) => (
+        <div key={label} className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-3 text-subheadline">
+            <span className="font-semibold">{label}</span>
+            <span className="tabular text-label-secondary">
+              {limit == null ? `${num(used)} · ${t("unlimited")}` : t("ofLimit", { used: num(used), limit: num(limit) })}
+            </span>
+          </div>
+          {limit != null ? <ProgressBar value={Math.min(1, limit > 0 ? used / limit : 1)} label={label} tone="accent" /> : null}
+        </div>
+      ))}
+      </div>
+      {children}
     </section>
   );
 }

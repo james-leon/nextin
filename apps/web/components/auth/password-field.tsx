@@ -12,6 +12,7 @@ export function PasswordField({
   error,
   autoComplete,
   leading,
+  grouped,
   name = "password",
 }: {
   label: string;
@@ -23,6 +24,8 @@ export function PasswordField({
   /** Icône à gauche (cadenas sur l'écran de connexion). */
   leading?: React.ReactNode;
   name?: string;
+  /** Cellule d'une liste groupée (`FormGroup`). */
+  grouped?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -30,6 +33,7 @@ export function PasswordField({
       name={name}
       type={visible ? "text" : "password"}
       leading={leading}
+      grouped={grouped}
       label={label}
       hint={hint}
       error={error}
@@ -41,7 +45,7 @@ export function PasswordField({
           aria-label={visible ? hideLabel : showLabel}
           aria-pressed={visible}
           onClick={() => setVisible((v) => !v)}
-          className="pressable flex size-11 items-center justify-center text-label-secondary"
+          className={grouped ? "pressable -my-2 -mr-2 flex size-11 shrink-0 items-center justify-center text-label-secondary" : "pressable flex size-11 shrink-0 items-center justify-center text-label-secondary"}
         >
           {visible ? <EyeOff aria-hidden className="size-5 stroke-[1.75]" /> : <Eye aria-hidden className="size-5 stroke-[1.75]" />}
         </button>

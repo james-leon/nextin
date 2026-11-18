@@ -22,7 +22,7 @@ import {
 } from "@nextin/shared/schemas";
 import { slugify, templateServices } from "@nextin/shared";
 import type { Json } from "@nextin/shared/database";
-import { mapDbError } from "@/lib/admin/db-errors";
+import { dbFailure, mapDbError } from "@/lib/admin/db-errors";
 import { formObject } from "@/lib/admin/form";
 import { fieldErrorsFrom, type ActionResult } from "@/lib/auth/errors";
 import { requireStaffSession } from "@/lib/auth/session";
@@ -58,7 +58,7 @@ export async function grantDays(_prev: ActionResult | null, data: FormData): Pro
     p_days: parsed.data.days,
     p_reason: parsed.data.reason,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done(sub(parsed.data.subscriptionId));
 }
 
@@ -73,7 +73,7 @@ export async function applyDiscount(_prev: ActionResult | null, data: FormData):
     p_invoices: parsed.data.invoices,
     p_reason: parsed.data.reason,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done(sub(String(data.get("subscriptionId"))));
 }
 
@@ -86,7 +86,7 @@ export async function changePlan(_prev: ActionResult | null, data: FormData): Pr
     p_plan: parsed.data.planId,
     p_reason: parsed.data.reason,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done(sub(parsed.data.subscriptionId));
 }
 
@@ -99,7 +99,7 @@ export async function setSuspension(_prev: ActionResult | null, data: FormData):
     p_suspended: parsed.data.suspended,
     p_reason: parsed.data.reason,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done(sub(String(data.get("subscriptionId"))));
 }
 
@@ -138,7 +138,7 @@ export async function updatePlan(_prev: ActionResult | null, data: FormData): Pr
     },
   };
   const { error } = await supabase.rpc("admin_update_plan", { p_plan: v.planId, p_fields: fields as unknown as Json });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done(`/admin/plans/${v.planId}`);
 }
 
@@ -154,7 +154,7 @@ export async function setLimits(_prev: ActionResult | null, data: FormData): Pro
     p_limits: overrides as unknown as Json,
     p_reason: reason,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done(sub(subscriptionId));
 }
 
@@ -169,7 +169,7 @@ export async function saveQuotaPack(_prev: ActionResult | null, data: FormData):
     p_pack: (v.packId ?? null) as string,
     p_fields: { code: v.code, kind: v.kind, quantity: v.quantity, price_xaf: v.priceXaf, name: v.name, name_en: v.nameEn, active: v.active } as unknown as Json,
   });
-  if (error) return { ok: false, error: mapDbError(error, "pack_code_invalid") };
+  if (error) return dbFailure(error, data, "pack_code_invalid");
   done("/admin/plans");
 }
 
@@ -200,9 +200,9 @@ export async function updateSettings(_prev: ActionResult | null, data: FormData)
       mfa_required: v.mfaRequired,
     },
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   const alerts = await supabase.rpc("admin_set_security_alert_email", { p_email: v.securityAlertEmail ?? "" });
-  if (alerts.error) return { ok: false, error: mapDbError(alerts.error) };
+  if (alerts.error) return dbFailure(alerts.error, data);
   done("/admin/settings");
 }
 
@@ -213,8 +213,9 @@ export async function resetAccountMfa(_prev: ActionResult | null, data: FormData
   if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
   const { error } = await supabase.rpc("admin_reset_mfa", { p_email: parsed.data.email, p_reason: parsed.data.reason });
   if (error) {
-    const code = mapDbError(error);
-    return { ok: false, error: code, fieldErrors: error.message === "not_found" ? { email: "not_found" } : undefined };
+    // Compte introuvable : sous le champ e-mail ; sinon la vraie raison (motif, droits…).
+    if (mapDbError(error) === "not_found") return { ok: false, error: "not_found", fieldErrors: { email: "not_found" } };
+    return dbFailure(error, data);
   }
   done("/admin/settings");
 }
@@ -233,7 +234,7 @@ export async function reviewCampaign(_prev: ActionResult | null, data: FormData)
     p_approve: parsed.data.approve,
     p_note: parsed.data.note,
   });
-  if (error) return { ok: false, error: mapDbError(error), fieldErrors: error.message === "reason_required" ? { note: "reason_required" } : undefined };
+  if (error) return dbFailure(error, data);
   done(campaign(parsed.data.campaignId));
 }
 
@@ -247,7 +248,7 @@ export async function setCampaignPaused(_prev: ActionResult | null, data: FormDa
     p_paused: parsed.data.approve,
     p_reason: parsed.data.note,
   });
-  if (error) return { ok: false, error: mapDbError(error), fieldErrors: error.message === "reason_required" ? { note: "reason_required" } : undefined };
+  if (error) return dbFailure(error, data);
   done(campaign(parsed.data.campaignId));
 }
 
@@ -269,7 +270,7 @@ export async function updateAdPackage(_prev: ActionResult | null, data: FormData
       active: v.active,
     },
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done("/admin/ads/packages");
 }
 
@@ -285,7 +286,7 @@ export async function upsertAdSector(_prev: ActionResult | null, data: FormData)
     p_requires_visa: v.requiresHealthVisa,
     p_active: v.active,
   });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, data);
   done("/admin/ads/packages");
 }
 
@@ -326,7 +327,7 @@ export async function createOrganizationForClient(
       reason: v.reason,
     } as Json,
   });
-  if (error || !created) return { ok: false, error: mapDbError(error) };
+  if (error || !created) return dbFailure(error, data);
   const result = created as { organization_id: string; token: string };
   const { mailSent, link } = await sendInvitationEmail({
     to: v.ownerEmail,
@@ -358,12 +359,7 @@ export async function recordManualPayment(_prev: ActionResult | null, data: Form
     p_invoice: v.invoiceId,
     p_fields: { method: v.method, amount_xaf: v.amountXaf, paid_on: v.paidOn, reference: v.reference, note: v.note } as Json,
   });
-  if (error) {
-    const code = mapDbError(error);
-    const fieldOf: Partial<Record<string, string>> = { amount_mismatch: "amountXaf", reference_required: "reference", invalid_date: "paidOn" };
-    const fieldName = fieldOf[code];
-    return fieldName ? { ok: false, error: code, fieldErrors: { [fieldName]: code } } : { ok: false, error: code };
-  }
+  if (error) return dbFailure(error, data);
   done(`/admin/invoices/${v.invoiceId}/payment`);
 }
 
@@ -373,7 +369,7 @@ export async function cancelManualPayment(manualPaymentId: string, reason: strin
   const parsed = manualPaymentCancelSchema.safeParse({ manualPaymentId, reason });
   if (!parsed.success) return { ok: false, error: "generic", fieldErrors: fieldErrorsFrom(parsed.error, KNOWN) };
   const { error } = await supabase.rpc("admin_cancel_manual_payment", { p_manual: parsed.data.manualPaymentId, p_reason: parsed.data.reason });
-  if (error) return { ok: false, error: mapDbError(error) };
+  if (error) return dbFailure(error, { reason });
   revalidatePath("/admin", "layout");
   revalidatePath(`/admin/invoices/${invoiceId}/payment`);
   return { ok: true };

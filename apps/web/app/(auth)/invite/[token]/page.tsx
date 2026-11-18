@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Clock, Link2Off, MailCheck, UsersRound } from "lucide-react";
+import { Clock, Link2Off, MailCheck } from "lucide-react";
 import { AcceptInvitationForm } from "@/components/auth/accept-invitation-form";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { getStaffSession } from "@/lib/auth/session";
+import { initialsOf } from "@/lib/text/initials";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -62,36 +62,36 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-large-title font-bold">{t("title")}</h1>
-      <Card className="flex items-start gap-4">
-        <span className="squircle flex size-12 shrink-0 items-center justify-center rounded-[12px] bg-accent-tint text-accent-on-tint">
-          <UsersRound aria-hidden className="size-6 stroke-[1.75]" />
+      <header className="flex flex-col items-center gap-2 text-center">
+        <span
+          aria-hidden
+          className="squircle mb-2 flex size-16 items-center justify-center rounded-[16px] bg-primary font-rounded text-title2 font-bold text-on-accent"
+        >
+          {initialsOf(invitation.organization_name)}
         </span>
-        <div className="flex flex-col gap-1">
-          <p className="text-body">
-            {t.rich("body", {
-              name: invitation.organization_name,
-              role: tr(invitation.role),
-            })}
-          </p>
-          {invitation.email_hint ? (
-            <p className="text-subheadline text-label-secondary">{t("sentTo", { email: invitation.email_hint })}</p>
-          ) : null}
-        </div>
-      </Card>
+        <p className="text-footnote font-medium tracking-wide text-label-secondary uppercase">{t("title")}</p>
+        <h1 className="text-title1 font-bold text-balance">{t("joinTitle", { name: invitation.organization_name })}</h1>
+        <p className="text-body text-label-secondary">
+          {t("body", { name: invitation.organization_name, role: tr(invitation.role) })}
+        </p>
+        {invitation.email_hint ? (
+          <p className="text-subheadline text-label-secondary">{t("sentTo", { email: invitation.email_hint })}</p>
+        ) : null}
+      </header>
       {session ? (
         <AcceptInvitationForm token={token} acceptLabel={t("accept")} acceptingLabel={t("accepting")} />
       ) : (
         <div className="flex flex-col gap-3">
-          <p className="text-subheadline text-label-secondary">{t("signInToAccept")}</p>
+          <p className="text-center text-subheadline text-label-secondary">{t("signInToAccept")}</p>
           <Button asChild block>
             <Link href={`/signup?next=${encodeURIComponent(here)}`}>{ta("createAccount")}</Link>
           </Button>
-          <Button asChild block variant="plain">
+          <Button asChild block variant="tinted">
             <Link href={`/login?next=${encodeURIComponent(here)}`}>{ta("signIn")}</Link>
           </Button>
         </div>
       )}
+      <p className="text-center text-footnote text-label-secondary">{t("validity")}</p>
     </div>
   );
 }

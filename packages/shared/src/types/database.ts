@@ -3101,6 +3101,11 @@ isOneToOne: false
 "my_mfa_status":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"my_sessions":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "created_at": string,"id": string,"is_current": boolean,"last_active_at": string,"user_agent": string
+            }[]
+                           },
 "nearby_branches":
 { Args: { "p_lat"?: number,"p_limit"?: number,"p_lng"?: number,"p_query"?: string,"p_radius_km"?: number }; Returns: Json
                            },
@@ -3398,6 +3403,9 @@ isOneToOne: false
                            },
 "revoke_display":
 { Args: { "p_display": string }; Returns: undefined
+                           },
+"revoke_my_session":
+{ Args: { "p_session": string }; Returns: boolean
                            },
 "rollup_ad_stats":
 { Args: { "p_days"?: number }; Returns: number

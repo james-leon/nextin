@@ -76,8 +76,8 @@ test.describe("M2 — structure de l'établissement", () => {
     const remote = page.getByRole("switch", { name: "Autoriser le ticket à distance" });
     await expect(remote).toHaveAttribute("aria-checked", "false");
     await remote.click();
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\?saved=1$/);
+    // Enregistrement automatique (refonte v2) : aucun bouton, l'état est annoncé.
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
     await page.goto(`${branch}/settings`);
     await expect(page.getByRole("switch", { name: "Autoriser le ticket à distance" })).toHaveAttribute("aria-checked", "true");
 
@@ -156,7 +156,7 @@ test.describe("M2 — structure de l'établissement", () => {
     const member = await ctx.newPage();
     const invitePath = new URL(link).pathname;
     await signUpViaUi(member, { name: "Mireille Accueil", email: memberEmail, next: invitePath });
-    await member.getByRole("button", { name: "Rejoindre l'équipe" }).click();
+    await member.getByRole("button", { name: "Accepter l'invitation" }).click();
     await member.waitForURL(/\/app\?joined=/);
 
     // Réceptionniste : consultation seule, pas de création d'agence.

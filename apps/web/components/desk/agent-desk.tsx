@@ -170,7 +170,7 @@ export function AgentDesk({
       }
       title={
         <span className="flex items-baseline gap-4">
-          <span className="w-16 shrink-0 font-semibold">{tk.code}</span>
+          <span className="w-20 shrink-0 font-rounded text-title3 font-bold text-ticket-number">{tk.code}</span>
           <span className="truncate text-label-secondary">
             {t(`source.${tk.source}`)} · {time(tk.createdAt)}
           </span>
@@ -277,16 +277,16 @@ export function AgentDesk({
           <span className="text-subheadline text-label-secondary">{t("waitingCount", { count: view.waiting.length })}</span>
           <IconButton label={t("exitCompact")} icon={<Maximize2 />} variant="plain" onClick={() => setDeskCompact(false)} />
         </div>
-        <section aria-live="polite" className="squircle flex items-end justify-between gap-3 rounded-[var(--radius-xl)] bg-navy px-4 py-3 text-white">
+        <section aria-live="polite" className="squircle flex items-end justify-between gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-4 py-3">
           <div className="min-w-0">
-            <p className="text-footnote font-semibold tracking-[0.08em] text-white/80 uppercase">
+            <p className="text-footnote text-label-secondary">
               {current ? (current.status === "called" ? t("alerted") : t("current")) : title}
             </p>
-            <p className="text-title1 font-extrabold whitespace-nowrap">{current ? current.code : "—"}</p>
-            {current && nameOf(current) ? <p className="truncate text-subheadline text-white/90">{nameOf(current)}</p> : null}
+            <p className="font-rounded text-title1 font-extrabold whitespace-nowrap text-ticket-number">{current ? current.code : "—"}</p>
+            {current && nameOf(current) ? <p className="truncate text-subheadline">{nameOf(current)}</p> : null}
           </div>
           {current ? (
-            <p className="pb-1 text-title3 font-semibold tabular">
+            <p className="pb-1 font-rounded text-title3 font-semibold tabular">
               <span className="sr-only">{current.status === "serving" ? t("elapsed") : t("sinceAlert")} : </span>
               {formatElapsed(since(current.status === "serving" ? current.servingStartedAt : current.calledAt))}
             </p>

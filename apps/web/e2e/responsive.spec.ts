@@ -86,6 +86,8 @@ test.beforeAll(async () => {
       { name: "org-ads", path: `${root}/ads`, user: "owner" },
       { name: "billing", path: `${root}/billing`, user: "owner" },
       { name: "settings", path: "/app/settings", user: "owner" },
+      { name: "settings-security", path: "/app/settings/security", user: "owner" },
+      { name: "settings-notifications", path: "/app/settings/notifications", user: "owner" },
       { name: "desk-choice", path: "/desk", user: "owner", primary: (p) => p.getByRole("link", { name: /^Accueil/ }) },
       { name: "reception", path: `/desk/reception/${b.branchId}`, user: "owner", primary: (p) => p.getByRole("button", { name: "Nouveau ticket" }) },
       {

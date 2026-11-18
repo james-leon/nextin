@@ -56,6 +56,31 @@ export function smtpConfigFromEnv(env: Record<string, string | undefined>): { co
   };
 }
 
+/** Toute adresse e-mail d'un texte masquée (« j…@domaine »), pour les journaux. */
+export function maskEmailsIn(text: string): string {
+  return text.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, (address) => maskEmail(address));
+}
+
+/**
+ * Échec d'envoi SMTP pour les journaux du serveur (Vercel → Logs) : code et message du fournisseur, commande SMTP en
+ * cours, destinataire masqué. Jamais le mot de passe ni une adresse complète (le message du fournisseur peut citer le
+ * destinataire ou l'identifiant : masqués aussi).
+ */
+export function smtpFailureLog(error: unknown, to: string, config: Pick<SmtpConfig, "host" | "port">) {
+  const e = error as { code?: unknown; responseCode?: unknown; command?: unknown; response?: unknown; message?: unknown };
+  const text = (value: unknown) => (typeof value === "string" ? maskEmailsIn(value).slice(0, 300) : null);
+  return {
+    host: config.host,
+    port: config.port,
+    to: maskEmail(to),
+    code: typeof e?.code === "string" ? e.code : null,
+    responseCode: typeof e?.responseCode === "number" ? e.responseCode : null,
+    command: typeof e?.command === "string" ? e.command : null,
+    response: text(e?.response),
+    message: text(e?.message),
+  };
+}
+
 /** Erreurs SMTP permanentes (5xx : adresse refusée, domaine inconnu) : pas de nouvel essai. */
 function permanent(error: unknown): boolean {
   const code = (error as { responseCode?: number }).responseCode;
@@ -86,7 +111,9 @@ export function smtpEmail(config: SmtpConfig, log: (line: string) => void = () =
         log(`[email:smtp] ${maskEmail(to)} « ${subject} » ${info.messageId}`);
         return { ok: true, messageId: info.messageId };
       } catch (e) {
-        const message = (e as Error).message.slice(0, 200);
+        // Toujours journalisé (même en production) : seule trace d'un e-mail non parti (code, vérification, invitation).
+        console.error("[email:smtp] échec d'envoi", JSON.stringify(smtpFailureLog(e, to, config)));
+        const message = maskEmailsIn(String((e as Error)?.message ?? e)).slice(0, 200);
         return { ok: false, retryable: !permanent(e), error: `smtp: ${message}` };
       }
     },

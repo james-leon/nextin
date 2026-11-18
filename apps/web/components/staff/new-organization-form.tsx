@@ -11,10 +11,12 @@ import { Turnstile } from "@/components/security/turnstile";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
-import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { TextField } from "@/components/ui/text-field";
+import { CodeBoxes } from "@/components/ui/code-boxes";
+import { StepProgress } from "@/components/ui/step-progress";
+import { FormGroup, TextField } from "@/components/ui/text-field";
+import { cn } from "@/lib/cn";
 import { OrgTypeIcon } from "@/components/ui/org-type-icon";
 
 type OrgType = (typeof ORG_TYPES)[number];
@@ -63,22 +65,26 @@ export function NewOrganizationForm({
 
   return (
     <div className="pb-36">
-      <NavigationBar title={t("title")} eyebrow={t("stepOf", { step: index + 1, total: STEPS.length })} back={back} />
-      <div className="mx-auto flex max-w-3xl flex-col gap-7 px-4 pt-3">
+      <NavigationBar title={t("title")} back={back} />
+      <div className="mx-auto flex max-w-[40rem] flex-col gap-7 px-4 pt-3">
+        <StepProgress step={index + 1} total={STEPS.length} label={t("stepOf", { step: index + 1, total: STEPS.length })} className="px-4" />
         {step === "phone" ? (
           <form id="signup-step" action={phoneAction} noValidate className="flex flex-col gap-7">
             <StepHeader title={t("phoneTitle")} body={codeChannel === "email" ? t("phoneBodyEmail", { email: emailMasked }) : t("phoneBody")} />
             <FormError message={phoneState && !phoneState.ok && !phoneState.fieldErrors ? te(phoneState.error) : null} />
-            <TextField
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel-national"
-              label={t("phoneLabel")}
-              placeholder={t("phonePlaceholder")}
-              required
-              error={phoneState && !phoneState.ok && phoneState.fieldErrors?.phone ? te("phone_invalid") : undefined}
-            />
+            <FormGroup>
+              <TextField
+                grouped
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel-national"
+                label={t("phoneLabel")}
+                placeholder={t("phonePlaceholder")}
+                required
+                error={phoneState && !phoneState.ok && phoneState.fieldErrors?.phone ? te("phone_invalid") : undefined}
+              />
+            </FormGroup>
             <input type="hidden" name="locale" value={defaultLocale} />
             <CalloutCard icon={<Sparkles />} tone="accent">
               {t("trialNote", { plan: trialPlan })}
@@ -94,17 +100,7 @@ export function NewOrganizationForm({
               body={verification.channel === "email" ? t("codeBodyEmail", { email: verification.destination }) : t("codeBody", { phone: verification.destination })}
             />
             <input type="hidden" name="verificationId" value={verification.id} />
-            <TextField
-              name="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9 ]*"
-              maxLength={7}
-              label={t("codeLabel")}
-              className="[&_input]:tabular [&_input]:tracking-[0.3em]"
-              required
-              error={codeState && !codeState.ok ? te(codeState.error) : undefined}
-            />
+            <CodeBoxes label={t("codeLabel")} error={codeState && !codeState.ok ? te(codeState.error) : undefined} autoFocus />
             <Button type="button" variant="plain" onClick={() => setStep("phone")}>
               {t("changePhone")}
             </Button>
@@ -167,36 +163,50 @@ function OrgStep({
       <StepHeader title={t("orgTitle")} body={t("footer")} />
       <FormError message={topError} />
       <input type="hidden" name="verificationId" value={verificationId} />
-      <TextField
-        name="name"
-        label={t("name")}
-        placeholder={t("namePlaceholder")}
-        hint={name.trim().length >= 2 ? t("identifier", { slug: slugify(name) }) : t("nameHint")}
-        autoComplete="organization"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-        error={fieldError("name")}
-      />
+      <div className="flex flex-col gap-1.5">
+        <FormGroup>
+          <TextField
+            grouped
+            name="name"
+            label={t("name")}
+            placeholder={t("namePlaceholder")}
+            autoComplete="organization"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            error={fieldError("name")}
+          />
+        </FormGroup>
+        <p className="px-4 text-footnote text-label-secondary">
+          {name.trim().length >= 2 ? t("identifier", { slug: slugify(name) }) : t("nameHint")}
+        </p>
+      </div>
 
       <div className="flex flex-col gap-1.5">
-        <ListSection header={t("sector")} radioGroupLabel={t("sector")}>
+        <span id="org-sector" className="px-4 text-footnote uppercase text-label-secondary">
+          {t("sector")}
+        </span>
+        {/* Secteur en pastilles (maquette v2 04) : choix exclusif, la pastille choisie cerclée de bleu. */}
+        <div role="radiogroup" aria-labelledby="org-sector" className="grid grid-cols-1 gap-2 min-[22rem]:grid-cols-2 sm:grid-cols-3">
           {ORG_TYPES.map((value) => (
-            <ListRow
+            <button
               key={value}
+              type="button"
               role="radio"
-              selected={type === value}
+              aria-checked={type === value}
               onClick={() => setType(value)}
-              icon={
-                <ListIcon color="var(--brand-tile)">
-                  <OrgTypeIcon type={value} />
-                </ListIcon>
-              }
-              title={tt(value)}
-              accessory="check"
-            />
+              className={cn(
+                "pressable squircle flex min-h-[3.25rem] items-center gap-2.5 rounded-[var(--radius-md)] bg-grouped-secondary px-3.5 py-2 text-left text-callout text-label",
+                type === value && "shadow-[inset_0_0_0_2px_var(--accent-text)]",
+              )}
+            >
+              <span aria-hidden className="text-accent-text [&_svg]:size-5 [&_svg]:stroke-[1.75]">
+                <OrgTypeIcon type={value} />
+              </span>
+              {tt(value)}
+            </button>
           ))}
-        </ListSection>
+        </div>
         {typeError ? (
           <p role="alert" className="px-4 text-footnote text-red-text">
             {typeError}

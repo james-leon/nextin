@@ -1,7 +1,9 @@
 "use client";
 
+import { primeAttention, signalAttention } from "@/lib/client/attention";
+import { alertEnabled } from "@/lib/desk/notification-prefs";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDown, Ban, CalendarDays, Check, CircleHelp, Eye, EyeOff, Inbox, PenLine, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
 import { identityLine } from "@nextin/shared/identity";
@@ -62,7 +64,10 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   const refresh = useCallback(async () => {
     const next = await loadReception(supabase, branchId).catch(() => null);
     if (next) setData(next);
+    return next;
   }, [branchId, supabase]);
+  // Demandes d'aide déjà connues : seule une nouvelle demande déclenche le son (pas une demande traitée ailleurs).
+  const knownHelp = useRef(new Set(initial.helpRequests.map((h) => h.id)));
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -74,12 +79,22 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
       })
       .on("broadcast", { event: "identity" }, () => void refresh())
       // C3 : demande d'aide envoyée depuis la page d'un ticket (ou traitée sur un autre poste).
-      .on("broadcast", { event: "help" }, () => void refresh())
+      .on("broadcast", { event: "help" }, () => {
+        void refresh().then((next) => {
+          if (!next) return;
+          // Nouvelle demande : son et vibration si cet appareil l'accepte (Réglages → Notifications).
+          const fresh = next.helpRequests.some((h) => !knownHelp.current.has(h.id));
+          knownHelp.current = new Set(next.helpRequests.map((h) => h.id));
+          if (fresh && alertEnabled("help")) signalAttention();
+        });
+      })
       .subscribe();
+    const unprime = primeAttention();
     const poll = setInterval(() => void refresh(), 15_000);
     return () => {
       if (timer) clearTimeout(timer);
       clearInterval(poll);
+      unprime();
       void supabase.removeChannel(channel);
     };
   }, [branchId, refresh, supabase]);
@@ -218,7 +233,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   return (
                     <ListRow
                       key={c.code}
-                      title={<span className="font-semibold">{c.code}</span>}
+                      title={<span className="font-rounded font-bold text-ticket-number">{c.code}</span>}
                       detail={c.status === "called" ? t("calledAt", { counter }) : t("servingAt", { counter })}
                     />
                   );
@@ -299,7 +314,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   // Actions secondaires (priorité, nom…) dans la feuille du ticket sélectionné : une seule action principale.
                   title={
                     <>
-                      <span className="font-semibold">{tk2.code}</span>
+                      <span className="font-rounded font-bold text-ticket-number">{tk2.code}</span>
                       {nameOf(tk2) ? <span className="text-label-secondary"> · {nameOf(tk2)}</span> : null}
                     </>
                   }

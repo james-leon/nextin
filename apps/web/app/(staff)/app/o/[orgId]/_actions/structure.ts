@@ -277,7 +277,9 @@ export async function saveBranchSettings(orgId: string, branchId: string, _prev:
     .select("branch_id");
   if (error) return { ok: false, error: mapDbError(error) };
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, base(orgId, branchId));
+  // Enregistrement automatique : pas de redirection, la page reste ouverte.
+  revalidatePath(`/app/o/${orgId}`, "layout");
+  return { ok: true };
 }
 
 /* ─── QR codes ────────────────────────────────────────────────────────────── */

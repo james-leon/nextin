@@ -9,15 +9,16 @@ test.describe("M4 — réglages du personnel", () => {
     await signInViaUi(page, email);
     await page.waitForURL(/\/app$/);
     await page.getByRole("link", { name: "Réglages" }).first().click();
-    await expect(page.getByRole("heading", { level: 1, name: "Réglages" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Mon compte" })).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
     await expectAccessible(page);
     await expectTouchTargets(page);
-    await page.getByRole("radio", { name: "Sombre" }).click();
+    // Langue et apparence en lignes de Réglages (maquette v2 07) : sélecteur natif posé sur la ligne.
+    await page.getByLabel("Apparence").selectOption("dark");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expectAccessible(page);
-    await page.getByRole("radio", { name: "Auto" }).click();
-    await page.getByRole("radio", { name: "English" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
+    await page.getByLabel("Apparence").selectOption("auto");
+    await page.getByLabel("Langue").selectOption("en");
+    await expect(page.getByRole("heading", { level: 1, name: "My account" })).toBeVisible();
   });
 });
