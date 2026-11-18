@@ -1,0 +1,598 @@
+<title>NextIn Personnel et praticiens v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 · maquette 18 : personnel, invitations, praticiens, spécialités, horaires et congés. Reprend la base de la maquette 17 : agences, services, guichets et cabinets, horaires, QR code. Barre latérale bleu nuit + maître-détail sur ordinateur ; listes groupées iOS sur téléphone. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000; --label2:#6C6C70; --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFF; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --green-text:#0E7A44; --red:#D70015; --tint:#E8F0F9;
+  --side:#0D2C54; --sidetext:rgba(255,255,255,.72); --sideon:rgba(255,255,255,.12); --frame:#1C1C1E; --chrome:#E9E9EE; --sel:#E8F0F9;
+  --switch:#34C759;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px;letter-spacing:-.005em}
+.page{max-width:1440px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:76ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px}
+h2.part{margin:0 0 -18px;font-size:22px;font-weight:700;letter-spacing:-.02em}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+figcaption{font-size:13px;color:var(--label2);text-align:center;max-width:70ch;line-height:1.45}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--num)}
+
+/* ===== Ordinateur ===== */
+.scroll{width:100%;overflow-x:auto;border-radius:14px}
+.win{width:1240px;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--sep);margin:0 auto}
+.bbar{height:34px;background:var(--chrome);display:flex;align-items:center;gap:7px;padding:0 14px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.bbar span{margin-left:14px;font-size:12px;color:var(--label2);background:var(--bg);border-radius:6px;padding:4px 14px;width:420px}
+.app{display:grid;grid-template-columns:232px 320px minmax(0,1fr);height:720px}
+.side{background:var(--side);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:16px}
+.sbrand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.sbrand svg{width:30px;height:30px}
+.sbrand b{font-size:16px;font-weight:700}
+.sbrand small{display:block;font-size:11px;color:var(--sidetext);font-weight:500}
+.org{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08)}
+.org .av{width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--num)}
+.org b{font-size:14px;font-weight:600;display:block}
+.org small{font-size:12px;color:var(--sidetext)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:var(--sidetext);font-size:14px;font-weight:500}
+.nav a.on{background:var(--sideon);color:#fff}
+.nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.45);padding:12px 10px 4px}
+.nav .count{margin-left:auto;font-size:12px;background:var(--orange);color:#fff;border-radius:999px;padding:1px 7px;font-weight:600}
+.side .foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;color:var(--sidetext)}
+.side .foot .av{width:28px;height:28px;border-radius:50%;background:#2A6FB5;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* Panneau liste (maître) */
+.master{border-right:.5px solid var(--sep);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.mhead{padding:18px 16px 10px;display:flex;flex-direction:column;gap:12px}
+.mhead .row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.crumb{font-size:13px;color:var(--blue);display:flex;align-items:center;gap:2px}
+.crumb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mhead h3{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.plusbtn{width:32px;height:32px;border-radius:50%;background:var(--tint);color:var(--blue);display:grid;place-items:center}
+.plusbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.search{display:flex;align-items:center;gap:6px;height:36px;border-radius:10px;background:var(--fill);padding:0 10px;color:var(--label2);font-size:15px}
+.search svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.mlist{padding:0 10px 16px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px}
+.mrow.on{background:var(--sel)}
+.mrow .t{flex:1;min-width:0}
+.mrow .t b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .t small{display:block;font-size:13px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .meta{font-size:13px;color:var(--label2);white-space:nowrap}
+.thumb{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:#C9D6E3}
+.thumb svg{width:100%;height:100%}
+.mstats{margin:0 16px 12px;background:var(--cell);border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr)}
+.mstats div{padding:10px 12px}
+.mstats div + div{border-left:.5px solid var(--sep)}
+.mstats b{display:block;font-family:var(--num);font-size:20px;font-weight:700}
+.mstats small{font-size:12px;color:var(--label2)}
+
+/* Panneau détail */
+.detail{overflow:hidden;padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0;container-type:inline-size}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.dhead .over{font-size:13px;color:var(--label2)}
+.dhead h3{margin:2px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.saved{font-size:13px;color:var(--label2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.saved svg{width:15px;height:15px;stroke:var(--green-text);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{border-radius:16px;overflow:hidden;background:var(--cell)}
+.hero .ph{height:150px;background:#C9D6E3;position:relative}
+.hero .ph svg{width:100%;height:100%;display:block}
+.hero .ph .open{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);color:#000;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.hero .ph .open::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.hero .in{padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero .in b{font-size:17px;font-weight:600;display:block}
+.hero .in small{font-size:13px;color:var(--label2)}
+.tbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:9px;background:var(--tint);color:var(--blue);font-size:14px;font-weight:600;white-space:nowrap}
+.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:10px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
+
+/* Listes groupées iOS (communes) */
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -12px 16px}
+.gfoot{font-size:13px;color:var(--label2);margin:-12px 16px 0;line-height:1.4}
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.group.ic .row + .row::before{left:56px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2);white-space:nowrap}
+.row .v.blue{color:var(--blue)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.letter{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#fff;font-weight:700;font-size:15px;font-family:var(--num)}
+.sw{width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18)}
+.sw.on{background:var(--switch)}
+.sw.on::after{left:22px}
+.field{display:flex;flex-direction:column;gap:2px;padding:8px 14px;min-height:56px;justify-content:center;position:relative}
+.field + .field::before,.row + .field::before,.field + .row::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.field label{font-size:12px;color:var(--label2)}
+.field span{font-size:16px}
+.field span.ph{color:var(--label3)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.seg span{text-align:center;font-size:13px;font-weight:500;padding:6px 4px;border-radius:7px;white-space:nowrap}
+.seg span.on{background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.colors{display:flex;gap:10px;padding:12px 14px}
+.colors i{width:28px;height:28px;border-radius:50%}
+.colors i.on{box-shadow:0 0 0 2px var(--cell),0 0 0 4px var(--blue)}
+.check{width:22px;height:22px;flex:none;stroke:var(--blue);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.check.off{visibility:hidden}
+.danger{color:var(--red);font-size:16px;text-align:center;padding:13px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:3px 8px;background:var(--fill);color:var(--label2);white-space:nowrap}
+.chip.green{background:rgba(21,160,90,.14);color:var(--green-text)}
+.time{font-family:var(--num);font-size:15px;background:var(--fill);border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums}
+.qrbox{display:flex;gap:18px;align-items:center;padding:16px}
+.qrbox .qr{width:132px;height:132px;flex:none;border-radius:10px;background:#fff;padding:8px}
+.qrbox .qr svg{width:100%;height:100%}
+.code{font-family:var(--num);font-size:30px;font-weight:700;letter-spacing:.12em;color:var(--label)}
+.pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative}
+.pdf + .pdf::before{content:"";position:absolute;top:0;right:0;left:74px;border-top:.5px solid var(--sep)}
+.pdf .mini{width:46px;height:60px;border-radius:5px;background:var(--bg);box-shadow:0 0 0 .5px var(--sep);display:grid;place-items:center;flex:none}
+.pdf .mini svg{width:26px;height:26px}
+.pdf .t{flex:1;min-width:0}
+.pdf .t b{display:block;font-size:16px;font-weight:400}
+.pdf .t small{font-size:13px;color:var(--label2)}
+
+/* ===== Téléphones ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+.grid figure{width:100%;max-width:320px}
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.pnav{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 10px;flex:none;color:var(--blue);font-size:16px}
+.pnav .back{display:flex;align-items:center;gap:0}
+.pnav .back svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pnav .ttl{color:var(--label);font-weight:600;font-size:16px}
+.pnav .act{font-weight:600}
+.body{flex:1;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.sub{margin:4px 0 0;font-size:15px;color:var(--label2)}
+.bottom{flex:none;padding:10px 16px 24px;background:var(--bg);border-top:.5px solid var(--sep)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.photo169{border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#C9D6E3}
+.photo169 svg{width:100%;height:100%;display:block}
+.emptyst{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:0 8px}
+.emptyst .ill{width:72px;height:72px;border-radius:18px;background:var(--tint);display:grid;place-items:center;margin-bottom:6px}
+.emptyst .ill svg{width:36px;height:36px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.emptyst h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.emptyst p{margin:0 0 14px;font-size:15px;color:var(--label2);line-height:1.4}
+</style>
+<style>
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;flex:none}
+.av.sm{width:30px;height:30px;font-size:12px}
+.av.pending{background:var(--fill);color:var(--label2)}
+.av.pending svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chip.orange{background:rgba(245,139,31,.16);color:#A3550A}
+.sec2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--label2);padding:10px 10px 4px}
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;padding:12px 14px 14px}
+.week .d{font-size:12px;color:var(--label2);text-align:center;font-weight:600}
+.week .h{font-size:11px;color:var(--label2);text-align:right;padding-right:4px;height:30px;line-height:12px}
+.week .col{position:relative;border-radius:8px;background:var(--fill);min-height:186px}
+.week .blk{position:absolute;left:3px;right:3px;border-radius:6px;background:rgba(26,107,181,.16);border-left:3px solid var(--blue);font-size:11px;color:var(--blue);padding:3px 5px;font-weight:600;line-height:1.25}
+.week .blk.off{background:rgba(245,139,31,.16);border-left-color:var(--orange);color:#A3550A}
+.leave{display:flex;align-items:center;gap:12px;padding:10px 14px;position:relative}
+.leave + .leave::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.leave .t{flex:1}
+.leave .t b{display:block;font-size:16px;font-weight:400}
+.leave .t small{font-size:13px;color:var(--label2)}
+.linkrow{color:var(--blue)}
+.linkrow svg.i{color:var(--blue)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:var(--bg);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--label3);margin:7px auto 0}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:16px}
+.sheet .sh .c{color:var(--blue)}
+.sheet .sh b{font-weight:600}
+.sheet .sh .ok{color:var(--blue);font-weight:600}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.28)}
+.success{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:8px auto 4px}
+.success svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.center{text-align:center}
+.linkbox{font-size:13px;color:var(--label2);background:var(--fill);border-radius:8px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><circle cx="6" cy="8" r="2.2"/><circle cx="12" cy="9" r="1.8"/><circle cx="17" cy="10" r="1.4"/><path d="M3 18c1-3 5-3 6 0M10 18c.8-2.2 3.6-2.2 4.4 0M15.5 18c.6-1.6 2.6-1.6 3.2 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+  <symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.1a.3.3 0 0 1-.4.3L5 19V5.6a1 1 0 0 1 .8-1l6-1.3a1 1 0 0 1 1.2 1z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
+  <symbol id="i-slider" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.6"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></symbol>
+  <!-- Photo d'agence (illustration neutre : façade) -->
+  <symbol id="facade" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice"><rect width="400" height="225" fill="#BFD0E2"/><rect y="170" width="400" height="55" fill="#9AA9B8"/><rect x="70" y="40" width="260" height="140" fill="#F1EEE6"/><rect x="70" y="40" width="260" height="16" fill="#5B6B7D"/><rect x="90" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="152" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="214" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="276" y="72" width="36" height="34" fill="#4A5A6C"/><rect x="176" y="124" width="48" height="56" fill="#3B4A5A"/><rect x="92" y="124" width="60" height="30" fill="#1A6BB5"/><path d="M114 131v16M106 139h16" stroke="#fff" stroke-width="5"/><rect x="40" y="120" width="8" height="60" fill="#6E5B45"/><circle cx="44" cy="112" r="20" fill="#5E8C5A"/></symbol>
+  <!-- QR simplifié -->
+  <symbol id="qrimg" viewBox="0 0 29 29"><path fill="#000" d="M0 0h7v7H0zM2 2v3h3V2zM22 0h7v7h-7zm2 2v3h3V2zM0 22h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm4 0h3v2h-3zm5 2h2v3h-2zM9 4h3v3H9zm5 1h2v2h-2zM0 9h3v2H0zm5 0h4v2H5zm6 0h2v4h-2zm4 0h5v2h-5zm7 0h3v3h-3zm4 1h3v2h-3zM2 13h3v3H2zm6 0h2v2H8zm5 2h4v2h-4zm6-2h2v4h-2zm4 3h4v2h-4zM0 18h2v2H0zm4 0h5v2H4zm7 1h2v3h-2zm4 1h3v2h-3zm5 0h2v2h-2zm4 0h5v3h-5zM9 22h2v3H9zm4 2h4v2h-4zm6 0h2v5h-2zm4 3h6v2h-6zM9 27h3v2H9zm5 0h2v2h-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3.5 20.5l1.4-4.2A8.5 8.5 0 1 1 20.5 11.6z"/><path d="M9 9c0 3 2.5 5.5 5.5 5.5l1.3-1.3-2-1-.8.8a4 4 0 0 1-2.5-2.5l.8-.8-1-2z"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></symbol>
+</svg>
+
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — Personnel et praticiens v2</h1>
+    <p>Qui a accès à l'établissement et qui reçoit les patients. Le personnel (comptes, rôles, invitations) et les praticiens (médecins ou agents, leur spécialité, leurs horaires de consultation et leurs congés) sont deux rubriques distinctes : un praticien n'a pas forcément de compte.</p>
+    <div class="changes"><span>Maître-détail sur ordinateur</span><span>Invitation par e-mail, lien en secours</span><span>Chaque rôle expliqué en une ligne</span><span>Semaine de consultation en un coup d'œil</span><span>Congés listés, rendez-vous à reprogrammer signalés</span></div>
+  </div>
+
+  <h2 class="part">Ordinateur</h2>
+
+  <!-- D1 Personnel -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/app/o/…/staff</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>by Wintek</small></div></div>
+          <div class="org"><span class="av" style="width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;font-family:var(--num);font-weight:700">DC</span><div><b>Douala Clinic</b><small>2 agences · Business</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-grid"/></svg>Vue d'ensemble</a>
+            <a><svg class="i"><use href="#i-queue"/></svg>File en direct</a>
+            <a><svg class="i"><use href="#i-cal"/></svg>Rendez-vous<span class="count">3</span></a>
+            <span class="sec">Organisation</span>
+            <a><svg class="i"><use href="#i-pin"/></svg>Agences et services</a>
+            <a><svg class="i"><use href="#i-steth"/></svg>Praticiens</a>
+            <a class="on"><svg class="i"><use href="#i-users"/></svg>Personnel</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité</a>
+            <span class="sec">Compte</span>
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnement</a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#2A6FB5;font-size:12px">NB</span>Dr Ngo Biyong · Directrice</div>
+        </aside>
+        <section class="master">
+          <div class="mhead">
+            <div class="row1"><h3>Personnel</h3><span class="plusbtn" aria-label="Inviter un membre"><svg><use href="#i-plus"/></svg></span></div>
+            <div class="search"><svg><use href="#i-search"/></svg>Rechercher</div>
+          </div>
+          <div class="mlist">
+            <div class="sec2">Membres · 4</div>
+            <div class="mrow"><span class="av sm" style="background:#0D2C54">NB</span><div class="t"><b>Dr Ngo Biyong <span style="font-weight:400;color:var(--label2)">· Vous</span></b><small>Administrateur</small></div></div>
+            <div class="mrow on"><span class="av sm" style="background:#D14D72">ME</span><div class="t"><b>Mireille Ekambi</b><small>Réceptionniste · Makepe</small></div></div>
+            <div class="mrow"><span class="av sm" style="background:#1A6BB5">PM</span><div class="t"><b>Dr Paul Mbarga</b><small>Agent / praticien · Makepe</small></div></div>
+            <div class="mrow"><span class="av sm" style="background:#8E8E93">SN</span><div class="t"><b>Dr Samuel Nkeng</b><small>Agent / praticien · Accès désactivé</small></div></div>
+            <div class="sec2">Invitations en attente · 1</div>
+            <div class="mrow"><span class="av sm pending"><svg><use href="#i-mail"/></svg></span><div class="t"><b>a.ngo@doualaclinic.cm</b><small>Agent / praticien · expire le 25 nov.</small></div></div>
+          </div>
+        </section>
+        <section class="detail">
+          <div class="dhead">
+            <div style="display:flex;align-items:center;gap:14px"><span class="av" style="width:56px;height:56px;font-size:20px;background:#D14D72">ME</span><div><div class="over">Accès du membre</div><h3>Mireille Ekambi</h3><div style="font-size:14px;color:var(--label2)">accueil@doualaclinic.cm</div></div></div>
+            <span class="saved"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span>
+          </div>
+          <div class="cols">
+            <div class="stack">
+              <div class="ghead">Rôle</div>
+              <div class="group" style="--inset:14px">
+                <div class="row"><div class="t"><b>Administrateur</b><small>Tout l'établissement</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+                <div class="row"><div class="t"><b>Responsable d'agence</b><small>Une agence et ses réglages</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+                <div class="row"><div class="t"><b>Réceptionniste</b><small>Accueil et rendez-vous</small></div><svg class="check"><use href="#i-check"/></svg></div>
+                <div class="row"><div class="t"><b>Agent / praticien</b><small>Son guichet ou son cabinet</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+              </div>
+              <div class="group">
+                <div class="row"><div class="t"><b>Agence</b></div><span class="v">Makepe</span><svg class="chev"><use href="#i-chev"/></svg></div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Ce qu'elle peut faire</div>
+              <div class="group" style="--inset:14px">
+                <div class="row"><svg class="check"><use href="#i-check"/></svg><div class="t"><b>Ouvrir l'accueil de Makepe</b></div></div>
+                <div class="row"><svg class="check"><use href="#i-check"/></svg><div class="t"><b>Créer tickets et rendez-vous</b></div></div>
+                <div class="row"><svg class="check"><use href="#i-check"/></svg><div class="t"><b>Répondre aux demandes</b></div></div>
+                <div class="row"><svg class="check off"><use href="#i-check"/></svg><div class="t"><b style="color:var(--label2)">Modifier les réglages</b></div></div>
+              </div>
+              <div class="group">
+                <div class="row"><div class="t"><b style="color:var(--blue)">Désactiver l'accès</b></div></div>
+                <div class="row"><div class="t"><b style="color:var(--red)">Retirer de l'établissement</b></div></div>
+              </div>
+              <p class="gfoot">Désactiver garde le compte et l'historique ; retirer coupe l'accès immédiatement.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Personnel</b>Membres et invitations en attente dans la même liste. Le détail montre le rôle, l'agence et, en clair, ce que ce rôle permet. Changer le rôle d'un administrateur demande un code de double authentification récent.</figcaption>
+  </figure>
+
+  <!-- D2 Praticiens -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/app/o/…/practitioners/…/schedule</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>by Wintek</small></div></div>
+          <div class="org"><span class="av" style="width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;font-family:var(--num);font-weight:700">DC</span><div><b>Douala Clinic</b><small>2 agences · Business</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-grid"/></svg>Vue d'ensemble</a>
+            <a><svg class="i"><use href="#i-queue"/></svg>File en direct</a>
+            <a><svg class="i"><use href="#i-cal"/></svg>Rendez-vous<span class="count">3</span></a>
+            <span class="sec">Organisation</span>
+            <a><svg class="i"><use href="#i-pin"/></svg>Agences et services</a>
+            <a class="on"><svg class="i"><use href="#i-steth"/></svg>Praticiens</a>
+            <a><svg class="i"><use href="#i-users"/></svg>Personnel</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité</a>
+            <span class="sec">Compte</span>
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnement</a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#2A6FB5;font-size:12px">NB</span>Dr Ngo Biyong · Directrice</div>
+        </aside>
+        <section class="master">
+          <div class="mhead">
+            <div class="row1"><h3>Praticiens</h3><span class="plusbtn" aria-label="Nouveau praticien"><svg><use href="#i-plus"/></svg></span></div>
+          </div>
+          <div class="mstats"><div><b>3</b><small>Praticiens</small></div><div><b>3</b><small>Actifs</small></div><div><b>3</b><small>Spécialités</small></div></div>
+          <div class="mlist">
+            <div class="sec2">Médecine générale</div>
+            <div class="mrow on"><span class="av sm" style="background:#1A6BB5">PM</span><div class="t"><b>Dr Paul Mbarga</b><small>Makepe · Cabinet 1</small></div></div>
+            <div class="mrow"><span class="av sm" style="background:#1A6BB5">SN</span><div class="t"><b>Dr Samuel Nkeng</b><small>Makepe · en congé jusqu'au 22 nov.</small></div></div>
+            <div class="sec2">Pédiatrie</div>
+            <div class="mrow"><span class="av sm" style="background:#15A05A">AN</span><div class="t"><b>Dr Aline Ngo Biyong</b><small>Makepe · Cabinet 3</small></div></div>
+            <div class="sec2">&nbsp;</div>
+            <div class="mrow linkrow"><span class="sq" style="background:var(--tint)"><svg style="stroke:var(--blue)"><use href="#i-bookmark"/></svg></span><div class="t"><b style="color:var(--blue);font-weight:500">Spécialités</b><small>Médecine générale, Pédiatrie, Biologie</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+        </section>
+        <section class="detail">
+          <div class="dhead">
+            <div style="display:flex;align-items:center;gap:14px"><span class="av" style="width:56px;height:56px;font-size:20px;background:#1A6BB5">PM</span><div><div class="over">Médecine générale · Makepe</div><h3>Dr Paul Mbarga</h3></div></div>
+            <span class="saved"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span>
+          </div>
+          <div class="cols" style="grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)">
+            <div class="stack">
+              <div class="ghead">Consultations de la semaine</div>
+              <div class="group">
+                <div class="week">
+                  <span class="d">Lun</span><span class="d">Mar</span><span class="d">Mer</span><span class="d">Jeu</span><span class="d">Ven</span><span class="d">Sam</span>
+                  <div class="col"><span class="blk" style="top:2%;height:42%">08:00<br>12:00</span><span class="blk" style="top:56%;height:34%">14:00<br>17:00</span></div>
+                  <div class="col"><span class="blk" style="top:2%;height:42%">08:00<br>12:00</span></div>
+                  <div class="col"><span class="blk" style="top:2%;height:42%">08:00<br>12:00</span><span class="blk" style="top:56%;height:34%">14:00<br>17:00</span></div>
+                  <div class="col"><span class="blk" style="top:2%;height:42%">08:00<br>12:00</span></div>
+                  <div class="col"><span class="blk" style="top:2%;height:42%">08:00<br>12:00</span><span class="blk" style="top:56%;height:34%">14:00<br>17:00</span></div>
+                  <div class="col"><span class="blk" style="top:2%;height:28%">08:00<br>11:00</span></div>
+                </div>
+                <div class="row" style="border-top:.5px solid var(--sep)"><svg class="i" style="color:var(--blue)"><use href="#i-plus"/></svg><div class="t"><b style="color:var(--blue)">Ajouter une plage</b></div></div>
+              </div>
+              <p class="gfoot">Rendez-vous de 30 min, service Consultation générale. Les créneaux proposés aux patients en découlent, moins les congés et les fermetures.</p>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Congés</div>
+              <div class="group">
+                <div class="leave"><span class="sq" style="background:#FF9500"><svg><use href="#i-cal"/></svg></span><div class="t"><b>Du 24 au 28 décembre</b><small>Congés de fin d'année</small></div></div>
+                <div class="row"><svg class="i" style="color:var(--blue)"><use href="#i-plus"/></svg><div class="t"><b style="color:var(--blue)">Ajouter un congé</b></div></div>
+              </div>
+              <p class="gfoot">Aucun rendez-vous n'est proposé pendant un congé. Les rendez-vous déjà pris sont signalés « À reprogrammer ».</p>
+              <div class="ghead">Fiche</div>
+              <div class="group">
+                <div class="row"><div class="t" style="flex:none"><b>Spécialité</b></div><span class="v" style="flex:1;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis">Médecine générale</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><div class="t"><b>Agence</b></div><span class="v">Makepe</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><div class="t"><b>En activité</b></div><span class="sw on"></span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Praticiens</b>La liste est rangée par spécialité. La fiche montre d'abord la semaine de consultation, sous forme de colonnes, puis les congés et la fiche. Le statut « en congé jusqu'au… » apparaît dans la liste.</figcaption>
+  </figure>
+
+  <h2 class="part">Téléphone</h2>
+  <div class="grid">
+    <!-- P1 Personnel -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Douala Clinic</span><span class="plusbtn" aria-label="Inviter un membre"><svg><use href="#i-plus"/></svg></span></div>
+        <div class="body" style="gap:16px">
+          <h2 class="large">Personnel</h2>
+          <div class="ghead">Membres</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><span class="av sm" style="background:#0D2C54">NB</span><div class="t"><b>Dr Ngo Biyong</b><small>Administrateur · Vous</small></div></div>
+            <div class="row"><span class="av sm" style="background:#D14D72">ME</span><div class="t"><b>Mireille Ekambi</b><small>Réceptionniste · Makepe</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="av sm" style="background:#1A6BB5">PM</span><div class="t"><b>Dr Paul Mbarga</b><small>Agent · Makepe</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="av sm" style="background:#8E8E93">SN</span><div class="t"><b style="color:var(--label2)">Dr Samuel Nkeng</b><small>Accès désactivé</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="ghead">Invitations en attente</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><span class="av sm pending"><svg><use href="#i-mail"/></svg></span><div class="t"><b>a.ngo@doualaclinic.cm</b><small>Agent · expire le 25 nov.</small></div><span class="v blue" style="font-size:15px">Renvoyer</span></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Personnel</b>Membres puis invitations en attente. Balayer une invitation vers la gauche l'annule, avec « Annuler » pendant 5 secondes pour revenir en arrière.</figcaption>
+    </figure>
+
+    <!-- P2 Inviter -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Personnel</span><span></span></div>
+        <div class="body" style="gap:14px">
+          <h2 class="large">Inviter un membre</h2>
+          <div class="group"><div class="field"><label>E-mail du membre</label><span>a.ngo@doualaclinic.cm</span></div></div>
+          <div class="ghead">Rôle</div>
+          <div class="group" style="--inset:14px">
+            <div class="row"><div class="t"><b>Administrateur</b><small>Tout l'établissement</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Responsable d'agence</b><small>Une agence et ses réglages</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Réceptionniste</b><small>Accueil et rendez-vous</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Agent / praticien</b><small>Son guichet ou son cabinet</small></div><svg class="check"><use href="#i-check"/></svg></div>
+          </div>
+          <div class="group"><div class="row"><div class="t"><b>Agence</b></div><span class="v">Makepe</span><svg class="chev"><use href="#i-chev"/></svg></div></div>
+        </div>
+        <div class="bottom"><button class="btn primary">Créer l'invitation</button></div>
+      </div></div>
+      <figcaption><b>Inviter un membre</b>Chaque rôle est expliqué en une ligne. L'agence n'est demandée que pour les rôles limités à une agence.</figcaption>
+    </figure>
+
+    <!-- P3 Invitation envoyée -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span></span><span class="ttl"></span><span class="act">Terminé</span></div>
+        <div class="body" style="gap:14px">
+          <div class="success"><svg><use href="#i-check"/></svg></div>
+          <h2 class="large center" style="font-size:26px">Invitation envoyée</h2>
+          <p class="sub center" style="margin-top:-8px;line-height:1.4">Un e-mail vient de partir vers a.ngo@doualaclinic.cm. Le lien est valable 7 jours et ne fonctionne qu'une fois.</p>
+          <div class="ghead">Le message n'arrive pas ?</div>
+          <div class="group" style="--inset:52px">
+            <div class="row" style="padding-top:12px;padding-bottom:12px"><div class="linkbox" style="flex:1;min-width:0">nextin.wintekservices.com/invite/k7Q…</div></div>
+            <div class="row"><svg class="i" style="color:var(--blue)"><use href="#i-copy"/></svg><div class="t"><b style="color:var(--blue)">Copier le lien</b></div></div>
+            <div class="row"><svg class="i" style="color:#15A05A"><use href="#i-wa"/></svg><div class="t"><b style="color:var(--blue)">Envoyer par WhatsApp</b></div></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Invitation envoyée</b>Confirmation claire, puis le lien de secours à copier ou à envoyer par WhatsApp. Si l'e-mail n'a pas pu partir, le titre devient « Invitation prête » et le lien passe en premier.</figcaption>
+    </figure>
+
+    <!-- P4 Accès du membre -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Personnel</span><span></span></div>
+        <div class="body" style="gap:14px">
+          <div class="center"><span class="av" style="width:64px;height:64px;font-size:22px;background:#D14D72;margin:0 auto">ME</span><h2 class="large" style="font-size:24px;margin-top:8px">Mireille Ekambi</h2><p class="sub" style="margin-top:2px">accueil@doualaclinic.cm</p></div>
+          <div class="ghead">Rôle</div>
+          <div class="group" style="--inset:14px">
+            <div class="row"><div class="t"><b>Administrateur</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Responsable d'agence</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Réceptionniste</b></div><svg class="check"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Agent / praticien</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+          </div>
+          <div class="group"><div class="row"><div class="t"><b>Agence</b></div><span class="v">Makepe</span><svg class="chev"><use href="#i-chev"/></svg></div></div>
+          <div class="group">
+            <div class="row"><div class="t"><b style="color:var(--blue)">Désactiver l'accès</b></div></div>
+            <div class="row"><div class="t"><b style="color:var(--red)">Retirer de l'établissement</b></div></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Accès du membre</b>Le rôle se choisit dans une liste à cocher, comme à l'invitation. « Retirer » demande une confirmation : « Il perdra immédiatement l'accès à l'établissement. »</figcaption>
+    </figure>
+
+    <!-- P5 Praticiens -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Douala Clinic</span><span class="plusbtn" aria-label="Nouveau praticien"><svg><use href="#i-plus"/></svg></span></div>
+        <div class="body" style="gap:16px">
+          <h2 class="large">Praticiens</h2>
+          <div class="ghead">Médecine générale</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><span class="av sm" style="background:#1A6BB5">PM</span><div class="t"><b>Dr Paul Mbarga</b><small>Makepe · Cabinet 1</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="av sm" style="background:#1A6BB5">SN</span><div class="t"><b>Dr Samuel Nkeng</b><small><span style="color:#A3550A;font-weight:600">En congé</span> jusqu'au 22 nov.</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="ghead">Pédiatrie</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><span class="av sm" style="background:#15A05A">AN</span><div class="t"><b>Dr Aline Ngo Biyong</b><small>Makepe · Cabinet 3</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="group ic"><div class="row"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-bookmark"/></svg></span><div class="t"><b>Spécialités</b></div><span class="v">3</span><svg class="chev"><use href="#i-chev"/></svg></div></div>
+        </div>
+      </div></div>
+      <figcaption><b>Praticiens</b>Regroupés par spécialité. Le congé en cours est signalé en orange, la couleur de l'attention.</figcaption>
+    </figure>
+
+    <!-- P6 Horaires et congés -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back" aria-label="Dr Paul Mbarga"><svg><use href="#i-back"/></svg></span><span class="ttl">Horaires et congés</span><span style="width:24px"></span></div>
+        <div class="body" style="gap:14px">
+          <div class="ghead">Consultations de la semaine</div>
+          <div class="group">
+            <div class="row"><div class="t"><b>Lundi</b><small>30 min · Consultation générale</small></div><span class="v" style="font-size:14px">08:00 – 12:00<br>14:00 – 17:00</span></div>
+            <div class="row"><div class="t"><b>Mardi</b></div><span class="v" style="font-size:14px">08:00 – 12:00</span></div>
+            <div class="row"><div class="t"><b>Mercredi</b></div><span class="v" style="font-size:14px">08:00 – 12:00<br>14:00 – 17:00</span></div>
+            <div class="row"><div class="t"><b>Jeudi</b></div><span class="v" style="font-size:14px">08:00 – 12:00</span></div>
+            <div class="row"><div class="t"><b>Vendredi</b></div><span class="v" style="font-size:14px">08:00 – 12:00<br>14:00 – 17:00</span></div>
+            <div class="row"><div class="t"><b>Samedi</b></div><span class="v" style="font-size:14px">08:00 – 11:00</span></div>
+            <div class="row"><svg class="i" style="color:var(--blue)"><use href="#i-plus"/></svg><div class="t"><b style="color:var(--blue)">Ajouter une plage</b></div></div>
+          </div>
+          <div class="ghead">Congés</div>
+          <div class="group"><div class="row"><div class="t"><b>Du 24 au 28 décembre</b><small>Congés de fin d'année</small></div></div></div>
+        </div>
+      </div></div>
+      <figcaption><b>Horaires et congés</b>Une ligne par jour avec ses plages. Les jours sans consultation n'apparaissent pas. Balayer une plage ou un congé vers la gauche le supprime.</figcaption>
+    </figure>
+
+    <!-- P7 Ajouter une plage (feuille) -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.5"><h2 class="large" style="margin-top:44px">Horaires et congés</h2></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="sh"><span class="c">Annuler</span><b>Nouvelle plage</b><span class="ok">Ajouter</span></div>
+          <div class="body" style="gap:14px;padding-top:6px">
+            <div class="group" style="padding:10px 12px"><div class="seg"><span>Lun</span><span class="on">Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span></div></div>
+            <div class="group">
+              <div class="row"><div class="t"><b>De</b></div><span class="time">14:00</span></div>
+              <div class="row"><div class="t"><b>À</b></div><span class="time">17:00</span></div>
+              <div class="row"><div class="t"><b>Durée</b></div><span class="v">30 min</span><svg class="chev"><use href="#i-chev"/></svg></div>
+              <div class="row"><div class="t"><b>Service</b></div><span class="v">Consultation</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            </div>
+            <p class="gfoot">6 rendez-vous possibles sur cette plage.</p>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Ajouter une plage</b>Feuille iOS : « Annuler » et « Ajouter » en haut. Le nombre de rendez-vous possibles se calcule en direct.</figcaption>
+    </figure>
+
+    <!-- P8 Spécialités -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Praticiens</span><span class="plusbtn" aria-label="Nouvelle spécialité"><svg><use href="#i-plus"/></svg></span></div>
+        <div class="body" style="gap:16px">
+          <h2 class="large">Spécialités</h2>
+          <div class="group">
+            <div class="row"><div class="t"><b>Médecine générale</b><small>General medicine · 2 praticiens</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><div class="t"><b>Pédiatrie</b><small>Pediatrics · 1 praticien</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><div class="t"><b>Biologie</b><small>Laboratory medicine · aucun praticien</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <p class="gfoot">Ex. Médecine générale, Pédiatrie, Réclamations. Sert à réorienter les patients si un praticien est absent.</p>
+        </div>
+      </div></div>
+      <figcaption><b>Spécialités</b>Nom en français et en anglais, nombre de praticiens. Une banque ou Eneo y met ses rubriques (Réclamations, Abonnements).</figcaption>
+    </figure>
+  </div>
+</div>

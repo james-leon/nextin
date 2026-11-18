@@ -1,0 +1,766 @@
+<title>NextIn Postes compléments v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 · maquette 20 : compléments des postes (choix du poste, agenda et demandes, feuilles d'action, absence, hors ligne, raccourcis, compact, ticket imprimé). Reprend la base de la maquette 17 : agences, services, guichets et cabinets, horaires, QR code. Barre latérale bleu nuit + maître-détail sur ordinateur ; listes groupées iOS sur téléphone. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000; --label2:#6C6C70; --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFF; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --green-text:#0E7A44; --red:#D70015; --tint:#E8F0F9;
+  --side:#0D2C54; --sidetext:rgba(255,255,255,.72); --sideon:rgba(255,255,255,.12); --frame:#1C1C1E; --chrome:#E9E9EE; --sel:#E8F0F9;
+  --switch:#34C759;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px;letter-spacing:-.005em}
+.page{max-width:1440px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:76ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px}
+h2.part{margin:0 0 -18px;font-size:22px;font-weight:700;letter-spacing:-.02em}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+figcaption{font-size:13px;color:var(--label2);text-align:center;max-width:70ch;line-height:1.45}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--num)}
+
+/* ===== Ordinateur ===== */
+.scroll{width:100%;overflow-x:auto;border-radius:14px}
+.win{width:1240px;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--sep);margin:0 auto}
+.bbar{height:34px;background:var(--chrome);display:flex;align-items:center;gap:7px;padding:0 14px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.bbar span{margin-left:14px;font-size:12px;color:var(--label2);background:var(--bg);border-radius:6px;padding:4px 14px;width:420px}
+.app{display:grid;grid-template-columns:232px 320px minmax(0,1fr);height:720px}
+.side{background:var(--side);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:16px}
+.sbrand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.sbrand svg{width:30px;height:30px}
+.sbrand b{font-size:16px;font-weight:700}
+.sbrand small{display:block;font-size:11px;color:var(--sidetext);font-weight:500}
+.org{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08)}
+.org .av{width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--num)}
+.org b{font-size:14px;font-weight:600;display:block}
+.org small{font-size:12px;color:var(--sidetext)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:var(--sidetext);font-size:14px;font-weight:500}
+.nav a.on{background:var(--sideon);color:#fff}
+.nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.45);padding:12px 10px 4px}
+.nav .count{margin-left:auto;font-size:12px;background:var(--orange);color:#fff;border-radius:999px;padding:1px 7px;font-weight:600}
+.side .foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;color:var(--sidetext)}
+.side .foot .av{width:28px;height:28px;border-radius:50%;background:#2A6FB5;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* Panneau liste (maître) */
+.master{border-right:.5px solid var(--sep);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.mhead{padding:18px 16px 10px;display:flex;flex-direction:column;gap:12px}
+.mhead .row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.crumb{font-size:13px;color:var(--blue);display:flex;align-items:center;gap:2px}
+.crumb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mhead h3{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.plusbtn{width:32px;height:32px;border-radius:50%;background:var(--tint);color:var(--blue);display:grid;place-items:center}
+.plusbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.search{display:flex;align-items:center;gap:6px;height:36px;border-radius:10px;background:var(--fill);padding:0 10px;color:var(--label2);font-size:15px}
+.search svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.mlist{padding:0 10px 16px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px}
+.mrow.on{background:var(--sel)}
+.mrow .t{flex:1;min-width:0}
+.mrow .t b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .t small{display:block;font-size:13px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .meta{font-size:13px;color:var(--label2);white-space:nowrap}
+.thumb{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:#C9D6E3}
+.thumb svg{width:100%;height:100%}
+.mstats{margin:0 16px 12px;background:var(--cell);border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr)}
+.mstats div{padding:10px 12px}
+.mstats div + div{border-left:.5px solid var(--sep)}
+.mstats b{display:block;font-family:var(--num);font-size:20px;font-weight:700}
+.mstats small{font-size:12px;color:var(--label2)}
+
+/* Panneau détail */
+.detail{overflow:hidden;padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0;container-type:inline-size}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.dhead .over{font-size:13px;color:var(--label2)}
+.dhead h3{margin:2px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.saved{font-size:13px;color:var(--label2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.saved svg{width:15px;height:15px;stroke:var(--green-text);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{border-radius:16px;overflow:hidden;background:var(--cell)}
+.hero .ph{height:150px;background:#C9D6E3;position:relative}
+.hero .ph svg{width:100%;height:100%;display:block}
+.hero .ph .open{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);color:#000;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.hero .ph .open::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.hero .in{padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero .in b{font-size:17px;font-weight:600;display:block}
+.hero .in small{font-size:13px;color:var(--label2)}
+.tbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:9px;background:var(--tint);color:var(--blue);font-size:14px;font-weight:600;white-space:nowrap}
+.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:10px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
+
+/* Listes groupées iOS (communes) */
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -12px 16px}
+.gfoot{font-size:13px;color:var(--label2);margin:-12px 16px 0;line-height:1.4}
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.group.ic .row + .row::before{left:56px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2);white-space:nowrap}
+.row .v.blue{color:var(--blue)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.letter{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#fff;font-weight:700;font-size:15px;font-family:var(--num)}
+.sw{width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18)}
+.sw.on{background:var(--switch)}
+.sw.on::after{left:22px}
+.field{display:flex;flex-direction:column;gap:2px;padding:8px 14px;min-height:56px;justify-content:center;position:relative}
+.field + .field::before,.row + .field::before,.field + .row::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.field label{font-size:12px;color:var(--label2)}
+.field span{font-size:16px}
+.field span.ph{color:var(--label3)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.seg span{text-align:center;font-size:13px;font-weight:500;padding:6px 4px;border-radius:7px;white-space:nowrap}
+.seg span.on{background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.colors{display:flex;gap:10px;padding:12px 14px}
+.colors i{width:28px;height:28px;border-radius:50%}
+.colors i.on{box-shadow:0 0 0 2px var(--cell),0 0 0 4px var(--blue)}
+.check{width:22px;height:22px;flex:none;stroke:var(--blue);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.check.off{visibility:hidden}
+.danger{color:var(--red);font-size:16px;text-align:center;padding:13px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:3px 8px;background:var(--fill);color:var(--label2);white-space:nowrap}
+.chip.green{background:rgba(21,160,90,.14);color:var(--green-text)}
+.time{font-family:var(--num);font-size:15px;background:var(--fill);border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums}
+.qrbox{display:flex;gap:18px;align-items:center;padding:16px}
+.qrbox .qr{width:132px;height:132px;flex:none;border-radius:10px;background:#fff;padding:8px}
+.qrbox .qr svg{width:100%;height:100%}
+.code{font-family:var(--num);font-size:30px;font-weight:700;letter-spacing:.12em;color:var(--label)}
+.pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative}
+.pdf + .pdf::before{content:"";position:absolute;top:0;right:0;left:74px;border-top:.5px solid var(--sep)}
+.pdf .mini{width:46px;height:60px;border-radius:5px;background:var(--bg);box-shadow:0 0 0 .5px var(--sep);display:grid;place-items:center;flex:none}
+.pdf .mini svg{width:26px;height:26px}
+.pdf .t{flex:1;min-width:0}
+.pdf .t b{display:block;font-size:16px;font-weight:400}
+.pdf .t small{font-size:13px;color:var(--label2)}
+
+/* ===== Téléphones ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+.grid figure{width:100%;max-width:320px}
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.pnav{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 10px;flex:none;color:var(--blue);font-size:16px}
+.pnav .back{display:flex;align-items:center;gap:0}
+.pnav .back svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pnav .ttl{color:var(--label);font-weight:600;font-size:16px}
+.pnav .act{font-weight:600}
+.body{flex:1;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.sub{margin:4px 0 0;font-size:15px;color:var(--label2)}
+.bottom{flex:none;padding:10px 16px 24px;background:var(--bg);border-top:.5px solid var(--sep)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.photo169{border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#C9D6E3}
+.photo169 svg{width:100%;height:100%;display:block}
+.emptyst{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:0 8px}
+.emptyst .ill{width:72px;height:72px;border-radius:18px;background:var(--tint);display:grid;place-items:center;margin-bottom:6px}
+.emptyst .ill svg{width:36px;height:36px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.emptyst h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.emptyst p{margin:0 0 14px;font-size:15px;color:var(--label2);line-height:1.4}
+</style>
+<style>
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;flex:none}
+.av.sm{width:30px;height:30px;font-size:12px}
+.av.pending{background:var(--fill);color:var(--label2)}
+.av.pending svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chip.orange{background:rgba(245,139,31,.16);color:#A3550A}
+.sec2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--label2);padding:10px 10px 4px}
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;padding:12px 14px 14px}
+.week .d{font-size:12px;color:var(--label2);text-align:center;font-weight:600}
+.week .h{font-size:11px;color:var(--label2);text-align:right;padding-right:4px;height:30px;line-height:12px}
+.week .col{position:relative;border-radius:8px;background:var(--fill);min-height:186px}
+.week .blk{position:absolute;left:3px;right:3px;border-radius:6px;background:rgba(26,107,181,.16);border-left:3px solid var(--blue);font-size:11px;color:var(--blue);padding:3px 5px;font-weight:600;line-height:1.25}
+.week .blk.off{background:rgba(245,139,31,.16);border-left-color:var(--orange);color:#A3550A}
+.leave{display:flex;align-items:center;gap:12px;padding:10px 14px;position:relative}
+.leave + .leave::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.leave .t{flex:1}
+.leave .t b{display:block;font-size:16px;font-weight:400}
+.leave .t small{font-size:13px;color:var(--label2)}
+.linkrow{color:var(--blue)}
+.linkrow svg.i{color:var(--blue)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:var(--bg);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--label3);margin:7px auto 0}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:16px}
+.sheet .sh .c{color:var(--blue)}
+.sheet .sh b{font-weight:600}
+.sheet .sh .ok{color:var(--blue);font-weight:600}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.28)}
+.success{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:8px auto 4px}
+.success svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.center{text-align:center}
+.callout{display:flex;gap:12px;align-items:flex-start;background:var(--tint);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.4}
+.callout.green{background:rgba(21,160,90,.12)}
+.callout b{font-weight:600}
+.progress{display:flex;flex-direction:column;gap:8px}
+.progress .pt{display:flex;justify-content:space-between;font-size:15px}
+.progress .pt b{font-weight:600}
+.progress .pt span{color:var(--label2);font-family:var(--num)}
+.progress .bar{height:6px;border-radius:99px;background:var(--fill);overflow:hidden}
+.progress .bar i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.steps .row{min-height:52px}
+.steps .row + .row::before{left:54px}
+.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px;font-weight:700;color:var(--label2);box-shadow:inset 0 0 0 1.5px var(--label3);font-family:var(--num)}
+.dot.ok{background:var(--green);box-shadow:none}
+.dot.ok svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.dot.n{background:var(--navy);color:#fff;box-shadow:none}
+.steps .done .t b{color:var(--label2)}
+.steps .next .t b{font-weight:600}
+.stepline{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4}
+.urlpill{margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--cell);border-radius:8px;padding:7px 10px;color:var(--blue)}
+.boxes{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.boxes span{aspect-ratio:4/5;border-radius:10px;background:var(--cell);display:grid;place-items:center;font-family:var(--num);font-size:24px;font-weight:700;box-shadow:inset 0 0 0 1px var(--sep)}
+.boxes span.cur{box-shadow:inset 0 0 0 2px var(--blue)}
+.slider{flex:1;height:4px;border-radius:99px;background:var(--fill);position:relative}
+.slider i{position:absolute;left:0;top:0;bottom:0;background:var(--blue);border-radius:99px}
+.slider b{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.alert{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;background:var(--cell);border-radius:14px;text-align:center;overflow:hidden}
+.alert b{display:block;font-size:16px;font-weight:600;padding:18px 16px 4px}
+.alert p{margin:0;padding:0 16px 16px;font-size:13px;line-height:1.35}
+.abtns{display:grid;grid-template-columns:1fr 1fr;border-top:.5px solid var(--sep)}
+.abtns span{padding:11px;color:var(--blue);font-size:16px}
+.abtns span + span{border-left:.5px solid var(--sep)}
+.abtns .red{color:var(--red);font-weight:600}
+.tvprev{border-radius:12px;overflow:hidden;background:#F2F2F7;box-shadow:0 0 0 4px #1C1C1E;aspect-ratio:16/9;display:flex;flex-direction:column;color:#000}
+.tvtop{background:#0D2C54;color:#fff;display:flex;align-items:center;gap:6px;padding:6px 9px;font-size:11px;font-weight:600}
+.tvtop svg{width:14px;height:14px}
+.tvtop span{margin-left:auto;font-family:var(--num)}
+.tvbody{flex:1;display:grid;grid-template-columns:1.8fr 1fr;gap:6px;padding:7px}
+.tvcalls{background:#fff;border-radius:7px;padding:4px 8px;display:flex;flex-direction:column;justify-content:space-around}
+.tvcalls div{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(60,60,67,.12);padding-top:2px}
+.tvcalls div:first-child{border-top:0;box-shadow:inset 3px 0 0 #F58B1F;padding-left:6px;margin-left:-6px}
+.tvcalls b{font-family:var(--num);font-size:19px;color:#0D2C54}
+.tvcalls span{font-size:11px;font-weight:600}
+.tvad{background:#0E7A44;border-radius:7px;color:#fff;font-size:10px;display:flex;align-items:flex-end;padding:6px}
+.linkbox{font-size:13px;color:var(--label2);background:var(--fill);border-radius:8px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><circle cx="6" cy="8" r="2.2"/><circle cx="12" cy="9" r="1.8"/><circle cx="17" cy="10" r="1.4"/><path d="M3 18c1-3 5-3 6 0M10 18c.8-2.2 3.6-2.2 4.4 0M15.5 18c.6-1.6 2.6-1.6 3.2 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+  <symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.1a.3.3 0 0 1-.4.3L5 19V5.6a1 1 0 0 1 .8-1l6-1.3a1 1 0 0 1 1.2 1z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
+  <symbol id="i-slider" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.6"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></symbol>
+  <!-- Photo d'agence (illustration neutre : façade) -->
+  <symbol id="facade" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice"><rect width="400" height="225" fill="#BFD0E2"/><rect y="170" width="400" height="55" fill="#9AA9B8"/><rect x="70" y="40" width="260" height="140" fill="#F1EEE6"/><rect x="70" y="40" width="260" height="16" fill="#5B6B7D"/><rect x="90" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="152" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="214" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="276" y="72" width="36" height="34" fill="#4A5A6C"/><rect x="176" y="124" width="48" height="56" fill="#3B4A5A"/><rect x="92" y="124" width="60" height="30" fill="#1A6BB5"/><path d="M114 131v16M106 139h16" stroke="#fff" stroke-width="5"/><rect x="40" y="120" width="8" height="60" fill="#6E5B45"/><circle cx="44" cy="112" r="20" fill="#5E8C5A"/></symbol>
+  <!-- QR simplifié -->
+  <symbol id="qrimg" viewBox="0 0 29 29"><path fill="#000" d="M0 0h7v7H0zM2 2v3h3V2zM22 0h7v7h-7zm2 2v3h3V2zM0 22h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm4 0h3v2h-3zm5 2h2v3h-2zM9 4h3v3H9zm5 1h2v2h-2zM0 9h3v2H0zm5 0h4v2H5zm6 0h2v4h-2zm4 0h5v2h-5zm7 0h3v3h-3zm4 1h3v2h-3zM2 13h3v3H2zm6 0h2v2H8zm5 2h4v2h-4zm6-2h2v4h-2zm4 3h4v2h-4zM0 18h2v2H0zm4 0h5v2H4zm7 1h2v3h-2zm4 1h3v2h-3zm5 0h2v2h-2zm4 0h5v3h-5zM9 22h2v3H9zm4 2h4v2h-4zm6 0h2v5h-2zm4 3h6v2h-6zM9 27h3v2H9zm5 0h2v2h-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3.5 20.5l1.4-4.2A8.5 8.5 0 1 1 20.5 11.6z"/><path d="M9 9c0 3 2.5 5.5 5.5 5.5l1.3-1.3-2-1-.8.8a4 4 0 0 1-2.5-2.5l.8-.8-1-2z"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 21V4M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M3 3l18 18M8 8a5 5 0 0 0-1 9.9h10M17.5 17A4 4 0 0 0 16 9.5 6 6 0 0 0 11 6"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 12l4 4-4 4M21 16H7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16M6 14l6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></symbol>
+</svg>
+
+<style>
+.agenda{display:grid;grid-template-columns:52px repeat(3,minmax(0,1fr));gap:0;background:var(--cell);border-radius:12px;overflow:hidden}
+.agenda .ph{padding:10px 10px 8px;font-size:13px;font-weight:600;border-bottom:.5px solid var(--sep);display:flex;align-items:center;gap:8px}
+.agenda .ph .av{width:24px;height:24px;font-size:10px}
+.agenda .hours{display:flex;flex-direction:column}
+.agenda .hours span{height:52px;font-size:11px;color:var(--label2);text-align:right;padding:2px 8px 0 0;font-family:var(--num)}
+.agenda .colp{position:relative;border-left:.5px solid var(--sep);background:repeating-linear-gradient(to bottom,transparent 0,transparent 51.5px,var(--sep) 51.5px,var(--sep) 52px)}
+.appt{position:absolute;left:4px;right:4px;border-radius:7px;padding:5px 7px;font-size:12px;line-height:1.3;background:rgba(26,107,181,.12);border-left:3px solid var(--blue)}
+.appt b{display:block;font-size:12px;font-weight:600}
+.appt small{color:var(--label2);font-size:11px}
+.appt.arr{background:rgba(21,160,90,.13);border-left-color:var(--green)}
+.appt.abs{background:var(--fill);border-left-color:var(--label3);color:var(--label2)}
+.appt.req{background:rgba(245,139,31,.13);border-left-color:var(--orange);border-style:dashed;border-width:0 0 0 3px}
+.nowline{position:absolute;left:52px;right:0;height:2px;background:#FF3B30}
+.nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#FF3B30}
+.toolbar{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.toolbar .seg{width:280px}
+.navbtns{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600}
+.navbtns span.b{width:30px;height:30px;border-radius:8px;background:var(--fill);display:grid;place-items:center;color:var(--blue)}
+.navbtns span.b svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);background:var(--cell);border-radius:12px}
+.statrow div{padding:10px 14px}
+.statrow div + div{border-left:.5px solid var(--sep)}
+.statrow b{display:block;font-family:var(--num);font-size:22px;font-weight:700}
+.statrow small{font-size:12px;color:var(--label2)}
+.slots{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}
+.slots span{font-family:var(--num);font-size:15px;font-weight:600;padding:7px 12px;border-radius:9px;background:var(--fill)}
+.slots span.on{background:var(--navy);color:#fff}
+.banner{display:flex;align-items:center;gap:10px;background:rgba(245,139,31,.14);color:#A3550A;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600}
+.banner svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.banner small{display:block;font-weight:400;color:var(--label2);font-size:13px}
+.hero2{background:var(--cell);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.hero2 .tk{font-family:var(--num);font-size:64px;font-weight:700;color:var(--navy);line-height:1}
+.hero2 .meta{display:flex;gap:14px;font-size:14px;color:var(--label2)}
+.bigbtn{height:56px;border-radius:14px;background:var(--navy);color:#fff;font-size:18px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
+.kbd{font-family:var(--num);font-size:12px;font-weight:600;min-width:24px;height:24px;padding:0 6px;border-radius:6px;background:var(--fill);box-shadow:inset 0 -1px 0 var(--sep);display:inline-grid;place-items:center}
+.secbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.secbtns span{height:44px;border-radius:12px;background:var(--cell);display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;font-weight:600;color:var(--blue)}
+.secbtns span.red{color:var(--red)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.32);display:grid;place-items:center}
+.kbsheet{width:420px;background:var(--bg);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.3);padding:16px;display:flex;flex-direction:column;gap:12px}
+.kbsheet .row{min-height:40px}
+.actsheet{position:absolute;left:8px;right:8px;bottom:10px;display:flex;flex-direction:column;gap:8px}
+.actsheet .grp{background:var(--cell);border-radius:14px;overflow:hidden}
+.actsheet .ttl2{text-align:center;font-size:13px;color:var(--label2);padding:12px 10px 10px;border-bottom:.5px solid var(--sep);line-height:1.35}
+.actsheet .ttl2 b{display:block;color:var(--label);font-size:15px}
+.actsheet .it{display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:17px;color:var(--blue);position:relative}
+.actsheet .it + .it::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.actsheet .it svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.actsheet .it.red{color:var(--red)}
+.actsheet .cancel{background:var(--cell);border-radius:14px;text-align:center;padding:14px;font-size:17px;font-weight:600;color:var(--blue)}
+.helpbox{border-radius:12px;background:rgba(245,139,31,.14);padding:10px 12px;display:flex;align-items:center;gap:10px}
+.helpbox .t b{font-size:15px;font-weight:600;color:#A3550A}
+.helpbox .t small{font-size:13px;color:var(--label2);display:block}
+.helpbox .done{margin-left:auto;font-size:14px;font-weight:600;color:var(--blue);background:var(--cell);border-radius:8px;padding:6px 10px}
+.paper{width:260px;background:#fff;color:#000;padding:18px 16px 22px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.18);position:relative;font-size:12px;line-height:1.45}
+.paper::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:linear-gradient(-45deg,transparent 4px,#fff 0) 0 0/10px 8px,linear-gradient(45deg,transparent 4px,#fff 0) 0 0/10px 8px}
+.paper .pn{font-family:var(--font);font-weight:700;font-size:15px;letter-spacing:.02em}
+.paper .big{font-family:var(--num);font-size:56px;font-weight:800;line-height:1;margin:8px 0 2px}
+.paper .svc{font-family:var(--font);font-weight:600;font-size:14px}
+.paper hr{border:0;border-top:1px dashed #000;margin:10px 0}
+.paper .qrp{width:96px;height:96px;margin:6px auto}
+.paper .qrp svg{width:100%;height:100%}
+.compactwin{width:300px;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 12px 30px rgba(0,0,0,.25),0 0 0 .5px var(--sep)}
+.compactwin .tb{height:28px;background:var(--chrome);display:flex;align-items:center;gap:6px;padding:0 10px}
+.compactwin .tb i{width:10px;height:10px;border-radius:50%;background:var(--label3)}
+.compactwin .cb{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.compactwin .tk{font-family:var(--num);font-size:40px;font-weight:700;color:var(--navy);line-height:1}
+.pair2{display:flex;flex-wrap:wrap;gap:36px 40px;justify-content:center;align-items:flex-start}
+</style>
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — Postes : compléments v2</h1>
+    <p>Ce qui manquait à la maquette 08 : le choix du poste, l'agenda et les demandes de rendez-vous de l'accueil, toutes les feuilles d'action sur un ticket, l'absence d'un praticien, le mode hors ligne, les raccourcis clavier, le mode compact et le ticket imprimé.</p>
+    <div class="changes"><span>Feuilles d'action iOS</span><span>Agenda par praticien</span><span>Demande en attente en orange</span><span>Hors ligne sans blocage</span><span>Ticket 80 mm lisible de loin</span></div>
+  </div>
+
+  <h2 class="part">Ordinateur et tablette</h2>
+
+  <!-- D1 Agenda -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/desk/reception/…/appointments</span></div>
+      <div class="app" style="grid-template-columns:minmax(0,1fr) 340px">
+        <section class="detail" style="padding:18px 22px">
+          <div class="dhead"><div><div class="over">Accueil · Makepe</div><h3>Rendez-vous</h3></div><span class="fbtn"><svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Nouveau rendez-vous</span></div>
+          <div class="toolbar"><div class="navbtns"><span class="b"><svg><use href="#i-back"/></svg></span><span>Mercredi 18 novembre</span><span class="b" style="transform:scaleX(-1)"><svg><use href="#i-back"/></svg></span><span class="tbtn" style="height:30px;margin-left:6px">Aujourd'hui</span></div><div class="seg"><span class="on">Jour</span><span>Semaine</span><span>Demandes <b style="color:var(--orange)">· 3</b></span></div></div>
+          <div class="statrow"><div><b>9</b><small>Rendez-vous</small></div><div><b>4</b><small>Arrivés</small></div><div><b>1</b><small>Absents</small></div><div><b>4</b><small>Prochains</small></div></div>
+          <div style="position:relative">
+            <div class="agenda">
+              <div class="ph" style="border-right:0"></div>
+              <div class="ph"><span class="av" style="background:#1A6BB5">PM</span>Dr Paul Mbarga</div>
+              <div class="ph"><span class="av" style="background:#15A05A">AN</span>Dr Aline Ngo Biyong</div>
+              <div class="ph"><span class="av" style="background:#8E8E93">SN</span><span style="color:var(--label2)">Dr Samuel Nkeng · congé</span></div>
+              <div class="hours"><span>08:00</span><span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span></div>
+              <div class="colp">
+                <div class="appt arr" style="top:2px;height:24px"><b>08:00 · arrivé</b></div>
+                <div class="appt arr" style="top:54px;height:24px"><b>09:00 · arrivé</b></div>
+                <div class="appt abs" style="top:106px;height:24px"><b>10:00 · absent</b></div>
+                <div class="appt" style="top:132px;height:24px"><b>10:30 · Mme Eyenga</b></div>
+                <div class="appt" style="top:184px;height:24px"><b>11:30 · M. Tchoua</b></div>
+                <div class="appt req" style="top:314px;height:24px"><b>14:00 · demande</b></div>
+              </div>
+              <div class="colp">
+                <div class="appt arr" style="top:28px;height:24px"><b>08:30 · arrivé</b></div>
+                <div class="appt arr" style="top:80px;height:24px"><b>09:30 · arrivé</b></div>
+                <div class="appt" style="top:158px;height:50px"><b>11:00 · Bébé Fouda</b><small>Vaccination · 1 h</small></div>
+              </div>
+              <div class="colp" style="background:repeating-linear-gradient(135deg,var(--fill) 0 6px,transparent 6px 12px)"></div>
+            </div>
+            <div class="nowline" style="top:178px"></div>
+          </div>
+        </section>
+        <section class="master" style="border-right:0;border-left:.5px solid var(--sep)">
+          <div class="mhead"><div class="over">Rendez-vous</div><h3 style="font-size:22px">10:30 · Mme Eyenga</h3></div>
+          <div style="padding:0 16px;display:flex;flex-direction:column;gap:16px">
+            <div class="group">
+              <div class="row"><div class="t"><b>Praticien</b></div><span class="v">Dr Paul Mbarga</span></div>
+              <div class="row"><div class="t"><b>Service</b></div><span class="v">Consultation</span></div>
+              <div class="row"><div class="t"><b>Rappels</b></div><span class="v">E-mail</span></div>
+            </div>
+            <div class="btn primary" style="height:46px;font-size:16px">Arrivée du patient</div>
+            <div class="group">
+              <div class="row"><div class="t"><b style="color:var(--blue)">Reprogrammer</b></div></div>
+              <div class="row"><div class="t"><b style="color:var(--blue)">Marquer absent</b></div></div>
+              <div class="row"><div class="t"><b style="color:var(--red)">Annuler le rendez-vous</b></div></div>
+            </div>
+            <p class="gfoot" style="margin:-8px 4px 0">« Arrivée du patient » lui donne un ticket prioritaire avec son numéro.</p>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Agenda de l'accueil</b>Une colonne par praticien, la ligne rouge de l'heure actuelle, les rendez-vous arrivés en vert, absents en gris, une demande à traiter en orange pointillé. Un praticien en congé a sa colonne hachurée. Le détail à droite porte une seule action principale : « Arrivée du patient ».</figcaption>
+  </figure>
+
+  <!-- D2 Demandes -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/desk/reception/…/appointments?view=requests</span></div>
+      <div class="app" style="grid-template-columns:360px minmax(0,1fr)">
+        <section class="master">
+          <div class="mhead"><span class="crumb"><svg><use href="#i-back"/></svg>Rendez-vous</span><h3>Demandes</h3><div style="font-size:14px;color:#A3550A;font-weight:600">3 en attente de réponse</div></div>
+          <div class="mlist">
+            <div class="mrow on"><span class="sq" style="background:#F58B1F"><svg><use href="#i-cal"/></svg></span><div class="t"><b>Mer. 18 · 14:00</b><small>Consultation · Dr Mbarga · reçue à 12:11</small></div></div>
+            <div class="mrow"><span class="sq" style="background:#F58B1F"><svg><use href="#i-cal"/></svg></span><div class="t"><b>Jeu. 19 · le matin</b><small>Pédiatrie · peu importe · reçue à 11:02</small></div></div>
+            <div class="mrow"><span class="sq" style="background:#F58B1F"><svg><use href="#i-cal"/></svg></span><div class="t"><b>Ven. 20 · 09:30</b><small>Consultation · Dr Nkeng · reçue hier</small></div></div>
+          </div>
+          <p class="gfoot" style="margin:6px 26px">Coordonnées vérifiées par un code (e-mail ou WhatsApp). La réponse part sur le même canal.</p>
+        </section>
+        <section class="detail">
+          <div class="dhead"><div><div class="over">Demande · reçue à 12:11</div><h3>Mercredi 18 novembre · 14:00</h3></div></div>
+          <div class="cols">
+            <div class="stack">
+              <div class="group">
+                <div class="row"><div class="t"><b>Nom</b></div><span class="v">Leonel Lontsi</span></div>
+                <div class="row"><div class="t"><b>E-mail</b></div><span class="v">l•••@gmail.com</span></div>
+                <div class="row"><div class="t"><b>Téléphone</b></div><span class="v">6 •• •• •• 16</span></div>
+                <div class="row"><div class="t"><b>Service</b></div><span class="v">Consultation générale</span></div>
+                <div class="row"><div class="t"><b>Praticien souhaité</b></div><span class="v">Dr Paul Mbarga</span></div>
+              </div>
+              <div class="btn primary" style="height:50px;font-size:16px">Confirmer · 14:00 avec Dr Mbarga</div>
+              <p class="gfoot" style="margin-top:-10px">Le patient reçoit la confirmation par e-mail, puis les rappels habituels.</p>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Proposer un autre créneau</div>
+              <div class="group"><div class="slots"><span>14:30</span><span>15:00</span><span class="on">15:30</span><span>16:00</span><span>16:30</span></div><div class="row" style="border-top:.5px solid var(--sep)"><div class="t"><b>Autre jour</b></div><span class="v">Jeu. 19 nov.</span><svg class="chev"><use href="#i-chev"/></svg></div></div>
+              <span class="tbtn" style="height:44px;justify-content:center;font-size:15px">Proposer mer. 18 à 15:30 avec Dr Mbarga</span>
+              <div class="group"><div class="danger">Refuser</div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Demandes de rendez-vous</b>Une demande à la fois. Confirmer le créneau demandé est l'action principale ; proposer un autre créneau est secondaire, avec la phrase exacte de ce qui sera proposé. « Refuser » demande un motif facultatif.</figcaption>
+  </figure>
+
+  <!-- D3 Poste hors ligne + raccourcis -->
+  <div class="pair2">
+  <figure style="max-width:760px">
+    <div class="scroll"><div class="win" style="width:740px">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/desk/counter/cabinet-1</span></div>
+      <div style="padding:18px 22px 24px;display:flex;flex-direction:column;gap:14px">
+        <div class="dhead"><div><div class="over">Makepe · Dr Paul Mbarga</div><h3 style="margin:2px 0 0;font-size:28px;font-weight:700">Cabinet 1</h3></div><span class="chip green" style="font-size:13px">Ouvert</span></div>
+        <div class="banner"><svg><use href="#i-cloud"/></svg><div>Hors ligne · 2 actions en attente<small>Continuez normalement : les actions seront envoyées au retour du réseau.</small></div></div>
+        <div class="hero2"><div class="over">Client en cours</div><div class="tk">C-051</div><div class="meta"><span>Durée du service <b class="num" style="color:var(--label)">06:12</b></span><span>Consultation générale</span></div></div>
+        <div class="bigbtn">Terminer et alerter le suivant <span class="kbd" style="background:rgba(255,255,255,.18);color:#fff">Espace</span></div>
+        <div class="secbtns"><span>Rappeler</span><span>Transférer</span><span class="red">Absent</span></div>
+      </div>
+    </div></div>
+    <figcaption><b>Poste hors ligne</b>Un bandeau orange compte les actions en attente ; rien n'est bloqué. Le bouton principal montre son raccourci clavier.</figcaption>
+  </figure>
+
+  <figure style="max-width:440px">          <div class="kbsheet">
+            <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">Raccourcis clavier</b><span style="color:var(--blue);font-weight:600">OK</span></div>
+            <div class="group">
+              <div class="row"><span class="kbd">Espace</span><div class="t"><b style="font-size:15px">Action principale</b></div></div>
+              <div class="row"><span class="kbd">A</span><div class="t"><b style="font-size:15px">Admettre le patient alerté</b></div></div>
+              <div class="row"><span class="kbd">R</span><div class="t"><b style="font-size:15px">Rappeler</b></div></div>
+              <div class="row"><span class="kbd">T</span><div class="t"><b style="font-size:15px">Transférer</b></div></div>
+              <div class="row"><span class="kbd">X</span><div class="t"><b style="font-size:15px">Absent (avec confirmation)</b></div></div>
+              <div class="row"><span class="kbd">P</span><div class="t"><b style="font-size:15px">Pause / Reprendre</b></div></div>
+            </div>
+            <p class="gfoot" style="margin:0 4px">Actifs quand aucun champ n'est en cours de saisie. Un raccourci indisponible ne fait rien.</p>
+          </div>
+        
+    <figcaption><b>Raccourcis clavier</b>« ? » ouvre cette fenêtre. Les lettres définitives restent celles déjà programmées dans l'app.</figcaption>
+  </figure>
+
+  <!-- D4 Mode compact -->
+  <figure style="max-width:320px">
+    <div class="compactwin">
+      <div class="tb"><i></i><i></i><i></i><span style="font-size:11px;color:var(--label2);margin-left:6px">Cabinet 1 · NextIn</span></div>
+      <div class="cb">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="over">En cours</span><span class="num" style="font-size:14px;color:var(--label2)">06:12</span></div>
+        <div class="tk">C-051</div>
+        <div style="font-size:13px;color:var(--label2)">À suivre : C-052 · P-020 · 5 en attente</div>
+        <div class="btn primary" style="height:42px;font-size:15px">Terminer et alerter</div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--blue);font-weight:600"><span>Rappeler</span><span>Transférer</span><span style="color:var(--red)">Absent</span></div>
+      </div>
+    </div>
+    <figcaption><b>Mode compact</b>Une petite fenêtre à placer à côté du logiciel médical : numéro, chrono, bouton principal. « Quitter le mode compact » dans le menu.</figcaption>
+  </figure>
+  </div>
+
+  <h2 class="part">Téléphone</h2>
+  <div class="grid">
+    <!-- P1 Choix du poste -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Établissements</span><span></span></div>
+        <div class="body" style="gap:14px">
+          <div><h2 class="large">Postes</h2><p class="sub">Choisissez votre poste pour la journée.</p></div>
+          <div class="ghead">Makepe</div>
+          <div class="group ic">
+            <div class="row"><span class="sq" style="background:#0D2C54"><svg><use href="#i-users"/></svg></span><div class="t"><b>Accueil</b><small>Créer des tickets, priorités, réorientations</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="ghead">Guichets et cabinets</div>
+          <div class="group ic">
+            <div class="row"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Cabinet 1</b><small>Dr Paul Mbarga</small></div><span class="chip green">Ouvert</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Cabinet 2</b><small>Dr Samuel Nkeng</small></div><span class="chip">Fermé</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="sq" style="background:#8E5BC7"><svg><use href="#i-door"/></svg></span><div class="t"><b>Laboratoire 1</b></div><span class="chip orange">En pause</span><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Choix du poste</b>L'accueil d'abord, puis les guichets et cabinets avec leur état. Un agent ne voit que les postes auxquels il a droit.</figcaption>
+    </figure>
+
+    <!-- P2 Nouveau ticket -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.4;padding-top:30px"><h2 class="large">Accueil</h2></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:56px">
+          <div class="grab"></div>
+          <div class="sh"><span class="c">Annuler</span><b>Nouveau ticket</b><span style="width:50px"></span></div>
+          <div class="body" style="gap:12px;padding-top:4px">
+            <div class="group" style="--inset:56px">
+              <div class="row"><span class="letter" style="background:#1A6BB5">C</span><div class="t"><b>Consultation</b></div><svg class="check"><use href="#i-check"/></svg></div>
+              <div class="row"><span class="letter" style="background:#15A05A">P</span><div class="t"><b>Pédiatrie</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+              <div class="row"><span class="letter" style="background:#8E5BC7">L</span><div class="t"><b>Laboratoire</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+            </div>
+            <div class="group">
+              <div class="row"><div class="t"><b>Praticien</b></div><span class="v">Premier disponible</span><svg class="chev"><use href="#i-chev"/></svg></div>
+              <div class="field"><label>Nom du client</label><span class="ph">Prénom et nom</span></div>
+              <div class="row"><div class="t"><b>Accès prioritaire</b></div><span class="sw"></span></div>
+              <div class="field"><label>WhatsApp du patient (facultatif)</label><span class="ph">6 77 12 34 56</span></div>
+            </div>
+          </div>
+          <div class="bottom"><button class="btn primary">Créer le ticket</button></div>
+        </div>
+      </div></div>
+      <figcaption><b>Nouveau ticket</b>Pour un patient sans smartphone. Le consentement WhatsApp n'apparaît qu'après la saisie d'un numéro (« Demandez-lui son accord à voix haute »).</figcaption>
+    </figure>
+
+    <!-- P3 Ticket créé -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span></span><span></span><span class="act">Fait</span></div>
+        <div class="body" style="gap:14px;align-items:center;text-align:center;padding-top:30px">
+          <div class="success"><svg><use href="#i-check"/></svg></div>
+          <div class="over">Ticket créé</div>
+          <div class="num" style="font-size:72px;font-weight:700;color:var(--navy);line-height:1">C-053</div>
+          <p class="sub" style="margin:0">Consultation générale · 4 personnes devant</p>
+        </div>
+        <div class="bottom" style="display:flex;flex-direction:column;gap:8px"><button class="btn primary"><svg><use href="#i-printer"/></svg>Imprimer le ticket</button><button class="btn tinted">Nouveau ticket</button></div>
+      </div></div>
+      <figcaption><b>Ticket créé</b>Le numéro en très grand pour le dire au patient. Imprimer est l'action principale ; « Nouveau ticket » enchaîne.</figcaption>
+    </figure>
+
+    <!-- P4 Feuille du ticket -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.4;padding-top:30px"><h2 class="large">Accueil</h2></div>
+        <div class="dim"></div>
+        <div class="actsheet">
+          <div class="grp">
+            <div class="ttl2"><b>Ticket C-052</b>Consultation · à distance · en route</div>
+            <div class="it"><svg><use href="#i-star"/></svg>Rendre prioritaire</div>
+            <div class="it"><svg><use href="#i-user"/></svg>Saisir le nom</div>
+            <div class="it"><svg><use href="#i-check"/></svg>Confirmer la présence</div>
+            <div class="it"><svg><use href="#i-swap"/></svg>Réorienter vers un autre service</div>
+            <div class="it"><svg><use href="#i-down"/></svg>Reculer de 3 places</div>
+            <div class="it red"><svg><use href="#i-x"/></svg>Annuler le ticket</div>
+          </div>
+          <div class="cancel">Fermer</div>
+        </div>
+      </div></div>
+      <figcaption><b>Actions sur un ticket</b>Toucher un ticket de la file ouvre cette feuille. « Confirmer la présence » n'apparaît que pour un ticket à distance. Sur ordinateur, même liste dans le menu « … ».</figcaption>
+    </figure>
+
+    <!-- P5 Motif de priorité -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.4;padding-top:30px"><h2 class="large">Accueil</h2></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:200px">
+          <div class="grab"></div>
+          <div class="sh"><span class="c">Annuler</span><b>Motif · C-052</b><span class="ok">OK</span></div>
+          <div class="body" style="gap:12px;padding-top:4px">
+            <div class="group">
+              <div class="row"><div class="t"><b>Rendez-vous</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+              <div class="row"><div class="t"><b>Grossesse</b></div><svg class="check"><use href="#i-check"/></svg></div>
+              <div class="row"><div class="t"><b>Personne âgée</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+              <div class="row"><div class="t"><b>Handicap</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+              <div class="row"><div class="t"><b>Autre</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+            </div>
+            <p class="gfoot">La priorité est enregistrée dans le journal avec son motif.</p>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Motif de priorité</b>Un motif obligatoire, en liste. Le ticket passe en tête de son service avec une étoile.</figcaption>
+    </figure>
+
+    <!-- P6 Nom du client -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.4;padding-top:30px"><h2 class="large">Accueil</h2></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:230px">
+          <div class="grab"></div>
+          <div class="sh"><span class="c">Annuler</span><b>Nom · C-052</b><span class="ok">Enregistrer</span></div>
+          <div class="body" style="gap:12px;padding-top:4px">
+            <div class="group">
+              <div class="field"><label>Nom du client</label><span>Odile Manga</span></div>
+              <div class="field"><label>Âge</label><span>67</span></div>
+            </div>
+            <p class="gfoot">Visible uniquement par le personnel de l'agence : jamais sur l'écran TV, dans les annonces ni les messages.</p>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Nom du client</b>Nom et, selon le réglage de l'agence, l'âge ou le numéro de dossier. Le rappel de confidentialité est toujours visible.</figcaption>
+    </figure>
+
+    <!-- P7 Transférer -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.4;padding-top:30px"><h2 class="large">Cabinet 1</h2></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:170px">
+          <div class="grab"></div>
+          <div class="sh"><span class="c">Annuler</span><b>Transférer vers</b><span style="width:50px"></span></div>
+          <div class="body" style="gap:12px;padding-top:4px">
+            <div class="group" style="--inset:56px">
+              <div class="row"><span class="letter" style="background:#8E5BC7">L</span><div class="t"><b>Laboratoire</b><small>2 en attente</small></div><svg class="check"><use href="#i-check"/></svg></div>
+              <div class="row"><span class="letter" style="background:#15A05A">P</span><div class="t"><b>Pédiatrie</b><small>1 en attente</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+              <div class="row"><span class="letter" style="background:#B7791F">K</span><div class="t"><b>Caisse</b><small>Personne en attente</small></div><svg class="check off"><use href="#i-check"/></svg></div>
+            </div>
+            <p class="gfoot">Le patient garde sa priorité et son ancienneté ; son lien de suivi reste valable.</p>
+          </div>
+          <div class="bottom"><button class="btn primary">Transférer C-051 au Laboratoire</button></div>
+        </div>
+      </div></div>
+      <figcaption><b>Transférer</b>Les autres services de l'agence avec leur file. Le bouton dit exactement ce qui va se passer.</figcaption>
+    </figure>
+
+    <!-- P8 Absence ou retard -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.4;padding-top:30px"><h2 class="large">Accueil</h2></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:150px">
+          <div class="grab"></div>
+          <div class="sh"><span class="c">Annuler</span><b>Absence ou retard</b><span style="width:50px"></span></div>
+          <div class="body" style="gap:12px;padding-top:4px">
+            <div class="group"><div class="row"><span class="av sm" style="background:#1A6BB5">PM</span><div class="t"><b>Dr Paul Mbarga</b><small>Cabinet 1 · 5 patients attitrés</small></div></div></div>
+            <div class="group" style="padding:10px 12px"><div class="seg"><span>Absent</span><span class="on">En retard</span></div></div>
+            <div class="group">
+              <div class="row"><div class="t"><b>Retour prévu à</b></div><span class="time">11:00</span></div>
+              <div class="field"><label>Motif (facultatif)</label><span class="ph">Embouteillages</span></div>
+            </div>
+            <p class="gfoot">Ses patients l'attendent ; leur attente estimée tient compte de l'heure de retour.</p>
+          </div>
+          <div class="bottom"><button class="btn primary">Enregistrer</button></div>
+        </div>
+      </div></div>
+      <figcaption><b>Absence ou retard</b>« Absent » réoriente ses patients vers un collègue de même spécialité, sans perte de place ; « En retard » les garde et ajuste l'attente.</figcaption>
+    </figure>
+
+    <!-- P9 Accueil avec demande d'aide -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Postes</span><span class="plusbtn" aria-label="Nouveau ticket"><svg><use href="#i-plus"/></svg></span></div>
+        <div class="body" style="gap:12px">
+          <div><div class="over">Makepe</div><h2 class="large">Accueil</h2></div>
+          <div class="helpbox"><span class="sq" style="background:var(--orange)"><svg><use href="#i-hand"/></svg></span><div class="t"><b>Demande d'aide · C-047</b><small>depuis 10:41</small></div><span class="done">Traité</span></div>
+          <div class="ghead">File d'attente · 7</div>
+          <div class="group" style="--inset:56px">
+            <div class="row"><span class="letter" style="background:#1A6BB5">C</span><div class="t"><b class="num" style="font-weight:700">C-047 <span class="chip orange" style="font-family:var(--font)">Aide</span></b><small>Sur place · 18 min</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="letter" style="background:#1A6BB5">C</span><div class="t"><b class="num" style="font-weight:700">C-048 ★</b><small>Grossesse · 12 min</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="letter" style="background:#15A05A">P</span><div class="t"><b class="num" style="font-weight:700">P-020</b><small>À distance · en route</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Demande d'aide</b>Quand un patient touche « Demander de l'aide » sur son ticket, un encadré orange apparaît en haut de l'accueil, avec son et vibration selon les réglages de l'appareil. « Traité » le fait disparaître.</figcaption>
+    </figure>
+
+    <!-- P10 Absent (alerte) -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="opacity:.5;padding-top:40px"><div class="over">Client en cours</div><div class="num" style="font-size:56px;font-weight:700;color:var(--navy)">C-051</div></div>
+        <div class="dim"></div>
+        <div class="alert"><b>Marquer C-051 absent ?</b><p>Le ticket quitte la file ; le patient pourra en reprendre un.</p><div class="abtns"><span>Annuler</span><span class="red">Absent</span></div></div>
+      </div></div>
+      <figcaption><b>Marquer absent</b>Seule action du poste qui demande une confirmation, car elle fait perdre sa place au patient.</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="part">Ticket imprimé</h2>
+  <div class="pair2">
+    <figure style="max-width:300px">
+      <div class="paper">
+        <div class="pn">DOUALA CLINIC</div>
+        <div>Makepe</div>
+        <hr>
+        <div class="svc">Consultation générale</div>
+        <div class="big">C-053</div>
+        <div>Devant vous : 4</div>
+        <div>Attente estimée : ≈ 25 min</div>
+        <hr>
+        <div class="qrp"><svg><use href="#qrimg"/></svg></div>
+        <div>Suivez votre tour sur votre téléphone : scannez ce code.</div>
+        <hr>
+        <div>Gardez ce ticket : votre numéro sera appelé.</div>
+        <div style="margin-top:6px">Pris le 18/11/2026 à 10:42</div>
+        <div style="margin-top:8px;font-family:var(--font);font-size:10px">NextIn by Wintek</div>
+      </div>
+      <figcaption><b>Ticket 80 mm</b>Noir sur blanc pour l'imprimante thermique. Le numéro en très grand, puis l'attente, le QR de suivi et la date. Version 58 mm : mêmes éléments, QR plus petit. Aucun nom de patient.</figcaption>
+    </figure>
+  </div>
+</div>

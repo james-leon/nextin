@@ -1,0 +1,300 @@
+<title>NextIn E-mails v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 · maquette 26 : un seul gabarit d'e-mail pour tout NextIn. Les e-mails restent toujours clairs (couleurs fixes), la page autour suit le thème. */
+:root{--page:#E5E5EA;--pagetext:#000;--pagetext2:#6C6C70;--frame:#FFFFFF;--framesep:rgba(60,60,67,.18)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--pagetext:#fff;--pagetext2:rgba(235,235,245,.62);--frame:#1C1C1E;--framesep:rgba(84,84,88,.6);color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--pagetext:#fff;--pagetext2:rgba(235,235,245,.62);--frame:#1C1C1E;--framesep:rgba(84,84,88,.6);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--pagetext);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.page{max-width:1400px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:30px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em}
+.intro p{margin:6px 0 0;color:var(--pagetext2);font-size:15px;max-width:80ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--frame);border-radius:999px;padding:7px 12px}
+h2.part{margin:0 0 -12px;font-size:22px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:28px 22px}
+figure{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+figcaption{font-size:13px;color:var(--pagetext2);line-height:1.45}
+figcaption b{display:block;color:var(--pagetext);font-size:15px}
+.mail{background:var(--frame);border-radius:14px;overflow:hidden;box-shadow:0 0 0 .5px var(--framesep)}
+.mhead{padding:12px 14px;border-bottom:.5px solid var(--framesep);display:flex;gap:10px;align-items:center}
+.mhead .av{width:36px;height:36px;border-radius:50%;flex:none;overflow:hidden}
+.mhead .av svg{width:100%;height:100%}
+.mhead .who{flex:1;min-width:0;font-size:13px}
+.mhead .who b{display:block;font-size:14px}
+.mhead .who span{color:var(--pagetext2)}
+.mhead .subj{font-size:15px;font-weight:600;padding:10px 14px 0;color:var(--pagetext)}
+.subjrow{padding:12px 14px 0;font-size:16px;font-weight:600}
+/* ===== Gabarit de l'e-mail (couleurs fixes) ===== */
+.em{background:#F7F9FC;padding:20px 14px 16px;color:#0B1B2B;font-size:15px}
+.em .brand{display:flex;align-items:center;gap:8px;padding:0 6px 14px;font-weight:800;color:#0D2C54;font-size:18px}
+.em .brand svg{width:26px;height:26px}
+.em .card{background:#fff;border:1px solid #E8EDF4;border-radius:20px;padding:24px 22px}
+.em h3{margin:0 0 8px;font-size:21px;line-height:1.25;font-weight:700;color:#0B1B2B}
+.em .lead{margin:0 0 16px;font-size:15px;line-height:1.5;color:#3C4A5C}
+.em .code{margin:0 0 16px;padding:16px 10px;border-radius:14px;background:#F1F4F9;text-align:center;font-size:32px;line-height:1;font-weight:800;letter-spacing:9px;color:#0D2C54;font-family:ui-rounded,"SF Pro Rounded",-apple-system,sans-serif}
+.em .note{margin:0 0 10px;font-size:13px;line-height:1.5;color:#5B6676}
+.em .btn{display:inline-block;padding:12px 20px;border-radius:12px;background:#0D2C54;color:#fff;font-size:15px;font-weight:600;text-decoration:none;margin-top:4px}
+.em .btn2{display:inline-block;padding:12px 18px;border-radius:12px;background:#E8F0F9;color:#1A6BB5;font-size:15px;font-weight:600;margin-top:4px;margin-left:6px}
+.em .rows{border:1px solid #E8EDF4;border-radius:14px;margin:0 0 16px;overflow:hidden}
+.em .rows div{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;font-size:14px}
+.em .rows div + div{border-top:1px solid #E8EDF4}
+.em .rows span:first-child{color:#5B6676}
+.em .rows span:last-child{font-weight:600;text-align:right}
+.em .rows .tot span{font-size:15px;color:#0B1B2B;font-weight:700}
+.em .date{display:flex;gap:14px;align-items:center;border:1px solid #E8EDF4;border-radius:16px;padding:12px;margin:0 0 16px}
+.em .date .cal{width:64px;flex:none;text-align:center;background:#F1F4F9;border-radius:12px;padding:7px 0}
+.em .date .cal small{display:block;font-size:11px;font-weight:700;color:#C4140A;text-transform:uppercase}
+.em .date .cal b{display:block;font-size:26px;line-height:1.1;font-family:ui-rounded,-apple-system,sans-serif}
+.em .date .cal i{display:block;font-style:normal;font-size:11px;color:#5B6676;text-transform:uppercase;font-weight:600}
+.em .date .t b{display:block;font-size:20px;color:#0D2C54;font-family:ui-rounded,-apple-system,sans-serif}
+.em .date .t span{font-size:13px;color:#3C4A5C;line-height:1.4}
+.em .banner{border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.4;margin:0 0 14px}
+.em .banner.orange{background:#FDF0E3;color:#7A3E06}
+.em .banner.green{background:#E3F4EA;color:#0E5C34}
+.em .banner.blue{background:#E8F0F9;color:#0D2C54}
+.em .gauge{margin:0 0 16px}
+.em .gauge .bar{height:8px;border-radius:99px;background:#E8EDF4;overflow:hidden}
+.em .gauge .bar i{display:block;height:100%;background:#F58B1F;border-radius:99px}
+.em .gauge .lb{display:flex;justify-content:space-between;font-size:13px;color:#5B6676;margin-top:6px}
+.em .foot{padding:12px 6px 0;font-size:11px;line-height:1.5;color:#5B6676}
+.em .foot a{color:#1A6BB5}
+.em .slot{display:flex;justify-content:space-between;align-items:center;border:1px solid #E8EDF4;border-radius:12px;padding:10px 12px;margin:0 0 8px;font-size:14px}
+.em .slot.old{color:#5B6676;text-decoration:line-through}
+.em .slot.new{border:2px solid #1A6BB5}
+.em .slot b{font-family:ui-rounded,-apple-system,sans-serif}
+.spec{background:var(--frame);border-radius:14px;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 24px;font-size:14px;line-height:1.45}
+.spec b{display:block;font-size:13px;color:var(--pagetext2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;font-weight:600}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px;box-shadow:0 0 0 .5px rgba(0,0,0,.2)}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+</svg>
+
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — E-mails v2</h1>
+    <p>Un seul gabarit pour tous les e-mails : connexion, invitation, rendez-vous, factures et rappels d'abonnement. Il reprend celui qui part déjà pour les demandes de rendez-vous (logo, carte blanche, code en grand, bouton bleu nuit) et le complète. Les e-mails restent toujours en clair : beaucoup de messageries gèrent mal le mode sombre.</p>
+    <div class="changes"><span>Icône NextIn à côté du nom</span><span>Un titre, une phrase, une action</span><span>Carte date pour les rendez-vous</span><span>Encadrés orange, vert, bleu</span><span>Messages de compte enfin en HTML</span></div>
+  </div>
+
+  <div class="spec">
+    <div><b>Structure</b>Logo + « NextIn » · carte blanche (rayon 20 px) · titre 21 px · phrase d'introduction · contenu · une action · pied de page gris.</div>
+    <div><b>Couleurs</b><span class="sw" style="background:#0D2C54"></span>Bleu nuit : titres et bouton · <span class="sw" style="background:#F1F4F9"></span>fond du code · <span class="sw" style="background:#F58B1F"></span>orange : attention seulement.</div>
+    <div><b>Texte brut</b>Chaque e-mail a sa version texte (même contenu, liens en clair), comme aujourd'hui.</div>
+    <div><b>Langue</b>Français ou anglais selon la langue de l'établissement ou du patient ; objet compris.</div>
+  </div>
+
+  <h2 class="part">Compte et connexion</h2>
+  <div class="grid">
+    <!-- 1 Code -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 12:12</span></div></div>
+        <div class="subjrow">Votre code de connexion NextIn</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>Votre code de connexion</h3>
+            <p class="lead">Saisissez ce code dans NextIn pour vous connecter.</p>
+            <div class="code">713031</div>
+            <p class="note">Il expire dans 10 minutes. Pour votre sécurité, ne le communiquez à personne.</p>
+            <p class="note">Vous n'avez rien demandé ? Ignorez cet e-mail : personne ne peut se connecter sans ce code.</p>
+          </div>
+          <div class="foot">NextIn par Wintek · Douala, Cameroun<br>Vous recevez cet e-mail car une connexion a été demandée avec cette adresse.</div>
+        </div>
+      </div>
+      <figcaption><b>Code (connexion, inscription, rendez-vous)</b>Même modèle pour le code de connexion, le code d'inscription et le code d'une demande de rendez-vous (déjà en ligne). Seuls le titre et la phrase changent. L'icône ronde dans la messagerie viendra de la photo du compte Google <code>nextin@</code>.</figcaption>
+    </figure>
+
+    <!-- 2 Invitation -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 09:30</span></div></div>
+        <div class="subjrow">Douala Clinic vous invite sur NextIn</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>Rejoignez Douala Clinic</h3>
+            <p class="lead">Dr Ngo Biyong vous invite à rejoindre l'équipe de Douala Clinic sur NextIn.</p>
+            <div class="rows"><div><span>Rôle</span><span>Agent / praticien</span></div><div><span>Agence</span><span>Makepe</span></div></div>
+            <a class="btn">Accepter l'invitation</a>
+            <p class="note" style="margin-top:14px">Le lien est valable 7 jours et ne fonctionne qu'une fois.</p>
+          </div>
+          <div class="foot">NextIn par Wintek · Douala, Cameroun<br>Vous ne connaissez pas cet établissement ? Ignorez cet e-mail.</div>
+        </div>
+      </div>
+      <figcaption><b>Invitation du personnel</b>Qui invite, pour quel rôle et quelle agence, puis un seul bouton. Aussi pour l'invitation du responsable créée depuis la console Wintek.</figcaption>
+    </figure>
+
+    <!-- 3 Mot de passe / sécurité -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 22:14</span></div></div>
+        <div class="subjrow">Nouvelle connexion à votre compte NextIn</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>Nouvelle connexion</h3>
+            <p class="lead">Votre compte administrateur vient d'être utilisé sur un nouvel appareil.</p>
+            <div class="rows"><div><span>Appareil</span><span>Chrome sur Windows</span></div><div><span>Date</span><span>18 nov. 2026 · 22:13</span></div></div>
+            <div class="banner orange">Ce n'est pas vous ? Changez votre mot de passe tout de suite et déconnectez cet appareil.</div>
+            <a class="btn">Vérifier mes appareils</a>
+          </div>
+          <div class="foot">NextIn par Wintek · Alerte de sécurité automatique.</div>
+        </div>
+      </div>
+      <figcaption><b>Alerte de sécurité</b>Pour un nouvel appareil, la double authentification désactivée ou un nouvel administrateur. Jamais d'adresse IP. Le bouton mène à « Appareils connectés ».</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="part">Rendez-vous (patients)</h2>
+  <div class="grid">
+    <!-- 4 Confirmé -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 12:19</span></div></div>
+        <div class="subjrow">Rendez-vous confirmé — Douala Clinic, Makepe</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>Rendez-vous confirmé</h3>
+            <p class="lead">Douala Clinic a accepté votre demande.</p>
+            <div class="date"><div class="cal"><small>Mer.</small><b>18</b><i>Nov.</i></div><div class="t"><b>14:00</b><span>Consultation générale · Dr Paul Mbarga<br>Douala Clinic – Makepe</span></div></div>
+            <p class="note">À votre arrivée, présentez-vous à l'accueil ou scannez le QR code de la salle d'attente.</p>
+            <a class="btn">Voir mon rendez-vous</a><a class="btn2">Ajouter au calendrier</a>
+          </div>
+          <div class="foot">NextIn par Wintek · Vous recevez ce message à la suite de votre demande de rendez-vous. Rappels la veille et 2 h avant.</div>
+        </div>
+      </div>
+      <figcaption><b>Rendez-vous confirmé</b>La carte date reprend celle de la page « Ma demande ». « Ajouter au calendrier » joint le fichier .ics.</figcaption>
+    </figure>
+
+    <!-- 5 Autre créneau -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 12:25</span></div></div>
+        <div class="subjrow">Un autre créneau vous est proposé — Douala Clinic</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>Un autre créneau vous est proposé</h3>
+            <p class="lead">Le créneau demandé n'est plus libre. Douala Clinic vous propose :</p>
+            <div class="slot old"><span>Demandé</span><b>Mer. 18 nov. · 14:00</b></div>
+            <div class="slot new"><span>Proposé</span><b>Mer. 18 nov. · 15:30</b></div>
+            <p class="note" style="margin-top:12px">Avec Dr Paul Mbarga · Consultation générale</p>
+            <a class="btn">Voir la proposition</a>
+          </div>
+          <div class="foot">NextIn par Wintek · Vous pouvez accepter ce créneau ou en choisir un autre depuis la page de votre demande.</div>
+        </div>
+      </div>
+      <figcaption><b>Autre créneau</b>L'ancien créneau barré, le nouveau encadré de bleu. Même modèle pour « Rendez-vous déplacé ».</figcaption>
+    </figure>
+
+    <!-- 6 Rappel -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 18:00</span></div></div>
+        <div class="subjrow">Rappel : rendez-vous demain à 14:00</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>C'est demain</h3>
+            <p class="lead">Rappel de votre rendez-vous chez Douala Clinic.</p>
+            <div class="date"><div class="cal"><small>Jeu.</small><b>19</b><i>Nov.</i></div><div class="t"><b>14:00</b><span>Consultation générale · Dr Paul Mbarga<br>Rond-point Makepe, face EEC</span></div></div>
+            <a class="btn">Voir mon rendez-vous</a>
+            <p class="note" style="margin-top:14px">Un empêchement ? Annulez depuis la page du rendez-vous pour libérer le créneau.</p>
+          </div>
+          <div class="foot">NextIn par Wintek · Rappel automatique.</div>
+        </div>
+      </div>
+      <figcaption><b>Rappel</b>La veille et 2 h avant (« Dans 2 heures »). Annulé ou refusé : même gabarit, titre neutre, sans carte date, bouton « Faire une nouvelle demande ».</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="part">Abonnement (directeurs)</h2>
+  <div class="grid">
+    <!-- 7 Paiement reçu -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 10:51</span></div></div>
+        <div class="subjrow">Paiement reçu · facture FAC-2026-000142</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <div class="banner green">Paiement reçu. Merci !</div>
+            <h3>Facture FAC-2026-000142</h3>
+            <p class="lead">L'abonnement de Douala Clinic est actif jusqu'au 31 décembre.</p>
+            <div class="rows"><div><span>Formule Business</span><span>59 900 FCFA</span></div><div><span>Payé le</span><span>18 nov. · MTN MoMo</span></div><div class="tot"><span>Total</span><span>59 900 FCFA</span></div></div>
+            <a class="btn">Télécharger la facture</a>
+          </div>
+          <div class="foot">Winner Teknology · RC/DLA/2021/A/1608 · NIU [à compléter]<br>Facture disponible à tout moment dans NextIn → Abonnement.</div>
+        </div>
+      </div>
+      <figcaption><b>Paiement reçu</b>Encadré vert, puis le détail. La facture PDF est la maquette 15. Les mentions légales viennent des réglages de la console.</figcaption>
+    </figure>
+
+    <!-- 8 Échéance -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 08:00</span></div></div>
+        <div class="subjrow">Échéance de votre abonnement NextIn le 1er décembre</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>Votre abonnement arrive à échéance</h3>
+            <p class="lead">Réglez la facture avant le 1er décembre pour que Douala Clinic continue sans interruption.</p>
+            <div class="rows"><div><span>Formule Business</span><span>Décembre</span></div><div class="tot"><span>À payer</span><span>59 900 FCFA</span></div></div>
+            <a class="btn">Payer 59 900 FCFA</a>
+            <p class="note" style="margin-top:14px">MTN MoMo ou Orange Money. Paiement en 1 minute, sans connexion.</p>
+          </div>
+          <div class="foot">NextIn par Wintek · Même rappel pour la fin de l'essai gratuit.</div>
+        </div>
+      </div>
+      <figcaption><b>Échéance et fin d'essai</b>Le bouton ouvre directement la page de paiement (maquette 21). Ton neutre, pas d'urgence inutile.</figcaption>
+    </figure>
+
+    <!-- 9 Impayé -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 08:00</span></div></div>
+        <div class="subjrow">Abonnement NextIn impayé : réglez-le pour éviter la lecture seule</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <div class="banner orange"><b>Facture impayée.</b> Le service continue jusqu'au 22 novembre, puis passe en lecture seule.</div>
+            <h3>Réglez votre abonnement</h3>
+            <p class="lead">Le paiement réactive tout immédiatement, même pendant les heures d'ouverture.</p>
+            <div class="rows"><div class="tot"><span>À payer</span><span>29 900 FCFA</span></div></div>
+            <a class="btn">Payer maintenant</a>
+          </div>
+          <div class="foot">NextIn par Wintek · Une question ? contact@wintekservices.com</div>
+        </div>
+      </div>
+      <figcaption><b>Impayé</b>L'orange signale l'attention, avec la date exacte et la conséquence. Suspension : même modèle, date de suppression des données.</figcaption>
+    </figure>
+
+    <!-- 10 Quota -->
+    <figure>
+      <div class="mail">
+        <div class="mhead"><span class="av"><svg><use href="#logo"/></svg></span><div class="who"><b>NextIn</b><span>nextin@wintekservices.com · 15:20</span></div></div>
+        <div class="subjrow">Quota de tickets bientôt atteint</div>
+        <div class="em">
+          <div class="brand"><svg><use href="#logo"/></svg>NextIn</div>
+          <div class="card">
+            <h3>80 % de vos tickets du mois utilisés</h3>
+            <p class="lead">Douala Clinic a émis 4 800 tickets sur 6 000 ce mois-ci.</p>
+            <div class="gauge"><div class="bar"><i style="width:80%"></i></div><div class="lb"><span>4 800 utilisés</span><span>6 000 inclus</span></div></div>
+            <p class="note">Rien ne s'arrête aujourd'hui. Si la limite est atteinte, la prise de ticket en ligne sera suspendue à partir du lendemain.</p>
+            <a class="btn">Ajouter 1 000 tickets</a><a class="btn2">Voir les formules</a>
+          </div>
+          <div class="foot">NextIn par Wintek · Alerte envoyée une fois par mois, à 80 % puis à 100 %.</div>
+        </div>
+      </div>
+      <figcaption><b>Quota</b>Une jauge et la règle en une phrase : jamais de blocage le jour même. Même modèle pour les messages WhatsApp.</figcaption>
+    </figure>
+  </div>
+</div>

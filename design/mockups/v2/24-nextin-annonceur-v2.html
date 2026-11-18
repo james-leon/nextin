@@ -1,0 +1,689 @@
+<title>NextIn Espace annonceur v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 · maquette 20 : compléments des postes (choix du poste, agenda et demandes, feuilles d'action, absence, hors ligne, raccourcis, compact, ticket imprimé). Reprend la base de la maquette 17 : agences, services, guichets et cabinets, horaires, QR code. Barre latérale bleu nuit + maître-détail sur ordinateur ; listes groupées iOS sur téléphone. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000; --label2:#6C6C70; --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFF; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --green-text:#0E7A44; --red:#D70015; --tint:#E8F0F9;
+  --side:#0D2C54; --sidetext:rgba(255,255,255,.72); --sideon:rgba(255,255,255,.12); --frame:#1C1C1E; --chrome:#E9E9EE; --sel:#E8F0F9;
+  --switch:#34C759;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px;letter-spacing:-.005em}
+.page{max-width:1440px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:76ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px}
+h2.part{margin:0 0 -18px;font-size:22px;font-weight:700;letter-spacing:-.02em}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+figcaption{font-size:13px;color:var(--label2);text-align:center;max-width:70ch;line-height:1.45}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--num)}
+
+/* ===== Ordinateur ===== */
+.scroll{width:100%;overflow-x:auto;border-radius:14px}
+.win{width:1240px;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--sep);margin:0 auto}
+.bbar{height:34px;background:var(--chrome);display:flex;align-items:center;gap:7px;padding:0 14px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.bbar span{margin-left:14px;font-size:12px;color:var(--label2);background:var(--bg);border-radius:6px;padding:4px 14px;width:420px}
+.app{display:grid;grid-template-columns:232px 320px minmax(0,1fr);height:720px}
+.side{background:var(--side);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:16px}
+.sbrand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.sbrand svg{width:30px;height:30px}
+.sbrand b{font-size:16px;font-weight:700}
+.sbrand small{display:block;font-size:11px;color:var(--sidetext);font-weight:500}
+.org{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08)}
+.org .av{width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--num)}
+.org b{font-size:14px;font-weight:600;display:block}
+.org small{font-size:12px;color:var(--sidetext)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:var(--sidetext);font-size:14px;font-weight:500}
+.nav a.on{background:var(--sideon);color:#fff}
+.nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.45);padding:12px 10px 4px}
+.nav .count{margin-left:auto;font-size:12px;background:var(--orange);color:#fff;border-radius:999px;padding:1px 7px;font-weight:600}
+.side .foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;color:var(--sidetext)}
+.side .foot .av{width:28px;height:28px;border-radius:50%;background:#2A6FB5;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* Panneau liste (maître) */
+.master{border-right:.5px solid var(--sep);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.mhead{padding:18px 16px 10px;display:flex;flex-direction:column;gap:12px}
+.mhead .row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.crumb{font-size:13px;color:var(--blue);display:flex;align-items:center;gap:2px}
+.crumb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mhead h3{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.plusbtn{width:32px;height:32px;border-radius:50%;background:var(--tint);color:var(--blue);display:grid;place-items:center}
+.plusbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.search{display:flex;align-items:center;gap:6px;height:36px;border-radius:10px;background:var(--fill);padding:0 10px;color:var(--label2);font-size:15px}
+.search svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.mlist{padding:0 10px 16px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px}
+.mrow.on{background:var(--sel)}
+.mrow .t{flex:1;min-width:0}
+.mrow .t b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .t small{display:block;font-size:13px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .meta{font-size:13px;color:var(--label2);white-space:nowrap}
+.thumb{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:#C9D6E3}
+.thumb svg{width:100%;height:100%}
+.mstats{margin:0 16px 12px;background:var(--cell);border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr)}
+.mstats div{padding:10px 12px}
+.mstats div + div{border-left:.5px solid var(--sep)}
+.mstats b{display:block;font-family:var(--num);font-size:20px;font-weight:700}
+.mstats small{font-size:12px;color:var(--label2)}
+
+/* Panneau détail */
+.detail{overflow:hidden;padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0;container-type:inline-size}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.dhead .over{font-size:13px;color:var(--label2)}
+.dhead h3{margin:2px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.saved{font-size:13px;color:var(--label2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.saved svg{width:15px;height:15px;stroke:var(--green-text);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{border-radius:16px;overflow:hidden;background:var(--cell)}
+.hero .ph{height:150px;background:#C9D6E3;position:relative}
+.hero .ph svg{width:100%;height:100%;display:block}
+.hero .ph .open{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);color:#000;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.hero .ph .open::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.hero .in{padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero .in b{font-size:17px;font-weight:600;display:block}
+.hero .in small{font-size:13px;color:var(--label2)}
+.tbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:9px;background:var(--tint);color:var(--blue);font-size:14px;font-weight:600;white-space:nowrap}
+.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:10px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
+
+/* Listes groupées iOS (communes) */
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -12px 16px}
+.gfoot{font-size:13px;color:var(--label2);margin:-12px 16px 0;line-height:1.4}
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.group.ic .row + .row::before{left:56px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2);white-space:nowrap}
+.row .v.blue{color:var(--blue)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.letter{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#fff;font-weight:700;font-size:15px;font-family:var(--num)}
+.sw{width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18)}
+.sw.on{background:var(--switch)}
+.sw.on::after{left:22px}
+.field{display:flex;flex-direction:column;gap:2px;padding:8px 14px;min-height:56px;justify-content:center;position:relative}
+.field + .field::before,.row + .field::before,.field + .row::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.field label{font-size:12px;color:var(--label2)}
+.field span{font-size:16px}
+.field span.ph{color:var(--label3)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.seg span{text-align:center;font-size:13px;font-weight:500;padding:6px 4px;border-radius:7px;white-space:nowrap}
+.seg span.on{background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.colors{display:flex;gap:10px;padding:12px 14px}
+.colors i{width:28px;height:28px;border-radius:50%}
+.colors i.on{box-shadow:0 0 0 2px var(--cell),0 0 0 4px var(--blue)}
+.check{width:22px;height:22px;flex:none;stroke:var(--blue);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.check.off{visibility:hidden}
+.danger{color:var(--red);font-size:16px;text-align:center;padding:13px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:3px 8px;background:var(--fill);color:var(--label2);white-space:nowrap}
+.chip.green{background:rgba(21,160,90,.14);color:var(--green-text)}
+.time{font-family:var(--num);font-size:15px;background:var(--fill);border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums}
+.qrbox{display:flex;gap:18px;align-items:center;padding:16px}
+.qrbox .qr{width:132px;height:132px;flex:none;border-radius:10px;background:#fff;padding:8px}
+.qrbox .qr svg{width:100%;height:100%}
+.code{font-family:var(--num);font-size:30px;font-weight:700;letter-spacing:.12em;color:var(--label)}
+.pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative}
+.pdf + .pdf::before{content:"";position:absolute;top:0;right:0;left:74px;border-top:.5px solid var(--sep)}
+.pdf .mini{width:46px;height:60px;border-radius:5px;background:var(--bg);box-shadow:0 0 0 .5px var(--sep);display:grid;place-items:center;flex:none}
+.pdf .mini svg{width:26px;height:26px}
+.pdf .t{flex:1;min-width:0}
+.pdf .t b{display:block;font-size:16px;font-weight:400}
+.pdf .t small{font-size:13px;color:var(--label2)}
+
+/* ===== Téléphones ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+.grid figure{width:100%;max-width:320px}
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.pnav{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 10px;flex:none;color:var(--blue);font-size:16px}
+.pnav .back{display:flex;align-items:center;gap:0}
+.pnav .back svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pnav .ttl{color:var(--label);font-weight:600;font-size:16px}
+.pnav .act{font-weight:600}
+.body{flex:1;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.sub{margin:4px 0 0;font-size:15px;color:var(--label2)}
+.bottom{flex:none;padding:10px 16px 24px;background:var(--bg);border-top:.5px solid var(--sep)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.photo169{border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#C9D6E3}
+.photo169 svg{width:100%;height:100%;display:block}
+.emptyst{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:0 8px}
+.emptyst .ill{width:72px;height:72px;border-radius:18px;background:var(--tint);display:grid;place-items:center;margin-bottom:6px}
+.emptyst .ill svg{width:36px;height:36px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.emptyst h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.emptyst p{margin:0 0 14px;font-size:15px;color:var(--label2);line-height:1.4}
+</style>
+<style>
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;flex:none}
+.av.sm{width:30px;height:30px;font-size:12px}
+.av.pending{background:var(--fill);color:var(--label2)}
+.av.pending svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chip.orange{background:rgba(245,139,31,.16);color:#A3550A}
+.sec2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--label2);padding:10px 10px 4px}
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;padding:12px 14px 14px}
+.week .d{font-size:12px;color:var(--label2);text-align:center;font-weight:600}
+.week .h{font-size:11px;color:var(--label2);text-align:right;padding-right:4px;height:30px;line-height:12px}
+.week .col{position:relative;border-radius:8px;background:var(--fill);min-height:186px}
+.week .blk{position:absolute;left:3px;right:3px;border-radius:6px;background:rgba(26,107,181,.16);border-left:3px solid var(--blue);font-size:11px;color:var(--blue);padding:3px 5px;font-weight:600;line-height:1.25}
+.week .blk.off{background:rgba(245,139,31,.16);border-left-color:var(--orange);color:#A3550A}
+.leave{display:flex;align-items:center;gap:12px;padding:10px 14px;position:relative}
+.leave + .leave::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.leave .t{flex:1}
+.leave .t b{display:block;font-size:16px;font-weight:400}
+.leave .t small{font-size:13px;color:var(--label2)}
+.linkrow{color:var(--blue)}
+.linkrow svg.i{color:var(--blue)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:var(--bg);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--label3);margin:7px auto 0}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:16px}
+.sheet .sh .c{color:var(--blue)}
+.sheet .sh b{font-weight:600}
+.sheet .sh .ok{color:var(--blue);font-weight:600}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.28)}
+.success{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:8px auto 4px}
+.success svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.center{text-align:center}
+.callout{display:flex;gap:12px;align-items:flex-start;background:var(--tint);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.4}
+.callout.green{background:rgba(21,160,90,.12)}
+.callout b{font-weight:600}
+.progress{display:flex;flex-direction:column;gap:8px}
+.progress .pt{display:flex;justify-content:space-between;font-size:15px}
+.progress .pt b{font-weight:600}
+.progress .pt span{color:var(--label2);font-family:var(--num)}
+.progress .bar{height:6px;border-radius:99px;background:var(--fill);overflow:hidden}
+.progress .bar i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.steps .row{min-height:52px}
+.steps .row + .row::before{left:54px}
+.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px;font-weight:700;color:var(--label2);box-shadow:inset 0 0 0 1.5px var(--label3);font-family:var(--num)}
+.dot.ok{background:var(--green);box-shadow:none}
+.dot.ok svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.dot.n{background:var(--navy);color:#fff;box-shadow:none}
+.steps .done .t b{color:var(--label2)}
+.steps .next .t b{font-weight:600}
+.stepline{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4}
+.urlpill{margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--cell);border-radius:8px;padding:7px 10px;color:var(--blue)}
+.boxes{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.boxes span{aspect-ratio:4/5;border-radius:10px;background:var(--cell);display:grid;place-items:center;font-family:var(--num);font-size:24px;font-weight:700;box-shadow:inset 0 0 0 1px var(--sep)}
+.boxes span.cur{box-shadow:inset 0 0 0 2px var(--blue)}
+.slider{flex:1;height:4px;border-radius:99px;background:var(--fill);position:relative}
+.slider i{position:absolute;left:0;top:0;bottom:0;background:var(--blue);border-radius:99px}
+.slider b{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.alert{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;background:var(--cell);border-radius:14px;text-align:center;overflow:hidden}
+.alert b{display:block;font-size:16px;font-weight:600;padding:18px 16px 4px}
+.alert p{margin:0;padding:0 16px 16px;font-size:13px;line-height:1.35}
+.abtns{display:grid;grid-template-columns:1fr 1fr;border-top:.5px solid var(--sep)}
+.abtns span{padding:11px;color:var(--blue);font-size:16px}
+.abtns span + span{border-left:.5px solid var(--sep)}
+.abtns .red{color:var(--red);font-weight:600}
+.tvprev{border-radius:12px;overflow:hidden;background:#F2F2F7;box-shadow:0 0 0 4px #1C1C1E;aspect-ratio:16/9;display:flex;flex-direction:column;color:#000}
+.tvtop{background:#0D2C54;color:#fff;display:flex;align-items:center;gap:6px;padding:6px 9px;font-size:11px;font-weight:600}
+.tvtop svg{width:14px;height:14px}
+.tvtop span{margin-left:auto;font-family:var(--num)}
+.tvbody{flex:1;display:grid;grid-template-columns:1.8fr 1fr;gap:6px;padding:7px}
+.tvcalls{background:#fff;border-radius:7px;padding:4px 8px;display:flex;flex-direction:column;justify-content:space-around}
+.tvcalls div{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(60,60,67,.12);padding-top:2px}
+.tvcalls div:first-child{border-top:0;box-shadow:inset 3px 0 0 #F58B1F;padding-left:6px;margin-left:-6px}
+.tvcalls b{font-family:var(--num);font-size:19px;color:#0D2C54}
+.tvcalls span{font-size:11px;font-weight:600}
+.tvad{background:#0E7A44;border-radius:7px;color:#fff;font-size:10px;display:flex;align-items:flex-end;padding:6px}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--green-text)}
+.live::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green)}
+.toast{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);background:var(--cell);border-radius:999px;padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);white-space:nowrap}
+.linkbox{font-size:13px;color:var(--label2);background:var(--fill);border-radius:8px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><circle cx="6" cy="8" r="2.2"/><circle cx="12" cy="9" r="1.8"/><circle cx="17" cy="10" r="1.4"/><path d="M3 18c1-3 5-3 6 0M10 18c.8-2.2 3.6-2.2 4.4 0M15.5 18c.6-1.6 2.6-1.6 3.2 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+  <symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.1a.3.3 0 0 1-.4.3L5 19V5.6a1 1 0 0 1 .8-1l6-1.3a1 1 0 0 1 1.2 1z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
+  <symbol id="i-slider" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.6"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></symbol>
+  <!-- Photo d'agence (illustration neutre : façade) -->
+  <symbol id="facade" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice"><rect width="400" height="225" fill="#BFD0E2"/><rect y="170" width="400" height="55" fill="#9AA9B8"/><rect x="70" y="40" width="260" height="140" fill="#F1EEE6"/><rect x="70" y="40" width="260" height="16" fill="#5B6B7D"/><rect x="90" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="152" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="214" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="276" y="72" width="36" height="34" fill="#4A5A6C"/><rect x="176" y="124" width="48" height="56" fill="#3B4A5A"/><rect x="92" y="124" width="60" height="30" fill="#1A6BB5"/><path d="M114 131v16M106 139h16" stroke="#fff" stroke-width="5"/><rect x="40" y="120" width="8" height="60" fill="#6E5B45"/><circle cx="44" cy="112" r="20" fill="#5E8C5A"/></symbol>
+  <!-- QR simplifié -->
+  <symbol id="qrimg" viewBox="0 0 29 29"><path fill="#000" d="M0 0h7v7H0zM2 2v3h3V2zM22 0h7v7h-7zm2 2v3h3V2zM0 22h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm4 0h3v2h-3zm5 2h2v3h-2zM9 4h3v3H9zm5 1h2v2h-2zM0 9h3v2H0zm5 0h4v2H5zm6 0h2v4h-2zm4 0h5v2h-5zm7 0h3v3h-3zm4 1h3v2h-3zM2 13h3v3H2zm6 0h2v2H8zm5 2h4v2h-4zm6-2h2v4h-2zm4 3h4v2h-4zM0 18h2v2H0zm4 0h5v2H4zm7 1h2v3h-2zm4 1h3v2h-3zm5 0h2v2h-2zm4 0h5v3h-5zM9 22h2v3H9zm4 2h4v2h-4zm6 0h2v5h-2zm4 3h6v2h-6zM9 27h3v2H9zm5 0h2v2h-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3.5 20.5l1.4-4.2A8.5 8.5 0 1 1 20.5 11.6z"/><path d="M9 9c0 3 2.5 5.5 5.5 5.5l1.3-1.3-2-1-.8.8a4 4 0 0 1-2.5-2.5l.8-.8-1-2z"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 21V4M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M3 3l18 18M8 8a5 5 0 0 0-1 9.9h10M17.5 17A4 4 0 0 0 16 9.5 6 6 0 0 0 11 6"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 12l4 4-4 4M21 16H7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16M6 14l6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-wifioff" viewBox="0 0 24 24"><path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M5 12.86a10 10 0 0 1 5.17-2.69M19 12.86a10 10 0 0 0-2-1.43M2 8.82a15 15 0 0 1 4.18-2.65M10.66 5c4.01-.36 8.14.9 11.34 3.76M2 2l20 20"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></symbol>
+</svg>
+
+<style>
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);background:var(--cell);border-radius:12px}
+.kpis div{padding:12px 14px;position:relative}
+.kpis div:nth-child(n+4){border-top:.5px solid var(--sep)}
+.kpis div:not(:nth-child(3n+1)){border-left:.5px solid var(--sep)}
+.kpis b{display:block;font-family:var(--num);font-size:24px;font-weight:700}
+.kpis small{font-size:12px;color:var(--label2)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:120px;padding:14px 14px 6px}
+.bars i{flex:1;background:var(--blue);border-radius:4px 4px 0 0;opacity:.85}
+.bars i.pk{background:var(--orange);opacity:1}
+.blabels{display:flex;gap:6px;padding:0 14px 12px;font-size:10px;color:var(--label2);font-family:var(--num)}
+.blabels span{flex:1;text-align:center}
+.stepper{display:flex;gap:6px;align-items:center;font-size:13px;flex-wrap:wrap}
+.stepper span{display:flex;align-items:center;gap:6px;color:var(--label2)}
+.stepper span b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;box-shadow:inset 0 0 0 1.5px var(--label3);font-family:var(--num)}
+.stepper span.done b{background:var(--green);box-shadow:none;color:#fff}
+.stepper span.on{color:var(--label);font-weight:600}
+.stepper span.on b{background:var(--navy);color:#fff;box-shadow:none}
+.stepper i{width:18px;height:1px;background:var(--sep)}
+.pkg{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;position:relative}
+.pkg + .pkg::before{content:"";position:absolute;top:0;left:56px;right:0;border-top:.5px solid var(--sep)}
+.pkg .medal{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+.pkg .t{flex:1}
+.pkg .t b{font-size:16px;font-weight:600;display:block}
+.pkg .t small{font-size:13px;color:var(--label2);display:block;line-height:1.35}
+.pkg .pr{text-align:right;white-space:nowrap}
+.pkg .pr b{font-family:var(--num);font-size:16px;font-weight:700;display:block}
+.pkg .pr small{font-size:12px;color:var(--label2)}
+.pkg.on{background:var(--sel)}
+.surf{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.surf span{font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--fill);color:var(--label2)}
+.summ{background:var(--cell);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.summ .l{display:flex;justify-content:space-between;gap:10px}
+.summ .l span:first-child{color:var(--label2)}
+.summ .tot{border-top:.5px solid var(--sep);padding-top:8px;font-weight:700;font-size:16px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}
+.pills span{font-size:14px;border-radius:999px;padding:6px 12px;background:var(--fill)}
+.pills span.on{background:var(--navy);color:#fff}
+.adprev{border-radius:12px;overflow:hidden;aspect-ratio:16/9;position:relative;background:#0E7A44;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:12px}
+.adprev svg{position:absolute;inset:0;width:100%;height:100%}
+.adprev .tag{position:absolute;top:8px;left:8px;font-size:10px;font-weight:600;background:rgba(0,0,0,.35);border-radius:99px;padding:2px 8px}
+.adprev b{position:relative;font-size:17px;line-height:1.15}
+.adprev small{position:relative;font-size:12px;opacity:.9}
+.ans{display:flex;align-items:center;gap:10px;padding:10px 14px;position:relative;font-size:15px}
+.ans + .ans::before{content:"";position:absolute;top:0;left:46px;right:0;border-top:.5px solid var(--sep)}
+.radio{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--label3);flex:none}
+.radio.on{box-shadow:inset 0 0 0 7px var(--green)}
+.notice{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.4;display:flex;gap:10px}
+.notice.blue{background:var(--tint)}
+.notice.green{background:rgba(21,160,90,.12)}
+.notice.orange{background:rgba(245,139,31,.14)}
+.notice.red{background:rgba(255,59,48,.10)}
+.notice b{display:block;font-size:15px}
+.camera{border-radius:16px;background:#0B0B0D;aspect-ratio:1/1;position:relative;overflow:hidden}
+.camera .frm{position:absolute;inset:22%;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.45)}
+.camera .frm::before,.camera .frm::after{content:"";position:absolute;width:28px;height:28px;border:4px solid #fff}
+.camera .frm::before{top:-2px;left:-2px;border-right:0;border-bottom:0;border-radius:12px 0 0 0}
+.camera .frm::after{bottom:-2px;right:-2px;border-left:0;border-top:0;border-radius:0 0 12px 0}
+.camera small{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-size:13px}
+</style>
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — Espace annonceur v2</h1>
+    <p>Pour un commerce qui veut annoncer dans les salles d'attente : créer sa campagne en cinq étapes, la faire valider par Wintek, la payer en Mobile Money, suivre ses chiffres, puis valider en caisse les bons gagnés par les clients. Et, côté établissement, la page Publicité (secteurs refusés, jeux, annonces Maison).</p>
+    <div class="changes"><span>Campagne en 5 étapes avec récapitulatif permanent</span><span>Statut expliqué en une phrase</span><span>Chiffres du jour, pic en orange</span><span>Valider un bon en un scan</span><span>Prix initiaux réels, modifiables par Wintek</span></div>
+  </div>
+
+  <h2 class="part">Ordinateur</h2>
+
+  <!-- D1 Campagnes -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/ads/campaigns/…</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>Espace annonceur</small></div></div>
+          <div class="org"><span class="av" style="width:30px;height:30px;border-radius:8px;background:#fff;color:#0E7A44;font-family:var(--num);font-weight:700">PM</span><div><b>Pharmacie de Makepe</b><small>Pharmacie · Douala</small></div></div>
+          <nav class="nav">
+            <a class="on"><svg class="i"><use href="#i-mega"/></svg>Campagnes</a>
+            <a><svg class="i"><use href="#i-qr"/></svg>Valider un bon</a>
+            <a><svg class="i"><use href="#i-tag"/></svg>Formules</a>
+            <a><svg class="i"><use href="#i-users"/></svg>Caissiers</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#0E7A44;font-size:12px">MO</span>M. Owona</div>
+        </aside>
+        <section class="master">
+          <div class="mhead"><div class="row1"><h3>Campagnes</h3><span class="plusbtn" aria-label="Nouvelle campagne"><svg><use href="#i-plus"/></svg></span></div></div>
+          <div class="mlist">
+            <div class="mrow on"><span class="sq" style="background:#0E7A44"><svg><use href="#i-mega"/></svg></span><div class="t"><b>Promo rentrée</b><small>Argent · jusqu'au 28 nov.</small></div><span class="chip green">Diffusée</span></div>
+            <div class="mrow"><span class="sq" style="background:#F58B1F"><svg><use href="#i-mega"/></svg></span><div class="t"><b>Vaccins de fin d'année</b><small>Bronze · 7 jours</small></div><span class="chip orange">À payer</span></div>
+            <div class="mrow"><span class="sq" style="background:#1A6BB5"><svg><use href="#i-mega"/></svg></span><div class="t"><b>Lait infantile</b><small>Or · 30 jours</small></div><span class="chip" style="background:var(--tint);color:var(--blue)">En validation</span></div>
+            <div class="mrow"><span class="sq" style="background:#8E8E93"><svg><use href="#i-mega"/></svg></span><div class="t"><b>Soldes d'octobre</b><small>Terminée le 31 oct.</small></div><span class="chip">Terminée</span></div>
+          </div>
+        </section>
+        <section class="detail">
+          <div class="dhead"><div><div class="over">Campagne · formule Argent</div><h3>Promo rentrée</h3></div><span class="tbtn">Modifier</span></div>
+          <div class="notice green"><svg class="i" style="color:var(--green-text)"><use href="#i-check"/></svg><div>Diffusée du 14 au 28 novembre dans 12 agences.</div></div>
+          <div class="kpis"><div><b>18 420</b><small>Affichages</small></div><div><b>312</b><small>Clics</small></div><div><b>1 046</b><small>Parties jouées</small></div><div><b>287</b><small>Bons émis</small></div><div><b>94</b><small>Bons utilisés</small></div><div><b>2 210</b><small>Pubs passées</small></div></div>
+          <div class="group">
+            <div style="padding:12px 14px 0;font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em">Affichages par jour</div>
+            <div class="bars"><i style="height:40%"></i><i style="height:55%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:70%"></i><i class="pk" style="height:96%"></i><i style="height:30%"></i></div>
+            <div class="blabels"><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span></div>
+          </div>
+          <p class="gfoot">Mise à jour chaque heure. Aucune donnée personnelle des clients : seulement des totaux.</p>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Campagnes</b>Chaque campagne avec son statut en couleur. Le détail commence par une phrase qui dit où en est la campagne, puis six chiffres et le graphique par jour (le pic en orange, comme le tableau de bord). Les chiffres sont des exemples.</figcaption>
+  </figure>
+
+  <!-- D2 Nouvelle campagne : formule -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/ads/campaigns/new</span></div>
+      <div class="app" style="grid-template-columns:232px minmax(0,1fr) 300px">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>Espace annonceur</small></div></div>
+          <div class="org"><span class="av" style="width:30px;height:30px;border-radius:8px;background:#fff;color:#0E7A44;font-family:var(--num);font-weight:700">PM</span><div><b>Pharmacie de Makepe</b><small>Pharmacie · Douala</small></div></div>
+          <nav class="nav">
+            <a class="on"><svg class="i"><use href="#i-mega"/></svg>Campagnes</a>
+            <a><svg class="i"><use href="#i-qr"/></svg>Valider un bon</a>
+            <a><svg class="i"><use href="#i-tag"/></svg>Formules</a>
+            <a><svg class="i"><use href="#i-users"/></svg>Caissiers</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#0E7A44;font-size:12px">MO</span>M. Owona</div>
+        </aside>
+        <section class="detail">
+          <div><span class="crumb"><svg><use href="#i-back"/></svg>Campagnes</span><h3 style="margin:4px 0 0;font-size:28px;font-weight:700">Nouvelle campagne</h3></div>
+          <div class="stepper"><span class="on"><b>1</b>Formule</span><i></i><span><b>2</b>Ciblage</span><i></i><span><b>3</b>Visuels</span><i></i><span><b>4</b>Jeux</span><i></i><span><b>5</b>Envoi</span></div>
+          <div class="group"><div class="field"><label>Nom de la campagne</label><span>Promo rentrée</span></div><div class="field"><label>Début de la diffusion</label><span>Lundi 23 novembre</span></div></div>
+          <div class="ghead">Formule</div>
+          <div class="group">
+            <div class="pkg"><span class="medal" style="background:#B7791F">B</span><div class="t"><b>Bronze</b><small>Écrans TV des salles d'attente, jusqu'à 5 agences.</small><div class="surf"><span>Écrans TV</span></div></div><div class="pr"><b>15 000 FCFA</b><small>7 jours</small></div></div>
+            <div class="pkg on"><span class="medal" style="background:#8E8E93">A</span><div class="t"><b>Argent</b><small>Écrans TV, application et jeux, quiz sponsorisé, jusqu'à 15 agences.</small><div class="surf"><span>Écrans TV</span><span>Application</span><span>Jeux</span><span>Quiz</span></div></div><div class="pr"><b>40 000 FCFA</b><small>14 jours</small></div></div>
+            <div class="pkg"><span class="medal" style="background:#D4A017">O</span><div class="t"><b>Or</b><small>Partout, toutes les agences ciblées, quiz et habillage de Sky Catch.</small><div class="surf"><span>Écrans TV</span><span>Application</span><span>Jeux</span><span>Quiz</span><span>Sky Catch</span></div></div><div class="pr"><b>90 000 FCFA</b><small>30 jours</small></div></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end"><span class="fbtn" style="height:44px">Continuer</span></div>
+        </section>
+        <section class="master" style="border-right:0;border-left:.5px solid var(--sep);padding:20px 16px;gap:14px">
+          <div class="over">Récapitulatif</div>
+          <div class="summ">
+            <div class="l"><span>Formule</span><span>Argent</span></div>
+            <div class="l"><span>Période</span><span>Du 23 nov. au 6 déc.</span></div>
+            <div class="l"><span>Villes</span><span>Tout le pays</span></div>
+            <div class="l"><span>Établissements</span><span>Tous</span></div>
+            <div class="l"><span>Agences</span><span>15 au plus</span></div>
+            <div class="l tot"><span style="color:var(--label)">Total</span><span class="num">40 000 FCFA</span></div>
+          </div>
+          <p class="gfoot" style="margin:0 4px">Payé seulement après validation par Wintek, en général sous 24 h.</p>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Nouvelle campagne</b>Cinq étapes. Le récapitulatif reste visible à droite et se met à jour à chaque choix. Les trois formules affichent leurs surfaces en pastilles. Les prix sont ceux du lancement (15 000, 40 000 et 90 000 FCFA), modifiables dans la console Wintek.</figcaption>
+  </figure>
+
+  <h2 class="part">Téléphone · annonceur</h2>
+  <div class="grid">
+    <!-- P1 Créer l'espace -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body" style="gap:14px;padding-top:12px">
+          <span class="sq" style="width:52px;height:52px;border-radius:14px;background:#F58B1F"><svg style="width:28px;height:28px"><use href="#i-mega"/></svg></span>
+          <div><h2 class="large" style="font-size:26px">Annoncez dans les salles d'attente</h2><p class="sub" style="line-height:1.4">Vos offres sur les écrans TV, dans l'application et dans les jeux des clients qui attendent, près de chez vous.</p></div>
+          <div class="group">
+            <div class="field"><label>Nom de votre entreprise</label><span>Pharmacie de Makepe</span></div>
+            <div class="row"><div class="t"><b>Secteur</b></div><span class="v">Pharmacie</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="field"><label>Téléphone</label><span>6 77 12 34 56</span></div>
+            <div class="field"><label>Ville</label><span>Douala</span></div>
+          </div>
+        </div>
+        <div class="bottom"><button class="btn primary">Créer mon espace annonceur</button></div>
+      </div></div>
+      <figcaption><b>Créer l'espace annonceur</b>Quatre champs. Le secteur décide si un visa santé sera exigé.</figcaption>
+    </figure>
+
+    <!-- P2 Ciblage -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Formule</span><span class="ttl">Étape 2 sur 5</span><span style="width:60px"></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Ciblage</h2>
+          <div class="ghead">Villes</div>
+          <div class="group"><div class="pills"><span class="on">Douala</span><span>Yaoundé</span><span>Bafoussam</span><span>Kribi</span><span>+ 6</span></div></div>
+          <p class="gfoot">Aucune ville cochée : tout le pays.</p>
+          <div class="ghead">Types d'établissement</div>
+          <div class="group"><div class="pills"><span class="on">Clinique</span><span class="on">Hôpital</span><span>Banque</span><span>Opérateur télécom</span><span>Administration</span></div></div>
+          <div class="group"><div class="row"><div class="t"><b>Plages de diffusion</b><small>Toute la journée</small></div><svg class="chev"><use href="#i-chev"/></svg></div></div>
+        </div>
+        <div class="bottom"><button class="btn primary">Continuer</button></div>
+      </div></div>
+      <figcaption><b>Ciblage</b>Villes et types en pastilles à toucher. Ne rien cocher veut dire « partout » : c'est écrit sous chaque groupe.</figcaption>
+    </figure>
+
+    <!-- P3 Visuels -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Ciblage</span><span class="ttl">Étape 3 sur 5</span><span style="width:60px"></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Visuels</h2>
+          <div class="adprev"><svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice"><rect width="400" height="225" fill="#0E7A44"/><circle cx="330" cy="50" r="110" fill="#15A05A"/><rect x="270" y="50" width="80" height="100" rx="12" fill="#fff" opacity=".95"/><path d="M310 75v50M285 100h50" stroke="#15A05A" stroke-width="14" stroke-linecap="round"/></svg><span class="tag">Publicité</span><b>Pharmacie de Makepe</b><small>-10 % avec votre ticket NextIn</small></div>
+          <div class="group">
+            <div class="field"><label>Titre</label><span>Pharmacie de Makepe</span></div>
+            <div class="field"><label>Offre</label><span>-10 % avec votre ticket NextIn</span></div>
+            <div class="row"><div class="t"><b>Durée d'affichage</b></div><span class="v">10 s</span><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="group"><div class="row"><svg class="i" style="color:var(--blue)"><use href="#i-plus"/></svg><div class="t"><b style="color:var(--blue)">Ajouter un visuel</b></div></div></div>
+          <p class="gfoot">Image (JPEG, PNG, WebP, 250 Ko au plus) ou vidéo MP4 pour les écrans TV. Format paysage 16:9 conseillé.</p>
+        </div>
+      </div></div>
+      <figcaption><b>Visuels</b>L'aperçu montre le rendu réel sur l'écran TV, avec l'étiquette « Publicité ». Le poids maximal est vérifié avant l'envoi.</figcaption>
+    </figure>
+
+    <!-- P4 Quiz -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Visuels</span><span class="ttl">Étape 4 sur 5</span><span style="width:60px"></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Quiz sponsorisé</h2>
+          <div class="group"><div class="field"><label>Récompense (texte du bon)</label><span>-10 % sur votre prochain achat</span></div><div class="row"><div class="t"><b>Validité du bon</b></div><span class="v">15 jours</span></div></div>
+          <div class="ghead">Question 1 sur 3</div>
+          <div class="group">
+            <div class="field"><span>Combien de fois par jour faut-il se laver les mains ?</span></div>
+            <div class="ans" style="border-top:.5px solid var(--sep)"><span class="radio"></span>Une fois</div>
+            <div class="ans"><span class="radio on"></span>Avant chaque repas et après les toilettes</div>
+            <div class="ans"><span class="radio"></span>Seulement le soir</div>
+          </div>
+          <p class="gfoot">3 à 5 questions, 2 à 4 réponses, une seule bonne (en vert).</p>
+        </div>
+        <div class="bottom"><button class="btn primary">Continuer</button></div>
+      </div></div>
+      <figcaption><b>Quiz sponsorisé</b>Formules Argent et Or. Une question à la fois, la bonne réponse cochée en vert. Avec la formule Or, l'étape propose aussi l'habillage de Sky Catch (couleurs de l'avion, logo sur les pièces).</figcaption>
+    </figure>
+
+    <!-- P5 Envoi -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Jeux</span><span class="ttl">Étape 5 sur 5</span><span style="width:60px"></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Récapitulatif</h2>
+          <div class="summ">
+            <div class="l"><span>Formule</span><span>Argent · 14 jours</span></div>
+            <div class="l"><span>Ciblage</span><span>Douala · 2 types</span></div>
+            <div class="l"><span>Visuels</span><span>1 image</span></div>
+            <div class="l"><span>Quiz</span><span>3 questions</span></div>
+            <div class="l tot"><span style="color:var(--label)">Total</span><span class="num">40 000 FCFA</span></div>
+          </div>
+          <div class="ghead">Visa du ministère de la Santé</div>
+          <div class="group"><div class="field"><label>Numéro de visa</label><span>MSP/2026/0412</span></div><div class="row"><svg class="i" style="color:var(--green-text)"><use href="#i-check"/></svg><div class="t"><b>Justificatif ajouté</b></div></div></div>
+          <p class="gfoot">Obligatoire pour la santé et la pharmacie.</p>
+        </div>
+        <div class="bottom"><button class="btn primary">Soumettre à la validation</button></div>
+      </div></div>
+      <figcaption><b>Envoi</b>Tout le contenu de la campagne en un coup d'œil. Le visa santé n'apparaît que pour les secteurs concernés ; sans lui, l'envoi est refusé.</figcaption>
+    </figure>
+
+    <!-- P6 À payer -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Campagnes</span><span class="act">Modifier</span></div>
+        <div class="body" style="gap:12px">
+          <div><div class="over">Formule Bronze</div><h2 class="large" style="font-size:26px">Vaccins de fin d'année</h2></div>
+          <div class="notice orange"><svg class="i" style="color:#A3550A"><use href="#i-card"/></svg><div><b style="color:#A3550A">Campagne validée</b>Payez pour lancer la diffusion le 23 novembre.</div></div>
+          <div class="notice blue" style="opacity:.6"><svg class="i" style="color:var(--blue)"><use href="#i-clock"/></svg><div>Autres statuts : « En cours de validation par l'équipe Wintek. » · « Campagne refusée : motif. Modifiez-la puis soumettez-la de nouveau. »</div></div>
+          <div class="group"><div class="row"><div class="t"><b>Factures</b></div><svg class="chev"><use href="#i-chev"/></svg></div></div>
+        </div>
+        <div class="bottom"><button class="btn primary">Payer 15 000 FCFA</button></div>
+      </div></div>
+      <figcaption><b>Statut de la campagne</b>Une phrase dit toujours où en est la campagne et ce qu'il faut faire. « Payer » ouvre la page Mobile Money de la maquette 21.</figcaption>
+    </figure>
+
+    <!-- P7 Valider un bon -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Annonceur</span><span></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Valider un bon</h2>
+          <div class="camera"><div class="frm"></div><small>Visez le QR code du client</small></div>
+          <div class="group"><div class="field"><label>Code du bon</label><span class="ph">PH7K-2Q</span></div></div>
+        </div>
+        <div class="bottom"><button class="btn tinted">Vérifier</button></div>
+      </div></div>
+      <figcaption><b>Valider un bon</b>Le caissier scanne le QR code du client, ou saisit le code. Un caissier ne voit que cet écran.</figcaption>
+    </figure>
+
+    <!-- P8 Bon vérifié -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Scanner</span><span></span></div>
+        <div class="body" style="gap:14px;justify-content:center;text-align:center">
+          <div class="success" style="width:72px;height:72px"><svg><use href="#i-check"/></svg></div>
+          <h3 style="margin:0;font-size:24px;font-weight:700">Bon valable</h3>
+          <div class="summ" style="text-align:left">
+            <div class="l"><span>Offre</span><span>-10 % sur votre prochain achat</span></div>
+            <div class="l"><span>Campagne</span><span>Promo rentrée</span></div>
+            <div class="l"><span>Valable jusqu'au</span><span>30 novembre</span></div>
+          </div>
+          <p class="gfoot" style="margin:0">Une fois validé, le bon ne peut plus resservir. Expiré ou déjà utilisé : écran rouge avec la date.</p>
+        </div>
+        <div class="bottom"><button class="btn primary">Valider le bon</button></div>
+      </div></div>
+      <figcaption><b>Bon vérifié</b>Vert si le bon est valable, avec ce qu'il donne droit. Après validation : « Bon validé le … ».</figcaption>
+    </figure>
+
+    <!-- P9 Caissiers -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Annonceur</span><span></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Caissiers</h2>
+          <p class="sub" style="margin:-6px 0 0;line-height:1.4">Un caissier valide les bons en caisse, sans voir vos campagnes, statistiques ni factures.</p>
+          <div class="group" style="--inset:58px">
+            <div class="row"><span class="av sm" style="background:#0E7A44">AT</span><div class="t"><b>a.tchakounte@gmail.com</b><small>Validation des bons seulement</small></div><span class="v" style="color:var(--red);font-size:15px">Retirer</span></div>
+          </div>
+          <div class="group"><div class="field"><label>Adresse e-mail du caissier</label><span class="ph">caisse@pharmacie.cm</span></div></div>
+          <p class="gfoot">Il doit d'abord créer son compte NextIn.</p>
+        </div>
+        <div class="bottom"><button class="btn tinted">Ajouter le caissier</button></div>
+      </div></div>
+      <figcaption><b>Caissiers</b>La liste et l'ajout sur le même écran. Rôle limité, expliqué en une ligne.</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="part">Téléphone · établissement</h2>
+  <div class="grid">
+    <!-- P10 Publicité de l'établissement -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Douala Clinic</span><span></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:28px">Publicité</h2>
+          <div class="ghead">Secteurs refusés</div>
+          <div class="group"><div class="pills"><span class="on">Boissons alcoolisées</span><span class="on">Paris et jeux d'argent</span><span>Banque et assurance</span><span>Télécoms</span><span>Alimentation</span><span>Beauté</span></div></div>
+          <p class="gfoot">Aucune publicité de ces secteurs sur vos écrans, dans l'application ni dans les jeux de vos clients.</p>
+          <div class="ghead">Jeux pendant l'attente</div>
+          <div class="group">
+            <div class="row"><div class="t"><b>Quiz sponsorisé</b></div><span class="sw on"></span></div>
+            <div class="row"><div class="t"><b>Sky Catch</b></div><span class="sw on"></span></div>
+          </div>
+          <div class="group"><div class="row"><div class="t"><b>Annonces Maison</b><small>Vos services, gratuitement</small></div><span class="v">2</span><svg class="chev"><use href="#i-chev"/></svg></div></div>
+        </div>
+      </div></div>
+      <figcaption><b>Publicité (établissement)</b>Le directeur garde la main : secteurs refusés en pastilles, jeux activables, et ses propres annonces Maison qui comblent les espaces non vendus. Les secteurs sont ceux de la liste de la console Wintek.</figcaption>
+    </figure>
+
+    <!-- P11 Annonce Maison -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Publicité</span><span></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large" style="font-size:26px">Annonce Maison</h2>
+          <p class="sub" style="margin:-6px 0 0;line-height:1.4">Présentez vos services (vaccination, nouveaux horaires, laboratoire…) aux clients qui attendent.</p>
+          <div class="adprev" style="background:#1A6BB5"><span class="tag">Douala Clinic</span><b>Vaccination des enfants</b><small>Tous les mercredis, sans rendez-vous</small></div>
+          <div class="group">
+            <div class="field"><label>Titre</label><span>Vaccination des enfants</span></div>
+            <div class="field"><label>Offre</label><span>Tous les mercredis, sans rendez-vous</span></div>
+          </div>
+        </div>
+        <div class="bottom"><button class="btn primary">Publier l'annonce</button></div>
+      </div></div>
+      <figcaption><b>Annonce Maison</b>Gratuite, sans validation Wintek. Même aperçu que les annonceurs, aux couleurs de l'établissement.</figcaption>
+    </figure>
+  </div>
+</div>

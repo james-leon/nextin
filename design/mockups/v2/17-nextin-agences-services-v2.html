@@ -1,0 +1,614 @@
+<title>NextIn Agences et services v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 · maquette 17 : agences, services, guichets et cabinets, horaires, QR code. Barre latérale bleu nuit + maître-détail sur ordinateur ; listes groupées iOS sur téléphone. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000; --label2:#6C6C70; --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFF; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --green-text:#0E7A44; --red:#D70015; --tint:#E8F0F9;
+  --side:#0D2C54; --sidetext:rgba(255,255,255,.72); --sideon:rgba(255,255,255,.12); --frame:#1C1C1E; --chrome:#E9E9EE; --sel:#E8F0F9;
+  --switch:#34C759;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px;letter-spacing:-.005em}
+.page{max-width:1440px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:76ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px}
+h2.part{margin:0 0 -18px;font-size:22px;font-weight:700;letter-spacing:-.02em}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+figcaption{font-size:13px;color:var(--label2);text-align:center;max-width:70ch;line-height:1.45}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--num)}
+
+/* ===== Ordinateur ===== */
+.scroll{width:100%;overflow-x:auto;border-radius:14px}
+.win{width:1240px;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--sep);margin:0 auto}
+.bbar{height:34px;background:var(--chrome);display:flex;align-items:center;gap:7px;padding:0 14px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.bbar span{margin-left:14px;font-size:12px;color:var(--label2);background:var(--bg);border-radius:6px;padding:4px 14px;width:420px}
+.app{display:grid;grid-template-columns:232px 320px minmax(0,1fr);height:720px}
+.side{background:var(--side);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:16px}
+.sbrand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.sbrand svg{width:30px;height:30px}
+.sbrand b{font-size:16px;font-weight:700}
+.sbrand small{display:block;font-size:11px;color:var(--sidetext);font-weight:500}
+.org{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08)}
+.org .av{width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--num)}
+.org b{font-size:14px;font-weight:600;display:block}
+.org small{font-size:12px;color:var(--sidetext)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:var(--sidetext);font-size:14px;font-weight:500}
+.nav a.on{background:var(--sideon);color:#fff}
+.nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.45);padding:12px 10px 4px}
+.nav .count{margin-left:auto;font-size:12px;background:var(--orange);color:#fff;border-radius:999px;padding:1px 7px;font-weight:600}
+.side .foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;color:var(--sidetext)}
+.side .foot .av{width:28px;height:28px;border-radius:50%;background:#2A6FB5;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* Panneau liste (maître) */
+.master{border-right:.5px solid var(--sep);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.mhead{padding:18px 16px 10px;display:flex;flex-direction:column;gap:12px}
+.mhead .row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.crumb{font-size:13px;color:var(--blue);display:flex;align-items:center;gap:2px}
+.crumb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mhead h3{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.plusbtn{width:32px;height:32px;border-radius:50%;background:var(--tint);color:var(--blue);display:grid;place-items:center}
+.plusbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.search{display:flex;align-items:center;gap:6px;height:36px;border-radius:10px;background:var(--fill);padding:0 10px;color:var(--label2);font-size:15px}
+.search svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.mlist{padding:0 10px 16px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px}
+.mrow.on{background:var(--sel)}
+.mrow .t{flex:1;min-width:0}
+.mrow .t b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .t small{display:block;font-size:13px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .meta{font-size:13px;color:var(--label2);white-space:nowrap}
+.thumb{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:#C9D6E3}
+.thumb svg{width:100%;height:100%}
+.mstats{margin:0 16px 12px;background:var(--cell);border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr)}
+.mstats div{padding:10px 12px}
+.mstats div + div{border-left:.5px solid var(--sep)}
+.mstats b{display:block;font-family:var(--num);font-size:20px;font-weight:700}
+.mstats small{font-size:12px;color:var(--label2)}
+
+/* Panneau détail */
+.detail{overflow:hidden;padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0;container-type:inline-size}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.dhead .over{font-size:13px;color:var(--label2)}
+.dhead h3{margin:2px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.saved{font-size:13px;color:var(--label2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.saved svg{width:15px;height:15px;stroke:var(--green-text);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{border-radius:16px;overflow:hidden;background:var(--cell)}
+.hero .ph{height:150px;background:#C9D6E3;position:relative}
+.hero .ph svg{width:100%;height:100%;display:block}
+.hero .ph .open{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);color:#000;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.hero .ph .open::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.hero .in{padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero .in b{font-size:17px;font-weight:600;display:block}
+.hero .in small{font-size:13px;color:var(--label2)}
+.tbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:9px;background:var(--tint);color:var(--blue);font-size:14px;font-weight:600;white-space:nowrap}
+.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:10px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
+
+/* Listes groupées iOS (communes) */
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -12px 16px}
+.gfoot{font-size:13px;color:var(--label2);margin:-12px 16px 0;line-height:1.4}
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.group.ic .row + .row::before{left:56px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2);white-space:nowrap}
+.row .v.blue{color:var(--blue)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.letter{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#fff;font-weight:700;font-size:15px;font-family:var(--num)}
+.sw{width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18)}
+.sw.on{background:var(--switch)}
+.sw.on::after{left:22px}
+.field{display:flex;flex-direction:column;gap:2px;padding:8px 14px;min-height:56px;justify-content:center;position:relative}
+.field + .field::before,.row + .field::before,.field + .row::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.field label{font-size:12px;color:var(--label2)}
+.field span{font-size:16px}
+.field span.ph{color:var(--label3)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.seg span{text-align:center;font-size:13px;font-weight:500;padding:6px 4px;border-radius:7px;white-space:nowrap}
+.seg span.on{background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.colors{display:flex;gap:10px;padding:12px 14px}
+.colors i{width:28px;height:28px;border-radius:50%}
+.colors i.on{box-shadow:0 0 0 2px var(--cell),0 0 0 4px var(--blue)}
+.check{width:22px;height:22px;flex:none;stroke:var(--blue);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.check.off{visibility:hidden}
+.danger{color:var(--red);font-size:16px;text-align:center;padding:13px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:3px 8px;background:var(--fill);color:var(--label2);white-space:nowrap}
+.chip.green{background:rgba(21,160,90,.14);color:var(--green-text)}
+.time{font-family:var(--num);font-size:15px;background:var(--fill);border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums}
+.qrbox{display:flex;gap:18px;align-items:center;padding:16px}
+.qrbox .qr{width:132px;height:132px;flex:none;border-radius:10px;background:#fff;padding:8px}
+.qrbox .qr svg{width:100%;height:100%}
+.code{font-family:var(--num);font-size:30px;font-weight:700;letter-spacing:.12em;color:var(--label)}
+.pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative}
+.pdf + .pdf::before{content:"";position:absolute;top:0;right:0;left:74px;border-top:.5px solid var(--sep)}
+.pdf .mini{width:46px;height:60px;border-radius:5px;background:var(--bg);box-shadow:0 0 0 .5px var(--sep);display:grid;place-items:center;flex:none}
+.pdf .mini svg{width:26px;height:26px}
+.pdf .t{flex:1;min-width:0}
+.pdf .t b{display:block;font-size:16px;font-weight:400}
+.pdf .t small{font-size:13px;color:var(--label2)}
+
+/* ===== Téléphones ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+.grid figure{width:100%;max-width:320px}
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.pnav{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 10px;flex:none;color:var(--blue);font-size:16px}
+.pnav .back{display:flex;align-items:center;gap:0}
+.pnav .back svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pnav .ttl{color:var(--label);font-weight:600;font-size:16px}
+.pnav .act{font-weight:600}
+.body{flex:1;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.sub{margin:4px 0 0;font-size:15px;color:var(--label2)}
+.bottom{flex:none;padding:10px 16px 24px;background:var(--bg);border-top:.5px solid var(--sep)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.photo169{border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#C9D6E3}
+.photo169 svg{width:100%;height:100%;display:block}
+.emptyst{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:0 8px}
+.emptyst .ill{width:72px;height:72px;border-radius:18px;background:var(--tint);display:grid;place-items:center;margin-bottom:6px}
+.emptyst .ill svg{width:36px;height:36px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.emptyst h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.emptyst p{margin:0 0 14px;font-size:15px;color:var(--label2);line-height:1.4}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><circle cx="6" cy="8" r="2.2"/><circle cx="12" cy="9" r="1.8"/><circle cx="17" cy="10" r="1.4"/><path d="M3 18c1-3 5-3 6 0M10 18c.8-2.2 3.6-2.2 4.4 0M15.5 18c.6-1.6 2.6-1.6 3.2 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+  <symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.1a.3.3 0 0 1-.4.3L5 19V5.6a1 1 0 0 1 .8-1l6-1.3a1 1 0 0 1 1.2 1z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
+  <symbol id="i-slider" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.6"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></symbol>
+  <!-- Photo d'agence (illustration neutre : façade) -->
+  <symbol id="facade" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice"><rect width="400" height="225" fill="#BFD0E2"/><rect y="170" width="400" height="55" fill="#9AA9B8"/><rect x="70" y="40" width="260" height="140" fill="#F1EEE6"/><rect x="70" y="40" width="260" height="16" fill="#5B6B7D"/><rect x="90" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="152" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="214" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="276" y="72" width="36" height="34" fill="#4A5A6C"/><rect x="176" y="124" width="48" height="56" fill="#3B4A5A"/><rect x="92" y="124" width="60" height="30" fill="#1A6BB5"/><path d="M114 131v16M106 139h16" stroke="#fff" stroke-width="5"/><rect x="40" y="120" width="8" height="60" fill="#6E5B45"/><circle cx="44" cy="112" r="20" fill="#5E8C5A"/></symbol>
+  <!-- QR simplifié -->
+  <symbol id="qrimg" viewBox="0 0 29 29"><path fill="#000" d="M0 0h7v7H0zM2 2v3h3V2zM22 0h7v7h-7zm2 2v3h3V2zM0 22h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm4 0h3v2h-3zm5 2h2v3h-2zM9 4h3v3H9zm5 1h2v2h-2zM0 9h3v2H0zm5 0h4v2H5zm6 0h2v4h-2zm4 0h5v2h-5zm7 0h3v3h-3zm4 1h3v2h-3zM2 13h3v3H2zm6 0h2v2H8zm5 2h4v2h-4zm6-2h2v4h-2zm4 3h4v2h-4zM0 18h2v2H0zm4 0h5v2H4zm7 1h2v3h-2zm4 1h3v2h-3zm5 0h2v2h-2zm4 0h5v3h-5zM9 22h2v3H9zm4 2h4v2h-4zm6 0h2v5h-2zm4 3h6v2h-6zM9 27h3v2H9zm5 0h2v2h-2z"/></symbol>
+</svg>
+
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — Agences et services v2</h1>
+    <p>Tout ce que le directeur configure pour une agence : sa fiche, ses services, ses guichets et cabinets, ses horaires et son QR code. Sur ordinateur, une liste à gauche et le détail à droite, sans changer de page. Sur téléphone, des listes groupées comme dans Réglages d'iPhone. Les changements s'enregistrent tout seuls.</p>
+    <div class="changes"><span>Maître-détail sur ordinateur</span><span>Enregistrement automatique</span><span>Une lettre et une couleur par service</span><span>Photo 16:9 pour « À proximité »</span><span>Supports PDF prêts à imprimer</span></div>
+  </div>
+
+  <h2 class="part">Ordinateur</h2>
+
+  <!-- D1 Fiche d'une agence -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/app/o/…/branches/makepe</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>by Wintek</small></div></div>
+          <div class="org"><span class="av">DC</span><div><b>Douala Clinic</b><small>2 agences · Business</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-grid"/></svg>Vue d'ensemble</a>
+            <a><svg class="i"><use href="#i-queue"/></svg>File en direct</a>
+            <a><svg class="i"><use href="#i-cal"/></svg>Rendez-vous<span class="count">3</span></a>
+            <span class="sec">Organisation</span>
+            <a class="on"><svg class="i"><use href="#i-pin"/></svg>Agences et services</a>
+            <a><svg class="i"><use href="#i-steth"/></svg>Praticiens</a>
+            <a><svg class="i"><use href="#i-users"/></svg>Personnel</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité</a>
+            <span class="sec">Compte</span>
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnement</a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+          </nav>
+          <div class="foot"><span class="av">NB</span>Dr Ngo Biyong · Directrice</div>
+        </aside>
+        <section class="master">
+          <div class="mhead">
+            <div class="row1"><h3>Agences</h3><span class="plusbtn" aria-label="Nouvelle agence"><svg><use href="#i-plus"/></svg></span></div>
+            <div class="search"><svg><use href="#i-search"/></svg>Rechercher</div>
+          </div>
+          <div class="mstats"><div><b>2</b><small>Agences</small></div><div><b>7</b><small>Services</small></div><div><b>9</b><small>Postes</small></div></div>
+          <div class="mlist">
+            <div class="mrow on"><div class="thumb"><svg><use href="#facade"/></svg></div><div class="t"><b>Makepe</b><small>4 services · 6 postes</small></div><span class="chip green">Ouverte</span></div>
+            <div class="mrow"><div class="thumb" style="background:var(--tint);display:grid;place-items:center"><svg class="i" style="width:22px;height:22px;color:var(--blue)"><use href="#i-steth"/></svg></div><div class="t"><b>Bonamoussadi</b><small>3 services · 3 postes</small></div><span class="chip">Fermée</span></div>
+          </div>
+        </section>
+        <section class="detail">
+          <div class="dhead">
+            <div><div class="over">Agence</div><h3>Makepe</h3></div>
+            <span class="tbtn"><svg><use href="#i-door"/></svg>Ouvrir les postes</span>
+          </div>
+          <div class="cols">
+            <div class="stack">
+              <div class="hero">
+                <div class="ph"><svg><use href="#facade"/></svg><span class="open">Ouverte jusqu'à 18:00</span></div>
+                <div class="in"><div><b>Rond-point Makepe, face EEC</b><small>Douala · 6 77 12 34 56</small></div><span class="tbtn">Modifier</span></div>
+              </div>
+              <div class="ghead">Structure</div>
+              <div class="group ic">
+                <div class="row"><span class="sq" style="background:#1A6BB5"><svg><use href="#i-tag"/></svg></span><div class="t"><b>Services</b></div><span class="v">4</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Guichets et cabinets</b></div><span class="v">6</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><span class="sq" style="background:#FF9500"><svg><use href="#i-clock"/></svg></span><div class="t"><b>Horaires</b></div><span class="v">Lun–Sam</span><svg class="chev"><use href="#i-chev"/></svg></div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Fonctionnement</div>
+              <div class="group ic">
+                <div class="row"><span class="sq" style="background:#0D2C54"><svg><use href="#i-qr"/></svg></span><div class="t"><b>QR code et supports</b><small>Code D4KM7P</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><span class="sq" style="background:#34A853"><svg><use href="#i-tv"/></svg></span><div class="t"><b>Écrans</b></div><span class="v">1 connecté</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><span class="sq" style="background:#8E8E93"><svg><use href="#i-slider"/></svg></span><div class="t"><b>Réglages de la file</b></div><svg class="chev"><use href="#i-chev"/></svg></div>
+              </div>
+              <div class="ghead">Aujourd'hui</div>
+              <div class="group">
+                <div class="row"><div class="t"><b>Tickets émis</b></div><span class="v num" style="color:var(--label);font-weight:600">47</span></div>
+                <div class="row"><div class="t"><b>Attente moyenne</b></div><span class="v num" style="color:var(--label);font-weight:600">14 min</span></div>
+                <div class="row"><div class="t"><b>Postes ouverts</b></div><span class="v num" style="color:var(--label);font-weight:600">4 sur 6</span></div>
+              </div>
+              <p class="gfoot">Les statistiques détaillées sont dans la vue d'ensemble.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Fiche d'une agence</b>La liste des agences reste visible à gauche. La fiche réunit tout : photo et adresse, la structure (services, postes, horaires) et le fonctionnement (QR code, écrans, réglages de la file), puis trois chiffres du jour. « Ouvrir les postes » mène directement à l'accueil et aux cabinets de cette agence.</figcaption>
+  </figure>
+
+  <!-- D2 Services -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/app/o/…/branches/makepe/services</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>by Wintek</small></div></div>
+          <div class="org"><span class="av">DC</span><div><b>Douala Clinic</b><small>2 agences · Business</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-grid"/></svg>Vue d'ensemble</a>
+            <a><svg class="i"><use href="#i-queue"/></svg>File en direct</a>
+            <a><svg class="i"><use href="#i-cal"/></svg>Rendez-vous<span class="count">3</span></a>
+            <span class="sec">Organisation</span>
+            <a class="on"><svg class="i"><use href="#i-pin"/></svg>Agences et services</a>
+            <a><svg class="i"><use href="#i-steth"/></svg>Praticiens</a>
+            <a><svg class="i"><use href="#i-users"/></svg>Personnel</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité</a>
+            <span class="sec">Compte</span>
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnement</a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+          </nav>
+          <div class="foot"><span class="av">NB</span>Dr Ngo Biyong · Directrice</div>
+        </aside>
+        <section class="master">
+          <div class="mhead">
+            <span class="crumb"><svg><use href="#i-back"/></svg>Makepe</span>
+            <div class="row1"><h3>Services</h3><span class="plusbtn" aria-label="Nouveau service"><svg><use href="#i-plus"/></svg></span></div>
+          </div>
+          <div class="mlist">
+            <div class="mrow on"><span class="letter" style="background:#1A6BB5">C</span><div class="t"><b>Consultation générale</b><small>15 min · Médecine générale</small></div></div>
+            <div class="mrow"><span class="letter" style="background:#15A05A">P</span><div class="t"><b>Pédiatrie</b><small>12 min · Pédiatrie</small></div></div>
+            <div class="mrow"><span class="letter" style="background:#8E5BC7">L</span><div class="t"><b>Laboratoire</b><small>8 min · Biologie</small></div></div>
+            <div class="mrow"><span class="letter" style="background:#B7791F">K</span><div class="t"><b>Caisse</b><small>3 min</small></div></div>
+          </div>
+          <p class="gfoot" style="margin:4px 26px 0">Maintenez et glissez pour changer l'ordre affiché aux clients.</p>
+        </section>
+        <section class="detail">
+          <div class="dhead">
+            <div><div class="over">Service · tickets C-001, C-002…</div><h3>Consultation générale</h3></div>
+            <span class="saved"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span>
+          </div>
+          <div class="cols">
+            <div class="stack">
+              <div class="group">
+                <div class="field"><label>Nom du service</label><span>Consultation générale</span></div>
+                <div class="field"><label>Nom en anglais</label><span>General consultation</span></div>
+                <div class="field"><label>Lettre du ticket</label><span class="num" style="font-weight:700">C</span></div>
+              </div>
+              <p class="gfoot">Tickets C-001. Une ou deux lettres, unique dans l'agence.</p>
+              <div class="ghead">Couleur</div>
+              <div class="group"><div class="colors"><i class="on" style="background:#1A6BB5"></i><i style="background:#15A05A"></i><i style="background:#8E5BC7"></i><i style="background:#B7791F"></i><i style="background:#D14D72"></i><i style="background:#0E8A8A"></i><i style="background:#5E5CE6"></i><i style="background:#6C6C70"></i></div></div>
+              <div class="ghead">Description</div>
+              <div class="group"><div class="field"><span class="ph">Ex. Apportez votre carnet de santé.</span></div></div>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Durée moyenne d'un passage</div>
+              <div class="group" style="padding:12px 14px"><div class="seg"><span>5 min</span><span>10 min</span><span class="on">15 min</span><span>20 min</span><span>30 min</span><span>Autre</span></div></div>
+              <p class="gfoot">Utilisée pour estimer l'attente tant que l'historique réel est insuffisant.</p>
+              <div class="group">
+                <div class="row"><div class="t"><b>Spécialité</b></div><span class="v">Médecine générale</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><div class="t"><b>Tickets maximum par jour</b></div><span class="v">Sans limite</span><svg class="chev"><use href="#i-chev"/></svg></div>
+              </div>
+              <div class="group">
+                <div class="row"><div class="t"><b>Accès prioritaire</b><small>Rendez-vous, grossesse, personne âgée</small></div><span class="sw on"></span></div>
+                <div class="row"><div class="t"><b>Ticket à distance</b><small>Effectif seulement si l'agence l'autorise</small></div><span class="sw"></span></div>
+                <div class="row"><div class="t"><b>Service ouvert aux clients</b></div><span class="sw on"></span></div>
+              </div>
+              <div class="group"><div class="danger">Supprimer le service</div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Services d'une agence</b>Chaque service a sa lettre et sa couleur, celles du ticket du patient. Le détail se modifie sur place et s'enregistre seul, sans bouton. « Supprimer » demande une confirmation : « Il disparaît du choix des clients et des guichets qui le servent. »</figcaption>
+  </figure>
+
+  <!-- D3 Guichets et cabinets -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/app/o/…/branches/makepe/counters</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>by Wintek</small></div></div>
+          <div class="org"><span class="av">DC</span><div><b>Douala Clinic</b><small>2 agences · Business</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-grid"/></svg>Vue d'ensemble</a>
+            <a><svg class="i"><use href="#i-queue"/></svg>File en direct</a>
+            <a><svg class="i"><use href="#i-cal"/></svg>Rendez-vous<span class="count">3</span></a>
+            <span class="sec">Organisation</span>
+            <a class="on"><svg class="i"><use href="#i-pin"/></svg>Agences et services</a>
+            <a><svg class="i"><use href="#i-steth"/></svg>Praticiens</a>
+            <a><svg class="i"><use href="#i-users"/></svg>Personnel</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité</a>
+            <span class="sec">Compte</span>
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnement</a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+          </nav>
+          <div class="foot"><span class="av">NB</span>Dr Ngo Biyong · Directrice</div>
+        </aside>
+        <section class="master">
+          <div class="mhead">
+            <span class="crumb"><svg><use href="#i-back"/></svg>Makepe</span>
+            <div class="row1"><h3>Guichets et cabinets</h3><span class="plusbtn" aria-label="Nouveau guichet ou cabinet"><svg><use href="#i-plus"/></svg></span></div>
+          </div>
+          <div class="mlist">
+            <div class="mrow on"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Cabinet 1</b><small>Dr Paul Mbarga · C</small></div><span class="chip green">En service</span></div>
+            <div class="mrow"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Cabinet 2</b><small>Dr Samuel Nkeng · C</small></div><span class="chip green">En service</span></div>
+            <div class="mrow"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Cabinet 3</b><small>Dr Aline Ngo Biyong · P</small></div><span class="chip green">En service</span></div>
+            <div class="mrow"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Cabinet 4</b><small>C, P</small></div><span class="chip">Hors service</span></div>
+            <div class="mrow"><span class="sq" style="background:#8E5BC7"><svg><use href="#i-door"/></svg></span><div class="t"><b>Laboratoire 1</b><small>L</small></div><span class="chip green">En service</span></div>
+            <div class="mrow"><span class="sq" style="background:#B7791F"><svg><use href="#i-door"/></svg></span><div class="t"><b>Caisse 1</b><small>K</small></div><span class="chip green">En service</span></div>
+          </div>
+        </section>
+        <section class="detail">
+          <div class="dhead">
+            <div><div class="over">Annoncé et affiché : « Cabinet 1 »</div><h3>Cabinet 1</h3></div>
+            <span class="saved"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span>
+          </div>
+          <div class="cols">
+            <div class="stack">
+              <div class="ghead">Type</div>
+              <div class="group" style="padding:12px 14px"><div class="seg"><span class="on">Cabinet</span><span>Guichet</span><span>Caisse</span><span>Labo</span><span>Accueil</span></div></div>
+              <div class="group">
+                <div class="field"><label>Numéro</label><span class="num" style="font-weight:600">1</span></div>
+                <div class="field"><label>Nom affiché</label><span class="ph">Facultatif, ex. Dr Mbarga</span></div>
+              </div>
+              <div class="group">
+                <div class="row"><div class="t"><b>Praticien attitré</b></div><span class="v">Dr Paul Mbarga</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                <div class="row"><div class="t"><b>En service</b></div><span class="sw on"></span></div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Services traités</div>
+              <div class="group" style="--inset:56px">
+                <div class="row"><span class="letter" style="background:#1A6BB5">C</span><div class="t"><b>Consultation générale</b></div><svg class="check"><use href="#i-check"/></svg></div>
+                <div class="row"><span class="letter" style="background:#15A05A">P</span><div class="t"><b>Pédiatrie</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+                <div class="row"><span class="letter" style="background:#8E5BC7">L</span><div class="t"><b>Laboratoire</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+                <div class="row"><span class="letter" style="background:#B7791F">K</span><div class="t"><b>Caisse</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+              </div>
+              <p class="gfoot">Le poste appelle les clients de ces services.</p>
+              <div class="group"><div class="danger">Supprimer le poste</div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Guichets et cabinets</b>Le type et le numéro forment ce qui est annoncé et affiché sur la TV (« Cabinet 1 »). Les services traités se cochent dans une liste, avec leur lettre et leur couleur. Un poste hors service garde son historique.</figcaption>
+  </figure>
+
+  <h2 class="part">Téléphone</h2>
+  <div class="grid">
+    <!-- P1 Liste des agences -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Douala Clinic</span><span class="plusbtn" aria-label="Nouvelle agence"><svg><use href="#i-plus"/></svg></span></div>
+        <div class="body">
+          <h2 class="large">Agences et services</h2>
+          <div class="group" style="--inset:70px">
+            <div class="row" style="min-height:64px"><div class="thumb"><svg><use href="#facade"/></svg></div><div class="t"><b style="font-weight:600">Makepe</b><small><span style="color:var(--green-text);font-weight:600">Ouverte</span> · 4 services</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row" style="min-height:64px"><div class="thumb" style="background:var(--tint);display:grid;place-items:center"><svg class="i" style="width:22px;height:22px;color:var(--blue)"><use href="#i-steth"/></svg></div><div class="t"><b style="font-weight:600">Bonamoussadi</b><small>Fermée · 3 services</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <p class="gfoot">Chaque agence a ses services, ses guichets, ses horaires et son QR code.</p>
+        </div>
+      </div></div>
+      <figcaption><b>Liste des agences</b>Photo ou icône du secteur, et l'état en direct. Le « + » en haut à droite crée une agence, dans la limite de la formule.</figcaption>
+    </figure>
+
+    <!-- P2 Fiche agence téléphone -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Agences</span><span class="act">Modifier</span></div>
+        <div class="body">
+          <div class="photo169"><svg><use href="#facade"/></svg></div>
+          <div><h2 class="large">Makepe</h2><p class="sub">Rond-point Makepe, face EEC · Douala</p></div>
+          <div class="group ic">
+            <div class="row"><span class="sq" style="background:#1A6BB5"><svg><use href="#i-tag"/></svg></span><div class="t"><b>Services</b></div><span class="v">4</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="sq" style="background:#5E5CE6"><svg><use href="#i-door"/></svg></span><div class="t"><b>Guichets et cabinets</b></div><span class="v">6</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="sq" style="background:#FF9500"><svg><use href="#i-clock"/></svg></span><div class="t"><b>Horaires</b></div><span class="v">Lun–Sam</span><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="group ic">
+            <div class="row"><span class="sq" style="background:#0D2C54"><svg><use href="#i-qr"/></svg></span><div class="t"><b>QR code et supports</b></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="sq" style="background:#34A853"><svg><use href="#i-tv"/></svg></span><div class="t"><b>Écrans</b></div><span class="v">1</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><span class="sq" style="background:#8E8E93"><svg><use href="#i-slider"/></svg></span><div class="t"><b>Réglages de la file</b></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Fiche d'une agence</b>Même contenu que sur ordinateur, en deux groupes. « Modifier » ouvre les informations et la photo.</figcaption>
+    </figure>
+
+    <!-- P3 Nouvelle agence -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Agences</span><span></span></div>
+        <div class="body">
+          <h2 class="large">Nouvelle agence</h2>
+          <div class="group">
+            <div class="field"><label>Nom de l'agence</label><span>Bonamoussadi</span></div>
+            <div class="field"><label>Adresse</label><span class="ph">Rue Joss, face à la pharmacie</span></div>
+            <div class="field"><label>Ville</label><span>Douala</span></div>
+            <div class="field"><label>Téléphone de l'agence</label><span class="ph">6 77 12 34 56</span></div>
+          </div>
+          <div class="ghead">Position GPS</div>
+          <div class="group"><div class="row"><span class="sq" style="background:#1A6BB5"><svg><use href="#i-loc"/></svg></span><div class="t"><b style="color:var(--blue)">Utiliser ma position</b></div></div></div>
+          <p class="gfoot">Sert aux « établissements à proximité ». Utilisez votre position sur place.</p>
+        </div>
+        <div class="bottom"><button class="btn primary">Créer l'agence</button></div>
+      </div></div>
+      <figcaption><b>Nouvelle agence</b>Quatre champs et la position. Seul formulaire avec un bouton : la création. Les services et postes s'ajoutent ensuite depuis la fiche.</figcaption>
+    </figure>
+
+    <!-- P4 Modifier : photo -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Makepe</span><span class="ttl">Informations</span><span style="width:60px"></span></div>
+        <div class="body">
+          <div class="ghead">Photo de l'établissement</div>
+          <div class="group" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+            <div class="photo169" style="border-radius:10px"><svg><use href="#facade"/></svg></div>
+            <div style="display:flex;gap:8px"><span class="tbtn" style="flex:1;justify-content:center"><svg><use href="#i-image"/></svg>Remplacer</span><span class="tbtn" style="background:var(--fill);color:var(--red)">Retirer</span></div>
+          </div>
+          <p class="gfoot">Affichée dans « À proximité ». Recadrée automatiquement ; 1 Mo au plus.</p>
+          <div class="group">
+            <div class="field"><label>Nom de l'agence</label><span>Makepe</span></div>
+            <div class="field"><label>Adresse</label><span>Rond-point Makepe, face EEC</span></div>
+            <div class="field"><label>Ville</label><span>Douala</span></div>
+          </div>
+          <span class="saved" style="justify-content:center"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span>
+        </div>
+      </div></div>
+      <figcaption><b>Informations et photo</b>La photo est recadrée en 16:9 et en carré dans le navigateur. Sans photo, l'icône du secteur s'affiche sur fond teinté.</figcaption>
+    </figure>
+
+    <!-- P5 Horaires -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Makepe</span><span class="ttl">Horaires</span><span style="width:60px"></span></div>
+        <div class="body" style="gap:14px">
+          <p class="sub" style="margin:0">Les tickets ne sont émis que pendant les heures d'ouverture.</p>
+          <div class="group">
+            <div class="row"><div class="t"><b>Lundi</b></div><span class="time">07:30</span><span class="time">18:00</span></div>
+            <div class="row"><div class="t"><b>Mardi</b></div><span class="time">07:30</span><span class="time">18:00</span></div>
+            <div class="row"><div class="t"><b>Mercredi</b></div><span class="time">07:30</span><span class="time">18:00</span></div>
+            <div class="row"><div class="t"><b>Jeudi</b></div><span class="time">07:30</span><span class="time">18:00</span></div>
+            <div class="row"><div class="t"><b>Vendredi</b></div><span class="time">07:30</span><span class="time">18:00</span></div>
+            <div class="row"><div class="t"><b>Samedi</b></div><span class="time">08:00</span><span class="time">13:00</span></div>
+            <div class="row"><div class="t"><b>Dimanche</b></div><span class="v">Fermé</span><span class="sw"></span></div>
+          </div>
+          <span class="saved" style="justify-content:center"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span>
+        </div>
+      </div></div>
+      <figcaption><b>Horaires d'ouverture</b>Une ligne par jour. Toucher une heure ouvre la roue iOS. Un jour fermé affiche un interrupteur pour le rouvrir.</figcaption>
+    </figure>
+
+    <!-- P6 QR code et supports -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Makepe</span><span class="ttl">QR code</span><span style="width:60px"></span></div>
+        <div class="body" style="gap:16px">
+          <div class="group"><div class="qrbox" style="flex-direction:column;gap:10px;text-align:center"><div class="qr" style="width:120px;height:120px"><svg><use href="#qrimg"/></svg></div><div><div style="font-size:13px;color:var(--label2)">Code de l'établissement</div><div class="code" style="font-size:26px">D4KM7P</div><div style="font-size:12px;color:var(--label2)">À saisir si le scan ne fonctionne pas.</div></div></div>
+            <div class="row" style="border-top:.5px solid var(--sep)"><svg class="i" style="color:var(--blue)"><use href="#i-copy"/></svg><div class="t"><b style="color:var(--blue)">Copier le lien</b></div></div>
+          </div>
+          <div class="ghead">Supports à imprimer</div>
+          <div class="group">
+            <div class="pdf"><span class="mini"><svg><use href="#qrimg"/></svg></span><div class="t"><b>Affiche murale</b><small>A4, pour la salle d'attente</small></div><svg class="i" style="color:var(--blue)"><use href="#i-download"/></svg></div>
+            <div class="pdf"><span class="mini" style="width:46px;height:40px"><svg><use href="#qrimg"/></svg></span><div class="t"><b>Chevalet de table</b><small>A5, à poser sur le comptoir</small></div><svg class="i" style="color:var(--blue)"><use href="#i-download"/></svg></div>
+          </div>
+          <div class="group"><div class="danger" style="padding:11px">Régénérer le QR code</div></div>
+        </div>
+      </div></div>
+      <figcaption><b>QR code et supports</b>Le QR et le code court en grand, puis les PDF prêts à imprimer (l'affiche est la maquette 14). « Régénérer » avertit : l'ancien code cesse de fonctionner et il faut réimprimer.</figcaption>
+    </figure>
+
+    <!-- P7 Nouveau service -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Services</span><span></span></div>
+        <div class="body" style="gap:14px">
+          <h2 class="large">Nouveau service</h2>
+          <div class="group">
+            <div class="field"><label>Nom du service</label><span>Échographie</span></div>
+            <div class="field"><label>Lettre du ticket</label><span class="num" style="font-weight:700">E</span></div>
+          </div>
+          <p class="gfoot">Tickets E-001. Une ou deux lettres, unique dans l'agence.</p>
+          <div class="group"><div class="colors" style="gap:9px;padding:11px 12px"><i style="background:#1A6BB5"></i><i style="background:#15A05A"></i><i style="background:#8E5BC7"></i><i style="background:#B7791F"></i><i class="on" style="background:#D14D72"></i><i style="background:#0E8A8A"></i><i style="background:#5E5CE6"></i></div></div>
+          <div class="ghead">Durée moyenne d'un passage</div>
+          <div class="group" style="padding:10px 12px"><div class="seg"><span>10</span><span>15</span><span class="on">20</span><span>30</span><span>Autre</span></div></div>
+        </div>
+        <div class="bottom"><button class="btn primary">Créer le service</button></div>
+      </div></div>
+      <figcaption><b>Nouveau service</b>L'essentiel pour commencer : nom, lettre, couleur et durée. Le reste (anglais, spécialité, limite par jour, priorité) se règle ensuite sur la fiche du service.</figcaption>
+    </figure>
+
+    <!-- P8 Aucune agence -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Douala Clinic</span><span></span></div>
+        <div class="emptyst">
+          <div class="ill"><svg><use href="#i-building"/></svg></div>
+          <h3>Aucune agence</h3>
+          <p>Créez la première pour configurer vos services, vos guichets et votre QR code.</p>
+          <button class="btn primary"><svg><use href="#i-plus"/></svg>Nouvelle agence</button>
+        </div>
+      </div></div>
+      <figcaption><b>Aucune agence</b>Une seule action. Même modèle pour « aucun service » et « aucun guichet » (« Créez d'abord des services » si aucun service n'existe).</figcaption>
+    </figure>
+  </div>
+</div>

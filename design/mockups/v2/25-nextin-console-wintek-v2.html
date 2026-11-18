@@ -1,0 +1,667 @@
+<title>NextIn Console Wintek v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 · maquette 20 : compléments des postes (choix du poste, agenda et demandes, feuilles d'action, absence, hors ligne, raccourcis, compact, ticket imprimé). Reprend la base de la maquette 17 : agences, services, guichets et cabinets, horaires, QR code. Barre latérale bleu nuit + maître-détail sur ordinateur ; listes groupées iOS sur téléphone. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000; --label2:#6C6C70; --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFF; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --green-text:#0E7A44; --red:#D70015; --tint:#E8F0F9;
+  --side:#0D2C54; --sidetext:rgba(255,255,255,.72); --sideon:rgba(255,255,255,.12); --frame:#1C1C1E; --chrome:#E9E9EE; --sel:#E8F0F9;
+  --switch:#34C759;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--green-text:#4CD38A;--red:#FF6961;--tint:#15263D;--side:#0B1A2E;--frame:#3A3A3C;--chrome:#2C2C2E;--sel:#15263D;--switch:#30D158;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px;letter-spacing:-.005em}
+.page{max-width:1440px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:76ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px}
+h2.part{margin:0 0 -18px;font-size:22px;font-weight:700;letter-spacing:-.02em}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+figcaption{font-size:13px;color:var(--label2);text-align:center;max-width:70ch;line-height:1.45}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--num)}
+
+/* ===== Ordinateur ===== */
+.scroll{width:100%;overflow-x:auto;border-radius:14px}
+.win{width:1240px;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--sep);margin:0 auto}
+.bbar{height:34px;background:var(--chrome);display:flex;align-items:center;gap:7px;padding:0 14px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.bbar span{margin-left:14px;font-size:12px;color:var(--label2);background:var(--bg);border-radius:6px;padding:4px 14px;width:420px}
+.app{display:grid;grid-template-columns:232px 320px minmax(0,1fr);height:720px}
+.side{background:var(--side);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:16px}
+.sbrand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.sbrand svg{width:30px;height:30px}
+.sbrand b{font-size:16px;font-weight:700}
+.sbrand small{display:block;font-size:11px;color:var(--sidetext);font-weight:500}
+.org{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08)}
+.org .av{width:30px;height:30px;border-radius:8px;background:#fff;color:#0D2C54;display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--num)}
+.org b{font-size:14px;font-weight:600;display:block}
+.org small{font-size:12px;color:var(--sidetext)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:var(--sidetext);font-size:14px;font-weight:500}
+.nav a.on{background:var(--sideon);color:#fff}
+.nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.45);padding:12px 10px 4px}
+.nav .count{margin-left:auto;font-size:12px;background:var(--orange);color:#fff;border-radius:999px;padding:1px 7px;font-weight:600}
+.side .foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;color:var(--sidetext)}
+.side .foot .av{width:28px;height:28px;border-radius:50%;background:#2A6FB5;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* Panneau liste (maître) */
+.master{border-right:.5px solid var(--sep);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.mhead{padding:18px 16px 10px;display:flex;flex-direction:column;gap:12px}
+.mhead .row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.crumb{font-size:13px;color:var(--blue);display:flex;align-items:center;gap:2px}
+.crumb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mhead h3{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.plusbtn{width:32px;height:32px;border-radius:50%;background:var(--tint);color:var(--blue);display:grid;place-items:center}
+.plusbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.search{display:flex;align-items:center;gap:6px;height:36px;border-radius:10px;background:var(--fill);padding:0 10px;color:var(--label2);font-size:15px}
+.search svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.mlist{padding:0 10px 16px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px}
+.mrow.on{background:var(--sel)}
+.mrow .t{flex:1;min-width:0}
+.mrow .t b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .t small{display:block;font-size:13px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .meta{font-size:13px;color:var(--label2);white-space:nowrap}
+.thumb{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:#C9D6E3}
+.thumb svg{width:100%;height:100%}
+.mstats{margin:0 16px 12px;background:var(--cell);border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr)}
+.mstats div{padding:10px 12px}
+.mstats div + div{border-left:.5px solid var(--sep)}
+.mstats b{display:block;font-family:var(--num);font-size:20px;font-weight:700}
+.mstats small{font-size:12px;color:var(--label2)}
+
+/* Panneau détail */
+.detail{overflow:hidden;padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0;container-type:inline-size}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.dhead .over{font-size:13px;color:var(--label2)}
+.dhead h3{margin:2px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.saved{font-size:13px;color:var(--label2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.saved svg{width:15px;height:15px;stroke:var(--green-text);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{border-radius:16px;overflow:hidden;background:var(--cell)}
+.hero .ph{height:150px;background:#C9D6E3;position:relative}
+.hero .ph svg{width:100%;height:100%;display:block}
+.hero .ph .open{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);color:#000;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.hero .ph .open::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.hero .in{padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero .in b{font-size:17px;font-weight:600;display:block}
+.hero .in small{font-size:13px;color:var(--label2)}
+.tbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:9px;background:var(--tint);color:var(--blue);font-size:14px;font-weight:600;white-space:nowrap}
+.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:10px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
+
+/* Listes groupées iOS (communes) */
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -12px 16px}
+.gfoot{font-size:13px;color:var(--label2);margin:-12px 16px 0;line-height:1.4}
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,14px);border-top:.5px solid var(--sep)}
+.group.ic .row + .row::before{left:56px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px}
+.row .v{font-size:16px;color:var(--label2);white-space:nowrap}
+.row .v.blue{color:var(--blue)}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.letter{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#fff;font-weight:700;font-size:15px;font-family:var(--num)}
+.sw{width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18)}
+.sw.on{background:var(--switch)}
+.sw.on::after{left:22px}
+.field{display:flex;flex-direction:column;gap:2px;padding:8px 14px;min-height:56px;justify-content:center;position:relative}
+.field + .field::before,.row + .field::before,.field + .row::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.field label{font-size:12px;color:var(--label2)}
+.field span{font-size:16px}
+.field span.ph{color:var(--label3)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.seg span{text-align:center;font-size:13px;font-weight:500;padding:6px 4px;border-radius:7px;white-space:nowrap}
+.seg span.on{background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.colors{display:flex;gap:10px;padding:12px 14px}
+.colors i{width:28px;height:28px;border-radius:50%}
+.colors i.on{box-shadow:0 0 0 2px var(--cell),0 0 0 4px var(--blue)}
+.check{width:22px;height:22px;flex:none;stroke:var(--blue);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.check.off{visibility:hidden}
+.danger{color:var(--red);font-size:16px;text-align:center;padding:13px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:3px 8px;background:var(--fill);color:var(--label2);white-space:nowrap}
+.chip.green{background:rgba(21,160,90,.14);color:var(--green-text)}
+.time{font-family:var(--num);font-size:15px;background:var(--fill);border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums}
+.qrbox{display:flex;gap:18px;align-items:center;padding:16px}
+.qrbox .qr{width:132px;height:132px;flex:none;border-radius:10px;background:#fff;padding:8px}
+.qrbox .qr svg{width:100%;height:100%}
+.code{font-family:var(--num);font-size:30px;font-weight:700;letter-spacing:.12em;color:var(--label)}
+.pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative}
+.pdf + .pdf::before{content:"";position:absolute;top:0;right:0;left:74px;border-top:.5px solid var(--sep)}
+.pdf .mini{width:46px;height:60px;border-radius:5px;background:var(--bg);box-shadow:0 0 0 .5px var(--sep);display:grid;place-items:center;flex:none}
+.pdf .mini svg{width:26px;height:26px}
+.pdf .t{flex:1;min-width:0}
+.pdf .t b{display:block;font-size:16px;font-weight:400}
+.pdf .t small{font-size:13px;color:var(--label2)}
+
+/* ===== Téléphones ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+.grid figure{width:100%;max-width:320px}
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.pnav{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 10px;flex:none;color:var(--blue);font-size:16px}
+.pnav .back{display:flex;align-items:center;gap:0}
+.pnav .back svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pnav .ttl{color:var(--label);font-weight:600;font-size:16px}
+.pnav .act{font-weight:600}
+.body{flex:1;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.large{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.1}
+.over{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;font-weight:500}
+.sub{margin:4px 0 0;font-size:15px;color:var(--label2)}
+.bottom{flex:none;padding:10px 16px 24px;background:var(--bg);border-top:.5px solid var(--sep)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn.tinted{background:var(--tint);color:var(--blue)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.photo169{border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#C9D6E3}
+.photo169 svg{width:100%;height:100%;display:block}
+.emptyst{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:0 8px}
+.emptyst .ill{width:72px;height:72px;border-radius:18px;background:var(--tint);display:grid;place-items:center;margin-bottom:6px}
+.emptyst .ill svg{width:36px;height:36px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.emptyst h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.emptyst p{margin:0 0 14px;font-size:15px;color:var(--label2);line-height:1.4}
+</style>
+<style>
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;flex:none}
+.av.sm{width:30px;height:30px;font-size:12px}
+.av.pending{background:var(--fill);color:var(--label2)}
+.av.pending svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chip.orange{background:rgba(245,139,31,.16);color:#A3550A}
+.sec2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--label2);padding:10px 10px 4px}
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;padding:12px 14px 14px}
+.week .d{font-size:12px;color:var(--label2);text-align:center;font-weight:600}
+.week .h{font-size:11px;color:var(--label2);text-align:right;padding-right:4px;height:30px;line-height:12px}
+.week .col{position:relative;border-radius:8px;background:var(--fill);min-height:186px}
+.week .blk{position:absolute;left:3px;right:3px;border-radius:6px;background:rgba(26,107,181,.16);border-left:3px solid var(--blue);font-size:11px;color:var(--blue);padding:3px 5px;font-weight:600;line-height:1.25}
+.week .blk.off{background:rgba(245,139,31,.16);border-left-color:var(--orange);color:#A3550A}
+.leave{display:flex;align-items:center;gap:12px;padding:10px 14px;position:relative}
+.leave + .leave::before{content:"";position:absolute;top:0;right:0;left:14px;border-top:.5px solid var(--sep)}
+.leave .t{flex:1}
+.leave .t b{display:block;font-size:16px;font-weight:400}
+.leave .t small{font-size:13px;color:var(--label2)}
+.linkrow{color:var(--blue)}
+.linkrow svg.i{color:var(--blue)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:var(--bg);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--label3);margin:7px auto 0}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:16px}
+.sheet .sh .c{color:var(--blue)}
+.sheet .sh b{font-weight:600}
+.sheet .sh .ok{color:var(--blue);font-weight:600}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.28)}
+.success{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:8px auto 4px}
+.success svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.center{text-align:center}
+.callout{display:flex;gap:12px;align-items:flex-start;background:var(--tint);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.4}
+.callout.green{background:rgba(21,160,90,.12)}
+.callout b{font-weight:600}
+.progress{display:flex;flex-direction:column;gap:8px}
+.progress .pt{display:flex;justify-content:space-between;font-size:15px}
+.progress .pt b{font-weight:600}
+.progress .pt span{color:var(--label2);font-family:var(--num)}
+.progress .bar{height:6px;border-radius:99px;background:var(--fill);overflow:hidden}
+.progress .bar i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.steps .row{min-height:52px}
+.steps .row + .row::before{left:54px}
+.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px;font-weight:700;color:var(--label2);box-shadow:inset 0 0 0 1.5px var(--label3);font-family:var(--num)}
+.dot.ok{background:var(--green);box-shadow:none}
+.dot.ok svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.dot.n{background:var(--navy);color:#fff;box-shadow:none}
+.steps .done .t b{color:var(--label2)}
+.steps .next .t b{font-weight:600}
+.stepline{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4}
+.urlpill{margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--cell);border-radius:8px;padding:7px 10px;color:var(--blue)}
+.boxes{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.boxes span{aspect-ratio:4/5;border-radius:10px;background:var(--cell);display:grid;place-items:center;font-family:var(--num);font-size:24px;font-weight:700;box-shadow:inset 0 0 0 1px var(--sep)}
+.boxes span.cur{box-shadow:inset 0 0 0 2px var(--blue)}
+.slider{flex:1;height:4px;border-radius:99px;background:var(--fill);position:relative}
+.slider i{position:absolute;left:0;top:0;bottom:0;background:var(--blue);border-radius:99px}
+.slider b{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.alert{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;background:var(--cell);border-radius:14px;text-align:center;overflow:hidden}
+.alert b{display:block;font-size:16px;font-weight:600;padding:18px 16px 4px}
+.alert p{margin:0;padding:0 16px 16px;font-size:13px;line-height:1.35}
+.abtns{display:grid;grid-template-columns:1fr 1fr;border-top:.5px solid var(--sep)}
+.abtns span{padding:11px;color:var(--blue);font-size:16px}
+.abtns span + span{border-left:.5px solid var(--sep)}
+.abtns .red{color:var(--red);font-weight:600}
+.tvprev{border-radius:12px;overflow:hidden;background:#F2F2F7;box-shadow:0 0 0 4px #1C1C1E;aspect-ratio:16/9;display:flex;flex-direction:column;color:#000}
+.tvtop{background:#0D2C54;color:#fff;display:flex;align-items:center;gap:6px;padding:6px 9px;font-size:11px;font-weight:600}
+.tvtop svg{width:14px;height:14px}
+.tvtop span{margin-left:auto;font-family:var(--num)}
+.tvbody{flex:1;display:grid;grid-template-columns:1.8fr 1fr;gap:6px;padding:7px}
+.tvcalls{background:#fff;border-radius:7px;padding:4px 8px;display:flex;flex-direction:column;justify-content:space-around}
+.tvcalls div{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(60,60,67,.12);padding-top:2px}
+.tvcalls div:first-child{border-top:0;box-shadow:inset 3px 0 0 #F58B1F;padding-left:6px;margin-left:-6px}
+.tvcalls b{font-family:var(--num);font-size:19px;color:#0D2C54}
+.tvcalls span{font-size:11px;font-weight:600}
+.tvad{background:#0E7A44;border-radius:7px;color:#fff;font-size:10px;display:flex;align-items:flex-end;padding:6px}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--green-text)}
+.live::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green)}
+.toast{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);background:var(--cell);border-radius:999px;padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);white-space:nowrap}
+.linkbox{font-size:13px;color:var(--label2);background:var(--fill);border-radius:8px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><circle cx="6" cy="8" r="2.2"/><circle cx="12" cy="9" r="1.8"/><circle cx="17" cy="10" r="1.4"/><path d="M3 18c1-3 5-3 6 0M10 18c.8-2.2 3.6-2.2 4.4 0M15.5 18c.6-1.6 2.6-1.6 3.2 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+  <symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.1a.3.3 0 0 1-.4.3L5 19V5.6a1 1 0 0 1 .8-1l6-1.3a1 1 0 0 1 1.2 1z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
+  <symbol id="i-slider" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.6"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></symbol>
+  <!-- Photo d'agence (illustration neutre : façade) -->
+  <symbol id="facade" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice"><rect width="400" height="225" fill="#BFD0E2"/><rect y="170" width="400" height="55" fill="#9AA9B8"/><rect x="70" y="40" width="260" height="140" fill="#F1EEE6"/><rect x="70" y="40" width="260" height="16" fill="#5B6B7D"/><rect x="90" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="152" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="214" y="72" width="44" height="34" fill="#4A5A6C"/><rect x="276" y="72" width="36" height="34" fill="#4A5A6C"/><rect x="176" y="124" width="48" height="56" fill="#3B4A5A"/><rect x="92" y="124" width="60" height="30" fill="#1A6BB5"/><path d="M114 131v16M106 139h16" stroke="#fff" stroke-width="5"/><rect x="40" y="120" width="8" height="60" fill="#6E5B45"/><circle cx="44" cy="112" r="20" fill="#5E8C5A"/></symbol>
+  <!-- QR simplifié -->
+  <symbol id="qrimg" viewBox="0 0 29 29"><path fill="#000" d="M0 0h7v7H0zM2 2v3h3V2zM22 0h7v7h-7zm2 2v3h3V2zM0 22h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm4 0h3v2h-3zm5 2h2v3h-2zM9 4h3v3H9zm5 1h2v2h-2zM0 9h3v2H0zm5 0h4v2H5zm6 0h2v4h-2zm4 0h5v2h-5zm7 0h3v3h-3zm4 1h3v2h-3zM2 13h3v3H2zm6 0h2v2H8zm5 2h4v2h-4zm6-2h2v4h-2zm4 3h4v2h-4zM0 18h2v2H0zm4 0h5v2H4zm7 1h2v3h-2zm4 1h3v2h-3zm5 0h2v2h-2zm4 0h5v3h-5zM9 22h2v3H9zm4 2h4v2h-4zm6 0h2v5h-2zm4 3h6v2h-6zM9 27h3v2H9zm5 0h2v2h-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3.5 20.5l1.4-4.2A8.5 8.5 0 1 1 20.5 11.6z"/><path d="M9 9c0 3 2.5 5.5 5.5 5.5l1.3-1.3-2-1-.8.8a4 4 0 0 1-2.5-2.5l.8-.8-1-2z"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 21V4M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M3 3l18 18M8 8a5 5 0 0 0-1 9.9h10M17.5 17A4 4 0 0 0 16 9.5 6 6 0 0 0 11 6"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 12l4 4-4 4M21 16H7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16M6 14l6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-wifioff" viewBox="0 0 24 24"><path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M5 12.86a10 10 0 0 1 5.17-2.69M19 12.86a10 10 0 0 0-2-1.43M2 8.82a15 15 0 0 1 4.18-2.65M10.66 5c4.01-.36 8.14.9 11.34 3.76M2 2l20 20"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></symbol>
+</svg>
+
+<style>
+.kpis4{display:grid;grid-template-columns:repeat(4,1fr);background:var(--cell);border-radius:12px}
+.kpis4 div{padding:12px 16px}
+.kpis4 div + div{border-left:.5px solid var(--sep)}
+.kpis4 b{display:block;font-family:var(--num);font-size:24px;font-weight:700}
+.kpis4 small{font-size:12px;color:var(--label2)}
+.kpis4 em{font-style:normal;font-size:12px;font-weight:600;border-radius:99px;padding:1px 7px;background:rgba(21,160,90,.14);color:var(--green-text);margin-left:6px}
+.table{background:var(--cell);border-radius:12px;overflow:hidden;font-size:14px}
+.table .tr{display:grid;grid-template-columns:2.2fr 1fr .8fr 1.3fr 1.5fr 1fr;align-items:center;padding:10px 16px;gap:10px;position:relative}
+.table .tr + .tr::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.table .th{font-size:12px;color:var(--label2);text-transform:uppercase;letter-spacing:.03em;background:var(--bg)}
+.table .tr b{font-weight:600}
+.table .tr small{display:block;font-size:12px;color:var(--label2)}
+.table .num{font-family:var(--num)}
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filters .pill{font-size:13px;border-radius:999px;padding:6px 12px;background:var(--fill)}
+.filters .pill.on{background:var(--navy);color:#fff}
+.filters .search{flex:1;min-width:200px;max-width:320px;margin-left:auto}
+.barsm{display:flex;align-items:flex-end;gap:8px;height:90px;padding:12px 16px 4px}
+.barsm i{flex:1;background:var(--blue);border-radius:4px 4px 0 0;opacity:.85}
+.barsm i.pk{background:var(--orange);opacity:1}
+.bl{display:flex;gap:8px;padding:0 16px 10px;font-size:10px;color:var(--label2)}
+.bl span{flex:1;text-align:center}
+.split2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.plans{display:grid;grid-template-columns:1.4fr repeat(4,1fr);background:var(--cell);border-radius:12px;overflow:hidden;font-size:13px}
+.plans > div{padding:9px 12px;border-top:.5px solid var(--sep)}
+.plans .h{border-top:0;font-weight:700;font-size:15px;background:var(--bg)}
+.plans .h small{display:block;font-weight:400;color:var(--label2);font-size:12px}
+.plans .k{color:var(--label2)}
+.plans .v{font-family:var(--num)}
+.plans .hl{background:var(--sel)}
+.timeline{display:flex;flex-direction:column}
+.timeline .ev{display:flex;gap:12px;padding:9px 14px;position:relative;font-size:14px}
+.timeline .ev::before{content:"";position:absolute;left:23px;top:24px;bottom:-9px;width:2px;background:var(--sep)}
+.timeline .ev:last-child::before{display:none}
+.timeline .ev i{width:12px;height:12px;border-radius:50%;margin-top:4px;flex:none;background:var(--blue);box-shadow:0 0 0 3px var(--cell)}
+.timeline .ev i.g{background:var(--green)}
+.timeline .ev i.o{background:var(--orange)}
+.timeline .ev small{display:block;color:var(--label2);font-size:12px}
+.reviewimg{border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#0E7A44;color:#fff;position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:12px}
+.reviewimg b{font-size:18px}
+.reviewimg small{opacity:.9}
+</style>
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — Console Wintek v2</h1>
+    <p>L'espace du super admin Wintek : suivre les abonnements et les encaissements, créer un établissement pour un client signé, régler les formules et les extensions, valider les publicités et régler la plateforme. Usage surtout sur ordinateur ; toute action importante demande un motif, enregistré dans le journal.</p>
+    <div class="changes"><span>Chiffres du mois en tête</span><span>Tableau des abonnements filtrable</span><span>Fiche d'abonnement avec historique</span><span>Validation des pubs côte à côte</span><span>Prix et limites réels de la grille v2</span></div>
+  </div>
+
+  <h2 class="part">Ordinateur</h2>
+
+  <!-- D1 Abonnements -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/admin</span></div>
+      <div class="app" style="grid-template-columns:232px minmax(0,1fr)">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>Console Wintek</small></div></div>
+          <nav class="nav">
+            <a class="on"><svg class="i"><use href="#i-card"/></svg>Abonnements</a>
+            <a><svg class="i"><use href="#i-tag"/></svg>Formules</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité<span class="count">2</span></a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+            <span class="sec">&nbsp;</span>
+            <a><svg class="i"><use href="#i-user"/></svg>Mon compte</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#F58B1F;font-size:12px">LL</span>Leonel · Super admin</div>
+        </aside>
+        <section class="detail" style="gap:14px">
+          <div class="dhead"><div><div class="over">Super admin</div><h3>Console Wintek</h3></div><span class="fbtn"><svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Nouvel établissement</span></div>
+          <div class="kpis4"><div><b>484 100</b><small>Revenu mensuel récurrent (FCFA)</small></div><div><b>344 700</b><small>Encaissé ce mois-ci</small></div><div><b>9</b><small>Abonnements payants</small></div><div><b>3 sur 5</b><small>Essais convertis (12 mois)</small></div></div>
+          <div class="split2">
+            <div class="group" style="display:flex;flex-direction:column">
+              <div style="padding:12px 16px 0;font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em">Encaissements par mois · en milliers de FCFA</div>
+              <div class="barsm"><i style="height:20%"></i><i style="height:34%"></i><i style="height:41%"></i><i style="height:55%"></i><i style="height:62%"></i><i class="pk" style="height:88%"></i></div>
+              <div class="bl"><span>juin</span><span>juil.</span><span>août</span><span>sept.</span><span>oct.</span><span>nov.</span></div>
+            </div>
+            <div class="group">
+              <div style="padding:12px 16px 2px;font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em">Abonnements payants par formule</div>
+              <div class="row"><div class="t"><b>Starter</b></div><span class="v num">4</span></div>
+              <div class="row"><div class="t"><b>Business</b></div><span class="v num">4</span></div>
+              <div class="row"><div class="t"><b>Premium</b></div><span class="v num">1</span></div>
+            </div>
+          </div>
+          <div class="filters"><span class="pill on">Tous</span><span class="pill">Essai</span><span class="pill">Actif</span><span class="pill">Impayé</span><span class="pill">Suspendu</span><div class="search"><svg><use href="#i-search"/></svg>Rechercher un établissement</div></div>
+          <div class="table">
+            <div class="tr th"><span>Établissement</span><span>Formule</span><span>Agences</span><span>Échéance</span><span>Dernier paiement</span><span>Statut</span></div>
+            <div class="tr"><span><b>Douala Clinic</b><small>Clinique</small></span><span>Business</span><span class="num">2</span><span>1er décembre</span><span>1er nov. · 59 900</span><span><span class="chip green">Actif</span></span></div>
+            <div class="tr"><span><b>Pharmacie Bonapriso</b><small>Pharmacie</small></span><span>Business</span><span class="num">1</span><span>Essai jusqu'au 2 déc.</span><span class="k" style="color:var(--label2)">Aucun paiement</span><span><span class="chip" style="background:var(--tint);color:var(--blue)">Essai</span></span></div>
+            <div class="tr"><span><b>Eneo Douala</b><small>Énergie</small></span><span>Enterprise</span><span class="num">4</span><span>Sans échéance</span><span>—</span><span><span class="chip">Pilote</span></span></div>
+            <div class="tr"><span><b>Cabinet Akwa</b><small>Cabinet médical</small></span><span>Starter</span><span class="num">1</span><span>15 novembre</span><span>15 oct. · 29 900</span><span><span class="chip orange">Impayé</span></span></div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Vue d'ensemble et abonnements</b>Quatre chiffres du mois, l'évolution des encaissements (le mois en cours en orange), la répartition par formule, puis le tableau filtrable. Les chiffres et les établissements sont des exemples ; les prix sont ceux de la grille v2.</figcaption>
+  </figure>
+
+  <!-- D2 Fiche abonnement -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/admin/subscriptions/…</span></div>
+      <div class="app" style="grid-template-columns:232px minmax(0,1fr)">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>Console Wintek</small></div></div>
+          <nav class="nav">
+            <a class="on"><svg class="i"><use href="#i-card"/></svg>Abonnements</a>
+            <a><svg class="i"><use href="#i-tag"/></svg>Formules</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité<span class="count">2</span></a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+            <span class="sec">&nbsp;</span>
+            <a><svg class="i"><use href="#i-user"/></svg>Mon compte</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#F58B1F;font-size:12px">LL</span>Leonel · Super admin</div>
+        </aside>
+        <section class="detail" style="gap:14px">
+          <div><span class="crumb"><svg><use href="#i-back"/></svg>Abonnements</span><div class="dhead" style="margin-top:4px"><div><div class="over">Abonnement · Starter</div><h3>Cabinet Akwa</h3></div><span class="chip orange" style="font-size:13px">Impayé · grâce jusqu'au 22 nov.</span></div></div>
+          <div class="cols">
+            <div class="stack">
+              <div class="ghead">Factures</div>
+              <div class="group">
+                <div class="row"><div class="t"><b>FAC-2026-000139 · 29 900 FCFA</b><small>Du 15 nov. au 14 déc. · à payer</small></div><span class="tbtn">Encaisser</span></div>
+                <div class="row"><div class="t"><b>FAC-2026-000098 · 29 900 FCFA</b><small>Payée le 15 oct. · MTN MoMo</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+              </div>
+              <div class="ghead">Utilisation du mois</div>
+              <div class="group">
+                <div class="row"><div class="t"><b>Tickets</b></div><span class="v num">1 184 / 1 500</span></div>
+                <div class="row"><div class="t"><b>Messages WhatsApp</b></div><span class="v num" style="color:#A3550A;font-weight:600">412 / 500</span></div>
+                <div class="row"><div class="t"><b>Utilisateurs</b></div><span class="v num">4 / 5</span></div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Actions</div>
+              <div class="group">
+                <div class="row"><div class="t"><b style="color:var(--blue)">Offrir des jours</b></div></div>
+                <div class="row"><div class="t"><b style="color:var(--blue)">Appliquer une remise</b></div></div>
+                <div class="row"><div class="t"><b style="color:var(--blue)">Changer de formule</b></div></div>
+                <div class="row"><div class="t"><b style="color:var(--blue)">Limites sur mesure</b></div></div>
+                <div class="row"><div class="t"><b style="color:var(--red)">Suspendre l'établissement</b></div></div>
+              </div>
+              <p class="gfoot">Chaque action demande un motif, visible dans le journal d'audit.</p>
+              <div class="ghead">Historique</div>
+              <div class="group timeline">
+                <div class="ev"><i class="o"></i><div>Période de grâce<small>15 nov. · automatique</small></div></div>
+                <div class="ev"><i></i><div>Facture émise<small>8 nov. · FAC-2026-000139</small></div></div>
+                <div class="ev"><i class="g"></i><div>Paiement reçu<small>15 oct. · 29 900 FCFA</small></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Fiche d'un abonnement</b>Statut en haut, en orange s'il faut agir. À gauche les factures (« Encaisser » pour un paiement reçu hors ligne) et l'utilisation du mois ; à droite les actions commerciales et l'historique.</figcaption>
+  </figure>
+
+  <!-- D3 Formules -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/admin/plans</span></div>
+      <div class="app" style="grid-template-columns:232px minmax(0,1fr)">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>Console Wintek</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnements</a>
+            <a class="on"><svg class="i"><use href="#i-tag"/></svg>Formules</a>
+            <a><svg class="i"><use href="#i-mega"/></svg>Publicité<span class="count">2</span></a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+            <span class="sec">&nbsp;</span>
+            <a><svg class="i"><use href="#i-user"/></svg>Mon compte</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#F58B1F;font-size:12px">LL</span>Leonel · Super admin</div>
+        </aside>
+        <section class="detail" style="gap:14px">
+          <div class="dhead"><div><div class="over">Console Wintek</div><h3>Formules</h3></div></div>
+          <div class="plans">
+            <div class="h"></div><div class="h">Starter<small>29 900 FCFA / mois</small></div><div class="h hl">Business<small>59 900 FCFA · essai</small></div><div class="h">Premium<small>124 900 FCFA / mois</small></div><div class="h">Enterprise<small>Sur devis</small></div>
+            <div class="k">Agences incluses</div><div class="v">1</div><div class="v hl">1</div><div class="v">3</div><div class="v">Sur mesure</div>
+            <div class="k">Services</div><div class="v">3</div><div class="v hl">10</div><div class="v">30</div><div class="v">Illimité</div>
+            <div class="k">Guichets</div><div class="v">3</div><div class="v hl">10</div><div class="v">30</div><div class="v">Illimité</div>
+            <div class="k">Écrans TV</div><div class="v">1</div><div class="v hl">3</div><div class="v">10</div><div class="v">Illimité</div>
+            <div class="k">Utilisateurs</div><div class="v">5</div><div class="v hl">15</div><div class="v">50</div><div class="v">Illimité</div>
+            <div class="k">Tickets par mois</div><div class="v">1 500</div><div class="v hl">6 000</div><div class="v">15 000</div><div class="v">Illimité</div>
+            <div class="k">WhatsApp par mois</div><div class="v">500</div><div class="v hl">2 000</div><div class="v">6 000</div><div class="v">Illimité</div>
+            <div class="k">Historique</div><div class="v">3 mois</div><div class="v hl">12 mois</div><div class="v">24 mois</div><div class="v">Illimité</div>
+          </div>
+          <p class="gfoot">Cliquer sur une colonne ouvre la formule. Les nouveaux prix s'appliquent aux prochaines factures ; les factures émises ne changent jamais.</p>
+          <div class="ghead">Extensions de quota</div>
+          <div class="group">
+            <div class="row"><div class="t"><b>Pack 1 000 tickets</b></div><span class="v num">10 000 FCFA</span><span class="chip green">En vente</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><div class="t"><b>Pack 500 messages WhatsApp</b></div><span class="v num">7 500 FCFA</span><span class="chip green">En vente</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><div class="t"><b>Pack 2 000 messages WhatsApp</b></div><span class="v num">25 000 FCFA</span><span class="chip green">En vente</span><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><svg class="i" style="color:var(--blue)"><use href="#i-plus"/></svg><div class="t"><b style="color:var(--blue)">Nouvelle extension</b></div></div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Formules et extensions</b>Les quatre formules côte à côte (la formule d'essai surlignée), puis les extensions de quota. Valeurs initiales de la grille v2, lues dans la base.</figcaption>
+  </figure>
+
+  <!-- D4 Modération -->
+  <figure>
+    <div class="scroll"><div class="win">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/admin/ads/…</span></div>
+      <div class="app">
+        <aside class="side">
+          <div class="sbrand"><svg><use href="#logo"/></svg><div><b>NextIn</b><small>Console Wintek</small></div></div>
+          <nav class="nav">
+            <a><svg class="i"><use href="#i-card"/></svg>Abonnements</a>
+            <a><svg class="i"><use href="#i-tag"/></svg>Formules</a>
+            <a class="on"><svg class="i"><use href="#i-mega"/></svg>Publicité<span class="count">2</span></a>
+            <a><svg class="i"><use href="#i-gear"/></svg>Réglages</a>
+            <span class="sec">&nbsp;</span>
+            <a><svg class="i"><use href="#i-user"/></svg>Mon compte</a>
+          </nav>
+          <div class="foot"><span class="av" style="width:28px;height:28px;background:#F58B1F;font-size:12px">LL</span>Leonel · Super admin</div>
+        </aside>
+        <section class="master">
+          <div class="mhead"><h3>Publicité</h3><div class="seg"><span class="on">À valider · 2</span><span>En cours</span><span>Toutes</span></div></div>
+          <div class="mlist">
+            <div class="mrow on"><span class="sq" style="background:#1A6BB5"><svg><use href="#i-mega"/></svg></span><div class="t"><b>Lait infantile</b><small>Pharmacie de Makepe · Or</small></div></div>
+            <div class="mrow"><span class="sq" style="background:#1A6BB5"><svg><use href="#i-mega"/></svg></span><div class="t"><b>Forfait internet</b><small>Annonceur Télécoms · Argent</small></div></div>
+          </div>
+          <p class="gfoot" style="margin:6px 26px">Formules et secteurs se règlent dans Publicité → Formules.</p>
+        </section>
+        <section class="detail">
+          <div class="dhead"><div><div class="over">Validation · Pharmacie de Makepe</div><h3>Lait infantile</h3></div></div>
+          <div class="cols">
+            <div class="stack">
+              <div class="reviewimg"><span class="tag" style="position:absolute;top:8px;left:8px;font-size:10px;font-weight:600;background:rgba(0,0,0,.35);border-radius:99px;padding:2px 8px">Publicité</span><b>Pharmacie de Makepe</b><small>Lait 1er âge : -15 % cette semaine</small></div>
+              <div class="group">
+                <div class="row"><div class="t"><b>Secteur</b></div><span class="v">Pharmacie</span></div>
+                <div class="row"><div class="t"><b>Ciblage</b></div><span class="v">Douala · Cliniques, hôpitaux</span></div>
+                <div class="row"><div class="t"><b>Formule</b></div><span class="v">Or · 30 jours</span></div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="ghead" style="margin-top:2px">Visa santé</div>
+              <div class="group"><div class="row"><div class="t"><b>MSP/2026/0388</b></div><span class="v blue">Ouvrir le justificatif</span></div></div>
+              <div class="ghead">Questions et bonnes réponses</div>
+              <div class="group"><div class="row"><div class="t"><b style="white-space:normal">À partir de quel âge diversifier l'alimentation ?</b><small>Bonne réponse : vers 6 mois</small></div></div></div>
+              <div class="btn primary" style="height:46px;font-size:16px">Valider la campagne</div>
+              <div class="group"><div class="danger" style="padding:11px">Refuser</div></div>
+              <p class="gfoot">Refuser demande un motif, envoyé à l'annonceur.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+    <figcaption><b>Modération des publicités</b>Le visuel tel qu'il sera diffusé, le ciblage, le visa santé (validation impossible sans lui) et les bonnes réponses du quiz, pour vérifier qu'elles ne trompent pas. Le contenu de la campagne est un exemple.</figcaption>
+  </figure>
+
+  <!-- D5 Réglages + Nouvel établissement -->
+  <div class="pair2" style="display:flex;flex-wrap:wrap;gap:36px 40px;justify-content:center">
+  <figure style="max-width:620px">
+    <div class="scroll"><div class="win" style="width:600px">
+      <div class="bbar"><i></i><i></i><i></i><span>…/admin/organizations/new</span></div>
+      <div style="padding:20px 26px 26px;display:flex;flex-direction:column;gap:14px">
+        <div><div class="over">Pour un client</div><h3 style="margin:2px 0 0;font-size:28px;font-weight:700">Nouvel établissement</h3><p class="sub" style="line-height:1.4">Créez l'espace d'un client signé : il reçoit par e-mail une invitation pour devenir administrateur et terminer la configuration.</p></div>
+        <div class="ghead">Établissement</div>
+        <div class="group"><div class="field"><label>Nom de l'établissement</label><span>Centre Médical Akwa</span></div><div class="row"><div class="t"><b>Secteur</b></div><span class="v">Clinique</span><svg class="chev"><use href="#i-chev"/></svg></div></div>
+        <div class="ghead">Abonnement</div>
+        <div class="group"><div class="row"><div class="t"><b>Formule</b></div><span class="v">Business</span><svg class="chev"><use href="#i-chev"/></svg></div><div class="field"><label>Durée de l'essai (jours)</label><span>14</span></div></div>
+        <div class="ghead">Responsable</div>
+        <div class="group"><div class="field"><label>Adresse e-mail du responsable</label><span>direction@cma.cm</span></div></div>
+        <div class="ghead">Services de départ</div>
+        <div class="group" style="--inset:56px">
+          <div class="row"><span class="letter" style="background:#1A6BB5">C</span><div class="t"><b>Consultation générale</b></div><span class="v">15 min</span><svg class="check"><use href="#i-check"/></svg></div>
+          <div class="row"><span class="letter" style="background:#15A05A">P</span><div class="t"><b>Pédiatrie</b></div><span class="v">12 min</span><svg class="check"><use href="#i-check"/></svg></div>
+          <div class="row"><span class="letter" style="background:#8E5BC7">L</span><div class="t"><b>Laboratoire</b></div><span class="v">8 min</span><svg class="check off"><use href="#i-check"/></svg></div>
+        </div>
+        <div class="group"><div class="field"><label>Motif (journalisé)</label><span class="ph">Ex. contrat signé le 10 novembre</span></div></div>
+        <div class="btn primary" style="height:46px;font-size:16px">Créer et inviter</div>
+      </div>
+    </div></div>
+    <figcaption><b>Nouvel établissement</b>Pour un client signé hors ligne. Les services de départ viennent du modèle du secteur, cochés par défaut. Ensuite : « Centre Médical Akwa est créé » et l'invitation envoyée (ou le lien à transmettre si l'e-mail n'est pas parti).</figcaption>
+  </figure>
+
+  <figure style="max-width:620px">
+    <div class="scroll"><div class="win" style="width:600px">
+      <div class="bbar"><i></i><i></i><i></i><span>…/admin/settings</span></div>
+      <div style="padding:20px 26px 26px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="over">Console Wintek</div><h3 style="margin:2px 0 0;font-size:28px;font-weight:700">Réglages</h3></div><span class="saved"><svg><use href="#i-check"/></svg>Enregistré automatiquement</span></div>
+        <div class="ghead">Durées</div>
+        <div class="group">
+          <div class="row"><div class="t"><b>Durée de l'essai</b></div><span class="v">14 jours</span></div>
+          <div class="row"><div class="t"><b>Grâce après l'échéance</b></div><span class="v">7 jours</span></div>
+          <div class="row"><div class="t"><b>Lecture seule avant suspension</b></div><span class="v">7 jours</span></div>
+        </div>
+        <div class="ghead">Messages</div>
+        <div class="group">
+          <div class="row"><div class="t"><b>Code d'inscription</b></div><span class="v">E-mail</span><svg class="chev"><use href="#i-chev"/></svg></div>
+          <div class="row"><div class="t"><b>Demandes de rendez-vous</b></div><span class="v">E-mail</span><svg class="chev"><use href="#i-chev"/></svg></div>
+          <div class="row"><div class="t"><b>Alerte de quota WhatsApp</b></div><span class="v">80 %</span></div>
+        </div>
+        <div class="ghead">Sécurité</div>
+        <div class="group">
+          <div class="row"><div class="t"><b>Double authentification obligatoire</b><small>Super admin et administrateurs</small></div><span class="sw"></span></div>
+          <div class="row"><div class="t"><b style="color:var(--blue)">Réinitialiser la double authentification d'un compte</b></div></div>
+        </div>
+        <div class="ghead">Mentions légales (factures)</div>
+        <div class="group">
+          <div class="row"><div class="t"><b>Raison sociale</b></div><span class="v">Winner Teknology</span></div>
+          <div class="row"><div class="t"><b>RC</b></div><span class="v">RC/DLA/2021/A/1608</span></div>
+          <div class="row"><div class="t"><b>NIU</b></div><span class="v" style="color:#A3550A;font-weight:600">À compléter</span></div>
+        </div>
+      </div>
+    </div></div>
+    <figcaption><b>Réglages de la plateforme</b>Regroupés comme dans Réglages d'iPhone : durées, messages, sécurité, mentions légales. Un champ obligatoire vide (le NIU) est signalé en orange. Durées par défaut de la base : 14, 7 et 7 jours.</figcaption>
+  </figure>
+  </div>
+
+  <h2 class="part">Téléphone</h2>
+  <div class="grid">
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span></span><span class="plusbtn" aria-label="Nouvel établissement"><svg><use href="#i-plus"/></svg></span></div>
+        <div class="body" style="gap:12px">
+          <h2 class="large">Abonnements</h2>
+          <div class="group" style="display:grid;grid-template-columns:1fr 1fr"><div style="padding:10px 14px"><b class="num" style="font-size:20px">484 100</b><div style="font-size:12px;color:var(--label2)">Revenu mensuel</div></div><div style="padding:10px 14px;border-left:.5px solid var(--sep)"><b class="num" style="font-size:20px">344 700</b><div style="font-size:12px;color:var(--label2)">Encaissé</div></div></div>
+          <div class="group">
+            <div class="row"><div class="t"><b>Douala Clinic</b><small>Business · échéance 1er déc.</small></div><span class="chip green">Actif</span></div>
+            <div class="row"><div class="t"><b>Cabinet Akwa</b><small>Starter · échu le 15 nov.</small></div><span class="chip orange">Impayé</span></div>
+            <div class="row"><div class="t"><b>Pharmacie Bonapriso</b><small>Essai jusqu'au 2 déc.</small></div><span class="chip" style="background:var(--tint);color:var(--blue)">Essai</span></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Console sur téléphone</b>Les deux chiffres clés et la liste, pour un coup d'œil en déplacement. Les réglages restent plus confortables sur ordinateur.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="pnav"><span class="back"><svg><use href="#i-back"/></svg>Cabinet Akwa</span><span></span></div>
+        <div class="body" style="gap:12px">
+          <div><div class="over">Facture FAC-2026-000139</div><h2 class="large" style="font-size:26px">Paiement manuel</h2></div>
+          <div class="group"><div class="row"><div class="t"><b>Total</b></div><span class="v num" style="color:var(--label);font-weight:700">29 900 FCFA</span></div></div>
+          <div class="ghead">Mode de paiement</div>
+          <div class="group">
+            <div class="row"><div class="t"><b>Espèces</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Virement</b></div><svg class="check off"><use href="#i-check"/></svg></div>
+            <div class="row"><div class="t"><b>Mobile Money hors ligne</b></div><svg class="check"><use href="#i-check"/></svg></div>
+          </div>
+          <div class="group"><div class="field"><label>Référence</label><span>MP261118.1042.A55901</span></div><div class="row"><div class="t"><b>Date de réception</b></div><span class="v">18 nov.</span></div></div>
+        </div>
+        <div class="bottom"><button class="btn primary">Enregistrer le paiement</button></div>
+      </div></div>
+      <figcaption><b>Encaisser</b>Même effet qu'un paiement en ligne : facture payée, abonnement réactivé, reçu envoyé. Un paiement saisi par erreur s'annule avec un motif.</figcaption>
+    </figure>
+  </div>
+</div>

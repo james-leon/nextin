@@ -1,0 +1,204 @@
+<title>NextIn Mes établissements v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Refonte v2 : « Mes établissements » (après connexion du personnel). Listes groupées iOS, une seule action principale. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --bg:#F2F2F7; --cell:#FFFFFF; --sep:rgba(60,60,67,.18); --label:#000000; --label2:#6C6C70; --label3:rgba(60,60,67,.32);
+  --fill:rgba(118,118,128,.12); --navy:#0D2C54; --onnavy:#FFFFFF; --blue:#1A6BB5; --orange:#F58B1F; --green:#15A05A; --tint:#E8F0F9;
+  --frame:#1C1C1E; --chrome:#E9E9EE;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--tint:#15263D;--frame:#3A3A3C;--chrome:#2C2C2E;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--bg:#000;--cell:#1C1C1E;--sep:rgba(84,84,88,.6);--label:#FFF;--label2:rgba(235,235,245,.62);--label3:rgba(235,235,245,.3);--fill:rgba(118,118,128,.24);--navy:#2A6FB5;--blue:#4A9BE8;--tint:#15263D;--frame:#3A3A3C;--chrome:#2C2C2E;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:17px;letter-spacing:-.01em}
+.page{max-width:1400px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+.intro h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.intro p{margin:6px 0 0;color:var(--label2);font-size:15px;max-width:68ch;line-height:1.45}
+.changes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.changes span{font-size:13px;background:var(--cell);border-radius:999px;padding:7px 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:36px 24px;justify-items:center}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px}
+figure.wide{max-width:1100px}
+figcaption{font-size:13px;color:var(--label2);text-align:center;max-width:60ch;line-height:1.45}
+figcaption b{color:var(--label);font-weight:600;display:block;font-size:15px}
+
+/* Téléphone */
+.phone{width:100%;max-width:320px;aspect-ratio:320/660;border-radius:46px;background:var(--frame);padding:9px}
+.screen{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 26px 0 30px;font-size:15px;font-weight:600;flex:none}
+.status i{display:flex;gap:5px;align-items:center}
+.status svg{width:17px;height:12px;fill:currentColor}
+.body{flex:1;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:18px;min-height:0}
+
+/* En-tête */
+.top{display:flex;align-items:center;justify-content:space-between;height:40px;flex:none}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-.02em}
+.brand svg{width:28px;height:28px}
+.iconbtn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--blue)}
+.iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.large{font-size:31px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.1}
+.sub{margin:4px 0 0;font-size:15px;color:var(--label2)}
+
+/* Listes groupées iOS */
+.group{background:var(--cell);border-radius:12px;overflow:hidden}
+.ghead{font-size:13px;color:var(--label2);text-transform:uppercase;letter-spacing:.02em;margin:0 0 -10px 16px}
+.gfoot{font-size:13px;color:var(--label2);margin:-10px 16px 0;line-height:1.4}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:9px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;right:0;left:var(--inset,58px);border-top:.5px solid var(--sep)}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;font-size:13px;color:var(--label2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.big{min-height:64px}
+.row.big .t b{font-weight:600;font-size:17px}
+.chev{width:8px;height:13px;stroke:var(--label3);fill:none;stroke-width:2;flex:none}
+.ini{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex:none;font-family:var(--num);letter-spacing:.02em}
+.sq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;margin-inline:2px}
+.sq svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.add{color:var(--blue)}
+.add .plus{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--tint);flex:none}
+.add .plus svg{width:18px;height:18px;stroke:var(--blue);fill:none;stroke-width:2.2;stroke-linecap:round}
+.add .t b{color:var(--blue)}
+.badge{font-size:12px;font-weight:600;border-radius:999px;padding:3px 8px;background:var(--fill);color:var(--label2);flex:none}
+.badge.trial{background:var(--tint);color:var(--blue)}
+.tagtxt{color:var(--blue);font-weight:600}
+
+/* Boutons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;width:100%}
+.btn.primary{background:var(--navy);color:var(--onnavy)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.plain{color:var(--blue);font-size:15px;text-align:center}
+
+/* État vide */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:0 8px}
+.empty .ill{width:72px;height:72px;border-radius:18px;background:var(--tint);display:grid;place-items:center;margin-bottom:6px}
+.empty .ill svg{width:36px;height:36px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.empty h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.empty p{margin:0 0 14px;font-size:15px;color:var(--label2);line-height:1.4}
+
+/* Ordinateur */
+.browser{width:100%;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--sep)}
+.bbar{height:34px;background:var(--chrome);display:flex;align-items:center;gap:7px;padding:0 14px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:var(--label3)}
+.bbar span{margin-left:14px;font-size:12px;color:var(--label2);background:var(--bg);border-radius:6px;padding:4px 14px;flex:1;max-width:380px}
+.desk{padding:22px 32px 40px;min-height:540px}
+.desk .top{max-width:1180px;margin:0 auto 26px}
+.desk .col{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.desk .large{font-size:34px}
+.link{display:flex;align-items:center;gap:6px;color:var(--blue);font-size:15px;font-weight:500}
+.link svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--fill);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--label2)}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.1a.3.3 0 0 1-.4.3L5 19V5.6a1 1 0 0 1 .8-1l6-1.3a1 1 0 0 1 1.2 1z"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 8 13"><path d="M1.5 1.5 6.5 6.5 1.5 11.5"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 17 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.6"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></symbol>
+</svg>
+
+<div class="page">
+  <div class="intro">
+    <h1>NextIn — Mes établissements v2</h1>
+    <p>Le premier écran du personnel après la connexion. Il sert à une seule chose : entrer dans son établissement. Les accès rapides et la création d'un établissement restent secondaires.</p>
+    <div class="changes"><span>Listes groupées iOS au lieu de cartes</span><span>Initiales sur la couleur du secteur</span><span>« Créer » en simple lien bleu</span><span>Colonne de 640 px sur ordinateur</span><span>État vide avec une seule action</span></div>
+  </div>
+
+  <div class="grid">
+    <!-- 1 Un établissement -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body">
+          <div class="top"><div class="brand"><svg><use href="#logo"/></svg>NextIn</div><span class="iconbtn" aria-label="Réglages"><svg><use href="#i-gear"/></svg></span></div>
+          <div><h2 class="large">Mes établissements</h2><p class="sub">directeur@doualaclinic.cm</p></div>
+          <div class="ghead">Établissements</div>
+          <div class="group">
+            <div class="row big"><div class="ini" style="background:#1A6BB5">DC</div><div class="t"><b>Douala Clinic</b><small>Clinique · Administrateur</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row add"><div class="plus"><svg><use href="#i-plus"/></svg></div><div class="t"><b>Créer un établissement</b></div></div>
+          </div>
+          <div class="ghead">Accès rapide</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><div class="sq" style="background:#1A6BB5"><svg><use href="#i-door"/></svg></div><div class="t"><b>Ouvrir les postes</b><small>Accueil, guichets et cabinets</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><div class="sq" style="background:#F58B1F"><svg><use href="#i-mega"/></svg></div><div class="t"><b>Espace annonceur</b><small>Annoncer dans les salles d'attente</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Téléphone · un établissement</b>L'établissement en première ligne, plus grand. « Créer » est une ligne bleue, pas une carte. Les accès rapides n'apparaissent que si le compte y a droit.</figcaption>
+    </figure>
+
+    <!-- 2 Plusieurs établissements -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body">
+          <div class="top"><div class="brand"><svg><use href="#logo"/></svg>NextIn</div><span class="iconbtn" aria-label="Réglages"><svg><use href="#i-gear"/></svg></span></div>
+          <div><h2 class="large">Mes établissements</h2><p class="sub">p.ngono@groupe-ngono.cm</p></div>
+          <div class="ghead">Établissements</div>
+          <div class="group">
+            <div class="row big"><div class="ini" style="background:#1A6BB5">DC</div><div class="t"><b>Douala Clinic</b><small>Clinique · Administrateur</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row big"><div class="ini" style="background:#15A05A">PB</div><div class="t"><b>Pharmacie Bonapriso</b><small>Pharmacie · Responsable · <span class="tagtxt">Essai</span></small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row big"><div class="ini" style="background:#8E5BC7">CA</div><div class="t"><b>Cabinet Akwa</b><small>Cabinet médical · Agent</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row add"><div class="plus"><svg><use href="#i-plus"/></svg></div><div class="t"><b>Créer un établissement</b></div></div>
+          </div>
+          <div class="ghead">Accès rapide</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><div class="sq" style="background:#1A6BB5"><svg><use href="#i-door"/></svg></div><div class="t"><b>Ouvrir les postes</b><small>Accueil, guichets et cabinets</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Téléphone · plusieurs établissements</b>Une ligne par établissement, avec le rôle du compte. Le mot « Essai » ou « Suspendu » s'ajoute au sous-titre, jamais un montant.</figcaption>
+    </figure>
+
+    <!-- 3 Aucun établissement -->
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><i><svg><use href="#i-signal"/></svg><svg style="width:26px"><use href="#i-batt"/></svg></i></div>
+        <div class="body">
+          <div class="top"><div class="brand"><svg><use href="#logo"/></svg>NextIn</div><span class="iconbtn" aria-label="Réglages"><svg><use href="#i-gear"/></svg></span></div>
+          <div class="empty">
+            <div class="ill"><svg><use href="#i-building"/></svg></div>
+            <h3>Aucun établissement</h3>
+            <p>Créez l'espace de votre clinique, agence ou boutique en quelques minutes.</p>
+            <button class="btn primary"><svg><use href="#i-plus"/></svg>Créer un établissement</button>
+            <span class="plain">J'ai reçu une invitation</span>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Téléphone · aucun établissement</b>Une seule action, en bleu nuit. Le lien rappelle qu'un membre invité doit ouvrir le lien reçu par e-mail.</figcaption>
+    </figure>
+  </div>
+
+  <!-- 4 Ordinateur -->
+  <figure class="wide">
+    <div class="browser">
+      <div class="bbar"><i></i><i></i><i></i><span>nextin.wintekservices.com/app</span></div>
+      <div class="desk">
+        <div class="top"><div class="brand"><svg><use href="#logo"/></svg>NextIn</div><div class="who"><span class="link"><svg><use href="#i-gear"/></svg>Réglages</span><span class="avatar">PM</span></div></div>
+        <div class="col">
+          <div><h2 class="large">Mes établissements</h2><p class="sub">directeur@doualaclinic.cm</p></div>
+          <div class="ghead">Établissements</div>
+          <div class="group">
+            <div class="row big"><div class="ini" style="background:#1A6BB5">DC</div><div class="t"><b>Douala Clinic</b><small>Clinique · Administrateur · 2 agences</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row add"><div class="plus"><svg><use href="#i-plus"/></svg></div><div class="t"><b>Créer un établissement</b></div></div>
+          </div>
+          <div class="ghead">Accès rapide</div>
+          <div class="group" style="--inset:58px">
+            <div class="row"><div class="sq" style="background:#1A6BB5"><svg><use href="#i-door"/></svg></div><div class="t"><b>Ouvrir les postes</b><small>Accueil, guichets et cabinets</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+            <div class="row"><div class="sq" style="background:#F58B1F"><svg><use href="#i-mega"/></svg></div><div class="t"><b>Espace annonceur</b><small>Annoncer dans les salles d'attente</small></div><svg class="chev"><use href="#i-chev"/></svg></div>
+          </div>
+          <p class="gfoot" style="margin-top:0">Un établissement regroupe vos agences, vos services et votre équipe.</p>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Ordinateur</b>Même liste, dans une colonne centrée de 640 px : pas de grille étirée sur toute la largeur. Réglages et initiales du compte en haut à droite.</figcaption>
+  </figure>
+</div>

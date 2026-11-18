@@ -1,0 +1,130 @@
+<title>NextIn Écran TV compléments v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Écran TV v2 : toujours clair (lisible à 3 m), police système, aplats ; flash d'appel vert plein écran */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --page:#E5E5EA; --pagetext:#000; --pagetext2:rgba(60,60,67,.64);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#000;--pagetext:#fff;--pagetext2:rgba(235,235,245,.62);color-scheme:dark}}
+:root[data-theme="dark"]{--page:#000;--pagetext:#fff;--pagetext2:rgba(235,235,245,.62);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--pagetext);font-family:var(--font);-webkit-font-smoothing:antialiased}
+.page{max-width:1280px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.page h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em}
+.page > p{margin:-6px 0 10px;color:var(--pagetext2);font-size:15px;max-width:70ch;line-height:1.45}
+.cap{font-size:14px;color:var(--pagetext2);margin:6px 0 22px}
+.cap b{color:var(--pagetext)}
+
+/* Écran 16:9 : toujours clair, tailles relatives à la largeur de l'écran (cqw) */
+.tv{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;container-type:inline-size;border:6px solid #1C1C1E;
+  --bg:#F2F2F7;--cell:#FFFFFF;--sep:rgba(60,60,67,.14);--label:#000;--label2:rgba(60,60,67,.62);--navy:#0D2C54;--blue:#1A6BB5;--orange:#F58B1F;--green:#15A05A;
+  background:var(--bg);color:var(--label);display:grid;grid-template-rows:auto 1fr auto}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;gap:1.4cqw;padding:1.6cqw 2.4cqw;background:var(--navy);color:#fff}
+.top svg{width:3.4cqw;height:3.4cqw}
+.top b{font-size:2.1cqw;font-weight:700}
+.top small{font-size:1.3cqw;opacity:.7;margin-left:.6cqw}
+.top .time{margin-left:auto;font-size:2.4cqw;font-weight:600}
+.content{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:1.6cqw;padding:1.6cqw 2.4cqw;min-height:0}
+.calls{background:var(--cell);border-radius:1.4cqw;padding:1.4cqw 2cqw;display:flex;flex-direction:column;min-height:0}
+.calls h2{margin:0 0 .6cqw;font-size:1.5cqw;font-weight:600;color:var(--label2);display:grid;grid-template-columns:1fr 1fr;text-transform:uppercase;letter-spacing:.04em}
+.call{display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:1cqw 0;border-top:.15cqw solid var(--sep)}
+.call .tk{font-size:6cqw;font-weight:700;color:var(--navy);line-height:1}
+.call .where{font-size:2.9cqw;font-weight:600}
+.call .where small{display:block;font-size:1.4cqw;font-weight:400;color:var(--label2);margin-top:.2cqw}
+.call.new{box-shadow:inset .5cqw 0 0 var(--orange);padding-left:1.4cqw;margin-left:-1.4cqw}
+.call.new .where::after{content:"Appel";display:inline-block;margin-left:1cqw;font-size:1.2cqw;font-weight:700;color:#fff;background:var(--orange);border-radius:99px;padding:.25cqw .9cqw;vertical-align:.6cqw}
+.side{display:flex;flex-direction:column;gap:1.6cqw;min-height:0}
+.ad{flex:1;border-radius:1.4cqw;overflow:hidden;position:relative;background:#0E7A44;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:1.6cqw}
+.ad svg{position:absolute;inset:0;width:100%;height:100%}
+.ad .tag{position:absolute;top:1.2cqw;left:1.2cqw;font-size:1cqw;font-weight:600;background:rgba(0,0,0,.35);border-radius:99px;padding:.3cqw .9cqw}
+.ad b{position:relative;font-size:2.3cqw;line-height:1.15;font-weight:700}
+.ad small{position:relative;font-size:1.3cqw;opacity:.9;margin-top:.4cqw}
+.next{background:var(--cell);border-radius:1.4cqw;padding:1.2cqw 1.6cqw}
+.next h3{margin:0 0 .6cqw;font-size:1.3cqw;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.04em}
+.next .row{display:flex;gap:1.4cqw;font-size:2.4cqw;font-weight:700;color:var(--navy);flex-wrap:wrap}
+.bottom{display:flex;align-items:center;gap:1.6cqw;padding:1cqw 2.4cqw 1.4cqw;font-size:1.4cqw;color:var(--label2)}
+.bottom .dots{display:flex;gap:.5cqw;align-items:flex-end}
+.bottom .dots i{width:.8cqw;height:.8cqw;border-radius:50%;background:var(--blue)}
+.bottom .dots i:nth-child(2){width:.7cqw;height:.7cqw}.bottom .dots i:nth-child(3){width:.6cqw;height:.6cqw}
+.bottom b{color:var(--label);font-weight:600}
+.bottom .code{margin-left:auto;display:flex;align-items:center;gap:.8cqw}
+.bottom .code span{font-family:var(--num);font-size:2cqw;font-weight:700;color:var(--label);letter-spacing:.2cqw;background:var(--cell);border-radius:.8cqw;padding:.2cqw 1cqw}
+
+/* Flash d'appel */
+.flash{background:var(--green);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.8cqw;grid-template-rows:none}
+.flash .k{font-size:2.6cqw;font-weight:600;opacity:.92}
+.flash .big{font-size:17cqw;font-weight:700;line-height:.95;letter-spacing:-.02em}
+.flash .go{font-size:4.6cqw;font-weight:700}
+.flash .svc{font-size:2cqw;opacity:.85}
+.flash .bar{width:30cqw;height:.6cqw;border-radius:99px;background:rgba(255,255,255,.3);margin-top:2cqw;overflow:hidden}
+.flash .bar i{display:block;height:100%;width:62%;background:#fff;border-radius:99px}
+</style>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs><linearGradient id="bga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A7BFF"/><stop offset="1" stop-color="#0029BC"/></linearGradient><linearGradient id="sha" gradientUnits="userSpaceOnUse" x1="330" y1="420" x2="560" y2="640"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A9C4FF"/></linearGradient><clipPath id="cpa"><path d="M600 0 H1024 V582 L600 712 Z"/></clipPath></defs>
+  <symbol id="logo" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="232" fill="url(#bga)"/><path d="M214 334 L578 640" stroke="url(#sha)" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M214 334 V650" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><path d="M578 334 V566" stroke="#FFFFFF" stroke-width="136" stroke-linecap="round" fill="none"/><circle cx="726" cy="450" r="50" fill="#FFFFFF"/><path d="M662 760 V580 A64 64 0 0 1 790 580 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="846" cy="478" r="39" fill="#FFFFFF"/><path d="M798 760 V584 A48 48 0 0 1 894 584 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><circle cx="934" cy="503" r="30" fill="#FFFFFF"/><path d="M898 760 V590 A36 36 0 0 1 970 590 V760 Z" fill="#FFFFFF" clip-path="url(#cpa)"/><path d="M372 812 C 540 726 760 666 972 628 C 990 625 994 648 976 652 C 790 696 640 760 520 812 C 506 818 470 818 372 812 Z" fill="#FFFFFF"/></symbol>
+</svg>
+
+<style>
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr));gap:28px 24px}
+.grid2 figure{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.grid2 figcaption{font-size:13px;color:var(--pagetext2);line-height:1.45}
+.grid2 figcaption b{display:block;color:var(--pagetext);font-size:15px}
+.pairscr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6cqw;text-align:center;background:var(--bg);grid-template-rows:none}
+.pairscr .lg{width:7cqw;height:7cqw}
+.pairscr h3{margin:0;font-size:3.6cqw;font-weight:700;letter-spacing:-.02em}
+.pairscr p{margin:0;font-size:1.7cqw;color:var(--label2);max-width:60cqw;line-height:1.4}
+.pcode{display:flex;gap:1.2cqw}
+.pcode span{width:8cqw;height:10cqw;border-radius:1.4cqw;background:var(--cell);display:grid;place-items:center;font-family:var(--num);font-size:6cqw;font-weight:700;color:var(--navy);box-shadow:0 0 0 .15cqw var(--sep)}
+.pcode i{width:2cqw}
+.pbar{width:30cqw;height:.5cqw;border-radius:99px;background:var(--sep);overflow:hidden}
+.pbar i{display:block;height:100%;width:70%;background:var(--blue)}
+.soundov{position:absolute;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center}
+.soundbtn{background:#fff;color:#0D2C54;border-radius:2cqw;padding:2.4cqw 3.6cqw;display:flex;flex-direction:column;align-items:center;gap:1cqw;text-align:center}
+.soundbtn svg{width:6cqw;height:6cqw;stroke:#0D2C54;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.soundbtn b{font-size:3cqw}
+.soundbtn small{font-size:1.5cqw;color:rgba(60,60,67,.7)}
+.offbanner{position:absolute;left:50%;top:1.8cqw;transform:translateX(-50%);background:#F58B1F;color:#fff;font-weight:700;font-size:1.6cqw;border-radius:99px;padding:.6cqw 1.8cqw;display:flex;align-items:center;gap:.8cqw}
+.offbanner svg{width:2cqw;height:2cqw;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+.tv.stale .content{opacity:.55;filter:grayscale(.4)}
+.nocall{background:var(--cell);border-radius:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;color:var(--label2);font-size:2cqw;text-align:center}
+.nocall .dts{display:flex;gap:.8cqw;align-items:flex-end}
+.nocall .dts i{width:1.4cqw;height:1.4cqw;border-radius:50%;background:var(--label2);opacity:.35}
+.qrcol{flex:1;background:var(--navy);color:#fff;border-radius:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;padding:1.6cqw;text-align:center}
+.qrcol .q{width:13cqw;height:13cqw;background:#fff;border-radius:1cqw;padding:.8cqw}
+.qrcol .q svg{width:100%;height:100%}
+.qrcol b{font-size:2cqw}
+.qrcol small{font-size:1.3cqw;opacity:.8}
+.qrcol .cd{font-family:var(--num);font-size:2.2cqw;font-weight:700;letter-spacing:.3cqw;background:rgba(255,255,255,.12);border-radius:.8cqw;padding:.2cqw 1cqw}
+.unav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4cqw;text-align:center;grid-template-rows:none;background:var(--bg)}
+.unav .ic{width:9cqw;height:9cqw;border-radius:2.4cqw;background:var(--cell);display:grid;place-items:center}
+.unav .ic svg{width:4.6cqw;height:4.6cqw;stroke:var(--label2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.unav h3{margin:0;font-size:3.6cqw;font-weight:700}
+.unav p{margin:0;font-size:2cqw;color:var(--label2)}
+.revnote{background:rgba(255,59,48,.12);color:#C4140A;border-radius:99px;padding:.6cqw 1.8cqw;font-size:1.6cqw;font-weight:600}
+.prev{background:var(--cell);border-radius:1.4cqw;padding:1.2cqw 1.6cqw}
+.prev h3{margin:0 0 .6cqw;font-size:1.3cqw;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.04em}
+.prev .row{display:flex;gap:1.4cqw;font-size:2.2cqw;font-weight:700;color:var(--label2);flex-wrap:wrap;font-family:var(--num)}
+</style>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="qrimg" viewBox="0 0 29 29"><path fill="#000" d="M0 0h7v7H0zM2 2v3h3V2zM22 0h7v7h-7zm2 2v3h3V2zM0 22h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm4 0h3v2h-3zm5 2h2v3h-2zM9 4h3v3H9zm5 1h2v2h-2zM0 9h3v2H0zm5 0h4v2H5zm6 0h2v4h-2zm4 0h5v2h-5zm7 0h3v3h-3zm4 1h3v2h-3zM2 13h3v3H2zm6 0h2v2H8zm5 2h4v2h-4zm6-2h2v4h-2zm4 3h4v2h-4zM0 18h2v2H0zm4 0h5v2H4zm7 1h2v3h-2zm4 1h3v2h-3zm5 0h2v2h-2zm4 0h5v3h-5zM9 22h2v3H9zm4 2h4v2h-4zm6 0h2v5h-2zm4 3h6v2h-6zM9 27h3v2H9zm5 0h2v2h-2z"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-wifioff" viewBox="0 0 24 24"><path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M5 12.86a10 10 0 0 1 5.17-2.69M2 2l20 20"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+</svg>
+<div class="page">
+<h1>NextIn — écran TV : compléments v2</h1>
+<p>Les états de l'écran que la maquette 09 ne montrait pas : l'appairage, l'activation du son, l'écran sans appel, sans publicité, hors ligne, révoqué ou indisponible. Toujours clair, lisible à 3 mètres, sans aucun nom de patient.</p>
+<div class="grid2">
+<figure><div class="tv" role="img" aria-label="Appairage" style="position:relative"><div class="pairscr" style="position:absolute;inset:0"><svg class="lg"><use href="#logo"/></svg><h3>Appairez cet écran</h3><p>Dans NextIn, ouvrez Agences → votre agence → Écrans, puis saisissez ce code.</p><div class="pcode"><span>4</span><span>8</span><span>2</span><i></i><span>9</span><span>1</span><span>6</span></div><div class="pbar"><i></i></div><p style="font-size:1.4cqw">Le code change automatiquement toutes les 10 minutes. · nextin.wintekservices.com/tv</p></div></div><figcaption><b>Appairage</b>Le premier écran d'un téléviseur neuf. Le code en très grand, en deux groupes de trois pour le lire à voix haute ; la barre montre le temps restant avant le prochain code.</figcaption></figure>
+<figure><div class="tv" role="img" aria-label="Activer le son" style="position:relative"><div class="top"><svg><use href="#logo"/></svg><b>Douala Clinic</b><small>Agence de Makepe</small><span class="time num">10:42</span></div><div class="content"><section class="calls"><h2><span>Ticket</span><span>Allez au</span></h2><div class="call new"><span class="tk num">C-051</span><span class="where">Cabinet 2<small>Consultation générale</small></span></div><div class="call"><span class="tk num">L-022</span><span class="where">Laboratoire<small>Prélèvements</small></span></div><div class="call"><span class="tk num">P-019</span><span class="where">Pédiatrie<small>Dr Fotso</small></span></div></section><div class="side"><div class="ad"><svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="400" height="300" fill="#0E7A44"/><circle cx="320" cy="70" r="120" fill="#15A05A"/><rect x="250" y="70" width="90" height="120" rx="14" fill="#fff" opacity=".95"/><path d="M295 100v60M265 130h60" stroke="#15A05A" stroke-width="16" stroke-linecap="round"/></svg><span class="tag">Publicité</span><b>Pharmacie de Makepe</b><small>Ouverte 24 h/24 · -10 % avec votre ticket NextIn</small></div><div class="next"><h3>À suivre</h3><div class="row num"><span>C-052</span><span>C-053</span><span>P-020</span><span>L-023</span></div></div></div></div><div class="bottom"><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div><span><b>13 personnes</b> en attente · Scannez le QR code de l'accueil pour prendre un ticket</span><span class="code">Code de présence <span>7K3Q</span></span></div><div class="soundov"><div class="soundbtn"><svg><use href="#i-speaker"/></svg><b>Activer le son</b><small>Touchez une fois pour autoriser les annonces vocales.</small></div></div></div><figcaption><b>Activer le son</b>Les navigateurs bloquent le son tant qu'on n'a pas touché l'écran. Une seule fois, à l'installation, avec la télécommande ou la souris. Ensuite, « Son activé » s'affiche 3 secondes.</figcaption></figure>
+<figure><div class="tv" role="img" aria-label="Aucun appel en cours" style="position:relative"><div class="top"><svg><use href="#logo"/></svg><b>Douala Clinic</b><small>Agence de Makepe</small><span class="time num">10:42</span></div><div class="content"><div class="nocall"><div class="dts"><i></i><i></i><i></i></div>Les appels s'afficheront ici.</div><div class="side"><div class="qrcol"><div class="q"><svg><use href="#qrimg"/></svg></div><b>Scannez, prenez votre ticket</b><small>Et attendez où vous voulez.</small><span class="cd">D4KM7P</span></div><div class="prev"><h3>Appels précédents</h3><div class="row"><span>Aucun appel précédent</span></div></div></div></div><div class="bottom"><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div><span><b>Personne</b> en attente · Scannez le QR code de l'accueil pour prendre un ticket</span><span class="code">Code de présence <span>7K3Q</span></span></div></div><figcaption><b>Aucun appel en cours</b>À l'ouverture, avant le premier appel : un message calme et, à droite, le QR code de l'agence en grand pour inviter à prendre un ticket.</figcaption></figure>
+<figure><div class="tv" role="img" aria-label="Sans publicité" style="position:relative"><div class="top"><svg><use href="#logo"/></svg><b>Douala Clinic</b><small>Agence de Makepe</small><span class="time num">10:42</span></div><div class="content"><section class="calls"><h2><span>Ticket</span><span>Allez au</span></h2><div class="call new"><span class="tk num">C-051</span><span class="where">Cabinet 2<small>Consultation générale</small></span></div><div class="call"><span class="tk num">L-022</span><span class="where">Laboratoire<small>Prélèvements</small></span></div><div class="call"><span class="tk num">P-019</span><span class="where">Pédiatrie<small>Dr Fotso</small></span></div></section><div class="side"><div class="qrcol"><div class="q"><svg><use href="#qrimg"/></svg></div><b>Scannez, prenez votre ticket</b><small>Et attendez où vous voulez.</small><span class="cd">D4KM7P</span></div><div class="next"><h3>À suivre</h3><div class="row num"><span>C-052</span><span>C-053</span><span>P-020</span><span>L-023</span></div></div></div></div><div class="bottom"><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div><span><b>13 personnes</b> en attente · Scannez le QR code de l'accueil pour prendre un ticket</span><span class="code">Code de présence <span>7K3Q</span></span></div></div><figcaption><b>Sans publicité</b>Quand la publicité est désactivée pour cet écran, sa place revient au QR code de l'agence et au code court. Rien n'est laissé vide.</figcaption></figure>
+<figure><div class="tv stale" role="img" aria-label="Hors ligne" style="position:relative"><div class="top"><svg><use href="#logo"/></svg><b>Douala Clinic</b><small>Agence de Makepe</small><span class="time num">10:42</span></div><div class="content"><section class="calls"><h2><span>Ticket</span><span>Allez au</span></h2><div class="call new"><span class="tk num">C-051</span><span class="where">Cabinet 2<small>Consultation générale</small></span></div><div class="call"><span class="tk num">L-022</span><span class="where">Laboratoire<small>Prélèvements</small></span></div><div class="call"><span class="tk num">P-019</span><span class="where">Pédiatrie<small>Dr Fotso</small></span></div></section><div class="side"><div class="ad"><svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="400" height="300" fill="#0E7A44"/><circle cx="320" cy="70" r="120" fill="#15A05A"/><rect x="250" y="70" width="90" height="120" rx="14" fill="#fff" opacity=".95"/><path d="M295 100v60M265 130h60" stroke="#15A05A" stroke-width="16" stroke-linecap="round"/></svg><span class="tag">Publicité</span><b>Pharmacie de Makepe</b><small>Ouverte 24 h/24 · -10 % avec votre ticket NextIn</small></div><div class="next"><h3>À suivre</h3><div class="row num"><span>C-052</span><span>C-053</span><span>P-020</span><span>L-023</span></div></div></div></div><div class="bottom"><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div><span><b>13 personnes</b> en attente · Scannez le QR code de l'accueil pour prendre un ticket</span><span class="code">Code de présence <span>7K3Q</span></span></div><div class="offbanner"><svg><use href="#i-wifioff"/></svg>Hors ligne · reconnexion…</div></div><figcaption><b>Hors ligne</b>Le dernier état reste affiché, atténué, avec une pastille orange en haut. Dès le retour du réseau, tout se remet à jour sans action.</figcaption></figure>
+<figure><div class="tv" role="img" aria-label="Service indisponible" style="position:relative"><div class="unav" style="position:absolute;inset:0"><div class="ic"><svg><use href="#i-pause"/></svg></div><h3>Service momentanément indisponible</h3><p>Merci de vous adresser à l'accueil.</p></div></div><figcaption><b>Service indisponible</b>Si l'établissement est suspendu ou en lecture seule. La raison (abonnement, paiement) n'est jamais affichée aux patients.</figcaption></figure>
+<figure><div class="tv" role="img" aria-label="Écran révoqué" style="position:relative"><div class="pairscr" style="position:absolute;inset:0"><span class="revnote">Cet écran n'est plus appairé.</span><svg class="lg"><use href="#logo"/></svg><h3>Appairez cet écran</h3><div class="pcode"><span>7</span><span>3</span><span>0</span><i></i><span>5</span><span>2</span><span>8</span></div><div class="pbar"><i style="width:95%"></i></div></div></div><figcaption><b>Écran révoqué</b>Révoqué depuis le back-office : l'écran revient seul à l'appairage avec un message en rouge, et un nouveau code.</figcaption></figure>
+</div>
+</div>
