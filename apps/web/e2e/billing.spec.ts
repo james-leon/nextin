@@ -81,8 +81,14 @@ test.describe("M10a — abonnements et paiements", () => {
       const pay = page.locator("button[type=submit]").filter({ hasText: /^Payer/ }).filter({ visible: true });
       await expect(pay, `${viewport.width}×${viewport.height}`).toHaveCount(1);
       // La barre de titre se réorganise au changement de taille : attendre que le bouton ait sa place.
-      await expect.poll(async () => (await pay.boundingBox())?.y ?? -1).toBeGreaterThanOrEqual(0);
-      const top = (await pay.boundingBox())!;
+      // Boîte relue jusqu'à ce qu'elle existe (le bouton peut être remonté entre deux lectures).
+      let top = { x: 0, y: -1, width: 0, height: 0 };
+      await expect
+        .poll(async () => {
+          top = (await pay.boundingBox()) ?? top;
+          return top.y;
+        })
+        .toBeGreaterThanOrEqual(0);
       expect(top.y + top.height, `${viewport.width}×${viewport.height} : à côté du titre`).toBeLessThan(200);
       // Aucune barre en bas de l'écran : rien ne recouvre les formules.
       await expect(page.locator(".safe-bottom").filter({ visible: true })).toHaveCount(0);

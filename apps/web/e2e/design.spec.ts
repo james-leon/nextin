@@ -225,8 +225,11 @@ test.describe("/design — vitrine du design system", () => {
     const frame = page.locator("#navigation .overflow-y-auto");
     const smallTitle = frame.locator("p[aria-hidden]").filter({ hasText: "Mes tickets" });
     await expect(smallTitle).toHaveAttribute("aria-hidden", "true");
-    await frame.evaluate((el) => el.scrollTo({ top: 400 }));
-    await expect(smallTitle).toHaveAttribute("aria-hidden", "false");
+    // Défilement redemandé jusqu'à ce que le titre se réduise (la vitrine peut encore s'allonger juste après l'ouverture).
+    await expect(async () => {
+      await frame.evaluate((el) => el.scrollTo({ top: 400 }));
+      await expect(smallTitle).toHaveAttribute("aria-hidden", "false", { timeout: 1000 });
+    }).toPass({ timeout: 10_000 });
   });
 
   for (const theme of ["light", "dark"] as const) {
