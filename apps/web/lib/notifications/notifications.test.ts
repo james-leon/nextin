@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { sendJob, type ClaimedJob } from "./send";
 import { signMetaPayload, verifyMetaSignature } from "./signature";
 import { cloudWhatsApp, fakeWhatsApp } from "./providers/whatsapp";
-import { consoleEmail, smtpConfigFromEnv } from "./providers/email";
+import { consoleEmail, maskEmailsIn, smtpConfigFromEnv, smtpFailureLog } from "./providers/email";
 import { consoleSms } from "./providers/sms";
 import { fakePush } from "./providers/push";
 import type { TicketView } from "@/lib/client/types";
@@ -297,3 +297,34 @@ describe("demandes vérifiées par e-mail", () => {
     expect(resend.config).toMatchObject({ port: 465, secure: true });
   });
 });
+
+describe("journal des échecs SMTP", () => {
+  it("code et message du fournisseur, adresses masquées, jamais de secret", () => {
+    const error = Object.assign(new Error("Message failed: 550 5.1.1 <awa.ngono@exemple.cm>: Recipient address rejected"), {
+      code: "EENVELOPE",
+      responseCode: 550,
+      command: "RCPT TO",
+      response: "550 5.1.1 <awa.ngono@exemple.cm>: Recipient address rejected",
+    });
+    const line = smtpFailureLog(error, "awa.ngono@exemple.cm", { host: "smtp-relay.brevo.com", port: 587 });
+    expect(line).toEqual({
+      host: "smtp-relay.brevo.com",
+      port: 587,
+      to: "a…@exemple.cm",
+      code: "EENVELOPE",
+      responseCode: 550,
+      command: "RCPT TO",
+      response: "550 5.1.1 <a…@exemple.cm>: Recipient address rejected",
+      message: "Message failed: 550 5.1.1 <a…@exemple.cm>: Recipient address rejected",
+    });
+    expect(JSON.stringify(line)).not.toContain("awa.ngono");
+  });
+  it("erreur d'authentification : identifiant masqué, mot de passe absent", () => {
+    const error = Object.assign(new Error("Invalid login: 535 5.7.8 Authentication failed for compte@wintek.cm"), { code: "EAUTH", responseCode: 535, command: "AUTH PLAIN" });
+    const line = smtpFailureLog(error, "x@y.cm", { host: "smtp.resend.com", port: 465 });
+    expect(line.code).toBe("EAUTH");
+    expect(line.message).toBe("Invalid login: 535 5.7.8 Authentication failed for c…@wintek.cm");
+    expect(maskEmailsIn("rien à masquer")).toBe("rien à masquer");
+  });
+});
+
