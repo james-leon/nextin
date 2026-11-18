@@ -65,7 +65,7 @@ test.describe("M8 — tableau de bord", () => {
     await page.keyboard.press("Escape");
 
     // Configuration incomplète : accès au démarrage.
-    await page.getByRole("link", { name: /Configuration : \d étapes sur 4/ }).click();
+    await page.getByRole("link", { name: /Configuration : \d étapes sur 6/ }).click();
     await expect(page.getByRole("heading", { name: "Démarrage", level: 1 })).toBeVisible();
   });
 

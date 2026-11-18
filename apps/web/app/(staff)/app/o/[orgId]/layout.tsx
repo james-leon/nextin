@@ -5,6 +5,7 @@ import { BillingBanner } from "@/components/billing/billing-banner";
 import { QuotaBanner } from "@/components/billing/quota-banner";
 import { SuspendedGate } from "@/components/billing/suspended-gate";
 import { SidebarShell } from "@/components/shell/sidebar-shell";
+import { setupSteps } from "@/components/admin/setup-overview";
 import { getOrgContext } from "@/lib/admin/context";
 import type { QuotaStatus } from "@/lib/billing/types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -36,6 +37,9 @@ export default async function OrgLayout({ children, params }: { children: React.
   const plan = sub?.plans as { name: string; name_en: string | null } | null | undefined;
   const planName = plan ? (locale === "en" ? (plan.name_en ?? plan.name) : plan.name) : ta("sidebar.pilot");
   const orgSummary = `${ta("sidebar.branches", { count: branchCount ?? 0 })} · ${planName}`;
+  // « Démarrage » en tête de la barre latérale tant que la mise en place n'est pas terminée (administrateurs).
+  const setup =
+    ctx.canManageOrg && ctx.org.onboarding_step < 5 ? await setupSteps(orgId, ctx.org.onboarding_step) : null;
   const user = {
     name: ctx.session.fullName ?? ctx.session.email ?? "",
     role: ctx.session.isPlatformAdmin && !ctx.role ? ta("nav.platform") : ctx.role ? tr(ctx.role) : "",
@@ -48,6 +52,7 @@ export default async function OrgLayout({ children, params }: { children: React.
           orgId={ctx.org.id}
           orgName={ctx.org.name}
           orgSummary={orgSummary}
+          setup={setup && !setup.allDone ? { done: setup.done, total: setup.total } : null}
           user={user}
           canManageOrg={ctx.canManageOrg}
           isPlatformAdmin={ctx.session.isPlatformAdmin}

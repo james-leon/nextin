@@ -1,14 +1,27 @@
 import { getTranslations } from "next-intl/server";
-import { Building2, CheckCircle2, Circle, CreditCard, DoorOpen, Megaphone, QrCode, Stethoscope, Tv, UsersRound } from "lucide-react";
+import Link from "next/link";
+import { Building2, Check, CreditCard, Megaphone, Stethoscope, UsersRound } from "lucide-react";
 import { SERVICE_COLORS } from "@nextin/shared";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
-import { StatCard } from "@/components/ui/stat-card";
+import { StatCard, StatGroup } from "@/components/ui/stat-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { getOrgContext } from "@/lib/admin/context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-/** Étapes de démarrage d'un établissement (agence, services, guichets, QR code, personnel). */
-export async function setupSteps(orgId: string) {
+export type SetupKey = "stepBranch" | "stepServices" | "stepCounters" | "stepQr" | "stepStaff" | "stepDisplay";
+export type SetupStep = { key: SetupKey; done: boolean; href: string; detail: string | null };
+
+/**
+ * Six étapes de démarrage d'un établissement (maquette v2 19), dans l'ordre de la mise en place : agence, services,
+ * guichets et cabinets, QR code imprimé, équipe invitée, écran TV appairé. Chacune est mesurée sur les données ; le QR
+ * code compte comme fait dès que ses supports ont été téléchargés (`onboarding_step` ≥ 4, posé par la route PDF).
+ * La mise en place peut être terminée dès que les étapes indispensables sont faites (QR code et écran facultatifs).
+ */
+export async function setupSteps(orgId: string, onboardingStep = 0) {
   const supabase = await getSupabaseServerClient();
+  const t = await getTranslations("overview");
   const count = (table: "branches" | "services" | "counters" | "memberships" | "displays") =>
     supabase.from(table).select("id", { count: "exact", head: true }).eq("organization_id", orgId);
   const [branches, services, counters, members, firstBranch, invites, displays] = await Promise.all([
@@ -16,7 +29,7 @@ export async function setupSteps(orgId: string) {
     count("services"),
     count("counters"),
     count("memberships"),
-    supabase.from("branches").select("id").eq("organization_id", orgId).order("sort_order").limit(1).maybeSingle(),
+    supabase.from("branches").select("id, name").eq("organization_id", orgId).order("sort_order").limit(1).maybeSingle(),
     supabase.from("invitations").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
     count("displays"),
   ]);
@@ -25,60 +38,123 @@ export async function setupSteps(orgId: string) {
     services: services.count ?? 0,
     counters: counters.count ?? 0,
     members: members.count ?? 0,
+    invites: invites.count ?? 0,
+    displays: displays.count ?? 0,
   };
   const b = firstBranch.data?.id;
   const root = `/app/o/${orgId}`;
-  const steps = [
-    { key: "stepBranch", done: n.branches > 0, href: `${root}/branches`, icon: <Building2 />, color: "var(--brand-tile)" },
-    { key: "stepServices", done: n.services > 0, href: b ? `${root}/branches/${b}/services` : `${root}/branches`, icon: <Stethoscope />, color: "var(--accent-fill)" },
-    { key: "stepCounters", done: n.counters > 0, href: b ? `${root}/branches/${b}/counters` : `${root}/branches`, icon: <DoorOpen />, color: SERVICE_COLORS.green },
-    { key: "stepQr", done: false, href: b ? `${root}/branches/${b}/qr` : `${root}/branches`, icon: <QrCode />, color: SERVICE_COLORS.purple },
-    // M10a (§11.3) : appairage de l'écran TV, facultatif (une agence peut fonctionner sans écran).
-    { key: "stepDisplay", done: (displays.count ?? 0) > 0, href: b ? `${root}/branches/${b}/displays` : `${root}/branches`, icon: <Tv />, color: SERVICE_COLORS.navy },
-    { key: "stepStaff", done: n.members > 1 || (invites.count ?? 0) > 0, href: `${root}/staff`, icon: <UsersRound />, color: SERVICE_COLORS.ochre },
-  ] as const;
-  // Le QR code n'est pas mesurable et l'écran TV est facultatif : la configuration est complète quand le reste est fait.
-  const optional = (key: string) => key === "stepQr" || key === "stepDisplay";
-  const done = steps.filter((s) => s.done && !optional(s.key)).length;
-  return { n, steps, done, total: steps.filter((s) => !optional(s.key)).length, complete: steps.every((s) => s.done || optional(s.key)) };
+  const inBranch = (path: string) => (b ? `${root}/branches/${b}/${path}` : `${root}/branches`);
+  const steps: SetupStep[] = [
+    { key: "stepBranch", done: n.branches > 0, href: `${root}/branches`, detail: firstBranch.data?.name ?? null },
+    { key: "stepServices", done: n.services > 0, href: inBranch("services"), detail: t("countServices", { count: n.services }) },
+    { key: "stepCounters", done: n.counters > 0, href: inBranch("counters"), detail: t("countCounters", { count: n.counters }) },
+    { key: "stepQr", done: onboardingStep >= 4, href: inBranch("qr"), detail: t("qrPrinted") },
+    { key: "stepStaff", done: n.members > 1 || n.invites > 0, href: `${root}/staff`, detail: t("countMembers", { count: n.members + n.invites }) },
+    { key: "stepDisplay", done: n.displays > 0, href: inBranch("displays"), detail: t("countDisplays", { count: n.displays }) },
+  ];
+  // Le QR code et l'écran TV sont facultatifs : la mise en place peut être terminée sans eux.
+  const optional = (key: SetupKey) => key === "stepQr" || key === "stepDisplay";
+  const done = steps.filter((s) => s.done).length;
+  return {
+    n,
+    steps,
+    done,
+    total: steps.length,
+    allDone: done === steps.length,
+    complete: steps.every((s) => s.done || optional(s.key)),
+  };
 }
 
-/** Compteurs et liste des étapes de démarrage (page « Démarrage », et vue d'ensemble sans tableau de bord). */
-export async function SetupOverview({ orgId }: { orgId: string }) {
+/**
+ * Démarrage (maquette v2 19) : progression « Configuration : 3 étapes sur 6 », puis une liste groupée où les étapes
+ * faites passent en gris avec une coche verte et « Fait », la suivante en gras avec sa description et le seul bouton
+ * de la page (« Commencer »), les autres « À faire ».
+ */
+export async function SetupChecklist({ orgId, onboardingStep }: { orgId: string; onboardingStep: number }) {
   const t = await getTranslations("overview");
-  const { n, steps } = await setupSteps(orgId);
+  const { steps, done, total } = await setupSteps(orgId, onboardingStep);
+  const next = steps.find((s) => !s.done)?.key;
+  const percent = Math.round((done / total) * 100);
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 px-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-headline">{t("progress", { done, total })}</p>
+          <p className="text-subheadline text-label-secondary tabular">{percent} %</p>
+        </div>
+        <ProgressBar value={done / total} label={t("progress", { done, total })} />
+      </div>
+      <ListSection footer={t("checklistFooter")}>
+        {steps.map((s, i) => {
+          const isNext = s.key === next;
+          const marker = s.done ? (
+            <span aria-hidden className="flex size-[1.625rem] items-center justify-center rounded-full bg-green text-on-accent">
+              <Check className="size-4 stroke-[3]" />
+            </span>
+          ) : (
+            <span
+              aria-hidden
+              className={
+                isNext
+                  ? "flex size-[1.625rem] items-center justify-center rounded-full bg-primary text-footnote font-semibold text-on-accent"
+                  : "flex size-[1.625rem] items-center justify-center rounded-full text-footnote font-semibold text-label-secondary shadow-[inset_0_0_0_1.5px_var(--label-tertiary)]"
+              }
+            >
+              {i + 1}
+            </span>
+          );
+          const title = <span className={s.done ? "text-label-secondary" : isNext ? "font-semibold" : undefined}>{t(s.key)}</span>;
+          if (isNext) {
+            return (
+              <ListRow
+                key={s.key}
+                icon={marker}
+                title={title}
+                subtitle={t(`${s.key}Hint`)}
+                trailing={
+                  <Button asChild size="md">
+                    <Link href={s.href} aria-label={`${t("start")} · ${t(s.key)}`}>
+                      {t("start")}
+                    </Link>
+                  </Button>
+                }
+              />
+            );
+          }
+          return (
+            <ListRow
+              key={s.key}
+              href={s.href}
+              icon={marker}
+              title={title}
+              subtitle={s.done ? (s.detail ?? undefined) : undefined}
+              detail={
+                <Badge shape="pill" tone={s.done ? "green" : "neutral"}>
+                  {s.done ? t("done") : t("todo")}
+                </Badge>
+              }
+              accessory={s.done ? undefined : "chevron"}
+            />
+          );
+        })}
+      </ListSection>
+    </div>
+  );
+}
+
+/** Compteurs et liste des étapes de démarrage (vue d'ensemble d'un établissement sans agence). */
+export async function SetupOverview({ orgId, onboardingStep = 0 }: { orgId: string; onboardingStep?: number }) {
+  const t = await getTranslations("overview");
+  const { n } = await setupSteps(orgId, onboardingStep);
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <StatGroup>
         <StatCard label={t("branches")} value={n.branches} />
         <StatCard label={t("services")} value={n.services} />
         <StatCard label={t("counters")} value={n.counters} />
         <StatCard label={t("staff")} value={n.members} />
-      </div>
-      <ListSection header={t("checklistTitle")} footer={t("checklistFooter")}>
-        {steps.map((s) => (
-          <ListRow
-            key={s.key}
-            href={s.href}
-            icon={<ListIcon color={s.color}>{s.icon}</ListIcon>}
-            title={t(s.key)}
-            detail={
-              s.done ? (
-                <span className="inline-flex items-center gap-1 text-green-text">
-                  <CheckCircle2 aria-hidden className="size-4 stroke-2" />
-                  {t("done")}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1">
-                  <Circle aria-hidden className="size-4 stroke-2" />
-                  {t("todo")}
-                </span>
-              )
-            }
-            accessory="chevron"
-          />
-        ))}
-      </ListSection>
+      </StatGroup>
+      <SetupChecklist orgId={orgId} onboardingStep={onboardingStep} />
     </>
   );
 }

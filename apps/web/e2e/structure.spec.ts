@@ -7,7 +7,8 @@ test.describe("M2 — structure de l'établissement", () => {
     const root = await createOrgViaUi(page, { orgName: "Clinique M2", email: uniqueEmail("m2") });
     await page.goto(root);
     await expect(page.getByRole("heading", { level: 1, name: "Vue d'ensemble" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Créer une agence/ })).toContainText("À faire");
+    // Démarrage (maquette v2 19) : la première étape à faire porte le seul bouton « Commencer ».
+    await expect(page.getByRole("link", { name: "Commencer · Créer une agence" })).toBeVisible();
 
     const branch = await createBranchViaUi(page, root, "Akwa");
     await expect(page.getByRole("heading", { level: 1, name: "Akwa" })).toBeVisible();

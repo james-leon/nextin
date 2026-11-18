@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
-import { SetupOverview, setupSteps } from "@/components/admin/setup-overview";
+import { SetupChecklist, setupSteps } from "@/components/admin/setup-overview";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -16,8 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Démarrage (§11.3) : étapes de configuration, reprenables à tout moment (chacune est mesurée sur les données de
- * l'établissement). Après l'inscription, message de bienvenue avec la durée de l'essai.
+ * Démarrage (§11.3, maquette v2 19) : six étapes de configuration, reprenables à tout moment (chacune est mesurée sur
+ * les données de l'établissement). Après l'inscription, message de bienvenue avec la durée de l'essai ; quand les
+ * étapes indispensables sont faites, « Tout est prêt » et le seul bouton « Terminer la mise en place ».
  */
 export default async function SetupPage({
   params,
@@ -32,7 +33,7 @@ export default async function SetupPage({
   const t = await getTranslations("dashboard");
   const to = await getTranslations("overview");
   const tb = await getTranslations("billing");
-  const setup = ctx.canManageOrg ? await setupSteps(orgId) : null;
+  const setup = ctx.canManageOrg ? await setupSteps(orgId, ctx.org.onboarding_step) : null;
   let trialDays: number | null = null;
   if (welcome) {
     const { data } = await (await getSupabaseServerClient()).from("platform_settings").select("trial_days").maybeSingle();
@@ -51,7 +52,7 @@ export default async function SetupPage({
         </CalloutCard>
       ) : null}
       {/* Les étapes mènent déjà à chaque rubrique : pas de liste de navigation en double. */}
-      <SetupOverview orgId={orgId} />
+      <SetupChecklist orgId={orgId} onboardingStep={ctx.org.onboarding_step} />
       {setup?.complete && ctx.org.onboarding_step < 5 ? (
         <form action={finishSetup.bind(null, orgId)} className="contents">
           <BottomBar>

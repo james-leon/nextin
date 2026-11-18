@@ -42,7 +42,7 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
   if (!branches.length) {
     return (
       <AdminPage title={t("title")} eyebrow={ctx.org.name} back={{ href: "/app", label: ta("nav.organizations") }}>
-        <SetupOverview orgId={orgId} />
+        <SetupOverview orgId={orgId} onboardingStep={ctx.org.onboarding_step} />
         <MobileOrgNav orgId={orgId} />
       </AdminPage>
     );
@@ -62,7 +62,7 @@ export default async function OrgOverview({ params }: { params: Promise<{ orgId:
       p_compare_from: compare.from,
       p_compare_to: compare.to,
     }),
-    ctx.canManageOrg ? setupSteps(orgId) : Promise.resolve(null),
+    ctx.canManageOrg ? setupSteps(orgId, ctx.org.onboarding_step) : Promise.resolve(null),
     supabase.rpc("staff_entitlements", { p_org: orgId }),
   ]);
   const ent = entitlements as {
