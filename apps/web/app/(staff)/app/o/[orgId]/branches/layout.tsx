@@ -51,8 +51,7 @@ export default async function BranchesLayout({ children, params }: { children: R
             texts={branches.map((b) => `${b.name} ${b.city ?? ""}`)}
             empty={<EmptyState title={t("noMatch")} icon={<Building2 />} />}
           >
-            {[
-              <ListSection key="list">
+            <ListSection>
                 {branches.map((b) => {
                   const open = openingStatus(b.opening_hours ?? [], now, b.timezone).open;
                   const photo = b.photo_updated_at
@@ -83,8 +82,7 @@ export default async function BranchesLayout({ children, params }: { children: R
                     />
                   );
                 })}
-              </ListSection>,
-            ]}
+            </ListSection>
           </FilterList>
         </>
       ) : (

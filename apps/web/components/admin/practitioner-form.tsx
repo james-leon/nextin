@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ActionResult } from "@/lib/auth/errors";
 import { FormError } from "@/components/auth/form-error";
@@ -9,11 +9,16 @@ import { Button } from "@/components/ui/button";
 import { ListSection } from "@/components/ui/list";
 import { ListSwitchRow } from "@/components/ui/list-switch-row";
 import { SelectField } from "@/components/ui/select-field";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
+import { AutoSaveStatus, useAutoSave } from "./use-auto-save";
 import { useFormErrors } from "./use-form-errors";
 
 export type PractitionerInitial = { title: string | null; displayName: string; specialtyId: string | null; branchId: string; active: boolean };
 
+/**
+ * Fiche d'un praticien (maquette v2 18) : titre et nom groupés, spécialité, agence, « En activité ».
+ * Modification : enregistrement automatique ; création : un seul bouton.
+ */
 export function PractitionerForm({
   action,
   initial,
@@ -29,16 +34,32 @@ export function PractitionerForm({
 }) {
   const t = useTranslations("practitioners");
   const ta = useTranslations("admin");
-  const [state, formAction, pending] = useActionState(action, null);
-  const { field, top } = useFormErrors(state);
+  const editing = !!initial;
+  const [createState, formAction, pending] = useActionState(action, null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const saveState = useAutoSave(formRef, action, editing && !disabled);
+  const { field, top } = useFormErrors(editing ? saveState.result : createState);
   const [active, setActive] = useState(initial?.active ?? true);
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-5">
-      <FormError message={top} />
-      <div className="grid grid-cols-[6rem_1fr] gap-3">
-        <TextField name="title" label={t("titleField")} placeholder={t("titlePlaceholder")} defaultValue={initial?.title ?? ""} disabled={disabled} />
-        <TextField name="displayName" label={t("displayName")} placeholder={t("displayNamePlaceholder")} defaultValue={initial?.displayName} required error={field("displayName")} disabled={disabled} />
-      </div>
+    <form
+      ref={formRef}
+      action={editing ? undefined : formAction}
+      onSubmit={editing ? (e) => e.preventDefault() : undefined}
+      noValidate
+      className="flex flex-col gap-5"
+    >
+      {editing ? (
+        <>
+          <input type="hidden" name="autosave" value="1" />
+          {disabled ? null : <AutoSaveStatus state={saveState} className="-mb-3" />}
+        </>
+      ) : (
+        <FormError message={top} />
+      )}
+      <FormGroup>
+        <TextField grouped name="title" label={t("titleField")} placeholder={t("titlePlaceholder")} defaultValue={initial?.title ?? ""} disabled={disabled} />
+        <TextField grouped name="displayName" label={t("displayName")} placeholder={t("displayNamePlaceholder")} defaultValue={initial?.displayName} required error={field("displayName")} disabled={disabled} />
+      </FormGroup>
       <SelectField
         name="specialtyId"
         label={t("specialty")}
@@ -58,7 +79,7 @@ export function PractitionerForm({
         <ListSwitchRow title={t("active")} checked={active} onCheckedChange={setActive} disabled={disabled} />
       </ListSection>
       <input type="hidden" name="active" value={String(active)} />
-      {disabled ? null : (
+      {disabled || editing ? null : (
         <BottomBar>
           <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>
             {ta("save")}

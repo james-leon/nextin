@@ -108,10 +108,11 @@ test.describe("M2 — structure de l'établissement", () => {
   test("spécialités et praticiens", async ({ page }) => {
     const root = await createOrgViaUi(page, { orgName: "Clinique Praticiens", email: uniqueEmail("prat") });
     await createBranchViaUi(page, root, "Bonapriso");
-    await page.goto(`${root}/practitioners`);
+    // Spécialités : page à part (maquette v2 18).
+    await page.goto(`${root}/practitioners/specialties`);
     await page.getByLabel("Nom de la spécialité").fill("Pédiatrie");
     await page.getByRole("button", { name: "Ajouter" }).click();
-    await page.waitForURL(/\?saved=1$/);
+    await page.waitForURL(/\/specialties\?saved=1$/);
     await page.getByLabel("Nom de la spécialité").fill("pédiatrie");
     await page.getByRole("button", { name: "Ajouter" }).click();
     await expect(page.getByText("Ce nom existe déjà.")).toBeVisible();
@@ -123,7 +124,9 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByLabel("Spécialité", { exact: true }).selectOption({ label: "Pédiatrie" });
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await page.waitForURL(/\/practitioners\?saved=1$/);
-    await expect(page.getByRole("link", { name: /Dr Aline Ngo/ })).toContainText("Pédiatrie · Bonapriso");
+    // Liste regroupée par spécialité (maquette v2 18) : la spécialité en en-tête, l'agence sous le nom.
+    const group = page.locator("section").filter({ has: page.getByRole("heading", { name: "Pédiatrie" }) });
+    await expect(group.getByRole("link", { name: /Dr Aline Ngo/ })).toContainText("Bonapriso");
     await expectAccessible(page);
   });
 
@@ -150,7 +153,9 @@ test.describe("M2 — structure de l'établissement", () => {
     const link = (await page.locator("p[title]").getAttribute("title"))!;
     expect(link).toMatch(/\/invite\/[A-Za-z0-9_-]+$/);
     await page.getByRole("link", { name: "Terminé" }).click();
-    await expect(page.getByText(memberEmail)).toBeVisible();
+    await page.waitForURL(/\/staff$/);
+    // Invitation en attente, dans la liste du personnel (maquette v2 18).
+    await expect(page.getByText(memberEmail, { exact: true })).toBeVisible();
 
     // Le membre rejoint l'équipe.
     const ctx = await browser.newContext();
@@ -176,19 +181,16 @@ test.describe("M2 — structure de l'établissement", () => {
     // L'administratrice change le rôle puis désactive l'accès.
     await page.goto(`${root}/staff`);
     await page.getByRole("link", { name: /Mireille Accueil/ }).click();
-    await page.getByRole("radio", { name: "Agent / praticien" }).click();
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/staff\?saved=1$/);
-    // Ordinateur : tableau (rôle et agence en colonnes) ; téléphone : liste.
-    const memberRow = info.project.name === "desktop" ? page.getByRole("row", { name: /Mireille Accueil/ }) : page.getByRole("link", { name: /Mireille Accueil/ });
-    await expect(memberRow).toContainText(info.project.name === "desktop" ? /Agent \/ praticien.*Deïdo/ : /Agent \/ praticien · Deïdo/);
+    await page.getByRole("radio", { name: /Agent \/ praticien/ }).click();
+    // Enregistrement automatique (maquette v2 18) ; la liste du personnel reste à côté sur ordinateur.
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
+    await page.goto(`${root}/staff`);
+    await expect(page.getByRole("link", { name: /Mireille Accueil/ })).toContainText(/Agent \/ praticien · Deïdo/);
     await page.getByRole("link", { name: /Mireille Accueil/ }).click();
     await page.getByRole("button", { name: "Désactiver l'accès" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Désactiver l'accès" }).click();
     await page.waitForURL(/\/staff\?saved=1$/);
-    await expect(
-      (info.project.name === "desktop" ? page.getByRole("row") : page.getByRole("listitem")).filter({ hasText: "Mireille Accueil" }),
-    ).toContainText("Accès désactivé");
+    await expect(page.getByRole("listitem").filter({ hasText: "Mireille Accueil" })).toContainText("Accès désactivé");
   });
 
   test("PDF protégés : connexion exigée et isolation entre établissements", async ({ page, browser, request }) => {

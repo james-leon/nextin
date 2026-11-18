@@ -1,6 +1,6 @@
 import { test, type Page } from "@playwright/test";
 import { PASSWORD, signInViaUi, uniqueEmail } from "./helpers";
-import { anonClient, rpc, setUpBranch } from "./queue-helpers";
+import { addDoctors, anonClient, rpc, setUpBranch } from "./queue-helpers";
 
 // Captures de la refonte v2, LOT 4 (espace directeur) → docs/captures/v2-lot4/ (ou V2_SHOTS_OUT) : téléphone (390),
 // tablette (768) et ordinateur (1280), clair et sombre. Établissement créé pour l'occasion.
@@ -26,6 +26,7 @@ for (const theme of ["light", "dark"] as const) {
     test.setTimeout(600_000);
     const b = await setUpBranch("DOUALA CLINIC");
     for (let i = 0; i < 3; i++) await rpc(b.staff, "reception_create_ticket", { p_service: b.serviceId });
+    const docs = await addDoctors(b);
 
     // Compte sans établissement (état vide de « Mes établissements »).
     const lonely = uniqueEmail("vide");
@@ -64,6 +65,8 @@ for (const theme of ["light", "dark"] as const) {
       await shoot(page, "20-staff", `${root}/staff`, suffix);
       await shoot(page, "21-staff-invite", `${root}/staff/invite`, suffix);
       await shoot(page, "22-practitioners", `${root}/practitioners`, suffix);
+      await shoot(page, "23-practitioner", `${root}/practitioners/${docs.abena}`, suffix);
+      await shoot(page, "24-specialties", `${root}/practitioners/specialties`, suffix);
       await shoot(page, "30-displays", `${branch}/displays`, suffix);
       await shoot(page, "40-billing", `${root}/billing`, suffix);
       await shoot(page, "41-branch-settings", `${branch}/settings`, suffix);

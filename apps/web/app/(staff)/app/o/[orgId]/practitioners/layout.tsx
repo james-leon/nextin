@@ -1,10 +1,10 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { Plus, Stethoscope, Trash2 } from "lucide-react";
-import { ConfirmAction } from "@/components/admin/confirm-action";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { Bookmark, Plus, Stethoscope } from "lucide-react";
 import { MasterDetail, SavedFromQuery, SplitRow } from "@/components/admin/master-detail";
-import { SpecialtyForm } from "@/components/admin/specialty-form";
+import { StatCard, StatGroup } from "@/components/ui/stat-card";
+import { initialsOf } from "@/lib/text/initials";
 import { SplitListPane } from "@/components/admin/split-pane";
 import { Badge } from "@/components/ui/badge";
 import { Button, IconLink } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { ListIcon, ListSection } from "@/components/ui/list";
 import { getOrgContext } from "@/lib/admin/context";
 import { listSpecialties } from "@/lib/admin/specialties";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { createSpecialty, deleteSpecialty } from "../_actions/people";
 
 /**
  * Praticiens : liste (et spécialités) à gauche, fiche à droite sans changer de page (maître-détail).
@@ -34,33 +33,74 @@ export default async function PractitionersLayout({ children, params }: { childr
   ]);
   const canCreate = ctx.canManageOrg || ctx.managedBranchIds.length > 0;
 
+  // Congé en cours (maquette v2 18 : « En congé jusqu'au 22 nov. » en orange dans la liste).
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: leaves } = await supabase
+    .from("practitioner_leaves")
+    .select("practitioner_id, ends_on")
+    .eq("organization_id", orgId)
+    .lte("starts_on", today)
+    .gte("ends_on", today);
+  const onLeave = new Map((leaves ?? []).map((l) => [l.practitioner_id, l.ends_on]));
+  const format = await getFormatter();
+  const all = practitioners ?? [];
+  const groups = new Map<string, typeof all>();
+  for (const p of all) {
+    const key = p.specialty?.name ?? "";
+    groups.set(key, [...(groups.get(key) ?? []), p]);
+  }
+  const ordered = [...groups.entries()].sort(([a], [b]) => (a ? (b ? a.localeCompare(b) : -1) : 1));
+
   const list = (
     <SplitListPane
       title={t("title")}
-      subtitle={t("subtitle")}
       eyebrow={ctx.org.name}
       back={{ href: `/app/o/${orgId}`, label: ta("nav.overview") }}
-      trailing={canCreate && practitioners?.length ? <IconLink href={`/app/o/${orgId}/practitioners/new`} label={t("new")} icon={<Plus />} /> : null}
+      trailing={canCreate && all.length ? <IconLink href={`/app/o/${orgId}/practitioners/new`} label={t("new")} icon={<Plus />} /> : null}
     >
       <SavedFromQuery message={ta("saved")} />
-      {practitioners?.length ? (
-        <ListSection>
-          {practitioners.map((p) => (
-            <SplitRow
-              key={p.id}
-              segment={p.id}
-              href={`/app/o/${orgId}/practitioners/${p.id}`}
-              icon={
-                <ListIcon color="var(--accent-fill)">
-                  <Stethoscope />
-                </ListIcon>
-              }
-              title={[p.title, p.display_name].filter(Boolean).join(" ")}
-              subtitle={[p.specialty?.name, p.branch?.name].filter(Boolean).join(" · ") || undefined}
-              accessory={p.active ? "chevron" : <Badge>{ta("inactive")}</Badge>}
-            />
+      {all.length ? (
+        <>
+          <StatGroup className="lg:grid-cols-3">
+            <StatCard label={t("statTotal")} value={all.length} className="px-4 py-3" />
+            <StatCard label={t("statActive")} value={all.filter((p) => p.active).length} className="px-4 py-3" />
+            <StatCard label={t("statSpecialties")} value={specialties.length} className="px-4 py-3" />
+          </StatGroup>
+          {/* Regroupés par spécialité (maquette v2 18), sans spécialité en dernier. */}
+          {ordered.map(([name, group]) => (
+            <ListSection key={name || "none"} header={name || t("noSpecialty")}>
+              {group.map((p) => {
+                const full = [p.title, p.display_name].filter(Boolean).join(" ");
+                const leave = onLeave.get(p.id);
+                return (
+                  <SplitRow
+                    key={p.id}
+                    segment={p.id}
+                    href={`/app/o/${orgId}/practitioners/${p.id}`}
+                    icon={
+                      <span
+                        aria-hidden
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full text-footnote font-semibold text-white"
+                        style={{ background: p.active ? "var(--accent-fill)" : "var(--icon-gray)" }}
+                      >
+                        {initialsOf(full)}
+                      </span>
+                    }
+                    title={full}
+                    subtitle={
+                      leave ? (
+                        <span className="text-orange-text">{t("onLeaveUntil", { date: format.dateTime(new Date(`${leave}T12:00:00`), { day: "numeric", month: "short" }) })}</span>
+                      ) : (
+                        p.branch?.name ?? undefined
+                      )
+                    }
+                    accessory={p.active ? "chevron" : <Badge>{ta("inactive")}</Badge>}
+                  />
+                );
+              })}
+            </ListSection>
           ))}
-        </ListSection>
+        </>
       ) : (
         <>
           <EmptyState title={t("empty")} icon={<Stethoscope />} />
@@ -74,41 +114,20 @@ export default async function PractitionersLayout({ children, params }: { childr
           ) : null}
         </>
       )}
-
-      <section aria-labelledby="specialties-title" className="flex flex-col gap-3">
-        <h2 id="specialties-title" className="px-1 text-title3 font-semibold">
-          {t("specialties")}
-        </h2>
-        <ListSection footer={t("specialtiesHint")}>
-          {specialties.length ? (
-            specialties.map((s) => (
-              <li key={s.id} className="group/row pl-4">
-                <span className="list-separator flex min-h-11 items-center justify-between gap-3 py-1 pr-2">
-                  <span className="text-body">
-                    {s.name}
-                    {s.name_en ? <span className="text-label-secondary" lang="en">{` · ${s.name_en}`}</span> : null}
-                  </span>
-                  {ctx.canManageOrg ? (
-                    <ConfirmAction
-                      action={deleteSpecialty.bind(null, orgId, s.id)}
-                      label={ta("delete")}
-                      title={t("deleteSpecialtyTitle")}
-                      body={t("deleteSpecialtyBody")}
-                      confirmLabel={ta("delete")}
-                      block={false}
-                      size="md"
-                      icon={<Trash2 aria-hidden className="size-4" />}
-                    />
-                  ) : null}
-                </span>
-              </li>
-            ))
-          ) : (
-            <li className="px-4 py-3 text-body text-label-secondary">{t("noSpecialties")}</li>
-          )}
-        </ListSection>
-        {ctx.canManageOrg ? <SpecialtyForm action={createSpecialty.bind(null, orgId)} /> : null}
-      </section>
+      <ListSection>
+        <SplitRow
+          segment="specialties"
+          href={`/app/o/${orgId}/practitioners/specialties`}
+          icon={
+            <ListIcon color="var(--icon-indigo)">
+              <Bookmark />
+            </ListIcon>
+          }
+          title={t("specialties")}
+          detail={<span className="tabular">{specialties.length}</span>}
+          accessory="chevron"
+        />
+      </ListSection>
     </SplitListPane>
   );
 

@@ -2,10 +2,10 @@
 
 import { startTransition, useOptimistic, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, MailOpen, X } from "lucide-react";
+import { CheckCircle2, Mail, MailOpen, X } from "lucide-react";
 import { resendInvitation, withdrawInvitation } from "@/app/(staff)/app/o/[orgId]/_actions/people";
 import { useMfaStepUp } from "@/components/security/use-mfa-step-up";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { DataTable, td, th } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListSection } from "@/components/ui/list";
@@ -23,7 +23,16 @@ const UNDO_MS = 5_000;
  * abandonnée…) : la ligne réapparaît et un message l'explique. « Renvoyer » (P2) reste sur chaque ligne.
  * Téléphone et tablette : liste groupée ; ordinateur : tableau.
  */
-export function PendingInvitations({ orgId, invitations }: { orgId: string; invitations: PendingInvitation[] }) {
+export function PendingInvitations({
+  orgId,
+  invitations,
+  compact,
+}: {
+  orgId: string;
+  invitations: PendingInvitation[];
+  /** Colonne de liste (maître-détail, maquette v2 18) : toujours en liste groupée, sans tableau ni état vide. */
+  compact?: boolean;
+}) {
   const t = useTranslations("staffMgmt");
   const ta = useTranslations("admin");
   const te = useTranslations("errors");
@@ -73,27 +82,40 @@ export function PendingInvitations({ orgId, invitations }: { orgId: string; invi
   const actions = (inv: PendingInvitation) => (
     <span className="flex shrink-0 items-center gap-1">
       <ResendInvitationButton email={inv.email} action={resendInvitation.bind(null, orgId, inv.id)} />
-      <Button
-        variant="destructive-plain"
-        size="md"
-        aria-label={t("withdrawLabel", { email: inv.email })}
-        leadingIcon={<X aria-hidden className="size-4" />}
-        onClick={() => withdraw(inv)}
-      >
-        {ta("cancel")}
-      </Button>
+      {compact ? (
+        <IconButton label={t("withdrawLabel", { email: inv.email })} icon={<X />} variant="plain" onClick={() => withdraw(inv)} className="text-red-text" />
+      ) : (
+        <Button
+          variant="destructive-plain"
+          size="md"
+          aria-label={t("withdrawLabel", { email: inv.email })}
+          leadingIcon={<X aria-hidden className="size-4" />}
+          onClick={() => withdraw(inv)}
+        >
+          {ta("cancel")}
+        </Button>
+      )}
     </span>
   );
 
   return (
     <>
       {stepUp.dialog}
-      <ListSection header={t("invitations")} className={visible.length ? "lg:hidden" : undefined}>
+      {compact && !visible.length ? null : (
+      <ListSection
+        header={compact ? `${t("invitations")} · ${visible.length}` : t("invitations")}
+        className={visible.length && !compact ? "lg:hidden" : undefined}
+      >
         {visible.length ? (
           visible.map((inv) => (
             <li key={inv.id} className="group/row pl-4">
               <span className="list-separator flex min-h-11 items-center justify-between gap-3 py-2 pr-2">
-                <span className="flex min-w-0 flex-col">
+                {compact ? (
+                  <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-tertiary text-label-secondary">
+                    <Mail className="size-4 stroke-[1.75]" />
+                  </span>
+                ) : null}
+                <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body">{inv.email}</span>
                   <span className="line-clamp-2 text-subheadline text-label-secondary">
                     {[inv.role, inv.scope, t("expires", { date: inv.expires })].join(" · ")}
@@ -107,7 +129,8 @@ export function PendingInvitations({ orgId, invitations }: { orgId: string; invi
           <EmptyState variant="inline" title={t("noInvitations")} icon={<MailOpen />} />
         )}
       </ListSection>
-      {visible.length ? (
+      )}
+      {visible.length && !compact ? (
         <section aria-labelledby="invitations-title" className="hidden flex-col gap-1.5 lg:flex">
           <h2 id="invitations-title" className="px-4 text-footnote uppercase text-label-secondary">
             {t("invitations")}
