@@ -53,7 +53,10 @@ for (const theme of ["light", "dark"] as const) {
       await shoot(page, "10-branches", `${root}/branches`, suffix);
       await shoot(page, "11-branch", branch, suffix);
       await shoot(page, "12-services", `${branch}/services`, suffix);
+      await shoot(page, "12b-service", `${branch}/services/${b.serviceId}`, suffix);
       await shoot(page, "13-counters", `${branch}/counters`, suffix);
+      await shoot(page, "13b-counter", `${branch}/counters/${b.counterId}`, suffix);
+      await shoot(page, "12c-service-new", `${branch}/services/new`, suffix);
       await shoot(page, "14-hours", `${branch}/hours`, suffix);
       await shoot(page, "15-branch-edit", `${branch}/edit`, suffix);
       await shoot(page, "16-qr", `${branch}/qr`, suffix);

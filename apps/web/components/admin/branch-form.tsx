@@ -1,31 +1,41 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { LocateFixed, MapPin, X } from "lucide-react";
 import type { ActionResult } from "@/lib/auth/errors";
 import { FormError } from "@/components/auth/form-error";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
+import { AutoSaveStatus, useAutoSave } from "./use-auto-save";
 import { useFormErrors } from "./use-form-errors";
 
 type Branch = { name: string; address: string | null; city: string | null; phone: string | null; lat: number | null; lng: number | null };
 
+/**
+ * Fiche d'une agence (maquette v2 17) : nom, adresse, ville et téléphone groupés, position GPS. Création : un seul
+ * bouton (« Créer l'agence ») ; modification (« Informations ») : enregistrement automatique.
+ */
 export function BranchForm({
   action,
   initial,
   submitLabel,
   submittingLabel,
+  disabled,
 }: {
   action: (prev: ActionResult | null, data: FormData) => Promise<ActionResult>;
   initial?: Branch;
   submitLabel: string;
   submittingLabel: string;
+  disabled?: boolean;
 }) {
   const t = useTranslations("branches");
-  const [state, formAction, pending] = useActionState(action, null);
-  const { field, top } = useFormErrors(state);
+  const editing = !!initial;
+  const [createState, formAction, pending] = useActionState(action, null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const saveState = useAutoSave(formRef, action, editing && !disabled);
+  const { field, top } = useFormErrors(editing ? saveState.result : createState);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     initial?.lat != null && initial?.lng != null ? { lat: initial.lat, lng: initial.lng } : null,
   );
@@ -52,21 +62,31 @@ export function BranchForm({
   };
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-5">
-      <FormError message={top} />
-      <TextField name="name" label={t("name")} placeholder={t("namePlaceholder")} defaultValue={initial?.name} required error={field("name")} />
-      <TextField name="address" label={t("address")} placeholder={t("addressPlaceholder")} defaultValue={initial?.address ?? ""} autoComplete="street-address" error={field("address")} />
-      <TextField name="city" label={t("city")} placeholder={t("cityPlaceholder")} defaultValue={initial?.city ?? ""} autoComplete="address-level2" error={field("city")} />
-      <TextField
-        name="phone"
-        type="tel"
-        inputMode="tel"
-        label={t("phone")}
-        placeholder={t("phonePlaceholder")}
-        defaultValue={initial?.phone ?? ""}
-        autoComplete="tel-national"
-        error={field("phone")}
-      />
+    <form
+      ref={formRef}
+      action={editing ? undefined : formAction}
+      onSubmit={editing ? (e) => e.preventDefault() : undefined}
+      noValidate
+      className="flex flex-col gap-5"
+    >
+      {editing ? <input type="hidden" name="autosave" value="1" /> : <FormError message={top} />}
+      <FormGroup>
+        <TextField grouped name="name" label={t("name")} placeholder={t("namePlaceholder")} defaultValue={initial?.name} required error={field("name")} disabled={disabled} />
+        <TextField grouped name="address" label={t("address")} placeholder={t("addressPlaceholder")} defaultValue={initial?.address ?? ""} autoComplete="street-address" error={field("address")} disabled={disabled} />
+        <TextField grouped name="city" label={t("city")} placeholder={t("cityPlaceholder")} defaultValue={initial?.city ?? ""} autoComplete="address-level2" error={field("city")} disabled={disabled} />
+        <TextField
+          grouped
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          label={t("phone")}
+          placeholder={t("phonePlaceholder")}
+          defaultValue={initial?.phone ?? ""}
+          autoComplete="tel-national"
+          error={field("phone")}
+          disabled={disabled}
+        />
+      </FormGroup>
 
       <section aria-labelledby="branch-location" className="flex flex-col gap-1.5">
         <h2 id="branch-location" className="px-4 text-footnote uppercase text-label-secondary">
@@ -85,6 +105,7 @@ export function BranchForm({
               variant="tinted"
               size="md"
               onClick={locate}
+              disabled={disabled}
               loading={locating}
               loadingLabel={t("locating")}
               leadingIcon={<LocateFixed aria-hidden className="size-5" />}
@@ -118,11 +139,15 @@ export function BranchForm({
         <input type="hidden" name="clearLocation" value={cleared ? "1" : ""} />
       </section>
 
-      <BottomBar>
-        <Button type="submit" block loading={pending} loadingLabel={submittingLabel}>
-          {submitLabel}
-        </Button>
-      </BottomBar>
+      {editing ? (
+        disabled ? null : <AutoSaveStatus state={saveState} className="justify-center" />
+      ) : (
+        <BottomBar>
+          <Button type="submit" block loading={pending} loadingLabel={submittingLabel}>
+            {submitLabel}
+          </Button>
+        </BottomBar>
+      )}
     </form>
   );
 }

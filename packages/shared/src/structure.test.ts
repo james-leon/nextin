@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTime, minutesToSeconds, nextCounterNumber, qrEntryUrl, suggestPrefix } from "./structure";
+import { formatTime, minutesToSeconds, nextCounterNumber, openingStatus, qrEntryUrl, suggestPrefix } from "./structure";
 
 describe("suggestPrefix", () => {
   it("initiale du nom", () => {
@@ -61,5 +61,21 @@ describe("summarizeOpeningHours", () => {
       ),
     ).toBe("Lun 08:00–12:00 · Mer 08:00–12:00 · Dim 09:00–11:00");
     expect(summarizeOpeningHours([], short, "Fermé")).toBe("Fermé");
+  });
+});
+
+describe("openingStatus", () => {
+  const hours = [
+    { weekday: 1, opens_at: "07:30:00", closes_at: "18:00:00" },
+    { weekday: 6, opens_at: "08:00:00", closes_at: "13:00:00" },
+  ];
+  it("ouverte jusqu'à l'heure de fermeture, à l'heure de Douala", () => {
+    // Lundi 16 novembre 2026, 09:15 à Douala (UTC+1).
+    expect(openingStatus(hours, new Date("2026-11-16T08:15:00Z"), "Africa/Douala")).toEqual({ open: true, until: "18:00" });
+  });
+  it("fermée avant l'ouverture, à la fermeture et les jours sans horaire", () => {
+    expect(openingStatus(hours, new Date("2026-11-16T06:00:00Z"), "Africa/Douala")).toEqual({ open: false });
+    expect(openingStatus(hours, new Date("2026-11-16T17:00:00Z"), "Africa/Douala")).toEqual({ open: false });
+    expect(openingStatus(hours, new Date("2026-11-17T10:00:00Z"), "Africa/Douala")).toEqual({ open: false });
   });
 });

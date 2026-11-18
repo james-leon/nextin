@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { formatCameroonPhone } from "@nextin/shared";
 import { AdminPage } from "@/components/admin/admin-page";
+import { BranchPhotoCard } from "@/components/admin/branch-photo-card";
 import { BranchForm } from "@/components/admin/branch-form";
 import { ReadOnlyNotice } from "@/components/admin/read-only-notice";
 import { getBranch } from "@/lib/admin/branch";
@@ -18,10 +19,22 @@ export default async function EditBranchPage({ params }: { params: Promise<{ org
   const t = await getTranslations("branches");
   const ta = await getTranslations("admin");
   return (
-    <AdminPage narrow title={t("editTitle")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
+    <AdminPage narrow title={t("info")} eyebrow={branch.name} back={{ href: `/app/o/${orgId}/branches/${branchId}`, label: branch.name }}>
       <ReadOnlyNotice show={!canManage} />
+      {/* Maquette v2 17 : photo de l'établissement en tête, puis les informations (enregistrement automatique). */}
+      <BranchPhotoCard
+        orgId={orgId}
+        branchId={branchId}
+        canManage={canManage}
+        photoUrl={
+          branch.photo_updated_at
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/branch-photos/${orgId}/${branchId}/cover.webp?v=${new Date(branch.photo_updated_at).getTime()}`
+            : null
+        }
+      />
       <fieldset disabled={!canManage} className="contents">
         <BranchForm
+          disabled={!canManage}
           action={updateBranch.bind(null, orgId, branchId)}
           initial={{
             name: branch.name,

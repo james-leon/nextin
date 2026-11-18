@@ -25,7 +25,7 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByRole("radio", { name: "15 min" }).click();
     await expectAccessible(page);
     await expectTouchTargets(page);
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await page.waitForURL(/\/services\?saved=1$/);
     await expect(page.getByText("Consultation générale")).toBeVisible();
     await expect(page.getByText("C-001 · 15 min")).toBeVisible();
@@ -35,10 +35,10 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByLabel("Nom du service", { exact: true }).fill("Caisse");
     await expect(page.getByLabel("Lettre du ticket")).toHaveValue("A");
     await page.getByLabel("Lettre du ticket").fill("C");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await expect(page.getByText("Cette lettre est déjà utilisée par un autre service de l'agence.")).toBeVisible();
     await page.getByLabel("Lettre du ticket").fill("K");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await page.waitForURL(/\/services\?saved=1$/);
     await expect(page.getByText("K-001 · 10 min")).toBeVisible();
 
@@ -48,7 +48,7 @@ test.describe("M2 — structure de l'établissement", () => {
     await expect(page.getByLabel("Numéro")).toHaveValue("1");
     await page.getByRole("checkbox", { name: /Consultation générale/ }).click();
     await expect(page.getByRole("checkbox", { name: /Consultation générale/ })).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le poste" }).click();
     await page.waitForURL(/\/counters\?saved=1$/);
     await expect(page.getByRole("link", { name: /Cabinet 1/ })).toContainText("C");
 
@@ -56,20 +56,20 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.goto(`${branch}/counters/new`);
     await page.getByRole("radio", { name: "Cabinet" }).click();
     await page.getByLabel("Numéro").fill("1");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le poste" }).click();
     await expect(page.getByText("Ce numéro existe déjà pour ce type dans l'agence.")).toBeVisible();
 
     // Horaires : fermeture avant ouverture refusée ; dimanche ouvert le matin.
     await page.goto(`${branch}/hours`);
+    // Enregistrement automatique (refonte v2) : la raison d'un refus s'affiche sous le jour et dans l'état.
     await page.getByLabel("Lundi — Fermeture").fill("06:00");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await expect(page.getByText("La fermeture doit suivre l'ouverture.")).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "La fermeture doit suivre l'ouverture." })).toBeVisible();
     await page.getByLabel("Lundi — Fermeture").fill("17:00");
     await page.getByRole("switch", { name: "Ouvert le Dimanche" }).click();
     await page.getByLabel("Dimanche — Ouverture").fill("09:00");
     await page.getByLabel("Dimanche — Fermeture").fill("12:00");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\?saved=1$/);
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
+    await page.goto(branch);
     await expect(page.getByText("Lun–Ven 07:30–17:00 · Sam 08:00–12:00 · Dim 09:00–12:00")).toBeVisible();
 
     // Réglages : ticket à distance désactivé par défaut, activable.
@@ -133,7 +133,7 @@ test.describe("M2 — structure de l'établissement", () => {
     const branch = await createBranchViaUi(page, root, "Deïdo");
     await page.goto(`${branch}/services/new`);
     await page.getByLabel("Nom du service", { exact: true }).fill("Consultation");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await page.waitForURL(/\/services\?saved=1$/);
 
     await page.goto(`${root}/staff/invite`);

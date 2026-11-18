@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { formatTicketCode } from "@nextin/shared";
 import { getTranslations } from "next-intl/server";
 import { Trash2 } from "lucide-react";
 import { AdminPage } from "@/components/admin/admin-page";
@@ -30,7 +31,10 @@ export default async function EditServicePage({ params }: { params: Promise<{ or
   ]);
   if (!s) notFound();
   return (
-    <AdminPage inSplit title={s.name} eyebrow={t("editTitle")} back={{ href: `/app/o/${orgId}/branches/${branchId}/services`, label: t("title") }}>
+    <AdminPage
+      inSplit
+      title={s.name}
+      eyebrow={t("ticketsEyebrow", { first: formatTicketCode(s.prefix, 1), second: formatTicketCode(s.prefix, 2) })} back={{ href: `/app/o/${orgId}/branches/${branchId}/services`, label: t("title") }}>
       <ReadOnlyNotice show={!canManage} />
       <ServiceForm
         action={saveService.bind(null, orgId, branchId, serviceId)}
@@ -54,7 +58,7 @@ export default async function EditServicePage({ params }: { params: Promise<{ or
       {canManage ? (
         <ConfirmAction
           action={deleteService.bind(null, orgId, branchId, serviceId)}
-          label={ta("delete")}
+          label={t("delete")}
           title={t("deleteConfirmTitle")}
           body={t("deleteConfirmBody")}
           confirmLabel={ta("delete")}

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { NavigationBar } from "@/components/ui/navigation-bar";
-import { StatCard } from "@/components/ui/stat-card";
+import { StatCard, StatGroup } from "@/components/ui/stat-card";
 import { isSidebarDestination } from "@/lib/admin/nav";
 
 /**
@@ -65,11 +65,11 @@ export function SplitPlaceholder({
         <p className="text-body text-label-secondary">{text}</p>
       </div>
       {stats?.length ? (
-        <div className="grid w-full max-w-xl grid-cols-1 gap-3 text-left @md:grid-cols-3">
+        <StatGroup className="w-full max-w-xl text-left lg:grid-cols-3 @md:grid-cols-3">
           {stats.map((s) => (
             <StatCard key={s.label} label={s.label} value={s.value} />
           ))}
-        </div>
+        </StatGroup>
       ) : null}
       {action}
     </div>

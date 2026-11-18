@@ -27,7 +27,7 @@ export default async function ServicesLayout({
   const supabase = await getSupabaseServerClient();
   const { data: services } = await supabase
     .from("services")
-    .select("id, name, prefix, color, default_service_seconds, active")
+    .select("id, name, prefix, color, default_service_seconds, active, specialty:specialties(name)")
     .eq("branch_id", branchId)
     .order("sort_order")
     .order("prefix");
@@ -51,7 +51,13 @@ export default async function ServicesLayout({
               href={`${base}/services/${s.id}`}
               icon={<ServiceTile letter={s.prefix} color={s.color} />}
               title={s.name}
-              subtitle={`${formatTicketCode(s.prefix, 1)} · ${t("minutes", { count: Math.round(s.default_service_seconds / 60) })}`}
+              subtitle={[
+                formatTicketCode(s.prefix, 1),
+                t("minutes", { count: Math.round(s.default_service_seconds / 60) }),
+                (s.specialty as { name: string } | null)?.name,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
               accessory={s.active ? "chevron" : <Badge>{ta("inactive")}</Badge>}
             />
           ))}
