@@ -68,6 +68,7 @@ for (const theme of ["light", "dark"] as const) {
       await shoot(page, "23-practitioner", `${root}/practitioners/${docs.abena}`, suffix);
       await shoot(page, "24-specialties", `${root}/practitioners/specialties`, suffix);
       await shoot(page, "30-displays", `${branch}/displays`, suffix);
+      await shoot(page, "31-announcements", `${branch}/displays/announcements`, suffix);
       await shoot(page, "40-billing", `${root}/billing`, suffix);
       await shoot(page, "41-branch-settings", `${branch}/settings`, suffix);
       await context.close();

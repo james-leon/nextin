@@ -81,16 +81,20 @@ export function useAutoSave(
   useEffect(() => {
     check.current();
   });
-  // … et à chaque saisie dans un champ non contrôlé.
+  // … à chaque saisie dans un champ non contrôlé, et à chaque changement d'un champ caché.
   useEffect(() => {
     const el = form.current;
     if (!el || !enabled) return;
     const onInput = () => check.current();
     el.addEventListener("input", onInput);
     el.addEventListener("change", onInput);
+    // Champs cachés tenus par des sous-composants (interrupteurs, cases) : valeur modifiée, ajoutés ou retirés.
+    const observer = new MutationObserver(onInput);
+    observer.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["value"] });
     return () => {
       el.removeEventListener("input", onInput);
       el.removeEventListener("change", onInput);
+      observer.disconnect();
     };
   }, [form, enabled]);
 

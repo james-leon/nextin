@@ -1734,6 +1734,9 @@ export const fr = {
     takenAt: "Pris le {date} à {time}",
   },
   displays: {
+    stepOpen: "Sur le téléviseur, ouvrez :",
+    stepCode: "Saisissez le code affiché :",
+    stateLabel: "État",
     title: "Écrans",
     offline: "Hors ligne",
     allServices: "Tous les services",

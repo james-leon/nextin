@@ -130,7 +130,7 @@ test.describe("M2 — structure de l'établissement", () => {
     await expectAccessible(page);
   });
 
-  test("invitation d'un membre, adhésion, accès en lecture seule et gestion des droits", async ({ page, browser }, info) => {
+  test("invitation d'un membre, adhésion, accès en lecture seule et gestion des droits", async ({ page, browser }) => {
     const adminEmail = uniqueEmail("dir");
     const root = await createOrgViaUi(page, { orgName: "Clinique Équipe", email: adminEmail });
     const branch = await createBranchViaUi(page, root, "Deïdo");

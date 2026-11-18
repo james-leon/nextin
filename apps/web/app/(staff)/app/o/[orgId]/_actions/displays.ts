@@ -24,6 +24,15 @@ async function scope(orgId: string, branchId: string) {
   return supabase;
 }
 
+/** Réglages enregistrés automatiquement (`autosave=1`) : la page reste ouverte ; sinon retour aux écrans. */
+function saved(orgId: string, branchId: string, data: FormData): ActionResult {
+  if (data.get("autosave") === "1") {
+    revalidatePath(`/app/o/${orgId}`, "layout");
+    return { ok: true };
+  }
+  done(orgId, branchId);
+}
+
 function done(orgId: string, branchId: string, flag = "saved"): never {
   revalidatePath(`/app/o/${orgId}`, "layout");
   redirect(`${base(orgId, branchId)}?${flag}=1`);
@@ -67,7 +76,7 @@ export async function updateDisplay(orgId: string, branchId: string, displayId: 
     p_show_ads: showAds,
   });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(orgId, branchId);
+  return saved(orgId, branchId, data);
 }
 
 export async function revokeDisplay(orgId: string, branchId: string, displayId: string): Promise<ActionResult> {
@@ -101,5 +110,5 @@ export async function saveAnnouncementSettings(orgId: string, branchId: string, 
     .select("branch_id");
   if (error) return { ok: false, error: mapDbError(error) };
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, branchId);
+  return saved(orgId, branchId, data);
 }

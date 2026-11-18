@@ -1735,6 +1735,9 @@ export const en: Messages = {
     takenAt: "Taken on {date} at {time}",
   },
   displays: {
+    stepOpen: "On the TV, open:",
+    stepCode: "Enter the code shown:",
+    stateLabel: "Status",
     title: "Screens",
     offline: "Offline",
     allServices: "All services",
