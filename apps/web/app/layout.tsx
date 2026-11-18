@@ -2,33 +2,47 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 import { themeInitScript } from "@/components/theme/theme";
-import { appleStartupFamily, startupImages } from "@/lib/pwa/startup-images";
+import { appleStartupFamily, startupImages, type StartupFamily } from "@/lib/pwa/startup-images";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
 
-const baseMetadata: Metadata = {
+export const metadata: Metadata = {
   title: { default: "NextIn", template: "%s · NextIn" },
   description: "Prenez un ticket virtuel et attendez où vous voulez.",
   applicationName: "NextIn",
-  appleWebApp: { capable: true, title: "NextIn", statusBarStyle: "default" },
   formatDetection: { telephone: false },
   icons: {
-    // Favicon : N seul (SVG pour les navigateurs récents, PNG 32 et 16 en repli). Icône pleine pour iOS.
+    // Favicon : N seul (SVG pour les navigateurs récents, PNG 32 et 16 en repli). Icône iOS : dans le <head> ci-dessous.
     icon: [
       { url: "/brand/nextin-favicon.svg", type: "image/svg+xml" },
       { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
     ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  // Écrans de démarrage clair et sombre (iPhone et iPad, `lib/pwa/startup-images.ts`) : seulement pour les navigateurs
-  // Apple, les seuls à les lire, et pour leur seule famille (iPhone : 24 balises, iPad : 18 ; budget des pages client).
-  const family = appleStartupFamily((await headers()).get("user-agent"));
-  if (!family) return baseMetadata;
-  return { ...baseMetadata, appleWebApp: { ...(baseMetadata.appleWebApp as object), startupImage: startupImages(family) } };
+/**
+ * Balises de web app iOS, écrites dans le <head> du gabarit racine et non par l'API `metadata` :
+ * - Next.js 16 n'émet pour `appleWebApp.capable` que `mobile-web-app-capable`, sans `apple-mobile-web-app-capable` ;
+ *   sans cette balise Apple, iOS ignore les `apple-touch-startup-image` et ne traite pas complètement l'icône de
+ *   l'écran d'accueil comme une web app ;
+ * - les métadonnées d'une page qui attend des données (« Mon ticket ») sont parfois envoyées en fin de flux, dans le
+ *   <body>, où Safari ne les lit pas. Le <head> du gabarit, lui, part toujours dans le premier envoi.
+ * Écrans de démarrage (iPhone et iPad, `lib/pwa/startup-images.ts`) : seulement pour les navigateurs Apple, et pour leur
+ * seule famille (iPhone : 24 balises, iPad : 18 ; budget des pages client).
+ */
+function AppleWebAppTags({ family }: { family: StartupFamily | null }) {
+  // Composant synchrone : un composant asynchrone dans le <head> serait suspendu et envoyé en fin de flux.
+  return (
+    <>
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-title" content="NextIn" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
+      {family ? startupImages(family).map((image) => <link key={image.url} rel="apple-touch-startup-image" href={image.url} media={image.media} />) : null}
+    </>
+  );
 }
 
 /**
@@ -55,12 +69,14 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
+  const [locale, requestHeaders] = await Promise.all([getLocale(), headers()]);
+  const family = appleStartupFamily(requestHeaders.get("user-agent"));
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: splashStyle }} />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <AppleWebAppTags family={family} />
       </head>
       <body>
         {children}
