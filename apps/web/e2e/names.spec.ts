@@ -101,7 +101,9 @@ test.describe("Nom du client", () => {
 
     await row.click();
     await page.getByRole("dialog", { name: "Ticket C-001" }).getByRole("button", { name: "Rendre prioritaire" }).click();
-    await page.getByRole("dialog", { name: /Motif de priorité · C-001/ }).getByRole("button", { name: "Handicap" }).click();
+    const prioritySheet = page.getByRole("dialog", { name: /Motif de priorité · C-001/ });
+    await prioritySheet.getByRole("radio", { name: "Handicap" }).click();
+    await prioritySheet.getByRole("button", { name: "OK" }).click();
     await expect(row).toContainText("Handicap");
     await expectAccessible(page);
   });

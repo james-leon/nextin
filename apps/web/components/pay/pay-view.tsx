@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Link2Off, ShieldCheck, Smartphone } from "lucide-react";
+import { AlertTriangle, Check, Link2Off, X } from "lucide-react";
 import { guessChannel, type PaymentChannel } from "@nextin/shared/billing/pricing";
 import { formatXaf } from "@nextin/shared/money";
 import { normalizeCameroonPhone } from "@nextin/shared/phone";
@@ -11,7 +11,8 @@ import { CalloutCard } from "@/components/ui/callout-card";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { LogoImage } from "@/components/ui/logo-image";
 import { Spinner } from "@/components/ui/spinner";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
+import { cn } from "@/lib/cn";
 import { requestTurnstileToken } from "@/lib/client/turnstile";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import type { PayInvoiceView } from "@/lib/payments/types";
@@ -40,6 +41,8 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
   const [waiting, setWaiting] = useState(initial?.payment?.status === "pending");
   // Facture réglée pendant cette visite (message de réussite) ou déjà réglée à l'ouverture du lien.
   const [openedUnpaid] = useState(initial?.status !== "paid");
+  // Échec : écran rouge (« Aucun montant n'a été débité »), puis « Réessayer » ramène au formulaire.
+  const [retrying, setRetrying] = useState(false);
   const captchaRef = useRef<HTMLDivElement>(null);
   const xaf = (n: number) => formatXaf(n, locale === "en" ? "en" : "fr");
 
@@ -65,21 +68,25 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
     };
   }, [waiting, token]);
 
-  if (!view) return <Message icon={<Link2Off />} title={t("notFoundTitle")} body={t("notFoundBody")} tone="red" />;
+  if (!view) return <Message icon={<Link2Off />} title={t("notFoundTitle")} body={t("notFoundBody")} tone="gray" />;
   if (view.status === "paid") {
     return openedUnpaid ? (
       <Message
-        icon={<CheckCircle2 />}
+        icon={<Check />}
         title={t("successTitle")}
         body={view.campaign ? t("successCampaign", { campaign: view.campaign.name }) : t("successBody", { organization: view.organization })}
         tone="green"
         action={{ href: view.campaign ? "/ads" : "/app", label: t("open") }}
       />
     ) : (
-      <Message icon={<CheckCircle2 />} title={t("paidTitle")} body={t("paidBody", { date: day(view.paid_at ?? view.period_start, locale) })} tone="green" />
+      <Message icon={<Check />} title={t("paidTitle")} body={t("paidBody", { date: day(view.paid_at ?? view.period_start, locale) })} tone="green" />
     );
   }
-  if (view.status === "void" || view.expired) return <Message icon={<Link2Off />} title={t("expiredTitle")} body={t("expiredBody")} tone="orange" />;
+  if (view.status === "void" || view.expired) return <Message icon={<Link2Off />} title={t("expiredTitle")} body={t("expiredBody")} tone="gray" />;
+  const failedNow = !waiting && !retrying && (view.payment?.status === "failed" || view.payment?.status === "expired");
+  if (failedNow) {
+    return <Message icon={<X />} title={t("failedTitle")} body={t("failedBody")} tone="red" action={{ label: t("retry"), onClick: () => setRetrying(true) }} />;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -108,6 +115,7 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
         return;
       }
       setView((v) => (v ? { ...v, payment: { status: "pending", channel, external_id: "", failure_reason: null } } : v));
+      setRetrying(false);
       setWaiting(true);
     } catch {
       setError(te("network"));
@@ -130,98 +138,118 @@ export function PayView({ token, initial, captchaSiteKey, demo }: { token: strin
         ? (view.plan.name_en ?? view.plan.name)
         : view.plan.name
       : "";
-  const failed = !waiting && (view.payment?.status === "failed" || view.payment?.status === "expired");
 
+  // Maquette v2 21 : logo et numéro de facture en tête, montant en premier, détail, opérateur, numéro à débiter ;
+  // le bouton répète le montant. En attente : le cercle tourne, rien d'autre à faire.
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-44">
-      <div className="flex h-11 items-center">
-        <LogoImage className="h-10" />
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <LogoImage className="h-9" />
+        <p className="text-footnote text-label-secondary tabular">{t("invoice", { number: view.number })}</p>
       </div>
-      <header className="flex flex-col items-center gap-1 pt-8 pb-6 text-center">
-        <p className="text-subheadline text-label-secondary">{t("invoice", { number: view.number })}</p>
-        <p className="tabular text-large-title font-bold text-ticket-number">{xaf(view.total_xaf)}</p>
-        <p className="text-body">
-          {view.campaign ? t("forCampaign", { campaign: view.campaign.name, organization: view.organization }) : t("for", { organization: view.organization })}
-        </p>
-        <p className="text-subheadline text-label-secondary">
-          {planName} · {t("period", { from: day(view.period_start, locale), to: day(view.period_end, locale) })}
-        </p>
-      </header>
 
       {waiting ? (
-        <section aria-live="polite" className="squircle flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-8 text-center shadow-card">
-          <span className="squircle flex size-14 items-center justify-center rounded-[16px] bg-accent-tint text-accent-on-tint">
-            <Smartphone aria-hidden className="size-7 stroke-[1.75]" />
-          </span>
-          <h1 className="text-title3 font-bold">{t("waitingTitle")}</h1>
+        <section aria-live="polite" className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
+          <Spinner label={t("waitingHint")} className="size-12 text-label-secondary" />
+          <h1 className="text-title1 font-bold [text-wrap:balance]">{t("waitingTitle")}</h1>
           <p className="text-body text-label-secondary">
             {t("waitingBody", { amount: xaf(view.total_xaf), phone: phone || "•••", channel: tc(view.payment?.channel ?? channel) })}
           </p>
-          <Spinner label={t("waitingHint")} />
           <p className="text-footnote text-label-secondary">{t("waitingHint")}</p>
         </section>
       ) : (
-        <form id="pay-form" onSubmit={submit} noValidate className="flex flex-col gap-6">
-          {failed ? (
-            <CalloutCard icon={<AlertTriangle />} tone="orange" role="alert">
-              <strong className="font-semibold">{t("failedTitle")}.</strong> {t("failedBody")}
-            </CalloutCard>
-          ) : null}
-          {error ? (
-            <CalloutCard icon={<AlertTriangle />} tone="red" role="alert">
-              {error}
-            </CalloutCard>
-          ) : null}
-          <ListSection header={t("details")}>
-            {view.lines
-              .filter((l) => l.amount_xaf !== 0)
-              .map((l, i) => (
-                <ListRow key={i} title={locale === "en" ? l.label_en : l.label} detail={<span className="tabular">{xaf(l.amount_xaf)}</span>} />
-              ))}
-            <ListRow title={<span className="font-semibold">{t("total")}</span>} detail={<span className="tabular font-semibold text-label">{xaf(view.total_xaf)}</span>} />
-          </ListSection>
-          <ListSection header={t("channel")} radioGroupLabel={t("channel")}>
-            {CHANNELS.map((c) => (
-              <ListRow key={c} role="radio" selected={channel === c} onClick={() => setChannel(c)} title={tc(c)} accessory="check" />
-            ))}
-          </ListSection>
-          <TextField
-            label={t("phone")}
-            hint={t("phoneHint")}
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel-national"
-            placeholder="6 77 12 34 56"
-            value={phone}
-            onChange={(e) => {
-              setPhone(e.target.value);
-              const guess = normalizeCameroonPhone(e.target.value);
-              const op = guess ? guessChannel(guess) : null;
-              if (op) setChannel(op);
-            }}
-            error={phoneError ?? undefined}
-            required
-          />
-          <div ref={captchaRef} className="flex justify-center empty:hidden" />
-          <p className="flex items-start gap-2 px-4 text-footnote text-label-secondary">
-            <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0" />
-            <span>{t("secure")}</span>
-          </p>
-          {demo ? <p className="px-4 text-footnote text-label-secondary">{t("fake")}</p> : null}
-        </form>
+        <>
+          <header className="flex flex-col gap-1 pt-6 pb-5">
+            <p className="text-footnote uppercase text-label-secondary">{t("title")}</p>
+            <h1 className="tabular text-large-title font-bold">{xaf(view.total_xaf)}</h1>
+            <p className="text-body text-label-secondary">
+              {view.campaign ? t("forCampaign", { campaign: view.campaign.name, organization: view.organization }) : t("for", { organization: view.organization })}
+            </p>
+          </header>
+          <form id="pay-form" onSubmit={submit} noValidate className="flex flex-col gap-6">
+            {error ? (
+              <CalloutCard icon={<AlertTriangle />} tone="red" role="alert">
+                {error}
+              </CalloutCard>
+            ) : null}
+            <ListSection footer={`${planName} · ${t("period", { from: day(view.period_start, locale), to: day(view.period_end, locale) })}`}>
+              {view.lines
+                .filter((l) => l.amount_xaf !== 0)
+                .map((l, i) => (
+                  <ListRow key={i} title={locale === "en" ? l.label_en : l.label} detail={<span className="tabular">{xaf(l.amount_xaf)}</span>} />
+                ))}
+              <ListRow title={<span className="font-semibold">{t("total")}</span>} detail={<span className="tabular font-semibold text-label">{xaf(view.total_xaf)}</span>} />
+            </ListSection>
+            <section className="flex flex-col gap-1.5">
+              <h2 className="px-4 text-footnote uppercase text-label-secondary">{t("channel")}</h2>
+              <div role="radiogroup" aria-label={t("channel")} className="grid grid-cols-2 gap-3">
+                {CHANNELS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    role="radio"
+                    aria-checked={channel === c}
+                    onClick={() => setChannel(c)}
+                    className={cn(
+                      "pressable squircle flex min-h-14 items-center gap-2.5 rounded-[var(--radius-lg)] bg-grouped-secondary px-3 text-left",
+                      channel === c ? "ring-2 ring-accent" : "ring-1 ring-separator",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className="flex size-8 shrink-0 items-center justify-center rounded-[8px] text-caption font-bold text-black"
+                      style={{ background: c === "mtn_momo" ? "var(--brand-mtn)" : "var(--brand-orange-money)" }}
+                    >
+                      {c === "mtn_momo" ? "MoMo" : "OM"}
+                    </span>
+                    <span className="min-w-0 text-subheadline font-semibold [text-wrap:balance]">{tc(c)}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+            <div className="flex flex-col gap-1.5">
+              <FormGroup>
+                <TextField
+                  grouped
+                  label={t("phone")}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel-national"
+                  placeholder="6 77 12 34 56"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    const guess = normalizeCameroonPhone(e.target.value);
+                    const op = guess ? guessChannel(guess) : null;
+                    if (op) setChannel(op);
+                  }}
+                  error={phoneError ?? undefined}
+                  required
+                />
+              </FormGroup>
+              <p className="px-4 text-footnote text-label-secondary">{t("phoneHint")}</p>
+            </div>
+            <div ref={captchaRef} className="flex justify-center empty:hidden" />
+            {demo ? <p className="px-4 text-footnote text-label-secondary">{t("fake")}</p> : null}
+          </form>
+        </>
       )}
 
       {!waiting ? (
         <BottomBar>
-          <Button type="submit" form="pay-form" block loading={sending} loadingLabel={t("submitting")}>
-            {failed ? t("retry") : t("submit", { amount: xaf(view.total_xaf) })}
-          </Button>
+          <div className="flex flex-col gap-1.5">
+            <Button type="submit" form="pay-form" block loading={sending} loadingLabel={t("submitting")}>
+              {t("submit", { amount: xaf(view.total_xaf) })}
+            </Button>
+            <p className="text-center text-caption text-label-secondary">{t("secureShort")}</p>
+          </div>
         </BottomBar>
       ) : null}
     </main>
   );
 }
 
+/** Écran de résultat (maquette v2 21) : grand cercle plein (vert réussi, rouge échec, gris lien), titre, phrase, action. */
 function Message({
   icon,
   title,
@@ -232,27 +260,33 @@ function Message({
   icon: React.ReactNode;
   title: string;
   body: string;
-  tone: "green" | "orange" | "red";
-  action?: { href: string; label: string };
+  tone: "green" | "red" | "gray";
+  action?: { label: string; href?: string; onClick?: () => void };
 }) {
-  const colors = { green: "bg-green-tint text-green-text", orange: "bg-orange-tint text-orange-text", red: "bg-red-tint text-red-on-tint" };
+  const colors = { green: "bg-green", red: "bg-red", gray: "bg-label-secondary" };
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-12">
-      <div className="flex h-11 items-center">
-        <LogoImage className="h-10" />
+      <div className="flex min-h-11 items-center">
+        <LogoImage className="h-9" />
       </div>
-      <section className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <span className={`squircle flex size-16 items-center justify-center rounded-[18px] [&_svg]:size-8 [&_svg]:stroke-[1.75] ${colors[tone]}`} aria-hidden>
+      <section role={tone === "red" ? "alert" : "status"} className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <span className={`flex size-16 items-center justify-center rounded-full text-white [&_svg]:size-8 [&_svg]:stroke-[2.5] ${colors[tone]}`} aria-hidden>
           {icon}
         </span>
-        <h1 className="text-title1 font-bold">{title}</h1>
+        <h1 className="text-title1 font-bold [text-wrap:balance]">{title}</h1>
         <p className="text-body text-label-secondary">{body}</p>
-        {action ? (
-          <Button asChild variant="tinted" className="mt-2">
+      </section>
+      {action ? (
+        action.href ? (
+          <Button asChild block>
             <a href={action.href}>{action.label}</a>
           </Button>
-        ) : null}
-      </section>
+        ) : (
+          <Button block onClick={action.onClick}>
+            {action.label}
+          </Button>
+        )
+      ) : null}
     </main>
   );
 }

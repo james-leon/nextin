@@ -266,6 +266,20 @@ test.describe("M9 — demande de rendez-vous", () => {
     await page.goto(`/r/${token}`);
     await expect(page.getByRole("heading", { name: "Rendez-vous confirmé" })).toBeVisible({ timeout: 25_000 });
     await expect(page.getByText(/avec Dr Abena/)).toBeVisible();
+    // Créneau demandé accordé tel quel : pas de ligne « Demandé » (seulement si l'accueil a proposé un autre créneau).
+    await expect(page.getByText("Vous aviez demandé")).toHaveCount(0);
+    await expect(page.getByText("Demandé", { exact: true })).toHaveCount(0);
+    // « Ajouter au calendrier » : fichier .ics à l'heure de Douala, rappel 1 h avant, sans donnée personnelle.
+    const calendar = page.getByRole("link", { name: "Ajouter au calendrier" });
+    await expect(calendar).toHaveAttribute("href", `/r/${token}/calendar`);
+    const ics = await page.request.get(`/r/${token}/calendar`);
+    expect(ics.headers()["content-type"]).toContain("text/calendar");
+    const body = await ics.text();
+    expect(body).toContain("BEGIN:VCALENDAR");
+    expect(body).toMatch(/DTSTART;TZID=Africa\/Douala:\d{8}T083000/);
+    expect(body).toContain("TRIGGER:-PT60M");
+    expect(body).not.toContain(email);
+    expect(body).not.toContain("A.B.");
     const { data: accepted } = await admin.from("appointment_requests").select("status, appointment_id").eq("id", request!.id).single();
     expect(accepted!.status).toBe("accepted");
     const { data: answer } = await admin

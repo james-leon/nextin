@@ -3,7 +3,8 @@
  * Les dimensions sont en points CSS (portrait) ; le fichier fait `width × ratio` sur `height × ratio` pixels.
  * Images générées par `scripts/generate-startup-images.mjs` dans `public/startup/` (test : `startup-images.test.ts`).
  * Tous les iPhone depuis le 6 et tous les iPad récents, en portrait. Sur un écran absent de la liste, iOS n'affiche
- * aucune image : le fond et le logo peints par le CSS en ligne du gabarit (`splashStyle` de `app/layout.tsx`) prennent le relais.
+ * aucune image : le même écran, peint par le HTML et le CSS en ligne du gabarit (`lib/pwa/splash.ts`), prend le relais.
+ * Une image par langue (slogan traduit), choisie par la langue de la page.
  * Balises envoyées aux seuls navigateurs Apple (`appleStartupFamily`) : ailleurs, elles ne servent à rien et pèseraient
  * sur le budget de 200 Ko des pages client.
  */
@@ -36,16 +37,20 @@ export const STARTUP_DEVICES: StartupDevice[] = [
   { family: "ipad", width: 1032, height: 1376, ratio: 2 }, // iPad Pro 13 pouces (M4)
 ];
 
-export function startupFileName(d: StartupDevice, scheme: "light" | "dark"): string {
-  return `startup-${d.width * d.ratio}x${d.height * d.ratio}-${scheme}.png`;
+export type StartupLocale = "fr" | "en";
+export const STARTUP_LOCALES: StartupLocale[] = ["fr", "en"];
+
+/** Nom du fichier ; le slogan est traduit : une image par langue (français sans suffixe, anglais en `-en`). */
+export function startupFileName(d: StartupDevice, scheme: "light" | "dark", locale: StartupLocale = "fr"): string {
+  return `startup-${d.width * d.ratio}x${d.height * d.ratio}-${scheme}${locale === "fr" ? "" : `-${locale}`}.png`;
 }
 
 /** Entrées de `metadata.appleWebApp.startupImage` (portrait, clair puis sombre) ; `family` : seulement les tailles
  * d'iPhone ou d'iPad (un iPhone n'a jamais besoin des images d'iPad, et inversement : moitié moins de balises). */
-export function startupImages(family?: StartupFamily): { url: string; media: string }[] {
+export function startupImages(family?: StartupFamily, locale: StartupLocale = "fr"): { url: string; media: string }[] {
   return STARTUP_DEVICES.filter((d) => !family || d.family === family).flatMap((d) =>
     (["light", "dark"] as const).map((scheme) => ({
-      url: `/startup/${startupFileName(d, scheme)}`,
+      url: `/startup/${startupFileName(d, scheme, locale)}`,
       media: `(device-width: ${d.width}px) and (device-height: ${d.height}px) and (-webkit-device-pixel-ratio: ${d.ratio}) and (orientation: portrait) and (prefers-color-scheme: ${scheme})`,
     })),
   );

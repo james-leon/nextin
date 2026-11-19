@@ -1,3 +1,4 @@
+export * from "./password";
 export * from "./roles";
 export * from "./phone";
 export * from "./mask-email";

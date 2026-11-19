@@ -69,15 +69,16 @@ for (const theme of ["light", "dark"] as const) {
     await page.waitForURL(/reception/);
     await shot("05-reception");
     await page.getByRole("button", { name: "Nouveau ticket" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: /^Praticien/ }).click();
     await page.getByRole("radio", { name: "Dr Abena" }).click();
     await page.getByLabel("WhatsApp du patient (facultatif)").fill("6 77 12 34 56");
     await page.getByLabel("Le patient accepte de recevoir ses alertes sur WhatsApp").click();
     await shot("06-reception-new-ticket");
     await page.getByRole("button", { name: "Créer le ticket" }).click();
-    await page.getByText("Ticket créé").waitFor();
+    await page.getByText("Ticket créé").first().waitFor();
     await shot("07-reception-created");
     const href = await page.getByRole("link", { name: "Imprimer le ticket" }).getAttribute("href");
-    await page.getByRole("button", { name: "Fermer" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Fait" }).click();
     await page.getByRole("button", { name: /^Dr Abena/ }).click();
     await page.getByLabel("Retour prévu à").waitFor();
     await shot("08-practitioner-absence");

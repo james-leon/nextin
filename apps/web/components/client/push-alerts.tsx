@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BellRing, Check } from "lucide-react";
+import { Bell, BellRing, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OptionRow } from "./option-row";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 
 type State = "unsupported" | "idle" | "pending" | "on" | "denied" | "error";
@@ -25,7 +26,10 @@ export function PushAlerts({
   subscribed,
   target = "ticket",
   hint,
+  variant = "button",
 }: {
+  /** `row` : ligne de liste groupée (« Mon ticket », maquette v2 21), dans la section « être prévenu ». */
+  variant?: "button" | "row";
   token: string;
   vapidKey: string;
   subscribed: boolean;
@@ -67,6 +71,22 @@ export function PushAlerts({
     } catch {
       setState("error");
     }
+  }
+
+  if (variant === "row") {
+    if (state === "unsupported" && !subscribed) return null;
+    const on = subscribed || state === "on";
+    return (
+      <OptionRow
+        status={on}
+        color="var(--red-fill)"
+        icon={<Bell />}
+        title={on ? t("pushOn") : <span className="text-accent-text">{t("pushShort")}</span>}
+        subtitle={on ? undefined : state === "denied" ? t("pushDenied") : state === "error" ? t("pushError") : t("pushSub")}
+        trailing={on ? <Check aria-hidden className="size-5 stroke-[2.5] text-accent-text" /> : undefined}
+        onClick={on || state === "denied" || state === "pending" ? undefined : enable}
+      />
+    );
   }
 
   if (subscribed || state === "on") {

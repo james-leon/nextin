@@ -1,11 +1,12 @@
 "use client";
 
+import { useNow } from "@/lib/desk/now";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
 import { alertEnabled } from "@/lib/desk/notification-prefs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, Ban, CalendarDays, Check, CircleHelp, Eye, EyeOff, Inbox, PenLine, Plus, Printer, ScanLine, Shuffle, Star, StarOff, UserRound, UserRoundX } from "lucide-react";
+import { ArrowDown, ArrowLeftRight, CalendarDays, Check, Eye, EyeOff, Hand, Inbox, Plus, Printer, Star, StarOff, UserRound, UserRoundX, X } from "lucide-react";
 import { identityLine } from "@nextin/shared/identity";
 import { useNameMask } from "@/lib/desk/name-mask";
 import { waitMinutes } from "@nextin/shared/queue/estimate";
@@ -19,7 +20,7 @@ import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { PageFrame } from "@/components/ui/page-frame";
 import { ServiceTile } from "@/components/ui/service-tile";
-import { Sheet } from "@/components/ui/sheet";
+import { ActionSheet } from "@/components/ui/action-sheet";
 import { useToast } from "@/components/ui/toast";
 import { loadReception, type ReceptionData, type ReceptionPractitioner, type ReceptionTicket } from "@/lib/desk/reception";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -59,6 +60,10 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
     return identityLine(tk.identity, { age: (age) => ti("ageValue", { age }), file: (value) => ti("fileValue", { value }) });
   };
   const [absenceFor, setAbsenceFor] = useState<ReceptionPractitioner | null>(null);
+  // Heure courante (minutes d'attente des lignes), avancée toutes les 30 s.
+  // Heure du navigateur seulement (null pendant l'hydratation : texte identique au rendu serveur).
+  const now = useNow(30_000);
+  const waitedMinutes = (iso: string) => (now === null ? 0 : Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000)));
 
   const branchId = initial.branch.id;
   const refresh = useCallback(async () => {
@@ -121,6 +126,14 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
     setSelected(null);
     await refresh();
   }
+
+  // « Cabinet 1 · 5 patients attitrés » : poste du praticien et tickets qui l'attendent (feuille d'absence).
+  const absenceDetail = (practitionerId: string) => {
+    const counter = data.counters.find((c) => c.practitionerId === practitionerId);
+    if (!counter) return undefined;
+    const name = counter.label ?? `${kindLabel(counter.kind)} ${counter.number}`;
+    return ta("detail", { counter: name, count: data.waiting.filter((w) => w.preferredCounterId === counter.id).length });
+  };
 
   const helpTickets = new Set(data.helpRequests.map((h) => h.ticketId));
 
@@ -267,37 +280,34 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-7">
-          {/* C3 : demandes d'aide des patients (page du ticket), à traiter en premier ; rien sur l'écran TV. */}
+          <div className="order-first flex flex-col gap-7 md:order-none">
+          {/* C3 : demandes d'aide des patients (page du ticket), à traiter en premier ; rien sur l'écran TV.
+              Maquette v2 20 : un encadré orange par demande, « Traité » le fait disparaître. */}
           {data.helpRequests.length ? (
-            <section aria-labelledby="help-requests" className="squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 shadow-card ring-1 ring-orange/40">
-              <h2 id="help-requests" className="flex items-center gap-2 text-headline text-orange-text">
-                <CircleHelp aria-hidden className="size-5 stroke-[2]" />
-                {t("helpHeader", { count: data.helpRequests.length })}
-              </h2>
-              <ul role="list" className="flex flex-col gap-1">
-                {data.helpRequests.map((h) => (
-                  <li key={h.id} className="flex min-h-11 items-center justify-between gap-3">
-                    <span className="min-w-0 text-body">
-                      <span className="font-semibold">{h.code}</span>
-                      <span className="text-label-secondary"> · {t("helpSince", { time: time(h.requestedAt) })}</span>
-                    </span>
-                    <Button
-                      variant="tinted"
-                      size="md"
-                      aria-label={t("helpDoneLabel", { code: h.code })}
-                      leadingIcon={<Check aria-hidden className="size-4 stroke-[2.5]" />}
-                      onClick={async () => {
-                        const { error } = await supabase.rpc("handle_ticket_help", { p_request: h.id });
-                        if (error) toast(te("generic"));
-                        await refresh();
-                      }}
-                    >
-                      {t("helpDone")}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+            <section aria-label={t("helpHeader", { count: data.helpRequests.length })} className="flex flex-col gap-2">
+              {data.helpRequests.map((h) => (
+                <div key={h.id} className="squircle flex items-center gap-3 rounded-[var(--radius-lg)] bg-orange-tint px-3 py-3">
+                  <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-orange text-white">
+                    <Hand className="size-5 stroke-[2]" />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-headline text-orange-text">{t("helpTitle", { code: h.code })}</span>
+                    <span className="text-subheadline text-label-secondary">{t("helpSince", { time: time(h.requestedAt) })}</span>
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={t("helpDoneLabel", { code: h.code })}
+                    className="pressable min-h-11 shrink-0 rounded-[var(--radius-md)] bg-grouped-secondary px-3.5 text-callout font-semibold text-accent-text"
+                    onClick={async () => {
+                      const { error } = await supabase.rpc("handle_ticket_help", { p_request: h.id });
+                      if (error) toast(te("generic"));
+                      await refresh();
+                    }}
+                  >
+                    {t("helpDone")}
+                  </button>
+                </div>
+              ))}
             </section>
           ) : null}
           <ListSection header={t("queueHeader", { count: data.waiting.length })}>
@@ -315,12 +325,24 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                   title={
                     <>
                       <span className="font-rounded font-bold text-ticket-number">{tk2.code}</span>
+                      {tk2.priorityReason ? (
+                        <>
+                          <Star aria-hidden className="ml-1 inline size-3.5 fill-current stroke-0 align-[-0.05em] text-label" />
+                          <span className="sr-only"> · {t("priorityStar")}</span>
+                        </>
+                      ) : null}
+                      {helpTickets.has(tk2.id) ? (
+                        <Badge tone="orange" className="ml-2 align-middle">
+                          {t("helpBadge")}
+                        </Badge>
+                      ) : null}
                       {nameOf(tk2) ? <span className="text-label-secondary"> · {nameOf(tk2)}</span> : null}
                     </>
                   }
                   subtitle={
                     <>
-                      {td(`source.${tk2.source}`)} · {time(tk2.createdAt)}
+                      {tk2.priorityReason ? tr(tk2.priorityReason) : td(`source.${tk2.source}`)}
+                      <span className="tabular"> · {td("minutes", { count: waitedMinutes(tk2.createdAt) })}</span>
                       {tk2.remote ? (
                         <span className={tk2.remote.confirmed ? "text-green-text" : "text-orange-text"}>
                           {" · "}
@@ -332,16 +354,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
                       ) : null}
                     </>
                   }
-                  accessory={
-                    tk2.priorityReason || helpTickets.has(tk2.id) ? (
-                      <span className="flex items-center gap-1.5">
-                        {helpTickets.has(tk2.id) ? <Badge tone="orange">{t("helpBadge")}</Badge> : null}
-                        {tk2.priorityReason ? <Badge tone="orange">{tk2.priorityReason === "appointment" ? "RDV" : tr(tk2.priorityReason)}</Badge> : null}
-                      </span>
-                    ) : (
-                      "chevron"
-                    )
-                  }
+                  accessory="chevron"
                 />
               );
             })}
@@ -358,68 +371,34 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
         <CreateTicketSheet data={data} open={createOpen} onOpenChange={setCreateOpen} onCreated={() => void refresh()} />
 
         {selected ? (
-          <Sheet
+          <ActionSheet
             open={!!selected && !transferOpen && !cancelOpen && !priorityOpen && !identityOpen}
             onOpenChange={(o) => !o && setSelected(null)}
             title={t("ticketActions", { code: selected.code })}
+            subtitle={[
+              serviceById.get(selected.serviceId)?.name,
+              selected.remote ? td("source.remote").toLowerCase() : null,
+              selected.remote ? (selected.remote.confirmed ? t("remoteHere") : selected.remote.onMyWay ? t("remoteOnWay") : t("remotePending")) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
             closeLabel={tc("close")}
-          >
-            <div className="flex flex-col gap-4 pt-2">
-              {selected.remote && !selected.remote.confirmed ? (
-                <ListSection>
-                  <ListRow
-                    onClick={() => command("staff_confirm_presence", { p_ticket: selected.id })}
-                    icon={<ListIcon color="var(--green-fill)"><ScanLine /></ListIcon>}
-                    title={t("confirmPresence")}
-                  />
-                </ListSection>
-              ) : null}
-              <ListSection>
-                {selected.priorityReason ? (
-                  <ListRow
-                    onClick={() => command("set_ticket_priority", { p_ticket: selected.id, p_reason: null })}
-                    icon={<ListIcon color="var(--orange-fill)"><StarOff /></ListIcon>}
-                    title={t("removePriority")}
-                  />
-                ) : (
-                  <ListRow
-                    onClick={() => setPriorityOpen(true)}
-                    icon={<ListIcon color="var(--orange-fill)"><Star /></ListIcon>}
-                    title={t("setPriority")}
-                    accessory="chevron"
-                  />
-                )}
-                {identityRules.mode !== "off" ? (
-                  <ListRow
-                    onClick={() => setIdentityOpen(true)}
-                    icon={<ListIcon color="var(--accent-fill)"><PenLine /></ListIcon>}
-                    title={selected.identity?.name ? ti("edit") : ti("enter")}
-                    accessory="chevron"
-                  />
-                ) : null}
-                <ListRow
-                  onClick={() => setTransferOpen(true)}
-                  icon={<ListIcon color="var(--accent-fill)"><Shuffle /></ListIcon>}
-                  title={t("reorient")}
-                  accessory="chevron"
-                />
-                <ListRow
-                  onClick={() => command("move_back_ticket", { p_ticket: selected.id, p_places: 3 })}
-                  icon={<ListIcon color="var(--brand-tile)"><ArrowDown /></ListIcon>}
-                  title={t("moveBack")}
-                />
-                <ListRow
-                  href={`/desk/print/${selected.id}`}
-                  icon={<ListIcon color="var(--brand-tile)"><Printer /></ListIcon>}
-                  title={t("print")}
-                  accessory="chevron"
-                />
-              </ListSection>
-              <ListSection>
-                <ListRow onClick={() => setCancelOpen(true)} icon={<ListIcon color="var(--red-fill)"><Ban /></ListIcon>} title={t("cancelTicket")} destructive />
-              </ListSection>
-            </div>
-          </Sheet>
+            items={[
+              selected.priorityReason
+                ? { key: "priority", label: t("removePriority"), icon: <StarOff />, onSelect: () => void command("set_ticket_priority", { p_ticket: selected.id, p_reason: null }) }
+                : { key: "priority", label: t("setPriority"), icon: <Star />, onSelect: () => setPriorityOpen(true) },
+              ...(identityRules.mode !== "off"
+                ? [{ key: "name", label: selected.identity?.name ? ti("edit") : ti("enter"), icon: <UserRound />, onSelect: () => setIdentityOpen(true) }]
+                : []),
+              ...(selected.remote && !selected.remote.confirmed
+                ? [{ key: "presence", label: t("confirmPresence"), icon: <Check />, onSelect: () => void command("staff_confirm_presence", { p_ticket: selected.id }) }]
+                : []),
+              { key: "transfer", label: t("reorient"), icon: <ArrowLeftRight />, onSelect: () => setTransferOpen(true) },
+              { key: "back", label: t("moveBack"), icon: <ArrowDown />, onSelect: () => void command("move_back_ticket", { p_ticket: selected.id, p_places: 3 }) },
+              { key: "print", label: t("print"), icon: <Printer />, href: `/desk/print/${selected.id}` },
+              { key: "cancel", label: t("cancelTicket"), icon: <X />, onSelect: () => setCancelOpen(true), destructive: true },
+            ]}
+          />
         ) : null}
 
         {selected && priorityOpen ? (
@@ -449,7 +428,9 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
         {selected ? (
           <TransferSheet
             code={selected.code}
-            services={data.services.filter((s) => s.id !== selected.serviceId)}
+            services={data.services
+              .filter((s) => s.id !== selected.serviceId)
+              .map((s) => ({ ...s, waiting: data.board?.services.find((x) => x.id === s.id)?.waiting.length ?? 0 }))}
             open={transferOpen}
             onOpenChange={setTransferOpen}
             onConfirm={(serviceId) => void command("transfer_ticket", { p_ticket: selected.id, p_target_service: serviceId })}
@@ -472,7 +453,7 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
         {absenceFor ? (
           <AbsenceSheet
             key={absenceFor.id}
-            practitioner={{ id: absenceFor.id, name: absenceFor.name }}
+            practitioner={{ id: absenceFor.id, name: absenceFor.name, detail: absenceDetail(absenceFor.id) }}
             active={absenceFor.absence}
             open
             onOpenChange={(o) => !o && setAbsenceFor(null)}

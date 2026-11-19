@@ -1,16 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { BadgeCheck, Bell, Check, CheckCircle2, ChevronLeft, CircleHelp, Clock, MessageCircle, Share, WifiOff, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Check, ChevronLeft, ChevronRight, Clock, Hand, Info, MessageCircle, Share, WifiOff } from "lucide-react";
 import { optInLink } from "@nextin/shared/notifications/opt-in";
 import { callForCode, isActiveCall, type BoardCall, type BranchBoard } from "@nextin/shared/queue/live";
 import { REALTIME_EVENTS, ticketTopic } from "@nextin/shared/queue/realtime";
 import { TicketBottomActions } from "@/components/ticket/ticket-bottom-actions";
 import { Badge, LiveIndicator } from "@/components/ui/badge";
-import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
+import { OptionList, OptionRow } from "./option-row";
 import { TicketHero } from "@/components/ui/ticket-hero";
 import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
@@ -21,20 +20,23 @@ import { callRpc } from "@/lib/client/supabase-public";
 import { ticketAvailability, waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
 import { LazyMount } from "./lazy-mount";
+import { lazyComponent } from "@/lib/client/lazy";
 
-// Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
-const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
-const TicketRating = dynamic(() => import("./ticket-rating").then((m) => m.TicketRating), { ssr: false });
+// Chargés seulement quand ils servent (page client < 200 Ko au premier chargement ; `lazyComponent` plutôt que
+// `next/dynamic`, plus léger).
+const AlertDialog = lazyComponent(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
+// Ticket fini (terminé, annulé, clôturé) : rendu côté serveur s'il sert, jamais téléchargé pour un ticket en cours.
+const TicketEnded = lazyComponent(() => import("./ticket-ended").then((m) => m.TicketEnded));
 // « C'est votre tour » plein écran : chargé seulement à l'appel (budget de la page).
-const CalledScreen = dynamic(() => import("./called-screen").then((m) => m.CalledScreen));
-const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
+const CalledScreen = lazyComponent(() => import("./called-screen").then((m) => m.CalledScreen));
+const PushAlerts = lazyComponent(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
 // Ticket à distance seulement : rendu côté serveur s'il sert, jamais téléchargé pour un ticket pris sur place.
-const RemoteTicketCard = dynamic(() => import("./remote-ticket-card").then((m) => m.RemoteTicketCard));
+const RemoteTicketCard = lazyComponent(() => import("./remote-ticket-card").then((m) => m.RemoteTicketCard));
 // Publicité et jeux (M10b) : jamais dans le premier chargement.
-const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
-const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
+const SponsoredCard = lazyComponent(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
+const GameSheet = lazyComponent(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
 // Carte « Jouer en attendant » : montée 3 s après le chargement (LazyMount), son code aussi (budget de 200 Ko).
-const PlayCard = dynamic(() => import("./games/play-card").then((m) => m.PlayCard), { ssr: false });
+const PlayCard = lazyComponent(() => import("./games/play-card").then((m) => m.PlayCard), { ssr: false });
 
 const aheadKey = (token: string) => `nextin-ahead-${token}`;
 const noSubscribe = () => () => {};
@@ -175,10 +177,16 @@ export function TicketLive({
 
   // C3 : demande d'aide à l'accueil (5 minutes entre deux demandes, vérifié par la base).
   const [help, setHelp] = useState<"idle" | "sending" | "sent" | "soon">("idle");
+  // Confirmation éphémère en bas de l'écran (maquette v2 21), en plus de la ligne devenue verte.
+  const [toast, setToast] = useState<string | null>(null);
   async function requestHelp() {
     setHelp("sending");
     const { error } = await callRpc<unknown>("request_ticket_help", { p_token: token });
     setHelp(!error ? "sent" : error.message === "help_too_soon" ? "soon" : "idle");
+    if (!error) {
+      setToast(t("helpSentTitle"));
+      setTimeout(() => setToast(null), 3000);
+    }
   }
 
   async function cancel() {
@@ -230,9 +238,8 @@ export function TicketLive({
         <p className="min-w-0 flex-1 truncate text-footnote font-medium text-label-secondary uppercase">
           {place} · {view.branch.name}
         </p>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex min-h-11 shrink-0 items-center gap-1">
           {status !== "offline" && active ? <LiveIndicator label={t("live")} /> : null}
-          <IconButton label={copied ? t("copied") : t("share")} icon={<Share />} variant="plain" onClick={share} />
         </div>
       </div>
       {/* Ordinateur : le ticket à gauche (héros, attente), alertes et actions à droite. */}
@@ -243,6 +250,15 @@ export function TicketLive({
             <WifiOff aria-hidden />
             {t("offline")}
           </Badge>
+        ) : null}
+
+        {/* Appel manqué (absent automatique) : encadré orange au-dessus du ticket, qui reste utilisable ; au prochain
+            appel manqué, le ticket est annulé (maquette v2 21). */}
+        {view.status === "waiting" && (view.missed_calls ?? 0) > 0 ? (
+          <CalloutCard icon={<Bell />} tone="orange" role="status" data-testid="missed-call">
+            <span className="block font-semibold text-orange-text">{t("missedCallTitle")}</span>
+            {t("missedCallBody")}
+          </CalloutCard>
         ) : null}
 
         {view.status === "waiting" && progress ? (
@@ -270,37 +286,8 @@ export function TicketLive({
             calledBody={view.counter ? (view.status === "called" ? goTo(view.counter) : counterName(view.counter)) : undefined}
           />
         ) : (
-          <section
-            aria-live="polite"
-            className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-7 text-center"
-          >
-            {view.status === "served" ? (
-              <CheckCircle2 aria-hidden className="size-10 stroke-[1.5] text-green" />
-            ) : (
-              <XCircle aria-hidden className="size-10 stroke-[1.5] text-label-secondary" />
-            )}
-            <p className="text-title2 font-bold">
-              {view.status === "served" ? t("servedTitle") : view.status === "cancelled" ? t("cancelledTitle") : t("noShowTitle")}
-            </p>
-            <p className="text-callout text-label-secondary">
-              {view.display_code} · {serviceName} · {place}
-            </p>
-            {view.status === "cancelled" ? (
-              <p className="text-body text-label-secondary">{view.remote?.cancelled_for_absence ? t("cancelledAbsence") : t("cancelledBody")}</p>
-            ) : null}
-            {view.status === "no_show" ? (
-              <p className="text-body text-label-secondary">{(view.missed_calls ?? 0) >= 2 ? t("noShowMissedBody") : t("noShowBody")}</p>
-            ) : null}
-          </section>
+          <TicketEnded view={view} token={token} serviceName={serviceName} entry={entry} onRated={setView} />
         )}
-
-        {/* Appel manqué (absent automatique) : le client est replacé ; au suivant, le ticket est annulé. */}
-        {view.status === "waiting" && (view.missed_calls ?? 0) > 0 ? (
-          <CalloutCard icon={<Bell />} role="status" data-testid="missed-call">
-            <span className="block font-semibold">{t("missedCallTitle")}</span>
-            {t("missedCallBody")}
-          </CalloutCard>
-        ) : null}
 
         {/* Accès prioritaire : accordé uniquement par le personnel (accueil, poste ou arrivée d'un rendez-vous). */}
         {active && view.priority_reason ? (
@@ -311,6 +298,17 @@ export function TicketLive({
         ) : null}
 
 
+        {/* Agence fermée ou aucun poste ouvert : jamais « D'un instant à l'autre » (maquette v2 21). */}
+        {view.status === "waiting" && (availability?.kind === "closed" || availability?.kind === "noCounter") ? (
+          <CalloutCard icon={<Clock />} tone="accent" role="status">
+            <span className="block font-semibold">{wait}</span>
+            {availability.kind === "closed" ? t("closedBody") : t("noCounterBody")}
+          </CalloutCard>
+        ) : null}
+        {view.status === "waiting" ? (
+          <p className="px-4 text-footnote text-label-secondary">{view.alerts?.whatsapp || view.alerts?.push ? t("keepOpenAlerts") : t("keepOpen")}</p>
+        ) : null}
+
         {view.status === "called" && call && call.recall_count > 0 ? (
           <Badge shape="pill" tone="orange" className="self-center">
             <Bell aria-hidden />
@@ -320,24 +318,29 @@ export function TicketLive({
 
         </div>
         <div className="flex min-w-0 flex-col gap-4">
-        {active && view.alerts?.whatsapp ? (
-          <Badge shape="pill" tone="green" className="self-center" role="status">
-            <Check aria-hidden />
-            {t("whatsappOn")}
-          </Badge>
-        ) : active && whatsappNumber ? (
-          <div className="flex flex-col gap-1.5">
-            <Button asChild block variant="tinted" className="h-auto min-h-[3.125rem] whitespace-normal py-3 text-center text-balance">
-              <a href={optInLink(whatsappNumber, view.display_code, token, locale === "en" ? "en" : "fr")} target="_blank" rel="noopener">
-                <MessageCircle aria-hidden className="size-5 shrink-0" />
-                {t("whatsapp")}
-              </a>
-            </Button>
-            <p className="px-4 text-center text-footnote text-label-secondary">{t("whatsappHint")}</p>
-          </div>
+        {/* Maquette v2 21 : sous le ticket, deux groupes — être prévenu (WhatsApp, notification), puis l'aide. */}
+        {active && (view.alerts?.whatsapp || whatsappNumber || vapidKey) ? (
+          <OptionList label={t("alertsSection")}>
+            {view.alerts?.whatsapp ? (
+              <OptionRow
+                status
+                color="var(--green-fill)"
+                icon={<MessageCircle />}
+                title={t("whatsappOn")}
+                trailing={<Check aria-hidden className="size-5 stroke-[2.5] text-accent-text" />}
+              />
+            ) : whatsappNumber ? (
+              <OptionRow
+                href={optInLink(whatsappNumber, view.display_code, token, locale === "en" ? "en" : "fr")}
+                external
+                color="var(--green-fill)"
+                icon={<MessageCircle />}
+                title={<span className="text-accent-text">{t("whatsapp")}</span>}
+              />
+            ) : null}
+            {vapidKey ? <PushAlerts token={token} vapidKey={vapidKey} subscribed={!!view.alerts?.push} variant="row" /> : null}
+          </OptionList>
         ) : null}
-
-        {active && vapidKey ? <PushAlerts token={token} vapidKey={vapidKey} subscribed={!!view.alerts?.push} /> : null}
 
         {view.status === "waiting" && view.remote ? (
           <RemoteTicketCard
@@ -359,9 +362,6 @@ export function TicketLive({
           </CalloutCard>
         ) : null}
 
-        {view.status === "waiting" ? (
-          <CalloutCard icon={<Bell />}>{view.alerts?.whatsapp || view.alerts?.push ? t("keepOpenAlerts") : t("keepOpen")}</CalloutCard>
-        ) : null}
 
         {view.status === "waiting" ? (
           <LiteIntlProvider locale={locale} messages={{ games: gameCards }}>
@@ -374,22 +374,39 @@ export function TicketLive({
           </LiteIntlProvider>
         ) : null}
 
-        {view.status === "served" ? (
-          view.rating_enabled && view.rating == null ? (
-            <TicketRating token={token} onRated={setView} />
-          ) : view.rating != null ? (
-            <CalloutCard icon={<CheckCircle2 />} tone="green" role="status">
-              {t("rated")}
-            </CalloutCard>
-          ) : null
-        ) : null}
-
-        {view.status === "cancelled" || view.status === "no_show" ? (
-          <Button asChild block variant="tinted" className="h-auto min-h-[3.125rem] whitespace-normal py-3 text-center text-balance">
-            <Link href={entry ? `/q/${entry}` : "/"}>{t("newTicket")}</Link>
-          </Button>
-        ) : null}
-        {/* En bas du contenu, jamais fixé : rien ne masque le ticket. */}
+        <div className="flex flex-col gap-1.5">
+          <OptionList label={t("helpSection")}>
+            {active ? (
+              help === "sent" || help === "soon" ? (
+                <OptionRow
+                  status
+                  color="var(--green-fill)"
+                  icon={<Check />}
+                  title={t("helpSentTitle")}
+                  subtitle={help === "sent" ? t("helpSentBody") : t("helpTooSoon")}
+                />
+              ) : (
+                <OptionRow
+                  onClick={help === "sending" ? undefined : requestHelp}
+                  color="var(--orange-fill)"
+                  icon={<Hand />}
+                  title={<span className="text-accent-text">{t("helpRequest")}</span>}
+                />
+              )
+            ) : null}
+            {/* C2 : aide (questions fréquentes, téléphone et horaires de l'établissement). */}
+            <OptionRow
+              href={`/help?t=${encodeURIComponent(token)}`}
+              color="var(--icon-gray)"
+              icon={<Info />}
+              title={t("helpLink")}
+              trailing={<ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />}
+            />
+            {active ? <OptionRow onClick={share} color="var(--accent-fill)" icon={<Share />} title={copied ? t("copied") : t("share")} /> : null}
+          </OptionList>
+          {help === "sent" ? <p className="px-4 text-footnote text-label-secondary">{t("helpAgain")}</p> : null}
+        </div>
+        {/* En bas du contenu, jamais fixé : « Je suis en route » (à distance) puis « Annuler le ticket » en lien gris. */}
         {active ? (
           <TicketBottomActions
             source={view.source}
@@ -401,26 +418,6 @@ export function TicketLive({
             onCancel={() => setConfirmCancel(true)}
           />
         ) : null}
-        {active ? (
-          help === "sent" || help === "soon" ? (
-            <p role="status" className="text-center text-subheadline text-green-text">
-              {t(help === "sent" ? "helpSent" : "helpTooSoon")}
-            </p>
-          ) : (
-            <Button variant="gray" block loading={help === "sending"} onClick={requestHelp} leadingIcon={<CircleHelp aria-hidden />}>
-              {t("helpRequest")}
-            </Button>
-          )
-        ) : null}
-        {/* C2 : aide (questions fréquentes, téléphone et horaires de l'établissement), sans préchargement (budget). */}
-        <Link
-          href={`/help?t=${encodeURIComponent(token)}`}
-          prefetch={false}
-          className="inline-flex min-h-11 items-center justify-center gap-2 self-center text-subheadline font-semibold text-accent-text"
-        >
-          <CircleHelp aria-hidden className="size-4 stroke-[2]" />
-          {t("helpLink")}
-        </Link>
         </div>
       </div>
 
@@ -451,6 +448,19 @@ export function TicketLive({
         />
       ) : null}
 
+      {toast ? (
+        <div
+          role="status"
+          className="fixed inset-x-0 z-40 flex justify-center px-4 animate-pop-in"
+          style={{ bottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+        >
+          <span className="flex min-h-11 items-center gap-2 rounded-full bg-grouped-secondary px-5 text-callout font-semibold shadow-floating">
+            <Check aria-hidden className="size-4 stroke-[2.5] text-green" />
+            {toast}
+          </span>
+        </div>
+      ) : null}
+
       {active && confirmCancel ? (
         <AlertDialog
           open
@@ -460,6 +470,7 @@ export function TicketLive({
           cancelLabel={t("cancelKeep")}
           actionLabel={t("cancel")}
           destructive
+          stacked
           onAction={cancel}
         />
       ) : null}

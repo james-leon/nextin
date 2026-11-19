@@ -13,7 +13,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { listAppointments, type Appointment, type AppointmentsContext } from "@/lib/desk/appointments";
+import { listAppointments, listRequests, type Appointment, type AppointmentRequest, type AppointmentsContext } from "@/lib/desk/appointments";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
 import { AppointmentDetail } from "./appointment-detail";
@@ -21,9 +21,10 @@ import { BookingForm } from "./booking-form";
 import { longDay, shortDay, timeOf } from "./format";
 import { AppointmentStatusBadge } from "./status-badge";
 import { RequestsInbox } from "./requests-inbox";
-import { StatCard } from "@/components/ui/stat-card";
+import { StatCard, StatGroup } from "@/components/ui/stat-card";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import { WeekAgenda } from "./week-agenda";
+import { DayAgenda } from "./day-agenda";
 
 type View = "day" | "week" | "requests";
 type Pane = { kind: "detail"; id: string } | { kind: "book" } | { kind: "reschedule"; id: string } | null;
@@ -44,17 +45,10 @@ function TimeColumn({ a, tz, locale }: { a: Appointment; tz: string; locale: str
 function DaySummary({ items, tz, locale, onOpen }: { items: Appointment[]; tz: string; locale: string; onOpen: (id: string) => void }) {
   const t = useTranslations("appointments");
   const booked = items.filter((a) => a.display_status !== "cancelled" && a.display_status !== "rescheduled");
-  const arrived = booked.filter((a) => a.display_status === "checked_in" || a.display_status === "completed").length;
-  const absent = booked.filter((a) => a.display_status === "no_show").length;
   const next = booked.filter((a) => a.display_status === "confirmed" || a.display_status === "waiting").slice(0, 4);
   return (
     <div className="flex flex-col gap-5">
       <h2 className="text-title3 font-semibold">{t("summaryTitle")}</h2>
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label={t("summaryTotal")} value={booked.length} className="bg-grouped" />
-        <StatCard label={t("summaryArrived")} value={arrived} className="bg-grouped" />
-        <StatCard label={t("summaryAbsent")} value={absent} className="bg-grouped" />
-      </div>
       <ListSection header={t("summaryNext")} footer={next.length ? t("selectHint") : undefined}>
         {next.length ? (
           next.map((a) => (
@@ -87,6 +81,8 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
   const locale = useLocale();
   const supabase = getSupabaseBrowserClient();
   const desktop = useMediaQuery("(min-width: 1024px)");
+  // Tablette et ordinateur : agenda par praticien (maquette v2 20) ; téléphone : liste.
+  const wide = useMediaQuery("(min-width: 768px)");
   const tz = ctx.branch.timeZone;
   const [view, setView] = useState<View>(initialView);
   const [date, setDate] = useState(ctx.today);
@@ -94,6 +90,15 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
   // Résultat rattaché à sa requête : changer de jour ou de filtre affiche le chargement sans effacement explicite.
   const [data, setData] = useState<{ key: string; items: Appointment[] } | null>(null);
   const [pane, setPane] = useState<Pane>(null);
+  // Demandes en attente (blocs orange de l'agenda) et praticiens en congé le jour affiché.
+  const [requests, setRequests] = useState<AppointmentRequest[]>([]);
+  const [leaves, setLeaves] = useState<{ date: string; ids: Set<string> } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const days = useMemo(() => (view === "week" ? weekDays(date) : [date]), [view, date]);
   const from = days[0]!;
@@ -108,6 +113,22 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
   useEffect(() => {
     shown.current = key;
   }, [key]);
+
+  useEffect(() => {
+    if (view !== "day") return;
+    let alive = true;
+    void Promise.all([
+      listRequests(supabase, ctx.branch.id).catch(() => [] as AppointmentRequest[]),
+      supabase.from("practitioner_leaves").select("practitioner_id").eq("branch_id", ctx.branch.id).lte("starts_on", date).gte("ends_on", date),
+    ]).then(([reqs, leaveRows]) => {
+      if (!alive) return;
+      setRequests(reqs);
+      setLeaves({ date, ids: new Set((leaveRows.data ?? []).map((l) => l.practitioner_id)) });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [supabase, ctx.branch.id, date, view, data]);
 
   const load = useCallback(async () => {
     const requested = `${from}|${to}|${practitioner}`;
@@ -161,6 +182,13 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
   }
 
   const inline = desktop && view === "day";
+  const live = (items ?? []).filter((a) => a.display_status !== "cancelled" && a.display_status !== "rescheduled");
+  const stats = {
+    total: live.length,
+    arrived: live.filter((a) => a.display_status === "checked_in" || a.display_status === "completed" || a.display_status === "waiting").length,
+    absent: live.filter((a) => a.display_status === "no_show").length,
+    next: live.filter((a) => a.display_status === "confirmed").length,
+  };
   const detailContent = (a: Appointment) => (
     <AppointmentDetail key={a.id} appointment={a} ctx={ctx} onChanged={changed} onReschedule={() => setPane({ kind: "reschedule", id: a.id })} />
   );
@@ -208,7 +236,24 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
       />
 
       <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-3">
+        {/* Maquette v2 20 : jour (ou semaine) avec ses flèches et « Aujourd'hui » à gauche, Jour / Semaine / Demandes à droite. */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {view === "requests" ? (
+            <h2 className="text-title2 font-bold" aria-live="polite">
+              {t("requests.title")}
+            </h2>
+          ) : (
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              <IconButton label={view === "day" ? t("previousDay") : t("previousWeek")} icon={<ChevronLeft />} variant="gray" onClick={() => setDate(addDays(date, -step))} />
+              <h2 className="min-w-0 px-1 text-title3 font-semibold first-letter:uppercase" aria-live="polite">
+                {title}
+              </h2>
+              <IconButton label={view === "day" ? t("nextDay") : t("nextWeek")} icon={<ChevronRight />} variant="gray" onClick={() => setDate(addDays(date, step))} />
+              <Button size="md" variant="tinted" className="ml-2" onClick={() => setDate(ctx.today)} disabled={days.includes(ctx.today)}>
+                {t("today")}
+              </Button>
+            </div>
+          )}
           <SegmentedControl
             label={t("viewLabel")}
             value={view}
@@ -223,28 +268,28 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
             ]}
             className="w-full md:w-96"
           />
-          <div className={cn("flex items-center gap-1", view === "requests" && "invisible")}>
-            <IconButton label={view === "day" ? t("previousDay") : t("previousWeek")} icon={<ChevronLeft />} variant="plain" onClick={() => setDate(addDays(date, -step))} />
-            <Button size="md" variant="gray" onClick={() => setDate(ctx.today)} disabled={days.includes(ctx.today)}>
-              {t("today")}
-            </Button>
-            <IconButton label={view === "day" ? t("nextDay") : t("nextWeek")} icon={<ChevronRight />} variant="plain" onClick={() => setDate(addDays(date, step))} />
-          </div>
         </div>
-        <h2 className="text-title2 font-bold first-letter:uppercase" aria-live="polite">
-          {view === "requests" ? t("requests.title") : title}
-        </h2>
+
+        {view === "day" && items ? (
+          <StatGroup className="grid-cols-2 md:grid-cols-4">
+            <StatCard label={t("summaryTotal")} value={stats.total} />
+            <StatCard label={t("summaryArrived")} value={stats.arrived} />
+            <StatCard label={t("summaryAbsent")} value={stats.absent} />
+            <StatCard label={t("summaryNext")} value={stats.next} />
+          </StatGroup>
+        ) : null}
 
         {view === "requests" ? (
           <RequestsInbox
             ctx={ctx}
+            initialId={focusRequest}
             onBooked={(d) => {
               setDate(d);
             }}
           />
         ) : null}
 
-        {view !== "requests" && ctx.practitioners.length > 1 ? (
+        {view !== "requests" && !(view === "day" && wide) && ctx.practitioners.length > 1 ? (
           <div role="radiogroup" aria-label={t("practitionerFilter")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
             {[{ id: "all", name: t("allPractitioners") }, ...ctx.practitioners].map((p) => (
               <button
@@ -265,10 +310,28 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
         ) : null}
 
         {view === "requests" ? null : view === "day" ? (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_24rem]">
             <section aria-label={title}>
               {items === null ? (
                 loading
+              ) : wide && ctx.practitioners.length ? (
+                <DayAgenda
+                  practitioners={ctx.practitioners}
+                  items={items}
+                  requests={requests.filter((r) => r.preferred_starts_at && r.practitioner_id && localDate(r.preferred_starts_at, tz) === date)}
+                  onLeave={leaves?.date === date ? leaves.ids : new Set()}
+                  tz={tz}
+                  locale={locale}
+                  isToday={date === ctx.today}
+                  now={now}
+                  selectedId={pane && pane.kind !== "book" ? pane.id : null}
+                  onOpen={(id) => setPane({ kind: "detail", id })}
+                  onOpenRequest={(id) => {
+                    setFocusRequest(id);
+                    setView("requests");
+                    setPane(null);
+                  }}
+                />
               ) : items.length ? (
                 <ListSection header={t("count", { count: items.length })}>{items.map((a) => row(a))}</ListSection>
               ) : (

@@ -43,7 +43,8 @@ test.describe("M7 — notifications", () => {
     const button = page.getByRole("link", { name: "Recevoir mes alertes sur WhatsApp" });
     const optIn = `NEXTIN ${ticket.display_code} ${ticket.public_token.slice(-4)}`;
     await expect(button).toHaveAttribute("href", `https://wa.me/${E2E_NOTIFY.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(optIn)}`);
-    await expect(page.getByText("WhatsApp s'ouvre avec un message prérempli")).toBeVisible();
+    // Lien externe (WhatsApp s'ouvre avec le message prérempli), dans la liste « être prévenu » (maquette v2 21).
+    await expect(button).toHaveAttribute("target", "_blank");
     await expectAccessible(page);
 
     // Signature absente ou fausse : refusé.

@@ -3,14 +3,14 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarCheck2, CalendarClock, Inbox, Mail, Phone } from "lucide-react";
+import { CalendarCheck2, CalendarClock, CalendarDays, ChevronDown, Inbox, Mail, Phone } from "lucide-react";
 import { formatCameroonPhone } from "@nextin/shared";
 import { addDays, localDate } from "@nextin/shared/appointments";
 import { staffTopic } from "@nextin/shared/queue/realtime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
-import { ListRow, ListSection } from "@/components/ui/list";
+import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextField } from "@/components/ui/text-field";
@@ -35,13 +35,22 @@ function inPeriod(iso: string, period: AppointmentRequest["preferred_period"], t
  * créneau libre du moment demandé), proposer un autre créneau, ou refuser avec un motif. La réponse part
  * par e-mail ou sur WhatsApp. Ordinateur : liste et détail côte à côte ; téléphone : liste et feuille.
  */
-export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onBooked: (date: string) => void }) {
+export function RequestsInbox({
+  ctx,
+  onBooked,
+  initialId = null,
+}: {
+  ctx: AppointmentsContext;
+  onBooked: (date: string) => void;
+  /** Demande à ouvrir d'emblée (bloc orange touché dans l'agenda). */
+  initialId?: string | null;
+}) {
   const t = useTranslations("appointments.requests");
   const tc = useTranslations("common");
   const supabase = getSupabaseBrowserClient();
   const desktop = useMediaQuery("(min-width: 1024px)");
   const [items, setItems] = useState<AppointmentRequest[] | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialId);
 
   const load = useCallback(async () => {
     const next = await listRequests(supabase, ctx.branch.id).catch(() => null);
@@ -83,7 +92,7 @@ export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onB
   const detail = selected ? <RequestDetail key={selected.id} request={selected} ctx={ctx} onHandled={handled} /> : null;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <section aria-label={t("title")}>
         {items === null ? (
           <div role="status" className="flex flex-col gap-2">
@@ -93,7 +102,7 @@ export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onB
             ))}
           </div>
         ) : items.length ? (
-          <ListSection header={t("count", { count: items.length })} footer={t("footer")}>
+          <ListSection header={<span className="font-semibold normal-case text-orange-text">{t("count", { count: items.length })}</span>} footer={t("footer")}>
             {items.map((r) => (
               <RequestRow
                 key={r.id}
@@ -111,7 +120,7 @@ export function RequestsInbox({ ctx, onBooked }: { ctx: AppointmentsContext; onB
       </section>
 
       {desktop ? (
-        <aside aria-label={t("detail")} className="squircle sticky top-24 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
+        <aside aria-label={t("detail")} className="@container sticky top-24">
           {detail ?? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <Inbox aria-hidden className="size-10 stroke-[1.5] text-label-tertiary" />
@@ -144,6 +153,20 @@ function useWhen(ctx: AppointmentsContext) {
   };
 }
 
+/** « reçue à 12:11 » (aujourd'hui), « reçue hier », sinon « reçue le 16 nov. ». */
+function useReceived(ctx: AppointmentsContext) {
+  const t = useTranslations("appointments.requests");
+  const locale = useLocale();
+  const tz = ctx.branch.timeZone;
+  return (iso: string) => {
+    const day = localDate(iso, tz);
+    if (day === ctx.today) return t("receivedAt", { time: timeOf(iso, locale, tz) });
+    if (day === addDays(ctx.today, -1)) return t("receivedYesterday");
+    const d = shortDay(day, locale);
+    return t("receivedOn", { date: `${d.day} ${d.month}` });
+  };
+}
+
 function RequestRow({
   request: r,
   ctx,
@@ -158,20 +181,19 @@ function RequestRow({
   chevron: boolean;
 }) {
   const t = useTranslations("appointments.requests");
-  const ti = useTranslations("identity");
   const locale = useLocale();
   const when = useWhen(ctx);
+  const received = useReceived(ctx);
+  // Maquette v2 20 : demande à traiter = orange (attention), « Mer. 18 · 14:00 », puis service, praticien et réception.
   return (
     <ListRow
       icon={
-        <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-tint text-accent-on-tint [&_svg]:size-5">
-          <CalendarClock />
-        </span>
+        <ListIcon color="var(--orange-fill)">
+          <CalendarDays />
+        </ListIcon>
       }
-      title={<span className="first-letter:uppercase">{when(r)}</span>}
-      subtitle={`${locale === "en" && r.service.name_en ? r.service.name_en : r.service.name} · ${r.practitioner ?? t("anyPractitioner")}${
-        personLine(r, ti) ? ` · ${personLine(r, ti)}` : ""
-      }`}
+      title={<span className="font-semibold first-letter:uppercase">{when(r)}</span>}
+      subtitle={`${locale === "en" && r.service.name_en ? r.service.name_en : r.service.name} · ${r.practitioner ?? t("anyPractitioner")} · ${received(r.created_at)}`}
       accessory={chevron ? "chevron" : undefined}
       onClick={onSelect}
       className={cn(selected && "bg-fill-tertiary")}
@@ -202,7 +224,10 @@ function RequestDetail({
   const candidates = r.practitioner_id ? bookable.filter((p) => p.id === r.practitioner_id) : bookable;
   const firstDay = r.preferred_starts_at ? localDate(r.preferred_starts_at, tz) : (r.preferred_day ?? ctx.today);
   const [slots, setSlots] = useState<PractitionerSlot[] | null>(null);
-  const [other, setOther] = useState(false);
+  // Autre créneau : choisi d'abord (pastille), puis proposé par un bouton qui dit exactement ce qui partira.
+  const other = true;
+  const [picked, setPicked] = useState<string | null>(null);
+  const [dayPicker, setDayPicker] = useState(false);
   const [otherPractitioner, setOtherPractitioner] = useState<string>(r.practitioner_id ?? bookable[0]?.id ?? "");
   const [otherDay, setOtherDay] = useState(firstDay < ctx.today ? ctx.today : firstDay);
   const [otherSlots, setOtherSlots] = useState<{ key: string; slots: Slot[] } | null>(null);
@@ -275,135 +300,174 @@ function RequestDetail({
   }
 
   const days = Array.from({ length: 14 }, (_, i) => addDays(ctx.today, i));
+  const received = useReceived(ctx);
+  const dayShort = (d: string) => {
+    const x = shortDay(d, locale);
+    return `${x.weekday} ${x.day}`;
+  };
+  const pickedSlot = shownOther?.find((s) => s.starts_at === picked) ?? null;
 
+  // Maquette v2 20 : en-tête « Demande · reçue à 12:11 » et créneau souhaité en grand ; à gauche le patient et
+  // « Confirmer » (action principale), à droite « Proposer un autre créneau » (secondaire) et « Refuser ».
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="text-footnote text-label-secondary uppercase">{t("requested")}</p>
-        <h2 className="text-title2 font-bold first-letter:uppercase">{when(r)}</h2>
-        <p className="text-subheadline text-label-secondary">
-          {locale === "en" && r.service.name_en ? r.service.name_en : r.service.name} · {r.practitioner ?? t("anyPractitioner")}
+        <p className="text-footnote text-label-secondary uppercase">
+          {t("detail")} · {received(r.created_at)}
         </p>
+        <h2 className="text-title1 font-bold first-letter:uppercase [text-wrap:balance]">{when(r)}</h2>
       </div>
 
-      <ListSection>
-        {personLine(r, ti) ? <ListRow title={t("label")} detail={personLine(r, ti)} /> : null}
-        {r.email ? (
-          <ListRow
-            title={t("email")}
-            detail={<span className="break-all">{r.email}</span>}
-            href={`mailto:${r.email}`}
-            accessory={<Mail aria-hidden className="size-4 text-accent-text" />}
-          />
-        ) : null}
-        {r.phone_e164 ? (
-          <ListRow
-            title={t("phone")}
-            detail={<span className="tabular">{formatCameroonPhone(r.phone_e164)}</span>}
-            href={`tel:${r.phone_e164}`}
-            accessory={<Phone aria-hidden className="size-4 text-accent-text" />}
-          />
-        ) : null}
-        <ListRow
-          title={t("received")}
-          detail={<span className="tabular">{`${longDay(localDate(r.created_at, tz), locale)} · ${timeOf(r.created_at, locale, tz)}`}</span>}
-        />
-      </ListSection>
+      <div className="grid grid-cols-1 gap-5 @3xl:grid-cols-2 @3xl:items-start">
+        <div className="flex min-w-0 flex-col gap-3">
+          <ListSection>
+            {personLine(r, ti) ? <ListRow title={t("label")} detail={personLine(r, ti)} /> : null}
+            {r.email ? (
+              <ListRow
+                title={t("email")}
+                detail={<span className="break-all">{r.email}</span>}
+                href={`mailto:${r.email}`}
+                accessory={<Mail aria-hidden className="size-4 text-accent-text" />}
+              />
+            ) : null}
+            {r.phone_e164 ? (
+              <ListRow
+                title={t("phone")}
+                detail={<span className="tabular">{formatCameroonPhone(r.phone_e164)}</span>}
+                href={`tel:${r.phone_e164}`}
+                accessory={<Phone aria-hidden className="size-4 text-accent-text" />}
+              />
+            ) : null}
+            <ListRow title={t("service")} detail={locale === "en" && r.service.name_en ? r.service.name_en : r.service.name} />
+            <ListRow title={t("wantedPractitioner")} detail={r.practitioner ?? t("anyPractitioner")} />
+          </ListSection>
 
-      {error ? (
-        <CalloutCard icon={<CalendarClock />} tone="red" role="alert">
-          {error}
-        </CalloutCard>
-      ) : null}
-
-      {slots === null ? (
-        <Skeleton className="h-[3.125rem] rounded-[14px]" />
-      ) : suggestion ? (
-        <div className="flex flex-col gap-1.5">
-          <Button block onClick={() => accept(suggestion.practitioner_id, suggestion.starts_at)} loading={pending === suggestion.starts_at} loadingLabel={t("confirming")}>
-            {t("confirm", { time: timeOf(suggestion.starts_at, locale, tz), name: name(suggestion.practitioner_id) })}
-          </Button>
-          <p className="px-4 text-center text-footnote text-label-secondary">{t("confirmHint", { channel: r.verify_channel ?? "whatsapp" })}</p>
-        </div>
-      ) : (
-        <CalloutCard icon={<CalendarClock />} tone="orange" role="status">
-          {t("taken")}
-        </CalloutCard>
-      )}
-
-      <Button block variant="tinted" onClick={() => setOther((v) => !v)} aria-expanded={other}>
-        {t("other")}
-      </Button>
-      {other ? (
-        <section aria-label={t("other")} className="flex flex-col gap-3">
-          {bookable.length > 1 ? (
-            <div role="radiogroup" aria-label={ta("practitioner")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
-              {bookable.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={otherPractitioner === p.id}
-                  onClick={() => setOtherPractitioner(p.id)}
-                  className={cn(
-                    "pressable min-h-11 shrink-0 rounded-full px-4 text-subheadline font-semibold",
-                    otherPractitioner === p.id ? "bg-accent text-white" : "bg-fill-tertiary text-label",
-                  )}
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
+          {error ? (
+            <CalloutCard icon={<CalendarClock />} tone="red" role="alert">
+              {error}
+            </CalloutCard>
           ) : null}
-          <div role="radiogroup" aria-label={ta("date")} className="-mx-4 flex gap-2 scroll-fade-x px-4 pb-1">
-            {days.map((d) => {
-              const s = shortDay(d, locale);
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  role="radio"
-                  aria-checked={otherDay === d}
-                  aria-label={longDay(d, locale)}
-                  onClick={() => setOtherDay(d)}
-                  className={cn(
-                    "pressable squircle flex min-h-11 min-w-12 shrink-0 flex-col items-center justify-center rounded-[var(--radius-sm)] px-2 py-1 tabular",
-                    otherDay === d ? "bg-accent text-white" : "bg-fill-tertiary text-label",
-                  )}
-                >
-                  <span className="text-caption font-semibold uppercase">{s.weekday}</span>
-                  <span className="text-callout font-bold">{s.day}</span>
-                </button>
-              );
-            })}
-          </div>
-          {shownOther === null ? (
-            <Skeleton className="h-11 rounded-[var(--radius-sm)]" />
-          ) : shownOther.length ? (
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-              {shownOther.map((s) => (
-                <button
-                  key={s.starts_at}
-                  type="button"
-                  onClick={() => accept(otherPractitioner, s.starts_at)}
-                  disabled={pending !== null}
-                  aria-label={t("offer", { time: timeOf(s.starts_at, locale, tz), day: longDay(otherDay, locale), name: name(otherPractitioner) })}
-                  className="pressable squircle h-11 rounded-[var(--radius-sm)] bg-fill-tertiary text-callout font-semibold text-accent-text tabular disabled:opacity-50"
-                >
-                  {timeOf(s.starts_at, locale, tz)}
-                </button>
-              ))}
+
+          {slots === null ? (
+            <Skeleton className="h-[3.125rem] rounded-[14px]" />
+          ) : suggestion ? (
+            <div className="flex flex-col gap-1.5">
+              <Button block onClick={() => accept(suggestion.practitioner_id, suggestion.starts_at)} loading={pending === suggestion.starts_at} loadingLabel={t("confirming")}>
+                {t("confirm", { time: timeOf(suggestion.starts_at, locale, tz), name: name(suggestion.practitioner_id) })}
+              </Button>
+              <p className="px-4 text-footnote text-label-secondary">{t("confirmHint", { channel: r.verify_channel ?? "whatsapp" })}</p>
             </div>
           ) : (
-            <p className="px-4 text-subheadline text-label-secondary">{ta("noSlots")}</p>
+            <CalloutCard icon={<CalendarClock />} tone="orange" role="status">
+              {t("taken")}
+            </CalloutCard>
           )}
-          <p className="px-4 text-footnote text-label-secondary">{t("otherHint", { channel: r.verify_channel ?? "whatsapp" })}</p>
-        </section>
-      ) : null}
+        </div>
 
-      <Button block variant="destructive-plain" onClick={() => setDeclineOpen(true)}>
-        {t("decline")}
-      </Button>
+        <section aria-label={t("other")} className="flex min-w-0 flex-col gap-3">
+          <h3 className="px-4 text-footnote uppercase text-label-secondary">{t("other")}</h3>
+          <div className="squircle flex flex-col rounded-[var(--radius-lg)] bg-grouped-secondary">
+            {bookable.length > 1 ? (
+              <div role="radiogroup" aria-label={ta("practitioner")} className="flex gap-2 scroll-fade-x px-3 pt-3">
+                {bookable.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={otherPractitioner === p.id}
+                    onClick={() => {
+                      setOtherPractitioner(p.id);
+                      setPicked(null);
+                    }}
+                    className={cn(
+                      "pressable min-h-11 shrink-0 rounded-full px-4 text-subheadline font-semibold",
+                      otherPractitioner === p.id ? "bg-accent text-white" : "bg-fill-tertiary text-label",
+                    )}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div className="p-3">
+              {shownOther === null ? (
+                <Skeleton className="h-11 rounded-[var(--radius-sm)]" />
+              ) : shownOther.length ? (
+                <div role="radiogroup" aria-label={t("other")} className="flex flex-wrap gap-2">
+                  {shownOther.map((s) => (
+                    <button
+                      key={s.starts_at}
+                      type="button"
+                      role="radio"
+                      aria-checked={picked === s.starts_at}
+                      onClick={() => setPicked(s.starts_at)}
+                      className={cn(
+                        "pressable squircle h-11 min-w-16 rounded-[var(--radius-sm)] px-3 text-callout font-semibold tabular",
+                        picked === s.starts_at ? "bg-primary text-on-accent" : "bg-fill-tertiary text-label",
+                      )}
+                    >
+                      {timeOf(s.starts_at, locale, tz)}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="px-1 text-subheadline text-label-secondary">{ta("noSlots")}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              aria-expanded={dayPicker}
+              onClick={() => setDayPicker((v) => !v)}
+              className="pressable flex min-h-11 items-center gap-3 px-4 py-2.5 text-left hairline-t"
+            >
+              <span className="flex-1 text-body">{t("otherDay")}</span>
+              <span className="text-body text-label-secondary first-letter:uppercase">{dayShort(otherDay)}</span>
+              <ChevronDown aria-hidden className={cn("size-4 stroke-[2.25] text-label-tertiary transition-transform", dayPicker && "rotate-180")} />
+            </button>
+            {dayPicker ? (
+              <div role="radiogroup" aria-label={ta("date")} className="flex gap-2 scroll-fade-x px-3 pb-3">
+                {days.map((d) => {
+                  const x = shortDay(d, locale);
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      role="radio"
+                      aria-checked={otherDay === d}
+                      aria-label={longDay(d, locale)}
+                      onClick={() => {
+                        setOtherDay(d);
+                        setPicked(null);
+                      }}
+                      className={cn(
+                        "pressable squircle flex min-h-11 min-w-12 shrink-0 flex-col items-center justify-center rounded-[var(--radius-sm)] px-2 py-1 tabular",
+                        otherDay === d ? "bg-accent text-white" : "bg-fill-tertiary text-label",
+                      )}
+                    >
+                      <span className="text-caption font-semibold uppercase">{x.weekday}</span>
+                      <span className="text-callout font-bold">{x.day}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+          <Button
+            block
+            variant="tinted"
+            disabled={!pickedSlot || pending !== null}
+            loading={!!pickedSlot && pending === pickedSlot.starts_at}
+            onClick={() => pickedSlot && accept(otherPractitioner, pickedSlot.starts_at)}
+          >
+            {pickedSlot ? t("offer", { day: dayShort(otherDay), time: timeOf(pickedSlot.starts_at, locale, tz), name: name(otherPractitioner) }) : t("pickSlot")}
+          </Button>
+          <p className="px-4 text-footnote text-label-secondary">{t("otherHint", { channel: r.verify_channel ?? "whatsapp" })}</p>
+          <Button block variant="gray" className="bg-grouped-secondary text-red-text" onClick={() => setDeclineOpen(true)}>
+            {t("decline")}
+          </Button>
+        </section>
+      </div>
+
       {declineOpen ? (
         <AlertDialog
           open

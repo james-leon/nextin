@@ -18,6 +18,9 @@ const PAGES = [
   { path: "/pay/AbCdEfGhIjKlMnOpQrStUvWxYz012345" },
   { path: "/invite/JetonInconnuJetonInconnu" },
   { path: "/page-qui-n-existe-pas" },
+  // LOT 5a : ticket inconnu, invitation introuvable (déjà ci-dessus), diagnostic de la PWA.
+  { path: "/t/AAAAAAAAAAAAAAAAAAAAAA", heading: "Mon ticket" },
+  { path: "/debug/pwa", heading: "Diagnostic de l'application" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

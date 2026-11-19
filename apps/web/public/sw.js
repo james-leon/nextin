@@ -1,5 +1,5 @@
 /* NextIn service worker — app shell, page hors ligne, cache des ressources statiques, web push. */
-const VERSION = "nextin-v2";
+const VERSION = "nextin-v4";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGES_CACHE = `${VERSION}-pages`;
 const ADS_CACHE = `${VERSION}-ads`;
@@ -9,6 +9,22 @@ const ADS_MAX = 40;
 const NAVIGATION_TIMEOUT_MS = 3000;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/manifest.webmanifest"];
+// Diagnostic de l'écran blanc (LOT 5a E) : navigations lentes ou en échec signalées à /api/client-log (chemin et
+// version seulement, jetons masqués par le serveur), cinq au plus par démarrage du service worker.
+let reports = 0;
+function report(message, path) {
+  if (reports++ >= 5) return;
+  fetch("/api/client-log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: "sw", message, path, sw: VERSION }),
+  }).catch(() => {});
+}
+
+// Page de diagnostic (/debug/pwa) : version du service worker actif.
+self.addEventListener("message", (event) => {
+  if (event.data === "version" && event.ports && event.ports[0]) event.ports[0].postMessage(VERSION);
+});
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -137,9 +153,15 @@ async function fallback(request) {
 }
 
 function navigate(event, request) {
+  const path = new URL(request.url).pathname;
+  let failed = false;
   const network = fetch(request).then((response) => {
     if (cacheable(response)) event.waitUntil(storePage(request, response.clone()).catch(() => {}));
+    if (response.status >= 500) report(`navigation_http_${response.status}`, path);
     return response;
+  });
+  network.catch(() => {
+    failed = true;
   });
   // Le réseau termine même si la page en cache est servie entre-temps (mise à jour pour la prochaine ouverture).
   event.waitUntil(network.catch(() => {}));
@@ -149,7 +171,13 @@ function navigate(event, request) {
   });
   return Promise.race([network.catch(() => null), timeout]).then((response) => {
     clearTimeout(timer);
-    return response || fallback(request);
+    if (response) return response;
+    return fallback(request).then((served) => {
+      // Raison (délai ou réseau en échec) et ce qui a été servi à la place (page en cache, page hors ligne, rien).
+      const what = served.type === "error" ? "none" : served.url && served.url.endsWith(OFFLINE_URL) ? "offline" : "cached";
+      event.waitUntil(Promise.resolve().then(() => report(`navigation_${failed ? "failed" : "timeout"}_${what}`, path)));
+      return served;
+    });
   });
 }
 

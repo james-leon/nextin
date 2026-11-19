@@ -33,6 +33,31 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
  * Écran 02 : arrivée par le QR code de l'agence (/q/<jeton>) ou par le code court (/q/<CODE>). Le QR code de
  * l'écran TV ajoute `?p=<code de présence>` (change chaque minute) : il confirme la présence d'un ticket à distance.
  */
+// Erreurs que la prise de ticket peut renvoyer : `take_ticket` (et les fonctions qu'il appelle : `take_ticket_core`,
+// `assert_customer_name`, `save_ticket_identity`), `confirm_presence`, la route `/api/tickets` (limite, captcha) et le
+// réseau. Les refus d'abonnement ou de quota sont ramenés à `common.onlineUnavailable` (`isOnlineUnavailable`) ; tout
+// autre code s'affiche en « generic » (`te.has`). Liste fermée : tout le dictionnaire `errors` pèserait ≈ 2 Ko de plus.
+const TAKE_TICKET_ERRORS = [
+  "active_ticket_exists",
+  "branch_closed",
+  "service_closed",
+  "invalid_entry",
+  "invalid_state",
+  "not_found",
+  "not_allowed",
+  "quota_reached",
+  "remote_not_allowed",
+  "presence_tv_only",
+  "priority_not_allowed",
+  "priority_staff_only",
+  "name_required",
+  "identity_invalid",
+  "rate_limited",
+  "captcha_failed",
+  "network",
+  "generic",
+];
+
 export default async function EntryPage({ params, searchParams }: Params & { searchParams: Promise<{ p?: string }> }) {
   const { code } = await params;
   const { p } = await searchParams;
@@ -61,7 +86,9 @@ export default async function EntryPage({ params, searchParams }: Params & { sea
 
   return (
     <>
-      <LiteMessages paths={["client.service", "errors", "identity"]}>
+      {/* Erreurs : seulement celles que la prise de ticket peut renvoyer (file, validation du nom, réseau, captcha),
+          pas tout le dictionnaire (budget de la page). */}
+      <LiteMessages paths={["client.service", ...TAKE_TICKET_ERRORS.map((code) => `errors.${code}`), "identity"]}>
         <ServiceChooser
           entry={entry}
           presenceCode={presenceCode}

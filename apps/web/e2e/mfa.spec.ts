@@ -43,7 +43,7 @@ test.describe("B5 — double authentification", () => {
     await expectAccessible(page);
     await page.getByRole("button", { name: "Configurer la double authentification" }).click();
     await expect(page.getByRole("img", { name: "QR code de configuration de la double authentification" })).toBeVisible();
-    const secret = (await page.getByTestId("mfa-secret").textContent())!.trim();
+    const secret = (await page.getByTestId("mfa-secret").textContent())!.replace(/\s/g, "");
     let used = Math.floor(Date.now() / 30_000);
     await page.getByLabel("Code à 6 chiffres").fill(totp(secret, used));
     await page.getByRole("button", { name: "Activer" }).click();

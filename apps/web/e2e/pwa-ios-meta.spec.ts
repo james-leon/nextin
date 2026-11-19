@@ -19,6 +19,8 @@ test.describe("PWA iOS : balises de web app", () => {
     expect(head).toMatch(/<meta name="mobile-web-app-capable" content="yes"\/?>/);
     expect(head).toMatch(/<meta name="apple-mobile-web-app-title" content="NextIn"\/?>/);
     expect(head).toMatch(/<meta name="apple-mobile-web-app-status-bar-style" content="default"\/?>/);
+    // Ni numéro, ni adresse e-mail masquée (« l•••@gmail.com »), ni adresse transformés en liens par iOS.
+    expect(head).toMatch(/<meta name="format-detection" content="telephone=no, email=no, address=no"\/?>/);
     // Écran de l'iPhone 12 Pro Max, en clair et en sombre.
     for (const scheme of ["light", "dark"]) {
       expect(head).toContain(`href="/startup/startup-1284x2778-${scheme}.png"`);
@@ -42,9 +44,21 @@ test.describe("PWA iOS : balises de web app", () => {
         expect(pageHead, path).toContain('<meta name="apple-mobile-web-app-capable" content="yes"/>');
         expect(pageHead, path).toContain('href="/startup/startup-1284x2778-dark.png"');
         expect(pageHead.match(/name="apple-mobile-web-app-capable"/g), `${path} : une seule fois`).toHaveLength(1);
+        expect(pageHead.match(/name="format-detection"/g), `${path} : format-detection une seule fois`).toHaveLength(1);
       }
     }
     // L'image annoncée existe bien.
     expect((await request.get("/startup/startup-1284x2778-light.png")).ok()).toBe(true);
   });
+
+  test("en anglais : écrans de démarrage au slogan traduit", async ({ request }) => {
+    const html = await (
+      await request.get("/", { headers: { "user-agent": IPHONE_12_PRO_MAX_UA, cookie: "NEXTIN_LOCALE=en" } })
+    ).text();
+    const head = html.slice(0, html.indexOf("</head>"));
+    expect(head).toContain('href="/startup/startup-1284x2778-light-en.png"');
+    expect(head).not.toContain('href="/startup/startup-1284x2778-light.png"');
+    expect((await request.get("/startup/startup-1284x2778-dark-en.png")).ok()).toBe(true);
+  });
 });
+

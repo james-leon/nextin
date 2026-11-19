@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { FILE_NUMBER_MAX, NAME_MAX, parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import type { DeskTicket } from "@nextin/shared/desk";
-import { Button } from "@/components/ui/button";
-import { Sheet } from "@/components/ui/sheet";
-import { TextField } from "@/components/ui/text-field";
+import { Sheet, SheetAction } from "@/components/ui/sheet";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
+ * Nom du client (maquette v2 20) : en-tête « Annuler · Nom · C-052 · Enregistrer », champs groupés selon le
+ * réglage de l'agence (nom, âge ou numéro de dossier), rappel de confidentialité toujours visible.
  * Saisie ou correction du nom d'un ticket (patient sans téléphone, ticket imprimé) : `set_ticket_identity`,
  * journalisé sans le nom. Le nom n'est jamais affiché sur l'écran TV, annoncé ni envoyé.
  */
@@ -68,47 +69,54 @@ export function IdentitySheet({
       title={t("sheetTitle", { code })}
       description={t("staffFooter")}
       closeLabel={tc("close")}
-      footer={
-        <Button type="submit" form={formId} block loading={pending}>
+      cancelLabel={tc("cancel")}
+      action={
+        <SheetAction type="submit" form={formId} disabled={pending}>
           {t("save")}
-        </Button>
+        </SheetAction>
       }
     >
-      <form id={formId} onSubmit={save} noValidate className="flex flex-col gap-4 pt-2">
-        <TextField
-          label={t("staffName")}
-          placeholder={t("staffNamePlaceholder")}
-          autoComplete="off"
-          autoCapitalize="words"
-          maxLength={NAME_MAX}
-          value={name}
-          error={error ?? undefined}
-          onChange={(e) => {
-            setName(e.target.value);
-            setError(null);
-          }}
-          autoFocus
-        />
-        {rules.extra === "age" ? (
+      <form id={formId} onSubmit={save} noValidate className="flex flex-col gap-1.5 pt-2">
+        <FormGroup>
           <TextField
-            label={t("staffAge")}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={3}
-            value={age}
-            onChange={(e) => setAge(e.target.value.replace(/\D/g, ""))}
-          />
-        ) : null}
-        {rules.extra === "file_number" ? (
-          <TextField
-            label={t("staffFileNumber")}
-            placeholder={t("fileNumberPlaceholder")}
+            grouped
+            label={t("staffName")}
+            placeholder={t("staffNamePlaceholder")}
             autoComplete="off"
-            maxLength={FILE_NUMBER_MAX}
-            value={fileNumber}
-            onChange={(e) => setFileNumber(e.target.value)}
+            autoCapitalize="words"
+            maxLength={NAME_MAX}
+            value={name}
+            error={error ?? undefined}
+            onChange={(e) => {
+              setName(e.target.value);
+              setError(null);
+            }}
+            autoFocus
           />
-        ) : null}
+          {rules.extra === "age" ? (
+            <TextField
+              grouped
+              label={t("staffAge")}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={3}
+              value={age}
+              onChange={(e) => setAge(e.target.value.replace(/\D/g, ""))}
+            />
+          ) : null}
+          {rules.extra === "file_number" ? (
+            <TextField
+              grouped
+              label={t("staffFileNumber")}
+              placeholder={t("fileNumberPlaceholder")}
+              autoComplete="off"
+              maxLength={FILE_NUMBER_MAX}
+              value={fileNumber}
+              onChange={(e) => setFileNumber(e.target.value)}
+            />
+          ) : null}
+        </FormGroup>
+        <p className="px-4 text-footnote text-label-secondary">{t("staffFooter")}</p>
       </form>
     </Sheet>
   );

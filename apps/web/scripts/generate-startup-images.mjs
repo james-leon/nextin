@@ -1,28 +1,47 @@
 // Écrans de démarrage iOS (PWA en mode standalone) : `node --experimental-strip-types scripts/generate-startup-images.mjs`.
 // Sans `apple-touch-startup-image`, iOS affiche un écran blanc avant le premier rendu (et en thème sombre).
-// Fond `bg-grouped` (clair #F2F2F7, sombre #000000) et icône NextIn au centre, à partir de public/brand/nextin-icon.svg.
-// La liste est partagée avec app/layout.tsx (lib/pwa/startup-images.ts).
+// Rendu par Chromium (Playwright) à partir du filet HTML du gabarit (`lib/pwa/splash.ts`) : même fond, icône, titre
+// « NextIn », slogan traduit et trois points (immobiles), en clair et en sombre, en français et en anglais.
+// Police Inter (la plus proche de la police système d'Apple disponible ici) ; PNG en palette (fichiers légers).
+// La liste des tailles est partagée avec app/layout.tsx (lib/pwa/startup-images.ts).
 import { mkdir, readFile } from "node:fs/promises";
+import { chromium } from "@playwright/test";
 import sharp from "sharp";
-import { STARTUP_DEVICES, startupFileName } from "../lib/pwa/startup-images.ts";
+import { STARTUP_DEVICES, STARTUP_LOCALES, startupFileName } from "../lib/pwa/startup-images.ts";
+import { splashCss, splashHtml } from "../lib/pwa/splash.ts";
+import { fr } from "../../../packages/shared/src/i18n/fr.ts";
+import { en } from "../../../packages/shared/src/i18n/en.ts";
 
 const OUT = new URL("../public/startup/", import.meta.url);
-const icon = await readFile(new URL("../public/brand/nextin-icon.svg", import.meta.url));
-const BG = { light: "#F2F2F7", dark: "#000000" };
+const icon = (await readFile(new URL("../public/brand/nextin-icon.svg", import.meta.url))).toString("base64");
+const TEXTS = { fr: fr.common, en: en.common };
+// Icône posée tout de suite (pas d'attente d'une seconde) et police d'Apple remplacée par Inter pour le rendu.
+const override = `#nx-s{font-family:Inter,sans-serif}#nx-s:before{animation:none;background-image:url(data:image/svg+xml;base64,${icon})}`;
 
 await mkdir(OUT, { recursive: true });
+const browser = await chromium.launch();
 for (const device of STARTUP_DEVICES) {
-  const width = device.width * device.ratio;
-  const height = device.height * device.ratio;
-  // Icône de 96 points (taille d'une icône d'application agrandie), centrée.
-  const size = Math.round(96 * device.ratio);
-  const logo = await sharp(icon, { density: 300 }).resize(size, size).png().toBuffer();
   for (const scheme of ["light", "dark"]) {
-    const name = startupFileName(device, scheme);
-    await sharp({ create: { width, height, channels: 3, background: BG[scheme] } })
-      .composite([{ input: logo, left: Math.round((width - size) / 2), top: Math.round((height - size) / 2) }])
-      .png({ compressionLevel: 9, palette: true })
-      .toFile(new URL(name, OUT).pathname);
-    console.log("✓", name);
+    const context = await browser.newContext({
+      viewport: { width: device.width, height: device.height },
+      deviceScaleFactor: device.ratio,
+      colorScheme: scheme,
+      reducedMotion: "reduce",
+    });
+    const page = await context.newPage();
+    for (const locale of STARTUP_LOCALES) {
+      const html = splashHtml(TEXTS[locale].appName, TEXTS[locale].tagline);
+      await page.setContent(
+        `<!doctype html><html lang="${locale}" data-theme="${scheme}"><head><style>${splashCss}${override}body{margin:0}</style></head>` +
+          `<body><div id="nx-s">${html}</div></body></html>`,
+      );
+      await page.evaluate(() => document.fonts.ready);
+      const shot = await page.screenshot({ type: "png" });
+      const name = startupFileName(device, scheme, locale);
+      await sharp(shot).png({ compressionLevel: 9, palette: true, quality: 90 }).toFile(new URL(name, OUT).pathname);
+      console.log("✓", name);
+    }
+    await context.close();
   }
 }
+await browser.close();

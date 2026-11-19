@@ -18,7 +18,8 @@ export function NowServingCard({
   subtitle?: React.ReactNode;
   elapsedSeconds: number;
   elapsedLabel: string;
-  actions: { label: string; onClick?: () => void }[];
+  /** Actions secondaires (bleu) ; `destructive` en rouge (« Absent »). */
+  actions: { label: string; onClick?: () => void; destructive?: boolean }[];
   className?: string;
 }) {
   return (
@@ -43,7 +44,10 @@ export function NowServingCard({
             key={a.label}
             type="button"
             onClick={a.onClick}
-            className="pressable h-12 truncate rounded-[var(--radius-md)] bg-fill-tertiary px-2 text-callout font-semibold text-label transition-colors hover:bg-fill-secondary"
+            className={cn(
+              "pressable h-12 truncate rounded-[var(--radius-md)] bg-fill-tertiary px-2 text-callout font-semibold transition-colors hover:bg-fill-secondary",
+              a.destructive ? "text-red-on-tint" : "text-accent-on-tint",
+            )}
           >
             {a.label}
           </button>

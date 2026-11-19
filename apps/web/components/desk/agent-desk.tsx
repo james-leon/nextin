@@ -1,9 +1,11 @@
 "use client";
 
+import { useNow } from "@/lib/desk/now";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, ArrowRight, CloudOff, Eye, EyeOff, Keyboard, Maximize2, Minimize2, RefreshCw, UserRoundX } from "lucide-react";
+import { AlertTriangle, ArrowRight, ChevronLeft, CloudOff, Eye, EyeOff, Keyboard, Maximize2, Minimize2, RefreshCw, UserRoundX } from "lucide-react";
 import { formatElapsed } from "@nextin/shared";
 import type { PriorityReason } from "@nextin/shared/queue/live";
 import { identityLine, type IdentityRules } from "@nextin/shared/identity";
@@ -25,7 +27,7 @@ import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { NowServingCard } from "@/components/ui/now-serving-card";
-import { Sheet } from "@/components/ui/sheet";
+import { Sheet, SheetAction } from "@/components/ui/sheet";
 import { StatCard } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
 import { PractitionerAppointments } from "@/components/appointments/practitioner-appointments";
@@ -46,6 +48,7 @@ const MAX_ROWS = 6;
 export function AgentDesk({
   counter,
   title,
+  eyebrow,
   subtitle,
   initial,
   services,
@@ -57,6 +60,8 @@ export function AgentDesk({
   /** Nom du client demandé par l'agence : affiché au personnel, masquable (l'écran peut être vu du public). */
   identityRules?: IdentityRules;
   title: string;
+  /** Sur-titre (maquette v2 20) : agence · praticien attitré. */
+  eyebrow?: string;
   subtitle: string;
   initial: DeskSnapshot;
   /** Services de l'agence (réorientation). */
@@ -82,25 +87,20 @@ export function AgentDesk({
   const toast = useToast();
   const router = useRouter();
   const { view, pending, online, busy, notices, perform, setStatus, dismiss, refresh } = useDesk(counter, initial);
-  const [now, setNow] = useState(() => Date.now());
   const [transferOpen, setTransferOpen] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [confirmAbsent, setConfirmAbsent] = useState(false);
   const compact = useDeskCompact();
 
-  const hasCurrent = !!view.current;
-  useEffect(() => {
-    if (!hasCurrent) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [hasCurrent]);
+  // Chrono du client en cours : heure du navigateur seulement (jamais celle du serveur : hydratation identique).
+  const now = useNow(1000, !!view.current);
 
   const current = view.current;
   const action = primaryAction(view);
   const time = (iso: string) =>
     new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: counter.timeZone }).format(new Date(iso));
-  const since = (iso: string | null) => (iso ? Math.max(0, (now - new Date(iso).getTime()) / 1000) : 0);
+  const since = (iso: string | null) => (iso && now !== null ? Math.max(0, (now - new Date(iso).getTime()) / 1000) : 0);
   const avg = averageServiceSeconds(view);
   const statusTone = view.counterStatus === "open" ? "green" : view.counterStatus === "paused" ? "orange" : "neutral";
   const offlineOnly = () => toast(t("onlineOnly"), <CloudOff aria-hidden />);
@@ -197,13 +197,21 @@ export function AgentDesk({
     />
   );
 
+  // Le bouton principal montre son raccourci (« Espace ») sur ordinateur, où le clavier sert (maquette v2 20).
   const primaryButton = (
     <Button
       block
       onClick={primary.run}
       loading={busy}
       disabled={action === "none"}
-      trailingIcon={action === "alert" || (action === "finish_and_alert" && view.waiting.length) ? <ArrowRight aria-hidden className="size-5 stroke-[2.25]" /> : undefined}
+      aria-keyshortcuts={action === "none" ? undefined : "Space"}
+      trailingIcon={
+        action === "none" ? undefined : (
+          <kbd aria-hidden className="hidden rounded-[6px] bg-black/25 px-1.5 py-0.5 font-sans text-footnote font-semibold lg:inline">
+            {t("shortcuts.space")}
+          </kbd>
+        )
+      }
     >
       {primary.label}
     </Button>
@@ -237,17 +245,24 @@ export function AgentDesk({
           onAction={() => perform("no_show", { ticketId: current.id, code: current.code })}
         />
       ) : null}
-      <Sheet open={helpOpen} onOpenChange={setHelpOpen} title={t("shortcuts.title")} description={t("shortcuts.hint")} closeLabel={tc("close")}>
-        <ListSection>
+      <Sheet
+        open={helpOpen}
+        onOpenChange={setHelpOpen}
+        title={t("shortcuts.title")}
+        description={t("shortcuts.hint")}
+        closeLabel={tc("close")}
+        action={<SheetAction onClick={() => setHelpOpen(false)}>{tc("done")}</SheetAction>}
+      >
+        <ListSection footer={t("shortcuts.hint")}>
           {DESK_SHORTCUTS.map((sc) => (
             <ListRow
               key={sc.key}
-              title={t(`shortcuts.${sc.command as Exclude<DeskCommand, "resume">}`)}
-              accessory={
-                <kbd className="min-w-9 rounded-[6px] bg-fill-tertiary px-2 py-1 text-center font-sans text-subheadline font-semibold text-label shadow-[inset_0_-1px_0_var(--separator)]">
-                  {sc.key === "space" ? t("shortcuts.space") : sc.key === "enter" ? t("shortcuts.enter") : sc.key}
+              icon={
+                <kbd className="min-w-7 rounded-[6px] bg-fill-tertiary px-1.5 py-0.5 text-center font-sans text-footnote font-semibold text-label shadow-[inset_0_-1px_0_var(--separator)]">
+                  {sc.key === "space" ? t("shortcuts.space") : sc.key === "enter" ? t("shortcuts.enter") : sc.key.toUpperCase()}
                 </kbd>
               }
+              title={t(`shortcuts.${sc.command as Exclude<DeskCommand, "resume">}`)}
             />
           ))}
         </ListSection>
@@ -268,38 +283,64 @@ export function AgentDesk({
     </>
   );
 
-  // Mode compact : petite fenêtre à côté du logiciel médical, l'essentiel seulement.
+  // Mode compact (maquette v2 20) : petite fenêtre à côté du logiciel médical — état et chrono, numéro, à suivre,
+  // bouton principal, puis Rappeler / Transférer / Absent en liens. « Quitter le mode compact » en haut.
   if (compact) {
+    const upNext = view.waiting.slice(0, 2).map((w) => w.code);
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col gap-3 p-3">
+      <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col gap-2 p-3">
         <div className="flex items-center justify-between gap-2">
           {statusBadge}
-          <span className="text-subheadline text-label-secondary">{t("waitingCount", { count: view.waiting.length })}</span>
           <IconButton label={t("exitCompact")} icon={<Maximize2 />} variant="plain" onClick={() => setDeskCompact(false)} />
         </div>
-        <section aria-live="polite" className="squircle flex items-end justify-between gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-footnote text-label-secondary">
-              {current ? (current.status === "called" ? t("alerted") : t("current")) : title}
+        <section aria-live="polite" className="flex flex-col gap-0.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-footnote uppercase text-label-secondary">
+              {current ? (current.status === "called" ? t("alerted") : t("compactCurrent")) : title}
             </p>
-            <p className="font-rounded text-title1 font-extrabold whitespace-nowrap text-ticket-number">{current ? current.code : "—"}</p>
-            {current && nameOf(current) ? <p className="truncate text-subheadline">{nameOf(current)}</p> : null}
+            {current ? (
+              <p className="font-rounded text-subheadline text-label-secondary tabular">
+                <span className="sr-only">{current.status === "serving" ? t("elapsed") : t("sinceAlert")} : </span>
+                {formatElapsed(since(current.status === "serving" ? current.servingStartedAt : current.calledAt))}
+              </p>
+            ) : null}
           </div>
-          {current ? (
-            <p className="pb-1 font-rounded text-title3 font-semibold tabular">
-              <span className="sr-only">{current.status === "serving" ? t("elapsed") : t("sinceAlert")} : </span>
-              {formatElapsed(since(current.status === "serving" ? current.servingStartedAt : current.calledAt))}
-            </p>
-          ) : null}
+          <p className="font-rounded text-large-title font-extrabold whitespace-nowrap text-ticket-number">{current ? current.code : "—"}</p>
+          {current && nameOf(current) ? <p className="truncate text-subheadline">{nameOf(current)}</p> : null}
+          <p className="text-footnote text-label-secondary">
+            {upNext.length ? `${t("compactNext", { codes: upNext.join(" · ") })} · ` : ""}
+            {t("waitingCount", { count: view.waiting.length })}
+          </p>
         </section>
         {!online ? (
-          <p role="status" className="flex items-center gap-1.5 text-footnote text-red-text">
+          <p role="status" className="flex items-center gap-1.5 text-footnote font-semibold text-orange-text">
             <CloudOff aria-hidden className="size-4" />
             {t("offline")}
             {pending.length ? ` · ${t("pending", { count: pending.length })}` : null}
           </p>
         ) : null}
         {primaryButton}
+        {current ? (
+          <div className="flex items-center justify-between gap-2">
+            {current.status === "called" ? (
+              <Button variant="plain" size="md" className="px-0" onClick={() => perform("recall", { ticketId: current.id, code: current.code })}>
+                {t("recall")}
+              </Button>
+            ) : (
+              <span />
+            )}
+            <Button variant="plain" size="md" className="px-0" onClick={() => setTransferOpen(true)}>
+              {t("transfer")}
+            </Button>
+            {current.status === "called" ? (
+              <Button variant="destructive-plain" size="md" className="px-0" onClick={() => setConfirmAbsent(true)}>
+                {t("absent")}
+              </Button>
+            ) : (
+              <span />
+            )}
+          </div>
+        ) : null}
         {sheets}
       </main>
     );
@@ -308,7 +349,12 @@ export function AgentDesk({
   return (
     <main className="mx-auto min-h-dvh w-full max-w-lg px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-40 md:max-w-7xl md:px-8 md:pb-12 lg:px-10">
       <div className="flex h-11 items-center justify-between gap-2">
-        {statusBadge}
+        <Button asChild variant="plain" size="md" className="-ml-3 px-3">
+          <Link href="/desk">
+            <ChevronLeft aria-hidden className="size-5 stroke-[2.25]" />
+            {t("title")}
+          </Link>
+        </Button>
         <div className="flex items-center gap-1">
           <IconButton label={t("shortcuts.title")} icon={<Keyboard />} variant="plain" className="hidden lg:inline-flex" onClick={() => setHelpOpen(true)} />
           <IconButton label={t("compact")} icon={<Minimize2 />} variant="plain" onClick={() => setDeskCompact(true)} />
@@ -325,16 +371,23 @@ export function AgentDesk({
       </div>
 
       <header className="pt-3 pb-5">
-        <h1 className="text-large-title font-bold">{title}</h1>
+        {eyebrow ? <p className="text-footnote uppercase text-label-secondary">{eyebrow}</p> : null}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <h1 className="text-large-title font-bold [text-wrap:balance]">{title}</h1>
+          {statusBadge}
+        </div>
         <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p>
       </header>
 
       <div className="flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_20rem] md:items-start md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8">
         <div className="flex min-w-0 flex-col gap-5">
           {!online || pending.length ? (
-            <CalloutCard icon={online ? <RefreshCw /> : <CloudOff />} tone={online ? "accent" : "red"} role="status">
-              <strong className="font-semibold">{online ? t("syncing") : t("offline")}</strong>
-              {pending.length ? ` · ${t("pending", { count: pending.length })}` : null}
+            // Maquette v2 20 : bandeau orange qui compte les actions en attente ; rien n'est bloqué.
+            <CalloutCard icon={online ? <RefreshCw /> : <CloudOff />} tone={online ? "accent" : "orange"} role="status">
+              <strong className={online ? "font-semibold" : "font-semibold text-orange-text"}>
+                {online ? t("syncing") : t("offline")}
+                {pending.length ? ` · ${t("pending", { count: pending.length })}` : null}
+              </strong>
               {!online ? <span className="block text-subheadline text-label-secondary">{t("offlineHint")}</span> : null}
             </CalloutCard>
           ) : null}
@@ -377,7 +430,7 @@ export function AgentDesk({
                     ? [
                         { label: t("recall"), onClick: () => perform("recall", { ticketId: current.id, code: current.code }) },
                         { label: t("transfer"), onClick: () => setTransferOpen(true) },
-                        { label: t("absent"), onClick: () => perform("no_show", { ticketId: current.id, code: current.code }) },
+                        { label: t("absent"), onClick: () => setConfirmAbsent(true), destructive: true },
                       ]
                     : [
                         { label: t("transfer"), onClick: () => setTransferOpen(true) },

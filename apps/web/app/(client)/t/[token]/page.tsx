@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getMessages, getTranslations } from "next-intl/server";
 import { absoluteUrl } from "@nextin/shared";
-import { Ticket } from "lucide-react";
+import { ChevronLeft, Ticket } from "lucide-react";
 import { ClientTabs } from "@/components/client/client-tabs";
 import { TicketLive } from "@/components/client/ticket-live";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
-import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { TicketView } from "@/lib/client/types";
 import { LiteMessages } from "@/lib/i18n/lite-server";
@@ -49,6 +48,8 @@ export default async function TicketPage({ params }: Params) {
         // Seules les erreurs possibles sur cette page (note du passage) : le dictionnaire entier alourdirait la page.
         paths={[
           "client.ticket",
+          // Ticket déjà fini : ses textes partent avec la page (sinon chargés à la fin, `/api/i18n/ticket-ended`).
+          ...(["served", "cancelled", "no_show"].includes(view.status) ? ["client.ticketEnded"] : []),
           // Textes du ticket à distance : seulement pour un ticket à distance.
           ...(view.remote ? ["client.ticketRemote"] : []),
           "counterKinds",
@@ -70,7 +71,17 @@ export default async function TicketPage({ params }: Params) {
   const t = await getTranslations("client.ticket");
   return (
     <main className="min-h-dvh pb-40">
-      <NavigationBar variant="inline" title={t("title")} back={{ href: "/t", label: t("allTickets"), prefetch: false }} contentClassName="max-w-lg" />
+      {/* Barre de navigation iOS rendue par le serveur (même gabarit que `NavigationBar inline`) : le composant client
+          ne pèserait sur « Mon ticket » que pour ce cas (budget de 200 Ko). Libellé court (« Tickets ») : jamais coupé. */}
+      <header className="safe-top">
+        <div className="mx-auto grid h-11 max-w-lg grid-cols-[1fr_auto_1fr] items-center gap-2 px-4">
+          <Link href="/t" prefetch={false} className="pressable -ml-2 inline-flex min-h-11 items-center gap-0.5 justify-self-start pr-2 text-body text-accent-text">
+            <ChevronLeft aria-hidden className="size-6" strokeWidth={2} />
+            {t("allTickets")}
+          </Link>
+          <h1 className="truncate text-center text-headline">{t("title")}</h1>
+        </div>
+      </header>
       <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3">
         <CalloutCard icon={<Ticket />} tone="red" role="alert">
           <strong className="font-semibold">{t("notFoundTitle")}.</strong> {t("notFoundBody")}

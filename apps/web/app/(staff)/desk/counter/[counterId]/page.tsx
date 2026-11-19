@@ -73,7 +73,8 @@ export default async function CounterDeskPage({ params }: Props) {
     <AgentDesk
       counter={deskCounter}
       title={counterName(counter, (k) => tk(k as "cabinet"))}
-      subtitle={[ownServices.map((s) => s.name).join(", "), doctor?.name, branch.name].filter(Boolean).join(" · ")}
+      eyebrow={[branch.name, doctor?.name].filter(Boolean).join(" · ")}
+      subtitle={ownServices.map((s) => s.name).join(", ")}
       initial={initial}
       services={services.data ?? []}
       practitioner={doctor}

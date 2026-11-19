@@ -151,6 +151,8 @@ test.describe("M4 — parcours client", () => {
     await page.getByRole("button", { name: "Annuler le ticket" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Annuler le ticket" }).click();
     await expect(page.getByText("Ticket annulé")).toBeVisible();
+    // Ticket fini (LOT 5a) : numéro grisé lisible (contraste AA).
+    await expectAccessible(page);
     await page.getByRole("link", { name: "Prendre un nouveau ticket" }).click();
     await page.waitForURL(/\/q\/[A-Za-z0-9]{22}$/);
     await expect(page.getByRole("heading", { level: 1, name: "Choisissez un service" })).toBeVisible();

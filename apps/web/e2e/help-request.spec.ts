@@ -21,7 +21,8 @@ test.describe("C3 — demande d'aide", () => {
     const patient = await phone.newPage();
     await patient.goto(`/t/${ticket.public_token}`);
     await patient.getByRole("button", { name: "Demander de l'aide à l'accueil" }).click();
-    await expect(patient.getByText("Demande envoyée : un membre de l'accueil vient vous voir.")).toBeVisible();
+    await expect(patient.getByRole("status").filter({ hasText: "Demande envoyée" }).first()).toBeVisible();
+    await expect(patient.getByText("Un membre de l'accueil vient vous voir.")).toBeVisible();
     await expectTouchTargets(patient);
 
     // Accueil : encadré et pastille, en direct (canal privé de l'agence).
