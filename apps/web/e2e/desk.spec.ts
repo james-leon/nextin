@@ -38,6 +38,15 @@ test.describe("M5 — poste agent", () => {
     await page.getByRole("button", { name: "Admettre" }).click();
     await expect(page.getByText("Client en cours")).toBeVisible();
     expect(await status(first.public_token)).toBe("serving");
+    // Rechargement avec un client en cours : chrono rendu sans écart entre serveur et navigateur (aucune erreur
+    // d'hydratation, signalée sinon par /api/client-log).
+    const pageErrors: string[] = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
+    await page.waitForTimeout(1200);
+    await page.reload();
+    await expect(page.getByText("Client en cours")).toBeVisible();
+    await page.waitForTimeout(1500);
+    expect(pageErrors).toEqual([]);
     await expectAccessible(page);
 
     await page.getByRole("button", { name: "Terminer et alerter le suivant" }).click();

@@ -1,5 +1,6 @@
 "use client";
 
+import { useNow } from "@/lib/desk/now";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -86,25 +87,20 @@ export function AgentDesk({
   const toast = useToast();
   const router = useRouter();
   const { view, pending, online, busy, notices, perform, setStatus, dismiss, refresh } = useDesk(counter, initial);
-  const [now, setNow] = useState(() => Date.now());
   const [transferOpen, setTransferOpen] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [confirmAbsent, setConfirmAbsent] = useState(false);
   const compact = useDeskCompact();
 
-  const hasCurrent = !!view.current;
-  useEffect(() => {
-    if (!hasCurrent) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [hasCurrent]);
+  // Chrono du client en cours : heure du navigateur seulement (jamais celle du serveur : hydratation identique).
+  const now = useNow(1000, !!view.current);
 
   const current = view.current;
   const action = primaryAction(view);
   const time = (iso: string) =>
     new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: counter.timeZone }).format(new Date(iso));
-  const since = (iso: string | null) => (iso ? Math.max(0, (now - new Date(iso).getTime()) / 1000) : 0);
+  const since = (iso: string | null) => (iso && now !== null ? Math.max(0, (now - new Date(iso).getTime()) / 1000) : 0);
   const avg = averageServiceSeconds(view);
   const statusTone = view.counterStatus === "open" ? "green" : view.counterStatus === "paused" ? "orange" : "neutral";
   const offlineOnly = () => toast(t("onlineOnly"), <CloudOff aria-hidden />);

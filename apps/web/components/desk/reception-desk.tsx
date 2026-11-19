@@ -1,5 +1,6 @@
 "use client";
 
+import { useNow } from "@/lib/desk/now";
 import { primeAttention, signalAttention } from "@/lib/client/attention";
 import { alertEnabled } from "@/lib/desk/notification-prefs";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -60,12 +61,9 @@ export function ReceptionDesk({ initial }: { initial: ReceptionData }) {
   };
   const [absenceFor, setAbsenceFor] = useState<ReceptionPractitioner | null>(null);
   // Heure courante (minutes d'attente des lignes), avancée toutes les 30 s.
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-  const waitedMinutes = (iso: string) => Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000));
+  // Heure du navigateur seulement (null pendant l'hydratation : texte identique au rendu serveur).
+  const now = useNow(30_000);
+  const waitedMinutes = (iso: string) => (now === null ? 0 : Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000)));
 
   const branchId = initial.branch.id;
   const refresh = useCallback(async () => {
