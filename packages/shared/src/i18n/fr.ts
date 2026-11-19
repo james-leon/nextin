@@ -1,6 +1,8 @@
 export const fr = {
   common: {
     appName: "NextIn",
+    // Slogan de l'écran de démarrage (filet HTML du gabarit et images iOS).
+    tagline: "Votre tour, sans attendre.",
     by: "par Wintek",
     back: "Retour",
     // Prise en ligne indisponible (abonnement, quota…) : jamais la raison côté client.

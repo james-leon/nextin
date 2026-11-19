@@ -1,17 +1,21 @@
 import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { STARTUP_DEVICES, appleStartupFamily, startupFileName, startupImages } from "./startup-images";
+import { STARTUP_DEVICES, STARTUP_LOCALES, appleStartupFamily, startupFileName, startupImages } from "./startup-images";
 
 const PUBLIC = join(__dirname, "../../public");
 
 describe("écrans de démarrage iOS", () => {
-  it("chaque taille a ses deux images (claire et sombre) dans public/startup/", () => {
+  it("chaque taille a ses images claire et sombre, en français et en anglais, dans public/startup/", () => {
     for (const device of STARTUP_DEVICES) {
       for (const scheme of ["light", "dark"] as const) {
-        const file = join(PUBLIC, "startup", startupFileName(device, scheme));
-        expect(existsSync(file), file).toBe(true);
-        expect(statSync(file).size, file).toBeGreaterThan(0);
+        for (const locale of STARTUP_LOCALES) {
+          const file = join(PUBLIC, "startup", startupFileName(device, scheme, locale));
+          expect(existsSync(file), file).toBe(true);
+          expect(statSync(file).size, file).toBeGreaterThan(0);
+          // PNG légers (palette) : au plus 60 Ko chacun.
+          expect(statSync(file).size, file).toBeLessThan(60 * 1024);
+        }
       }
     }
   });
@@ -34,6 +38,8 @@ describe("écrans de démarrage iOS", () => {
     expect(startupImages("iphone")).toHaveLength(STARTUP_DEVICES.filter((d) => d.family === "iphone").length * 2);
     expect(startupImages("iphone").every((i) => !startupImages("ipad").some((j) => j.url === i.url))).toBe(true);
     expect(startupImages("iphone").length + startupImages("ipad").length).toBe(images.length);
+    expect(startupImages("iphone", "en").every((i) => i.url.endsWith("-en.png"))).toBe(true);
+    expect(startupImages("iphone", "fr").some((i) => i.url.endsWith("-en.png"))).toBe(false);
     expect(images[0]!.media).toMatch(/device-width: \d+px.*device-height: \d+px.*-webkit-device-pixel-ratio: \d.*orientation: portrait.*prefers-color-scheme: (light|dark)/);
   });
 

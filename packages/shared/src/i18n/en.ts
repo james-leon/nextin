@@ -3,6 +3,7 @@ import type { Messages } from "./fr";
 export const en: Messages = {
   common: {
     appName: "NextIn",
+    tagline: "Your turn, without the wait.",
     by: "by Wintek",
     back: "Back",
     onlineUnavailable: "Online tickets are temporarily unavailable. Please ask at the front desk.",

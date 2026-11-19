@@ -12,7 +12,6 @@ import type { EntryInfo } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
 import { fetchIdentityRules } from "@/lib/client/identity-rules";
 import { LiteMessages } from "@/lib/i18n/lite-server";
-import { QUEUE_ERROR_CODES } from "@nextin/shared/queue";
 
 type Params = { params: Promise<{ code: string }> };
 
@@ -34,7 +33,30 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
  * Écran 02 : arrivée par le QR code de l'agence (/q/<jeton>) ou par le code court (/q/<CODE>). Le QR code de
  * l'écran TV ajoute `?p=<code de présence>` (change chaque minute) : il confirme la présence d'un ticket à distance.
  */
-const TAKE_TICKET_ERRORS = [...QUEUE_ERROR_CODES, "generic", "network", "captcha_failed", "name_required", "identity_invalid"];
+// Erreurs que la prise de ticket peut renvoyer : `take_ticket` (et les fonctions qu'il appelle : `take_ticket_core`,
+// `assert_customer_name`, `save_ticket_identity`), `confirm_presence`, la route `/api/tickets` (limite, captcha) et le
+// réseau. Les refus d'abonnement ou de quota sont ramenés à `common.onlineUnavailable` (`isOnlineUnavailable`) ; tout
+// autre code s'affiche en « generic » (`te.has`). Liste fermée : tout le dictionnaire `errors` pèserait ≈ 2 Ko de plus.
+const TAKE_TICKET_ERRORS = [
+  "active_ticket_exists",
+  "branch_closed",
+  "service_closed",
+  "invalid_entry",
+  "invalid_state",
+  "not_found",
+  "not_allowed",
+  "quota_reached",
+  "remote_not_allowed",
+  "presence_tv_only",
+  "priority_not_allowed",
+  "priority_staff_only",
+  "name_required",
+  "identity_invalid",
+  "rate_limited",
+  "captcha_failed",
+  "network",
+  "generic",
+];
 
 export default async function EntryPage({ params, searchParams }: Params & { searchParams: Promise<{ p?: string }> }) {
   const { code } = await params;

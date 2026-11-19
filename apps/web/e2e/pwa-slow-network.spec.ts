@@ -60,34 +60,52 @@ test.describe("PWA : réseau lent avec service worker", () => {
   });
 });
 
+// LOT 5a (D) — filet de la première peinture = écran de démarrage (`lib/pwa/splash.ts`, identique aux images iOS) :
+// icône, « NextIn » en 28 pt, slogan traduit et trois points, sur le fond de l'application (aucun flash blanc) ; masqué
+// dès que la feuille de style est appliquée, son icône n'étant alors jamais téléchargée.
 test.describe("Filet de la première peinture", () => {
   test.skip(({ isMobile }) => !isMobile, "une passe sur téléphone suffit");
 
-  test("feuille de style absente : fond de l'app et logo NextIn centré ; feuille présente : logo jamais chargé", async ({ browser }) => {
+  test("feuille de style absente : écran de démarrage sur le fond de l'app ; feuille présente : masqué, icône jamais chargée", async ({ browser }) => {
     for (const colorScheme of ["light", "dark"] as const) {
-      const context = await browser.newContext({ colorScheme, serviceWorkers: "block" });
+      const context = await browser.newContext({ colorScheme, serviceWorkers: "block", locale: "fr-FR" });
       const page = await context.newPage();
       await page.route(/\/_next\/static\/.+\.css$/, (route) => route.abort());
       await page.goto("/c");
+      const splash = page.locator("#nx-s");
+      await expect(splash).toBeVisible();
+      await expect(splash.locator("b")).toHaveText("NextIn");
+      await expect(splash.locator("p")).toHaveText("Votre tour, sans attendre.");
+      await expect(splash.locator("i")).toHaveCount(3);
+      expect(await splash.locator("b").evaluate((b) => getComputedStyle(b).fontSize)).toBe("28px");
       await expect
-        .poll(() => page.evaluate(() => getComputedStyle(document.body, "::before").backgroundImage), { timeout: 4000 })
-        .toContain("/icons/icon-192.png");
+        .poll(() => page.evaluate(() => getComputedStyle(document.querySelector("#nx-s")!, "::before").backgroundImage), { timeout: 4000 })
+        .toContain("/brand/nextin-icon.svg");
       expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe(
         colorScheme === "dark" ? "rgb(0, 0, 0)" : "rgb(242, 242, 247)",
       );
       await context.close();
     }
 
-    // Cas normal : la feuille de style masque le logo avant qu'il ne soit demandé (aucun octet de plus).
+    // En anglais : slogan traduit.
+    const english = await browser.newContext({ serviceWorkers: "block" });
+    await english.addCookies([{ name: "NEXTIN_LOCALE", value: "en", url: test.info().project.use.baseURL ?? "http://localhost:3000" }]);
+    const en = await english.newPage();
+    await en.route(/\/_next\/static\/.+\.css$/, (route) => route.abort());
+    await en.goto("/c");
+    await expect(en.locator("#nx-s p")).toHaveText("Your turn, without the wait.");
+    await english.close();
+
+    // Cas normal : la feuille de style masque l'écran avant que l'icône ne soit demandée (aucun octet de plus).
     const context = await browser.newContext({ serviceWorkers: "block" });
     const page = await context.newPage();
     const icons: string[] = [];
     page.on("request", (r) => {
-      if (r.url().includes("/icons/icon-192.png")) icons.push(r.url());
+      if (r.url().includes("/brand/nextin-icon.svg")) icons.push(r.url());
     });
     await page.goto("/c", { waitUntil: "networkidle" });
     await page.waitForTimeout(1500);
-    expect(await page.evaluate(() => getComputedStyle(document.body, "::before").content)).toBe("none");
+    await expect(page.locator("#nx-s")).toBeHidden();
     expect(icons).toEqual([]);
     await context.close();
   });

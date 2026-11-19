@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BadgeCheck, Bell, Check, ChevronLeft, ChevronRight, Clock, Hand, Info, MessageCircle, Share, WifiOff } from "lucide-react";
 import { optInLink } from "@nextin/shared/notifications/opt-in";
@@ -21,21 +20,23 @@ import { callRpc } from "@/lib/client/supabase-public";
 import { ticketAvailability, waitingProgress } from "@/lib/client/ticket-progress";
 import type { CounterRef, TicketView } from "@/lib/client/types";
 import { LazyMount } from "./lazy-mount";
+import { lazyComponent } from "@/lib/client/lazy";
 
-// Chargés seulement quand ils servent (page client < 200 Ko au premier chargement).
-const AlertDialog = dynamic(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
+// Chargés seulement quand ils servent (page client < 200 Ko au premier chargement ; `lazyComponent` plutôt que
+// `next/dynamic`, plus léger).
+const AlertDialog = lazyComponent(() => import("@/components/ui/alert-dialog").then((m) => m.AlertDialog), { ssr: false });
 // Ticket fini (terminé, annulé, clôturé) : rendu côté serveur s'il sert, jamais téléchargé pour un ticket en cours.
-const TicketEnded = dynamic(() => import("./ticket-ended").then((m) => m.TicketEnded));
+const TicketEnded = lazyComponent(() => import("./ticket-ended").then((m) => m.TicketEnded));
 // « C'est votre tour » plein écran : chargé seulement à l'appel (budget de la page).
-const CalledScreen = dynamic(() => import("./called-screen").then((m) => m.CalledScreen));
-const PushAlerts = dynamic(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
+const CalledScreen = lazyComponent(() => import("./called-screen").then((m) => m.CalledScreen));
+const PushAlerts = lazyComponent(() => import("./push-alerts").then((m) => m.PushAlerts), { ssr: false });
 // Ticket à distance seulement : rendu côté serveur s'il sert, jamais téléchargé pour un ticket pris sur place.
-const RemoteTicketCard = dynamic(() => import("./remote-ticket-card").then((m) => m.RemoteTicketCard));
+const RemoteTicketCard = lazyComponent(() => import("./remote-ticket-card").then((m) => m.RemoteTicketCard));
 // Publicité et jeux (M10b) : jamais dans le premier chargement.
-const SponsoredCard = dynamic(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
-const GameSheet = dynamic(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
+const SponsoredCard = lazyComponent(() => import("./sponsored-card").then((m) => m.SponsoredCard), { ssr: false });
+const GameSheet = lazyComponent(() => import("./games/game-sheet").then((m) => m.GameSheet), { ssr: false });
 // Carte « Jouer en attendant » : montée 3 s après le chargement (LazyMount), son code aussi (budget de 200 Ko).
-const PlayCard = dynamic(() => import("./games/play-card").then((m) => m.PlayCard), { ssr: false });
+const PlayCard = lazyComponent(() => import("./games/play-card").then((m) => m.PlayCard), { ssr: false });
 
 const aheadKey = (token: string) => `nextin-ahead-${token}`;
 const noSubscribe = () => () => {};

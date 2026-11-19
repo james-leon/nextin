@@ -551,11 +551,11 @@
   }
 }
 
-/* Logo de démarrage du gabarit (CSS en ligne, `splashStyle` de app/layout.tsx) : masqué dès que cette feuille est
-   appliquée, donc jamais téléchargé. Hors de toute couche (@layer) : une règle en couche perdrait contre le style en
-   ligne, qui n'en a pas, et le logo serait chargé sur chaque page (budget). */
-html body::before {
-  content: none;
+/* Écran de démarrage du gabarit (`lib/pwa/splash.ts`, CSS en ligne) : masqué dès que cette feuille est appliquée,
+   donc son icône n'est jamais téléchargée. Hors de toute couche (@layer) : une règle en couche perdrait contre le style
+   en ligne, qui n'en a pas, et l'icône serait chargée sur chaque page (budget). */
+html body #nx-s {
+  display: none;
 }
 
 /*

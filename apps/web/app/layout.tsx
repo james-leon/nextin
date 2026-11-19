@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { getLocale } from "next-intl/server";
-import { themeInitScript } from "@/components/theme/theme";
+import { getLocale, getTranslations } from "next-intl/server";
+import { themeInitScript } from "@/components/theme/theme-init";
 import { appleStartupFamily, startupImages, type StartupFamily } from "@/lib/pwa/startup-images";
+import { splashCss, splashHtml } from "@/lib/pwa/splash";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
 
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
  * Écrans de démarrage (iPhone et iPad, `lib/pwa/startup-images.ts`) : seulement pour les navigateurs Apple, et pour leur
  * seule famille (iPhone : 24 balises, iPad : 18 ; budget des pages client).
  */
-function AppleWebAppTags({ family }: { family: StartupFamily | null }) {
+function AppleWebAppTags({ family, locale }: { family: StartupFamily | null; locale: string }) {
   // Composant synchrone : un composant asynchrone dans le <head> serait suspendu et envoyé en fin de flux.
   return (
     <>
@@ -42,23 +43,10 @@ function AppleWebAppTags({ family }: { family: StartupFamily | null }) {
       <meta name="apple-mobile-web-app-title" content="NextIn" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
-      {family ? startupImages(family).map((image) => <link key={image.url} rel="apple-touch-startup-image" href={image.url} media={image.media} />) : null}
+      {family ? startupImages(family, locale === "en" ? "en" : "fr").map((image) => <link key={image.url} rel="apple-touch-startup-image" href={image.url} media={image.media} />) : null}
     </>
   );
 }
-
-/**
- * Filet de sécurité de la première peinture (sans JS ni police) : fond de l'application (#F2F2F7, noir en sombre,
- * comme `background_color` du manifeste et `theme-color`) et logo NextIn centré, tant que la feuille de style de
- * l'application n'est pas appliquée (elle masque ce logo : `html body::before`, hors couche CSS). Le fond est immédiat,
- * le logo vient après 1 s. Utile sur un écran sans image de démarrage iOS, ou si la feuille de style tarde ou manque.
- */
-const splashStyle =
-  "html{background:#f2f2f7}@media(prefers-color-scheme:dark){html:not([data-theme=light]){background:#000}}html[data-theme=dark]{background:#000}" +
-  "body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:50% 50%/96px 96px no-repeat;animation:nx-splash 0s 1s forwards}" +
-  // Logo posé après 1 s seulement : si la feuille de style arrive avant (cas normal), l'élément disparaît et l'image
-  // n'est jamais téléchargée (budget des pages client).
-  "@keyframes nx-splash{to{background-image:url(/icons/icon-192.png)}}";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -71,16 +59,19 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [locale, requestHeaders] = await Promise.all([getLocale(), headers()]);
+  const [locale, requestHeaders, t] = await Promise.all([getLocale(), headers(), getTranslations("common")]);
   const family = appleStartupFamily(requestHeaders.get("user-agent"));
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
-        <style dangerouslySetInnerHTML={{ __html: splashStyle }} />
+        <style dangerouslySetInnerHTML={{ __html: splashCss }} />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <AppleWebAppTags family={family} />
+        <AppleWebAppTags family={family} locale={locale} />
       </head>
       <body>
+        {/* Filet de la première peinture (sans JS ni police) : écran de démarrage tant que la feuille de style de
+            l'application n'est pas appliquée (`lib/pwa/splash.ts`, identique aux images iOS). */}
+        <div id="nx-s" aria-hidden dangerouslySetInnerHTML={{ __html: splashHtml(t("appName"), t("tagline")) }} />
         {children}
         <ServiceWorkerRegister />
       </body>

@@ -50,4 +50,15 @@ test.describe("PWA iOS : balises de web app", () => {
     // L'image annoncée existe bien.
     expect((await request.get("/startup/startup-1284x2778-light.png")).ok()).toBe(true);
   });
+
+  test("en anglais : écrans de démarrage au slogan traduit", async ({ request }) => {
+    const html = await (
+      await request.get("/", { headers: { "user-agent": IPHONE_12_PRO_MAX_UA, cookie: "NEXTIN_LOCALE=en" } })
+    ).text();
+    const head = html.slice(0, html.indexOf("</head>"));
+    expect(head).toContain('href="/startup/startup-1284x2778-light-en.png"');
+    expect(head).not.toContain('href="/startup/startup-1284x2778-light.png"');
+    expect((await request.get("/startup/startup-1284x2778-dark-en.png")).ok()).toBe(true);
+  });
 });
+
