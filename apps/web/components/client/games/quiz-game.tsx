@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Circle, Trophy } from "lucide-react";
+import { Circle, Gift } from "lucide-react";
 import type { AdCandidate } from "@nextin/shared/ads";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
@@ -12,8 +12,12 @@ import { cn } from "@/lib/cn";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { CouponCard } from "./coupon-card";
 import { Interstitial } from "./interstitial";
+import { AnswerPill, QuizCard, ResultRing } from "./quiz-ui";
 
-/** Quiz sponsorisé : une question à la fois, une pub au milieu si elle est due, puis score et bon de réduction. */
+/**
+ * Quiz sponsorisé (M10b, style de la maquette v2 10) : une question à la fois, une pub au milieu si elle est due, puis
+ * score et bon de réduction. Logique inchangée : réponses envoyées et vérifiées par la base à la fin (`finish_quiz`).
+ */
 export function QuizGame({
   token,
   quiz,
@@ -74,18 +78,32 @@ export function QuizGame({
   }
   if (ad) return <Interstitial ad={ad} token={token} skipAfter={skipAfter} onDone={() => setAd(null)} />;
 
+  const title = en && quiz.title_en ? quiz.title_en : quiz.title;
+  const reward = en && quiz.reward_en ? quiz.reward_en : quiz.reward;
+  const sponsor = (
+    <p className="flex items-center gap-2.5 rounded-[14px] bg-grouped-secondary px-3 py-2.5 text-footnote">
+      <Gift aria-hidden className="size-7 shrink-0 stroke-[1.8] text-orange-text" />
+      <span className="min-w-0">
+        <span className="block text-caption tracking-[0.08em] text-label-secondary uppercase">{t("sponsoredBy", { advertiser: quiz.advertiser })}</span>
+        {title} · {reward}
+      </span>
+    </p>
+  );
+
   if (result) {
     return (
-      <div className="flex flex-col gap-4 p-4">
-        <section aria-live="polite" className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-6 text-center shadow-card">
-          <Trophy aria-hidden className="size-10 stroke-[1.5] text-orange" />
-          <p className="text-title2 font-bold">{t("score", { score: result.score, total: result.total })}</p>
-          <p className="text-subheadline text-label-secondary">{en && quiz.title_en ? quiz.title_en : quiz.title}</p>
+      <div className="flex flex-col items-center gap-4 p-4 text-center">
+        <section aria-live="polite" className="flex flex-col items-center gap-3">
+          <p className="text-caption font-bold tracking-[0.14em] text-orange-text uppercase">{t("resultEyebrow")}</p>
+          <ResultRing value={result.score} fraction={result.total ? result.score / result.total : 0} label={t("score", { score: result.score, total: result.total })} />
+          <h2 className="font-rounded text-title1 font-extrabold">{title}</h2>
         </section>
         {result.coupon ? (
           <CouponCard coupon={result.coupon} couponBaseUrl={couponBaseUrl} advertiser={quiz.advertiser} />
         ) : (
-          <CalloutCard icon={<Circle />}>{t("noCoupon")}</CalloutCard>
+          <CalloutCard icon={<Circle />} className="w-full text-left">
+            {t("noCoupon")}
+          </CalloutCard>
         )}
       </div>
     );
@@ -105,30 +123,24 @@ export function QuizGame({
   }
 
   return (
-    <div className="flex flex-col gap-5 p-4">
-      <p className="px-4 text-footnote uppercase text-label-secondary">
-        {t("questionOf", { n: index + 1, total: start.questions.length })} · {t("sponsoredBy", { advertiser: quiz.advertiser })}
-      </p>
-      <h2 className="px-4 text-title2 font-bold">{en && q.question_en ? q.question_en : q.question}</h2>
-      <div role="radiogroup" aria-label={en && q.question_en ? q.question_en : q.question} className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
-        {q.answers.map((a, k) => (
-          <div key={k} className="group/row pl-4">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={selected === k}
-              onClick={() => setSelected(k)}
-              className={cn("pressable flex min-h-12 w-full items-center gap-3 py-2 pr-4 text-left text-body list-separator", selected === k && "font-semibold")}
-            >
-              {selected === k ? <CheckCircle2 aria-hidden className="size-6 shrink-0 text-accent-text" /> : <Circle aria-hidden className="size-6 shrink-0 text-label-tertiary" />}
-              {en && a.text_en ? a.text_en : a.text}
-            </button>
-          </div>
-        ))}
+    <div className="flex flex-col gap-3.5 p-4">
+      <div className="flex items-center gap-2.5">
+        <span className="font-rounded text-subheadline font-bold tabular">{t("questionOf", { n: index + 1, total: start.questions.length })}</span>
+        <span aria-hidden className="flex flex-1 gap-1.5">
+          {start.questions.map((_, k) => (
+            <i key={k} className={cn("h-1.5 flex-1 rounded-full", k < index ? "bg-accent" : k === index ? "bg-orange" : "bg-fill")} />
+          ))}
+        </span>
       </div>
-      <Button block onClick={next} disabled={selected === null} loading={sending} loadingLabel={t("loading")}>
+      <QuizCard number={index + 1} verdict={null} question={en && q.question_en ? q.question_en : q.question}>
+        {q.answers.map((a, k) => (
+          <AnswerPill key={k} index={k} text={en && a.text_en ? a.text_en : a.text} state={selected === k ? "selected" : "idle"} disabled={sending} onSelect={() => setSelected(k)} />
+        ))}
+      </QuizCard>
+      <Button block className="h-16 rounded-[22px] font-rounded text-title3 font-extrabold" onClick={next} disabled={selected === null} loading={sending} loadingLabel={t("loading")}>
         {last ? t("finish") : t("next")}
       </Button>
+      {sponsor}
     </div>
   );
 }
