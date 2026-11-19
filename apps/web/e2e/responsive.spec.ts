@@ -129,6 +129,9 @@ test.beforeAll(async () => {
       { name: "client-branch", path: `/b/${b.branchId}`, user: "visitor" },
       { name: "client-profile", path: "/profile", user: "visitor" },
       { name: "client-help", path: `/help?t=${tickets[12]!.public_token}`, user: "visitor" },
+      // LOT 5a : ticket introuvable (en-tête rendu par le serveur), coupon introuvable, diagnostic de la PWA.
+      { name: "client-ticket-unknown", path: "/t/AAAAAAAAAAAAAAAAAAAAAA", user: "visitor" },
+      { name: "debug-pwa", path: "/debug/pwa", user: "visitor", primary: (p) => p.getByRole("button", { name: "Réinitialiser" }) },
     ],
   };
 });

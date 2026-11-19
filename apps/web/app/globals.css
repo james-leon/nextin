@@ -557,6 +557,9 @@
 html body #nx-s {
   display: none;
 }
+html body {
+  overflow-x: visible;
+}
 
 /*
  * Remplissage automatique (Chrome, Edge, Safari) : le navigateur peint son fond bleu ou jaune sur le champ. On le

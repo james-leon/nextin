@@ -13,6 +13,7 @@ describe("journal des erreurs du navigateur", () => {
   it("garde le chemin seul, sans origine, paramètres ni jeton", () => {
     expect(scrubPath("https://nextin.cm/t/AbCdEfGhIjKlMnOpQrStUv?x=1#y")).toBe("/t/…");
     expect(scrubPath("/r/AbCdEfGhIjKlMnOpQrStUv/calendar")).toBe("/r/…/calendar");
+    expect(scrubPath("/desk/counter/c71bdc12-3b92-4f43-8ecd-1234567890af")).toBe("/desk/counter/…");
     expect(scrubPath("/_next/static/chunks/1_zjt64hmoooq.js")).toBe("/_next/static/chunks/1_zjt64hmoooq.js");
     expect(scrubPath(undefined)).toBeUndefined();
   });

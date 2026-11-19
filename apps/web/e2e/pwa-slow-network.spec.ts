@@ -78,6 +78,8 @@ test.describe("Filet de la première peinture", () => {
       await expect(splash.locator("p")).toHaveText("Votre tour, sans attendre.");
       await expect(splash.locator("i")).toHaveCount(3);
       expect(await splash.locator("b").evaluate((b) => getComputedStyle(b).fontSize)).toBe("28px");
+      // Au-dessus de la page : le HTML brut (sans mise en forme) ne transparaît pas.
+      expect(await page.evaluate(() => !!document.elementFromPoint(10, 10)?.closest("#nx-s"))).toBe(true);
       await expect
         .poll(() => page.evaluate(() => getComputedStyle(document.querySelector("#nx-s")!, "::before").backgroundImage), { timeout: 4000 })
         .toContain("/brand/nextin-icon.svg");

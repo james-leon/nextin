@@ -7,16 +7,20 @@
  *
  * CSS minifié à la main : il part dans chaque page (budget de 200 Ko des pages client).
  * - Fond de `<html>` immédiat (#F2F2F7, noir en sombre, comme `data-theme`).
+ * - Bloc opaque au-dessus de la page : sans feuille de style, l'écran de démarrage reste propre au lieu du HTML brut ;
+ *   au bout de 12 s, il s'efface (le contenu, même sans mise en forme, reste accessible si la feuille ne vient jamais).
+ * - Pas de défilement horizontal tant que la feuille manque (le HTML brut élargirait la page et décentrerait l'écran sur
+ *   téléphone) ; rétabli par la feuille de style (`html body` dans globals.css).
  * - Icône posée après 1 s seulement : si la feuille de style arrive avant (cas normal), le bloc est masqué
  *   (`html body #nx-s` dans globals.css) et l'image n'est jamais téléchargée.
  * - Points immobiles si les animations sont réduites (et toujours immobiles sur les images iOS).
  */
-const DARK = "--l:#fff;--s:rgb(235 235 245/.6);--a:#4a9be8";
+const DARK = "--b:#000;--l:#fff;--s:rgb(235 235 245/.6);--a:#4a9be8";
 
 export const splashCss =
-  "html{background:#f2f2f7}@media(prefers-color-scheme:dark){html:not([data-theme=light]){background:#000}}html[data-theme=dark]{background:#000}" +
-  "#nx-s{--l:#000;--s:#6c6c70;--a:#1a6bb5;position:fixed;inset:0;z-index:-1;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;" +
-  'font:15px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--s);text-align:center}' +
+  "body{overflow-x:hidden}html{background:#f2f2f7}@media(prefers-color-scheme:dark){html:not([data-theme=light]){background:#000}}html[data-theme=dark]{background:#000}" +
+  "#nx-s{--b:#f2f2f7;--l:#000;--s:#6c6c70;--a:#1a6bb5;position:fixed;inset:0;z-index:2147483647;background:var(--b);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;" +
+  'font:15px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--s);text-align:center;animation:nx-o 0s 12s forwards}' +
   `@media(prefers-color-scheme:dark){html:not([data-theme=light]) #nx-s{${DARK}}}html[data-theme=dark] #nx-s{${DARK}}` +
   "#nx-s:before{content:'';width:92px;height:92px;background:50%/92px no-repeat;animation:nx-i 0s 1s forwards}" +
   "#nx-s b{font-size:28px;font-weight:700;letter-spacing:-.02em;color:var(--l)}#nx-s p{margin:-8px 0 8px}" +
@@ -24,7 +28,7 @@ export const splashCss =
   "#nx-s i{width:9px;height:9px;border-radius:50%;background:var(--a);opacity:.8;animation:nx-h 1.2s infinite ease-in-out}" +
   "#nx-s i+i{width:8px;height:8px;animation-delay:.15s}#nx-s i+i+i{width:7px;height:7px;animation-delay:.3s}" +
   "@keyframes nx-h{0%,60%,100%{transform:none;opacity:.45}30%{transform:translateY(-6px);opacity:1}}" +
-  "@keyframes nx-i{to{background-image:url(/brand/nextin-icon.svg)}}" +
+  "@keyframes nx-i{to{background-image:url(/brand/nextin-icon.svg)}}@keyframes nx-o{to{visibility:hidden}}" +
   "@media(prefers-reduced-motion:reduce){#nx-s i{animation:none}}";
 
 /** Contenu du bloc (texte échappé : il vient du dictionnaire). */

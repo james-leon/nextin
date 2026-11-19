@@ -55,7 +55,7 @@ function Ended({ view, token, serviceName, entry, onRated }: Props) {
       <section aria-live="polite" className="flex flex-col items-center gap-3 text-center">
         {!served ? (
           <div className="squircle flex w-full flex-col items-center gap-1 rounded-[var(--radius-xl)] bg-grouped-secondary px-5 py-5">
-            <p className="font-rounded text-display font-extrabold text-label-tertiary">{view.display_code}</p>
+            <p className="font-rounded text-display font-extrabold text-label-secondary">{view.display_code}</p>
             <p className="text-footnote text-label-secondary">{serviceName}</p>
           </div>
         ) : null}

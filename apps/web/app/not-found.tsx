@@ -10,7 +10,7 @@ export default async function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pt-[max(env(safe-area-inset-top),1rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)] text-center">
       <section className="flex flex-1 flex-col items-center justify-center gap-3">
-        <p aria-hidden className="font-rounded text-hero font-bold text-label-tertiary tabular">404</p>
+        <p aria-hidden className="font-rounded text-hero font-bold text-label-secondary tabular">404</p>
         <h1 className="text-title1 font-bold [text-wrap:balance]">{t("notFoundTitle")}</h1>
         <p className="text-body text-label-secondary">{t("notFoundBody")}</p>
       </section>

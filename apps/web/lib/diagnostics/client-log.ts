@@ -31,9 +31,9 @@ export type ClientLog = z.infer<typeof clientLogSchema>;
 export function scrub(text: string): string {
   return text
     .replace(/[^\s@"'<>]+@[^\s@"'<>]+\.[A-Za-z]{2,}/g, "[email]")
-    .replace(/\+?\d[\d\s.-]{5,}\d/g, "[n]")
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "…")
-    .replace(/[A-Za-z0-9]{20,}/g, "…");
+    .replace(/[A-Za-z0-9]{20,}/g, "…")
+    .replace(/\+?\d[\d\s.-]{5,}\d/g, "[n]");
 }
 
 /** Chemin seul (sans origine ni paramètres), jetons masqués : /t/AbC…(22) → /t/…. */
