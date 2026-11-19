@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pause, Play, Trophy } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { adFileUrl, type AdCandidate } from "@nextin/shared/ads";
 import {
   BEST_SCORE_KEY,
+  COIN_POINTS,
   PLANE,
   WORLD,
   advance,
@@ -16,6 +17,7 @@ import {
 import { Button, IconButton } from "@/components/ui/button";
 import type { GameSkin, SkyCatchResult } from "@/lib/client/games";
 import { callRpc, SUPABASE_URL } from "@/lib/client/supabase-public";
+import { cn } from "@/lib/cn";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { CouponCard } from "./coupon-card";
 import { Interstitial } from "./interstitial";
@@ -325,77 +327,111 @@ export function SkyCatch({
   if (phase === "ad" && ad) return <Interstitial ad={ad} token={token} skipAfter={skipAfter} onDone={resumeNextLevel} />;
 
   const reward = skin ? (locale === "en" && skin.reward_en ? skin.reward_en : skin.reward) : null;
+  const light = "bg-white text-navy hover:bg-white/90 active:bg-white/80";
+  const eyebrow = "text-caption font-bold tracking-[0.14em] text-orange uppercase";
   const overlay =
     phase === "ready" ? (
       <Overlay>
-        <p className="text-title2 font-bold">{t("skyCatch")}</p>
-        <p className="text-body text-label-secondary">{t("skyCatchBody")}</p>
-        {skin ? <p className="text-subheadline text-label-secondary">{t("sponsoredBy", { advertiser: skin.advertiser })}{reward ? ` · ${reward}` : ""}</p> : null}
-        <p className="text-footnote text-label-secondary">{t("controls")}</p>
-        {best ? <p className="text-footnote text-label-secondary">{t("best", { score: best })}</p> : null}
-        <Button onClick={newGame} leadingIcon={<Play />}>
+        <p className={eyebrow}>{t("pairsEyebrow")}</p>
+        <p className="font-rounded text-large-title font-extrabold">{t("skyCatch")}</p>
+        <p className="max-w-[28ch] text-subheadline text-white/85">{t("skyCatchBody")}</p>
+        <p className="flex flex-wrap justify-center gap-3.5 text-footnote text-white/85">
+          <span className="flex items-center gap-1.5">
+            <i aria-hidden className="size-3 rounded-full bg-[var(--game-coin)]" />
+            {t("legendCoin", { points: COIN_POINTS })}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <i aria-hidden className="size-3 rounded-full bg-[var(--game-storm)]" />
+            {t("legendStorm")}
+          </span>
+        </p>
+        {skin ? (
+          <p className="text-footnote text-white/85">
+            {t("sponsoredBy", { advertiser: skin.advertiser })}
+            {reward ? ` · ${reward}` : ""}
+          </p>
+        ) : null}
+        <Button className={light} onClick={newGame} leadingIcon={<Play />}>
           {t("start")}
         </Button>
+        <p className="max-w-[30ch] text-footnote text-white/75">
+          {t("controls")} {t("autoStop")}
+        </p>
+        {best ? <p className="text-footnote text-white/75">{t("best", { score: best })}</p> : null}
       </Overlay>
     ) : phase === "paused" ? (
       <Overlay>
-        <p className="text-title2 font-bold">{t("paused")}</p>
-        <Button onClick={() => (setPhase("playing"), canvasRef.current?.focus())} leadingIcon={<Play />}>
+        <p className="font-rounded text-large-title font-extrabold">{t("paused")}</p>
+        <Button className={light} onClick={() => (setPhase("playing"), canvasRef.current?.focus())} leadingIcon={<Play />}>
           {t("resume")}
         </Button>
       </Overlay>
     ) : phase === "level_complete" ? (
       <Overlay>
-        <p className="text-title2 font-bold">{t("levelComplete", { n: hud.level })}</p>
-        <p className="tabular text-body text-label-secondary">
+        <p className={eyebrow}>{t("level", { n: hud.level })}</p>
+        <p className="font-rounded text-title1 font-extrabold">{t("levelComplete", { n: hud.level })}</p>
+        <p className="font-rounded text-headline text-white/85 tabular">
           {hud.score} · {t("coins", { count: hud.coins })}
         </p>
-        <Button onClick={nextLevel}>{t("nextLevel")}</Button>
+        <Button className={light} onClick={nextLevel}>
+          {t("nextLevel")}
+        </Button>
       </Overlay>
     ) : phase === "game_over" ? (
       <Overlay scroll>
-        <Trophy aria-hidden className="size-10 stroke-[1.5] text-orange" />
-        <p className="text-title2 font-bold">{skin ? (locale === "en" && skin.end_title_en ? skin.end_title_en : skin.end_title) : t("gameOver")}</p>
-        <p className="tabular text-body text-label-secondary">
-          {hud.score} · {t("level", { n: hud.level })} · {t("best", { score: best })}
+        <p className={eyebrow}>{t("gameOver")}</p>
+        <p className="font-rounded text-[56px] leading-none font-extrabold tabular">{hud.score}</p>
+        {skin ? <p className="text-title3 font-bold">{locale === "en" && skin.end_title_en ? skin.end_title_en : skin.end_title}</p> : null}
+        <p className="text-subheadline text-white/85 tabular">
+          {t("level", { n: hud.level })} · {t("best", { score: best })}
         </p>
-        {result?.coupon ? <CouponCard coupon={result.coupon} couponBaseUrl={couponBaseUrl} advertiser={skin?.advertiser} /> : null}
-        <Button onClick={newGame} leadingIcon={<Play />}>
+        {result?.coupon ? (
+          <div className="w-full text-label">
+            <CouponCard coupon={result.coupon} couponBaseUrl={couponBaseUrl} advertiser={skin?.advertiser} />
+          </div>
+        ) : null}
+        <Button className={light} onClick={newGame} leadingIcon={<Play />}>
           {t("playAgain")}
         </Button>
       </Overlay>
     ) : null;
 
+  const chip = "rounded-full bg-black/45 px-2.5 py-1.5 font-rounded text-footnote font-bold text-white tabular";
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 px-4 py-2" aria-live="off">
-        <span className="tabular text-subheadline font-semibold">{t("level", { n: hud.level })}</span>
-        <span className="tabular text-subheadline text-label-secondary">{hud.score}</span>
-        <span className="tabular ml-auto text-subheadline text-label-secondary">{hud.time} s</span>
-        <IconButton
-          label={phase === "playing" ? t("pause") : t("resume")}
-          icon={phase === "playing" ? <Pause /> : <Play />}
-          variant="plain"
-          disabled={phase !== "playing" && phase !== "paused"}
-          onClick={() => setPhase(phase === "playing" ? "paused" : "playing")}
-        />
-      </div>
-      <div ref={wrapRef} className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4">
-        <canvas
-          ref={canvasRef}
-          tabIndex={0}
-          aria-label={`${t("skyCatch")} · ${t("controls")}`}
-          className="squircle touch-none rounded-[var(--radius-xl)] outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-tint)]"
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            pointer(e);
-          }}
-          onPointerMove={(e) => e.buttons && pointer(e)}
-          onPointerUp={() => (input.current.targetX = null)}
-          onKeyDown={(e) => key(e, true)}
-          onKeyUp={(e) => key(e, false)}
-        />
-        {overlay}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div ref={wrapRef} className="relative flex min-h-0 flex-1 items-center justify-center p-4">
+        <div className="relative overflow-hidden rounded-[28px] bg-navy">
+          <canvas
+            ref={canvasRef}
+            tabIndex={0}
+            aria-label={`${t("skyCatch")} · ${t("controls")}`}
+            className="block touch-none outline-none focus-visible:shadow-[inset_0_0_0_3px_var(--accent-tint)]"
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              pointer(e);
+            }}
+            onPointerMove={(e) => e.buttons && pointer(e)}
+            onPointerUp={() => (input.current.targetX = null)}
+            onKeyDown={(e) => key(e, true)}
+            onKeyUp={(e) => key(e, false)}
+          />
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 p-3" aria-live="off">
+            <span className={chip}>{hud.score}</span>
+            <span className={cn(chip, "font-semibold")}>{t("level", { n: hud.level })}</span>
+            <span className={cn(chip, "ml-auto")}>{t("timeLeft", { seconds: hud.time })}</span>
+          </div>
+          <div className="absolute top-14 right-3">
+            <IconButton
+              label={phase === "playing" ? t("pause") : t("resume")}
+              icon={phase === "playing" ? <Pause /> : <Play />}
+              variant="plain"
+              className="rounded-[12px] bg-black/45 text-white hover:bg-black/55 disabled:opacity-0"
+              disabled={phase !== "playing" && phase !== "paused"}
+              onClick={() => setPhase(phase === "playing" ? "paused" : "playing")}
+            />
+          </div>
+          {overlay}
+        </div>
       </div>
     </div>
   );
@@ -403,12 +439,13 @@ export function SkyCatch({
 
 function Overlay({ children, scroll }: { children: React.ReactNode; scroll?: boolean }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-6">
-      <div
-        className={`squircle material-blur bg-sheet flex max-h-full w-full max-w-sm flex-col items-center gap-3 rounded-[var(--radius-xl)] px-5 py-6 text-center shadow-floating ${scroll ? "overflow-y-auto" : ""}`}
-      >
-        {children}
-      </div>
+    <div
+      className={cn(
+        "absolute inset-0 flex flex-col items-center justify-center gap-3.5 bg-navy/85 p-6 text-center text-white",
+        scroll && "justify-start overflow-y-auto",
+      )}
+    >
+      {children}
     </div>
   );
 }
