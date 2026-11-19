@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, CalendarClock, CheckCircle2, Mail, MessageCircle, Phone, Printer, Repeat2, Ticket, UserRound } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Printer } from "lucide-react";
 import { localDate } from "@nextin/shared/appointments";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
-import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
-import { ServiceTile } from "@/components/ui/service-tile";
+import { ListRow, ListSection } from "@/components/ui/list";
 import { useToast } from "@/components/ui/toast";
 import { personLine, type Appointment, type AppointmentsContext } from "@/lib/desk/appointments";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -33,6 +32,7 @@ export function AppointmentDetail({
   onReschedule: () => void;
 }) {
   const t = useTranslations("appointments");
+  const ta = t;
   const ti = useTranslations("identity");
   const te = useTranslations("errors");
   const locale = useLocale();
@@ -80,11 +80,23 @@ export function AppointmentDetail({
     if (r) onChanged(r as Appointment);
   }
 
+  // Maquette v2 20 : « Rendez-vous » puis « 10:30 · Mme Eyenga », praticien, service et rappels en lignes ; une seule
+  // action principale (« Marquer arrivé », le jour même), les autres en liens dessous (annulation en rouge).
+  const person = personLine(a, ti);
+  const reminders = a.email ? ta("email") : a.phone_e164 ? ta("phone") : ta("remindersNone");
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 px-1">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1 px-1">
+        <p className="text-footnote uppercase text-label-secondary">{ta("title")}</p>
+        <p className="text-title2 font-bold [text-wrap:balance]">
+          <span className="tabular">{timeOf(a.starts_at, locale, tz)}</span>
+          {person ? ` · ${person}` : ""}
+        </p>
         <div className="flex flex-wrap items-center gap-2">
           <AppointmentStatusBadge status={a.display_status} shape="pill" />
+          <span className="text-subheadline text-label-secondary first-letter:uppercase">
+            {longDay(day, locale)} · {t("time", { start: timeOf(a.starts_at, locale, tz), end: timeOf(a.ends_at, locale, tz) })}
+          </span>
           {a.conflict ? (
             <span className="inline-flex items-center gap-1 text-subheadline font-semibold text-orange-text">
               <AlertTriangle aria-hidden className="size-4" />
@@ -92,8 +104,6 @@ export function AppointmentDetail({
             </span>
           ) : null}
         </div>
-        <p className="text-title1 font-bold tabular">{t("time", { start: timeOf(a.starts_at, locale, tz), end: timeOf(a.ends_at, locale, tz) })}</p>
-        <p className="text-callout text-label-secondary first-letter:uppercase">{longDay(day, locale)}</p>
       </div>
 
       {a.conflict ? (
@@ -109,94 +119,37 @@ export function AppointmentDetail({
       ) : null}
 
       <ListSection>
-        <ListRow
-          icon={
-            <ListIcon color="var(--fill-secondary)">
-              <UserRound className="text-label" />
-            </ListIcon>
-          }
-          title={personLine(a, ti) ?? t("noLabel")}
-          subtitle={t("with", { name: a.practitioner.name })}
-        />
-        <ListRow icon={<ServiceTile letter={a.service.prefix} color={a.service.color} className="size-[1.875rem] rounded-[7px] text-subheadline" />} title={serviceName} />
-        {a.email ? (
-          // Demande en ligne vérifiée par e-mail : réponse et rappels par e-mail ; le numéro ne sert qu'à l'accueil.
-          <>
-            <ListRow
-              icon={
-                <ListIcon color="var(--accent-fill)">
-                  <Mail />
-                </ListIcon>
-              }
-              title={t("email")}
-              detail={<span className="break-all">{a.email}</span>}
-            />
-            {a.phone_e164 ? (
-              <ListRow
-                icon={
-                  <ListIcon color="var(--fill-secondary)">
-                    <Phone className="text-label" />
-                  </ListIcon>
-                }
-                title={t("phoneOnly")}
-                detail={<span className="tabular">{a.phone_e164}</span>}
-              />
-            ) : null}
-          </>
-        ) : (
-          <ListRow
-            icon={
-              <ListIcon color="var(--green-fill)">
-                <MessageCircle />
-              </ListIcon>
-            }
-            title={t("phone")}
-            detail={<span className="tabular">{a.phone_e164 ?? t("noPhoneValue")}</span>}
-          />
-        )}
+        <ListRow title={t("practitioner")} detail={a.practitioner.name} />
+        <ListRow title={t("service")} detail={serviceName} />
+        <ListRow title={t("remindersLabel")} detail={reminders} />
+        {a.email ? <ListRow title={t("email")} detail={<span className="break-all">{a.email}</span>} /> : null}
+        {a.phone_e164 ? <ListRow title={a.email ? t("phoneOnly") : t("phone")} detail={<span className="tabular">{a.phone_e164}</span>} /> : null}
         {a.ticket ? (
           <ListRow
-            icon={
-              <ListIcon color="var(--navy)">
-                <Ticket />
-              </ListIcon>
-            }
             title={t("ticket", { code: a.ticket.display_code })}
             href={`/desk/print/${a.ticket.id}`}
             accessory={<Printer aria-hidden className="size-5 text-label-tertiary" />}
           />
         ) : null}
-        {a.rescheduled_from_id ? (
-          <ListRow
-            icon={
-              <ListIcon color="var(--fill-secondary)">
-                <Repeat2 className="text-label" />
-              </ListIcon>
-            }
-            title={t("rescheduledFrom")}
-          />
-        ) : null}
+        {a.rescheduled_from_id ? <ListRow title={t("rescheduledFrom")} /> : null}
       </ListSection>
 
       {a.status === "confirmed" ? (
-        <div className="flex flex-col gap-2">
+        <>
           {isToday ? (
             <Button block onClick={arrive} loading={pending === "checkIn"}>
               {t("checkIn")}
             </Button>
           ) : null}
-          <Button block variant="tinted" onClick={onReschedule} disabled={!!pending}>
-            {t("reschedule")}
-          </Button>
-          {started ? (
-            <Button block variant="gray" onClick={noShow} loading={pending === "noShow"}>
-              {t("noShow")}
-            </Button>
-          ) : null}
-          <Button block variant="destructive-plain" onClick={() => setConfirmCancel(true)} disabled={!!pending}>
-            {t("cancel")}
-          </Button>
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <ListSection>
+              <ListRow onClick={pending ? undefined : onReschedule} title={<span className="text-accent-text">{t("reschedule")}</span>} />
+              {started ? <ListRow onClick={pending ? undefined : noShow} title={<span className="text-accent-text">{t("noShow")}</span>} /> : null}
+              <ListRow onClick={pending ? undefined : () => setConfirmCancel(true)} title={t("cancel")} destructive />
+            </ListSection>
+            {isToday ? <p className="px-4 text-footnote text-label-secondary">{t("checkInFooter")}</p> : null}
+          </div>
+        </>
       ) : checkIn ? (
         <Button asChild block variant="tinted">
           <a href={`/desk/print/${checkIn.ticketId}`} target="_blank" rel="noopener">

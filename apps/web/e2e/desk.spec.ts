@@ -48,6 +48,8 @@ test.describe("M5 — poste agent", () => {
     await expect(page.getByText("Servis aujourd'hui")).toBeVisible();
 
     await page.getByRole("button", { name: "Absent" }).click();
+    // Marquer absent fait perdre sa place au patient : confirmation obligatoire (maquette v2 20).
+    await page.getByRole("alertdialog", { name: "Marquer C-002 absent ?" }).getByRole("button", { name: "Absent" }).click();
     await expect(page.getByRole("button", { name: "Personne en attente" })).toBeDisabled();
     expect(await status(second.public_token)).toBe("no_show");
 
@@ -64,7 +66,7 @@ test.describe("M5 — poste agent", () => {
     await page.getByRole("button", { name: "Alerter le suivant" }).click();
     await page.getByRole("button", { name: "Transférer" }).click();
     await page.getByRole("radio", { name: /Pédiatrie/ }).click();
-    await page.getByRole("button", { name: "Transférer", exact: true }).last().click();
+    await page.getByRole("button", { name: "Transférer C-001 vers Pédiatrie" }).click();
     await expect(page.getByText("Patient alerté")).toHaveCount(0);
     const view = await rpc<{ display_code: string; status: string }>(anonClient(), "get_ticket", { p_token: t1.public_token });
     expect(view).toMatchObject({ display_code: "P-001", status: "waiting" });
@@ -112,13 +114,14 @@ test.describe("M5 — accueil", () => {
     await expectAccessible(page);
 
     await page.getByRole("button", { name: "Nouveau ticket" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: /^Praticien/ }).click();
     await page.getByRole("radio", { name: "Dr Abena" }).click();
     await page.getByLabel("WhatsApp du patient (facultatif)").fill("6 77 12 34 56");
     await page.getByRole("button", { name: "Créer le ticket" }).click();
     await expect(page.getByText("Cochez l'accord du patient pour enregistrer son numéro WhatsApp.")).toBeVisible();
     await page.getByLabel("Le patient accepte de recevoir ses alertes sur WhatsApp").click();
     await page.getByRole("button", { name: "Créer le ticket" }).click();
-    await expect(page.getByText("Ticket créé")).toBeVisible();
+    await expect(page.getByText("Ticket créé").first()).toBeVisible();
     await expect(page.getByRole("dialog").getByText("C-001")).toBeVisible();
     const contacts = await b.staff.from("notification_contacts").select("phone_e164, consent_source");
     expect(contacts.data).toEqual([{ phone_e164: "+237677123456", consent_source: "reception_with_consent" }]);
@@ -132,7 +135,7 @@ test.describe("M5 — accueil", () => {
     await expect(ticketCard.getByRole("img", { name: /scannez ce code/ })).toBeVisible();
     await print.close();
 
-    await page.getByRole("button", { name: "Fermer" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Fait" }).click();
     await expect(page.getByRole("button", { name: /^C-001/ })).toContainText("Pour Dr Abena");
   });
 
@@ -159,7 +162,9 @@ test.describe("M5 — accueil", () => {
     await expect(page.getByRole("button", { name: "Prioritaire", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: /^C-002/ }).click();
     await page.getByRole("dialog", { name: "Ticket C-002" }).getByRole("button", { name: "Rendre prioritaire" }).click();
-    await page.getByRole("dialog", { name: /Motif de priorité · C-002/ }).getByRole("button", { name: "Personne âgée" }).click();
+    const prioritySheet = page.getByRole("dialog", { name: /Motif de priorité · C-002/ });
+    await prioritySheet.getByRole("radio", { name: "Personne âgée" }).click();
+    await prioritySheet.getByRole("button", { name: "OK" }).click();
     await expect(page.getByRole("button", { name: /^C-002/ })).toContainText("Personne âgée");
 
     await page.getByRole("button", { name: /^C-001/ }).click();

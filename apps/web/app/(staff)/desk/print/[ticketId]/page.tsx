@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Ticket thermique 80 mm (ou 58 mm) : établissement, service, numéro en grand, position, attente,
+ * Ticket thermique 80 mm (ou 58 mm, mêmes éléments, QR plus petit) — maquette v2 20 : établissement, service, numéro en grand, position, attente,
  * QR code du lien de suivi /t/<jeton>. Noir sur blanc quel que soit le thème. Aucune donnée personnelle.
  */
 export default async function PrintTicketPage({ params, searchParams }: Props) {
@@ -59,35 +59,46 @@ export default async function PrintTicketPage({ params, searchParams }: Props) {
       />
       <article
         aria-label={t("title", { code: ticket.display_code })}
-        className="flex flex-col items-center gap-[2mm] bg-white px-[3mm] py-[4mm] text-center text-black shadow-card print:shadow-none"
+        className="flex flex-col items-stretch bg-white px-[3mm] py-[4mm] text-center text-black shadow-card print:shadow-none"
         style={{ width: `${width}mm` }}
       >
-        <p className="text-[11pt] font-bold uppercase">{branch.organization?.name}</p>
-        <p className="text-[9pt]">{branch.name}</p>
-        <p className="mt-[2mm] text-[10pt] font-semibold uppercase">{service?.name}</p>
-        <p className={width === "58" ? "text-[34pt] leading-none font-extrabold" : "text-[44pt] leading-none font-extrabold"}>
+        {/* Maquette v2 20 : noir sur blanc pour l'imprimante thermique, sections séparées par des pointillés,
+            informations en chasse fixe (lisibles de loin), aucun nom de patient. */}
+        <p className="text-[11pt] leading-tight font-bold uppercase">{branch.organization?.name}</p>
+        <p className="font-mono text-[8.5pt]">{branch.name}</p>
+        <hr className="my-[2mm] border-0 border-t border-dashed border-black" />
+        <p className="text-[10pt] font-semibold">{service?.name}</p>
+        <p className={width === "58" ? "my-[1mm] text-[34pt] leading-none font-extrabold" : "my-[1mm] text-[44pt] leading-none font-extrabold"}>
           <span aria-hidden>{ticket.display_code}</span>
           <span className="sr-only">{spellTicketCode(ticket.display_code)}</span>
         </p>
         {position?.position ? (
-          <p className="text-[10pt]">
-            {t("ahead", { count: position.position - 1 })}
-            {position.wait_seconds ? ` · ${t("wait", { minutes: waitMinutes(position.wait_seconds) })}` : ""}
-          </p>
+          <div className="font-mono text-[8.5pt] leading-snug">
+            <p>{t("ahead", { count: position.position - 1 })}</p>
+            {position.wait_seconds ? <p>{t("wait", { minutes: waitMinutes(position.wait_seconds) })}</p> : null}
+          </div>
         ) : null}
         {qr ? (
           <>
-            <svg viewBox={`0 0 ${qr.size} ${qr.size}`} role="img" aria-label={t("track")} className="mt-[2mm] w-[38mm]" shapeRendering="crispEdges">
+            <hr className="my-[2mm] border-0 border-t border-dashed border-black" />
+            <svg
+              viewBox={`0 0 ${qr.size} ${qr.size}`}
+              role="img"
+              aria-label={t("track")}
+              className={width === "58" ? "mx-auto w-[26mm]" : "mx-auto w-[32mm]"}
+              shapeRendering="crispEdges"
+            >
               <rect width={qr.size} height={qr.size} fill="#fff" />
               <path d={qr.path} fill="#000" />
             </svg>
-            <p className="text-[8.5pt] leading-tight">{t("track")}</p>
+            <p className="mt-[1.5mm] font-mono text-[8pt] leading-snug">{t("track")}</p>
           </>
         ) : null}
-        <p className="mt-[2mm] text-[8.5pt] leading-tight">{t("keep")}</p>
-        <p className="text-[8pt]">{t("takenAt", { date, time })}</p>
+        <hr className="my-[2mm] border-0 border-t border-dashed border-black" />
+        <p className="font-mono text-[8pt] leading-snug">{t("keep")}</p>
+        <p className="mt-[1.5mm] font-mono text-[8pt]">{t("takenAt", { date, time })}</p>
         {/* Logo horizontal, version claire (le ticket est toujours en clair). */}
-        <Logo className="mt-[1mm] h-[8mm]" />
+        <Logo className="mx-auto mt-[2mm] h-[6mm]" />
       </article>
     </main>
   );
