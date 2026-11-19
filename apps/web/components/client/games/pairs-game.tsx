@@ -126,7 +126,7 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
   const nextLevel = PAIR_LEVELS[levelIndex + 1];
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <div className="relative flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
         <div className="min-w-0 flex-1">
           <p className="text-caption font-bold tracking-[0.12em] text-label-secondary uppercase">{t("pairsEyebrow")}</p>

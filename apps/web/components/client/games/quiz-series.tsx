@@ -77,22 +77,31 @@ export function QuizSeries({
   const queue = useRef<QuizBankQuestion[]>([]);
   const ctaRef = useRef<HTMLButtonElement>(null);
 
-  /** Tirage : questions jamais vues sur l'appareil ; tout vu, un nouveau tour commence. */
-  const draw = useCallback(async (): Promise<boolean> => {
-    const seen = parseSeen(read(QUIZ_SEEN_KEY));
-    const exclude = [...seen, ...queue.current.map((q) => q.id)];
-    let { data, error } = await callRpc<QuizBankQuestion[]>("quiz_bank_draw", { p_ticket_token: token, p_exclude: exclude, p_count: QUIZ_DRAW_SIZE });
-    if (!error && data && data.length === 0 && seen.length) {
-      write(QUIZ_SEEN_KEY, "[]");
-      ({ data, error } = await callRpc<QuizBankQuestion[]>("quiz_bank_draw", {
-        p_ticket_token: token,
-        p_exclude: queue.current.map((q) => q.id),
-        p_count: QUIZ_DRAW_SIZE,
-      }));
-    }
-    if (error || !data) return false;
-    queue.current.push(...data);
-    return true;
+  const inflight = useRef<Promise<boolean> | null>(null);
+
+  /** Tirage : questions jamais vues sur l'appareil ; tout vu, un nouveau tour commence. Un seul tirage à la fois. */
+  const draw = useCallback((): Promise<boolean> => {
+    inflight.current ??= (async () => {
+      const seen = parseSeen(read(QUIZ_SEEN_KEY));
+      const exclude = [...seen, ...queue.current.map((q) => q.id)];
+      let { data, error } = await callRpc<QuizBankQuestion[]>("quiz_bank_draw", { p_ticket_token: token, p_exclude: exclude, p_count: QUIZ_DRAW_SIZE });
+      if (!error && data && data.length === 0 && seen.length) {
+        write(QUIZ_SEEN_KEY, "[]");
+        ({ data, error } = await callRpc<QuizBankQuestion[]>("quiz_bank_draw", {
+          p_ticket_token: token,
+          p_exclude: queue.current.map((q) => q.id),
+          p_count: QUIZ_DRAW_SIZE,
+        }));
+      }
+      if (error || !data) return false;
+      // Jamais deux fois la même question dans la réserve, ni une question déjà vue entre-temps.
+      const known = new Set([...queue.current.map((q) => q.id), ...parseSeen(read(QUIZ_SEEN_KEY))]);
+      queue.current.push(...data.filter((q) => !known.has(q.id)));
+      return true;
+    })().finally(() => {
+      inflight.current = null;
+    });
+    return inflight.current;
   }, [token]);
 
   /** Question suivante de la réserve (vue dès qu'elle s'affiche), puis réserve complétée en arrière-plan. */
@@ -107,7 +116,11 @@ export function QuizSeries({
   }, [draw]);
 
   const showNext = useCallback(async () => {
-    if (queue.current.length === 0 && !(await draw())) return setFailed(true);
+    if (queue.current.length === 0) {
+      // Réserve vide : chargement affiché (jamais la question déjà répondue).
+      setQuestion(null);
+      if (!(await draw())) return setFailed(true);
+    }
     takeNext();
   }, [draw, takeNext]);
 
@@ -170,6 +183,7 @@ export function QuizSeries({
         skipAfter={skipAfter}
         onDone={() => {
           setAd(null);
+          setQuestion(null);
           void showNext();
         }}
       />

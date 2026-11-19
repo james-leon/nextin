@@ -45,6 +45,8 @@ select tests.logout();
 insert into vals select 'token', public_token from public.tickets where branch_id = tests.v('branch')::uuid;
 
 -- ─── Écriture : service role seulement ────────────────────────────────────────
+-- Banque vide pour le test (une base locale peut contenir la banque d'exemple ; annulé à la fin).
+delete from public.quiz_bank_questions;
 select is((select relrowsecurity from pg_class where oid = 'public.quiz_bank_questions'::regclass), true, 'RLS activée');
 set local role service_role;
 insert into public.quiz_bank_questions (id, category, difficulty, question, question_en, answers, correct, active) values
