@@ -34,9 +34,9 @@ test.describe("T1 — publicité sur les écrans TV", () => {
     const tvContext = await browser.newContext({ viewport: { width: 1920, height: 1080 }, locale: "fr-FR" });
     const tv = await tvContext.newPage();
     await tv.goto("/tv");
-    const codeText = tv.locator("p[aria-live]");
-    await expect(codeText).toHaveText(/^\d{3} \d{3}$/);
-    const code = (await codeText.innerText()).replace(/\D/g, "");
+    const codeBox = tv.locator("[data-pairing-code]");
+    await expect(codeBox).toHaveAttribute("data-pairing-code", /^\d{6}$/);
+    const code = (await codeBox.getAttribute("data-pairing-code"))!;
 
     const staffContext = await browser.newContext({ locale: "fr-FR" });
     const staff = await staffContext.newPage();

@@ -1890,6 +1890,16 @@ export const en: Messages = {
     offline: "Offline · reconnecting…",
     fullscreen: "Full screen",
     revoked: "This screen is no longer paired.",
+    columnTicket: "Ticket",
+    columnGoTo: "Go to",
+    callTag: "Call",
+    upNext: "Up next",
+    waitingNobody: "Nobody",
+    waitingPeople: "{count, plural, one {# person} other {# people}}",
+    waitingSuffix: "waiting",
+    scanHint: "Scan the QR code at reception to get a ticket",
+    presenceCode: "Presence code",
+    flashRemaining: "Time left for this call",
   },
   design: {
     v2: {

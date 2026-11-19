@@ -6,13 +6,13 @@ import { trackAd } from "@/lib/client/ad-events";
 import { SUPABASE_URL } from "@/lib/client/supabase-public";
 import { useLiteT } from "@/lib/i18n/lite";
 
-/** Temps d'affichage des files d'attente entre deux pubs. */
+/** Temps d'affichage du QR code de l'agence entre deux pubs. */
 const QUEUE_MS = 20_000;
 
 /**
- * Emplacement publicitaire de l'écran TV : les files d'attente (`children`) alternent avec un visuel tiré au sort
- * (poids de la base, jamais deux fois le même de suite), étiqueté « Publicité ». Les appels restent toujours visibles
- * dans la colonne de gauche. Sans visuel diffusable, seules les files s'affichent.
+ * Colonne publicitaire de l'écran TV (maquette v2 09) : le QR code de l'agence (`children`) alterne avec un visuel tiré
+ * au sort (poids de la base, jamais deux fois le même de suite), étiqueté « Publicité ». Règles de diffusion inchangées
+ * (M10b). Sans visuel diffusable (publicité désactivée pour l'écran), le QR code reste affiché : rien n'est laissé vide.
  */
 export function TvAdSlot({ ads, adKey, children }: { ads: AdCandidate[]; adKey: string; children: ReactNode }) {
   const t = useLiteT("tv");
@@ -41,21 +41,21 @@ export function TvAdSlot({ ads, adKey, children }: { ads: AdCandidate[]; adKey: 
   if (!current) return <>{children}</>;
   const src = adFileUrl(SUPABASE_URL, current.path);
   return (
-    <section aria-label={t("sponsored")} className="squircle relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[2.4vw] bg-tv-surface animate-pop-in">
-      <div className="relative min-h-0 flex-1">
+    <section aria-label={t("sponsored")} className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[calc(var(--u)*1.4)] bg-grouped-secondary animate-pop-in">
+      <div className="relative min-h-0 flex-1 bg-navy">
         {current.kind === "video" ? (
           <video key={current.creative_id} src={src} autoPlay muted playsInline onEnded={() => setCurrent(null)} className="absolute inset-0 size-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- visuel du stockage public, déjà limité en poids
           <img key={current.creative_id} crossOrigin="anonymous" src={src} alt={current.headline} className="absolute inset-0 size-full object-cover" />
         )}
-        <span className="absolute top-[1.6vh] left-[1.6vh] rounded-full bg-black/60 px-[1.2vh] py-[0.5vh] text-[1.8vh] font-semibold tracking-[0.06em] text-white uppercase">
+        <span className="absolute top-[calc(var(--u)*1.2)] left-[calc(var(--u)*1.2)] rounded-full bg-black/60 px-[calc(var(--u)*0.9)] py-[calc(var(--u)*0.3)] text-[calc(var(--u)*1)] font-semibold text-white">
           {t("sponsored")}
         </span>
       </div>
-      <div className="px-[2.2vw] py-[2vh]">
-        <p className="truncate text-[3vh] leading-tight font-bold">{current.headline}</p>
-        <p className="truncate text-[2.3vh] text-white/80">{current.offer ? `${current.offer} · ${current.advertiser}` : current.advertiser}</p>
+      <div className="px-[calc(var(--u)*1.6)] py-[calc(var(--u)*1.2)]">
+        <p className="truncate text-[calc(var(--u)*2.3)] leading-tight font-bold">{current.headline}</p>
+        <p className="truncate text-[calc(var(--u)*1.3)] text-label-secondary">{current.offer ? `${current.offer} · ${current.advertiser}` : current.advertiser}</p>
       </div>
     </section>
   );

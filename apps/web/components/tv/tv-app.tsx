@@ -6,9 +6,11 @@ import { subscribeBoard } from "@/lib/client/board-feed";
 import { onRealtimeStatus } from "@/lib/client/realtime";
 import { SUPABASE_URL } from "@/lib/client/supabase-public";
 import { Announcer } from "@/lib/tv/announcer";
-import { Logo } from "@/components/ui/logo";
+import { Pause } from "lucide-react";
+import type { BoardCall } from "@nextin/shared/queue/live";
 import { useLiteT } from "@/lib/i18n/lite";
-import { TvBoard } from "./tv-board";
+import { TV_UNIT_STYLE, TvBoard, TvSoundGate, useServiceName } from "./tv-board";
+import { TV_FLASH_MS, TvFlash } from "./tv-flash";
 import { TvPairing } from "./tv-pairing";
 import { tvAdKey } from "@/lib/client/ad-events";
 import type { TvSession } from "./types";
@@ -16,7 +18,9 @@ import type { TvSession } from "./types";
 const TOKEN_KEY = "nextin-tv-token";
 const SESSION_KEY = "nextin-tv-session";
 const SESSION_REFRESH_MS = 60_000;
-export const TV_APP_VERSION = "m6-1";
+export const TV_APP_VERSION = "v2-lot5b";
+/** Écran révoqué pendant cette visite : message rouge sur l'appairage (maquette v2 23). */
+const REVOKED_KEY = "nextin-tv-revoked";
 
 // Jeton d'appareil (localStorage) : seule son empreinte est connue du serveur.
 const tokenListeners = new Set<() => void>();
@@ -28,12 +32,15 @@ const tokenStore = {
       return null;
     }
   },
-  set: (value: string | null) => {
+  set: (value: string | null, revoked = false) => {
     try {
-      if (value) localStorage.setItem(TOKEN_KEY, value);
-      else {
+      if (value) {
+        localStorage.setItem(TOKEN_KEY, value);
+        sessionStorage.removeItem(REVOKED_KEY);
+      } else {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(SESSION_KEY);
+        if (revoked) sessionStorage.setItem(REVOKED_KEY, "1");
       }
     } catch {
       // Stockage indisponible : l'appairage vaut pour la session du navigateur.
@@ -45,6 +52,14 @@ const tokenStore = {
     return () => tokenListeners.delete(l);
   },
 };
+
+function wasRevoked(): boolean {
+  try {
+    return sessionStorage.getItem(REVOKED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function cachedSession(): TvSession | null {
   try {
@@ -66,6 +81,8 @@ export function TvApp() {
   const [board, setBoard] = useState<BranchBoard | null>(null);
   const [offline, setOffline] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  // Flash d'appel : un appel à la fois, 4 secondes chacun, dans l'ordre d'arrivée.
+  const [flashes, setFlashes] = useState<BoardCall[]>([]);
   const announcer = useRef<Announcer | null>(null);
   const announced = useRef<Set<string> | null>(null);
 
@@ -76,7 +93,7 @@ export function TvApp() {
     const load = async () => {
       try {
         const res = await fetch("/api/tv/session", { headers: { Authorization: `Bearer ${token}`, "x-app-version": TV_APP_VERSION }, cache: "no-store" });
-        if (res.status === 401) return tokenStore.set(null);
+        if (res.status === 401) return tokenStore.set(null, true);
         if (!res.ok) throw new Error(String(res.status));
         const body = (await res.json()) as { session: TvSession };
         if (!alive) return;
@@ -143,12 +160,18 @@ export function TvApp() {
       announced.current = new Set(keys);
       return;
     }
-    calls
-      .filter((_, i) => !announced.current!.has(keys[i]!))
-      .reverse()
-      .forEach((c) => announcer.current?.announce({ code: c.code, counterKind: c.counter_kind, counterNumber: c.counter_number, counterLabel: c.counter_label }));
+    const fresh = calls.filter((_, i) => !announced.current!.has(keys[i]!)).reverse();
+    fresh.forEach((c) => announcer.current?.announce({ code: c.code, counterKind: c.counter_kind, counterNumber: c.counter_number, counterLabel: c.counter_label }));
     keys.forEach((k) => announced.current!.add(k));
+    if (fresh.length) setFlashes((f) => [...f, ...fresh]);
   }, [board, session]);
+
+  const flash = flashes[0] ?? null;
+  useEffect(() => {
+    if (!flash) return;
+    const id = setTimeout(() => setFlashes((f) => f.slice(1)), TV_FLASH_MS);
+    return () => clearTimeout(id);
+  }, [flash]);
 
   // Écran toujours allumé (si le navigateur le permet).
   useEffect(() => {
@@ -173,21 +196,36 @@ export function TvApp() {
     setSoundOn(await announcer.current.unlock());
   }, []);
 
-  if (token === undefined) return <main className="min-h-dvh bg-tv" />;
-  if (token === null) return <TvPairing onPaired={(t) => tokenStore.set(t)} />;
+  if (token === undefined) return <main className="min-h-dvh bg-grouped" />;
+  if (token === null) return <TvPairing onPaired={onPaired} revoked={wasRevoked()} />;
   if (session?.unavailable) return <TvUnavailable />;
-  if (!session || !board) return <main className="min-h-dvh bg-tv" aria-busy />;
-  return <TvBoard session={session} board={board} offline={offline} soundOn={soundOn} onEnableSound={enableSound} adKey={tvAdKey(token)} />;
+  if (!session || !board) return <main className="min-h-dvh bg-grouped" aria-busy />;
+  return (
+    <>
+      <TvBoard session={session} board={board} offline={offline} adKey={tvAdKey(token)} />
+      {flash ? <FlashFor key={`${flash.code}|${flash.called_at}|${flash.recall_count}`} call={flash} board={board} /> : null}
+      <TvSoundGate soundOn={soundOn} onEnable={enableSound} />
+    </>
+  );
 }
 
-/** Établissement suspendu : message neutre (jamais le motif), l'écran reste appairé pour la reprise. */
+const onPaired = (deviceToken: string) => tokenStore.set(deviceToken);
+
+function FlashFor({ call, board }: { call: BoardCall; board: NonNullable<TvSession["board"]> }) {
+  const serviceName = useServiceName(board);
+  return <TvFlash call={call} service={serviceName(call.service_id)} />;
+}
+
+/** Établissement suspendu ou en lecture seule (maquette v2 23) : message neutre, jamais le motif ; l'écran reste appairé. */
 function TvUnavailable() {
   const t = useLiteT("tv");
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-tv p-16 text-center text-white">
-      <Logo tone="inverse" className="h-[12vh]" />
-      <h1 className="text-[4vw] leading-tight font-bold">{t("unavailableTitle")}</h1>
-      <p className="text-[2vw] text-white/75">{t("unavailableBody")}</p>
+    <main style={TV_UNIT_STYLE} className="flex min-h-dvh flex-col items-center justify-center gap-[calc(var(--u)*1.4)] bg-grouped p-[calc(var(--u)*4)] text-center leading-snug text-label">
+      <span aria-hidden className="grid size-[calc(var(--u)*9)] place-items-center rounded-[calc(var(--u)*2.4)] bg-grouped-secondary">
+        <Pause className="size-[calc(var(--u)*4.6)] stroke-[1.8] text-label-secondary" />
+      </span>
+      <h1 className="text-[calc(var(--u)*3.6)] font-bold text-balance">{t("unavailableTitle")}</h1>
+      <p className="text-[calc(var(--u)*2)] text-label-secondary">{t("unavailableBody")}</p>
     </main>
   );
 }

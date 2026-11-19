@@ -1891,6 +1891,16 @@ export const fr = {
     offline: "Hors ligne · reconnexion…",
     fullscreen: "Plein écran",
     revoked: "Cet écran n'est plus appairé.",
+    columnTicket: "Ticket",
+    columnGoTo: "Allez au",
+    callTag: "Appel",
+    upNext: "À suivre",
+    waitingNobody: "Personne",
+    waitingPeople: "{count, plural, one {# personne} other {# personnes}}",
+    waitingSuffix: "en attente",
+    scanHint: "Scannez le QR code de l'accueil pour prendre un ticket",
+    presenceCode: "Code de présence",
+    flashRemaining: "Temps restant de l'appel",
   },
   design: {
     v2: {
