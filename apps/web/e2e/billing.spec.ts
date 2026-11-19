@@ -111,7 +111,10 @@ test.describe("M10a — abonnements et paiements", () => {
     await page.getByLabel("Numéro à débiter").fill("699999999");
     await page.getByRole("button", { name: /^Payer/ }).click();
     await expect(page.getByRole("alert").filter({ hasText: "Le paiement n'a pas abouti" })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole("button", { name: "Réessayer" })).toBeVisible();
+    await expect(page.getByText("Aucun montant n'a été débité", { exact: false })).toBeVisible();
+    // « Réessayer » ramène au formulaire (maquette v2 21).
+    await page.getByRole("button", { name: "Réessayer" }).click();
+    await expect(page.getByLabel("Numéro à débiter")).toBeVisible();
   });
 
   test("lien de paiement inconnu : page neutre", async ({ page }) => {

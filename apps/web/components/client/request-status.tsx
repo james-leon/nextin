@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { CalendarCheck2, CalendarX2, Check, Clock, Mail, MessageCircle, MessageSquareText, Navigation } from "lucide-react";
+import { CalendarCheck2, CalendarPlus, CalendarX2, Check, Clock, Mail, MessageCircle, MessageSquareText, Navigation } from "lucide-react";
 import { directionsUrl } from "@nextin/shared/remote";
 import { Badge } from "@/components/ui/badge";
 import { BottomBar } from "@/components/ui/bottom-bar";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { NavigationBar } from "@/components/ui/navigation-bar";
-import { TextField } from "@/components/ui/text-field";
+import { CodeBoxes } from "@/components/ui/code-boxes";
 import { resendRequestCode } from "@/lib/client/appointment-request";
 import { callRpc } from "@/lib/client/supabase-public";
 import type { RequestView } from "@/lib/client/types";
@@ -50,6 +50,16 @@ export function RequestStatusView({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  // « Renvoyer le code » : un code par minute (vérifié aussi par la base). L'heure du dernier envoi se déduit de
+  // l'expiration du code (envoi + 10 min), relue après un rechargement : le compte à rebours reprend tout seul.
+  const resendAt = view.code_expires_at ? new Date(view.code_expires_at).getTime() - 10 * 60_000 + 60_000 : 0;
+  const [clock, setClock] = useState(() => Date.now());
+  const waitSeconds = Math.max(0, Math.ceil((resendAt - clock) / 1000));
+  useEffect(() => {
+    if (view.status !== "unverified" || waitSeconds <= 0) return;
+    const timer = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [view.status, waitSeconds]);
 
   // En attente de l'accueil : la réponse arrive sur WhatsApp, la page se met à jour aussi.
   useEffect(() => {
@@ -98,6 +108,9 @@ export function RequestStatusView({
     if (r.ok) {
       setCode("");
       setNotice(t("resent"));
+      const { data } = await callRpc<RequestView | null>("get_appointment_request", { p_token: token });
+      if (data) setView(data);
+      setClock(Date.now());
     } else {
       setError(te.has(r.error ?? "") ? te(r.error!) : te("generic"));
     }
@@ -147,7 +160,13 @@ export function RequestStatusView({
   const details = (
     <ListSection>
       <ListRow title={t("service")} detail={serviceName} />
-      {requested ? <ListRow title={t("requested")} subtitle={<span className="block first-letter:uppercase">{requested}</span>} /> : null}
+      {/* Créneau demandé : rappelé seulement s'il diffère du rendez-vous donné (« Vous aviez demandé : … »). */}
+      {requested && view.status !== "accepted" ? (
+        <ListRow
+          title={view.status === "modified" ? t("requestedBefore") : t("requested")}
+          subtitle={<span className="block first-letter:uppercase">{requested}</span>}
+        />
+      ) : null}
       {view.practitioner ? <ListRow title={tr("practitionerHeader")} detail={view.practitioner} /> : null}
       {view.email_masked ? <ListRow title={t("emailLabel")} detail={view.email_masked} /> : null}
       {view.phone_masked ? <ListRow title={t("phoneLabel")} detail={<span className="tabular">{view.phone_masked}</span>} /> : null}
@@ -189,17 +208,7 @@ export function RequestStatusView({
                 }}
                 className="flex flex-col gap-3"
               >
-                <TextField
-                  label={t("code")}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  pattern="[0-9 ]*"
-                  maxLength={7}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  error={error ?? undefined}
-                  className="[&_input]:bg-fill-tertiary [&_input]:text-title2 [&_input]:tracking-[0.3em] [&_input]:tabular"
-                />
+                <CodeBoxes label={t("code")} value={code} onValueChange={setCode} error={error ?? undefined} />
                 {notice ? (
                   <p role="status" className="px-4 text-footnote text-green-text">
                     {notice}
@@ -208,8 +217,8 @@ export function RequestStatusView({
                 <Button type="submit" block loading={pending === "verify"} loadingLabel={t("verifying")} disabled={code.replace(/\s/g, "").length !== 6}>
                   {t("verify")}
                 </Button>
-                <Button variant="plain" block onClick={resend} loading={pending === "resend"} disabled={pending !== null}>
-                  {t("resend")}
+                <Button variant="plain" block onClick={resend} loading={pending === "resend"} disabled={pending !== null || waitSeconds > 0}>
+                  {waitSeconds > 0 ? t("resendIn", { time: `${Math.floor(waitSeconds / 60)}:${String(waitSeconds % 60).padStart(2, "0")}` }) : t("resend")}
                 </Button>
               </form>
               <div ref={captchaRef} className="flex justify-center empty:hidden" />
@@ -269,9 +278,18 @@ export function RequestStatusView({
           ) : null}
 
           {appointment && (view.status === "accepted" || view.status === "modified") ? (
-            <CalloutCard icon={<CalendarCheck2 />} tone="green">
-              {t("arrival")}
-            </CalloutCard>
+            <>
+              <CalloutCard icon={<CalendarCheck2 />} tone="green">
+                {t("arrival")}
+              </CalloutCard>
+              {/* Fichier .ics préparé par le serveur (heure de Douala, rappel 1 h avant) : rien de personnel dans l'URL. */}
+              <Button asChild block variant="tinted">
+                <a href={`/r/${token}/calendar`} download>
+                  <CalendarPlus aria-hidden className="size-5" />
+                  {t("addToCalendar")}
+                </a>
+              </Button>
+            </>
           ) : null}
           {hasLocation && view.status !== "unverified" ? (
             <Button asChild block variant="tinted">

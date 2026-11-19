@@ -12,6 +12,7 @@ import type { EntryInfo } from "@/lib/client/types";
 import { captchaConfig } from "@/lib/security/captcha";
 import { fetchIdentityRules } from "@/lib/client/identity-rules";
 import { LiteMessages } from "@/lib/i18n/lite-server";
+import { QUEUE_ERROR_CODES } from "@nextin/shared/queue";
 
 type Params = { params: Promise<{ code: string }> };
 
@@ -33,6 +34,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
  * Écran 02 : arrivée par le QR code de l'agence (/q/<jeton>) ou par le code court (/q/<CODE>). Le QR code de
  * l'écran TV ajoute `?p=<code de présence>` (change chaque minute) : il confirme la présence d'un ticket à distance.
  */
+const TAKE_TICKET_ERRORS = [...QUEUE_ERROR_CODES, "generic", "network", "captcha_failed", "name_required", "identity_invalid"];
+
 export default async function EntryPage({ params, searchParams }: Params & { searchParams: Promise<{ p?: string }> }) {
   const { code } = await params;
   const { p } = await searchParams;
@@ -61,7 +64,9 @@ export default async function EntryPage({ params, searchParams }: Params & { sea
 
   return (
     <>
-      <LiteMessages paths={["client.service", "errors", "identity"]}>
+      {/* Erreurs : seulement celles que la prise de ticket peut renvoyer (file, validation du nom, réseau, captcha),
+          pas tout le dictionnaire (budget de la page). */}
+      <LiteMessages paths={["client.service", ...TAKE_TICKET_ERRORS.map((code) => `errors.${code}`), "identity"]}>
         <ServiceChooser
           entry={entry}
           presenceCode={presenceCode}

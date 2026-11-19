@@ -29,6 +29,9 @@ export default async function PayPage({ params }: Params) {
   const [view, locale, m] = await Promise.all([load(token), getLocale(), getMessages()]);
   return (
     <LiteIntlProvider locale={locale} messages={{ common: m.common, errors: m.errors, pay: m.pay, channels: m.channels }}>
+      {/* Jetons des vignettes des opérateurs Mobile Money (couleurs de marque, texte noir : contraste AA), propres à
+          cette page : rien de plus dans la feuille de style commune aux pages client (budget). */}
+      <style>{":root{--brand-mtn:#ffcc00;--brand-orange-money:#ff7900}"}</style>
       <PayView
         token={token}
         initial={view}

@@ -53,7 +53,7 @@ export function Sheet({
         >
           <div aria-hidden className="mx-auto mt-1.5 h-[5px] w-9 shrink-0 rounded-full bg-label-tertiary" />
           {cancelLabel || action ? (
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 pt-1 pb-1">
+            <div className="grid items-center gap-2 px-2 pt-1 pb-1" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
               {cancelLabel ? (
                 <Drawer.Close className="pressable min-h-11 justify-self-start rounded-[var(--radius-md)] px-3 text-body text-accent-text">
                   {cancelLabel}
@@ -61,7 +61,7 @@ export function Sheet({
               ) : (
                 <span />
               )}
-              <div className="min-w-0 max-w-[16rem] text-center">
+              <div className="min-w-0 text-center" style={{ maxWidth: "16rem" }}>
                 <Drawer.Title className={titleHidden ? "sr-only" : "line-clamp-2 text-headline [text-wrap:balance]"}>{title}</Drawer.Title>
                 {description ? <Drawer.Description className="sr-only">{description}</Drawer.Description> : null}
               </div>

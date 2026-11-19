@@ -18,8 +18,8 @@ describe("formatMessage", () => {
   });
 
   it("donne le même résultat que next-intl sur les messages client", () => {
-    expect(formatMessage(messages.fr.client.ticket.star, { count: 5 }, "fr")).toBe("5 étoiles");
-    expect(formatMessage(messages.fr.client.ticket.star, { count: 1 }, "fr")).toBe("1 étoile");
+    expect(formatMessage(messages.fr.client.ticketEnded.star, { count: 5 }, "fr")).toBe("5 étoiles");
+    expect(formatMessage(messages.fr.client.ticketEnded.star, { count: 1 }, "fr")).toBe("1 étoile");
     expect(formatMessage(messages.fr.client.ticket.recalled, { count: 2 })).toBe("Rappel n° 2");
   });
 

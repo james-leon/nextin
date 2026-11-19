@@ -1,5 +1,5 @@
 /* NextIn service worker — app shell, page hors ligne, cache des ressources statiques, web push. */
-const VERSION = "nextin-v2";
+const VERSION = "nextin-v3";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGES_CACHE = `${VERSION}-pages`;
 const ADS_CACHE = `${VERSION}-ads`;

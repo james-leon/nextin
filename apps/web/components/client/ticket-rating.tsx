@@ -11,7 +11,7 @@ import type { TicketView } from "@/lib/client/types";
 
 /** Note de 1 à 5 après le passage (une seule fois), commentaire facultatif. */
 export function TicketRating({ token, onRated }: { token: string; onRated: (view: TicketView) => void }) {
-  const t = useLiteT("client.ticket");
+  const t = useLiteT("client.ticketEnded");
   const te = useLiteT("errors");
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");

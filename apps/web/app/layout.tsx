@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: { default: "NextIn", template: "%s · NextIn" },
   description: "Prenez un ticket virtuel et attendez où vous voulez.",
   applicationName: "NextIn",
-  formatDetection: { telephone: false },
   icons: {
     // Favicon : N seul (SVG pour les navigateurs récents, PNG 32 et 16 en repli). Icône iOS : dans le <head> ci-dessous.
     icon: [
@@ -35,6 +34,9 @@ function AppleWebAppTags({ family }: { family: StartupFamily | null }) {
   // Composant synchrone : un composant asynchrone dans le <head> serait suspendu et envoyé en fin de flux.
   return (
     <>
+      {/* Pas de liens automatiques sur les numéros, adresses e-mail masquées (« l•••@gmail.com ») ni adresses : iOS
+          les soulignait. Écrit ici (et non par `metadata`) pour être lu par Safari à coup sûr. */}
+      <meta name="format-detection" content="telephone=no, email=no, address=no" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-title" content="NextIn" />

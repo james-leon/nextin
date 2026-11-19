@@ -476,6 +476,9 @@
   }
 }
 @utility scroll-fade-x {
+  /* Repère des éléments en position absolue du contenu (textes `sr-only` des pastilles) : sans lui, ils sortent du
+     conteneur défilant et élargissent la page sur Chrome Android (bouton du bas hors écran, LOT 5a). */
+  position: relative;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);

@@ -47,7 +47,12 @@ export default async function PrintTicketPage({ params, searchParams }: Props) {
 
   return (
     <main data-theme="light" className="flex min-h-dvh flex-col items-center gap-6 bg-grouped py-8 print:block print:bg-white print:py-0">
-      <style>{`@page { size: ${width}mm auto; margin: 0 } @media print { html, body { background: #fff } }`}</style>
+      {/* Mise en page du ticket en millimètres : propre à cette page (rien dans la feuille de style commune). */}
+      <style>{`@page { size: ${width}mm auto; margin: 0 } @media print { html, body { background: #fff } }
+.tk { padding: 4mm 3mm } .tk hr { margin: 2mm 0; border: 0; border-top: 1px dashed #000 }
+.tk .m { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 8pt; line-height: 1.35 }
+.tk .n { margin: 1mm 0; font-size: ${width === "58" ? 34 : 44}pt; line-height: 1; font-weight: 800 }
+.tk .q { width: ${width === "58" ? 26 : 32}mm; margin: 0 auto } .tk .l { height: 6mm; margin: 2mm auto 0 }`}</style>
       <PrintTrigger
         label={t("print")}
         base={`/desk/print/${ticket.id}`}
@@ -59,46 +64,40 @@ export default async function PrintTicketPage({ params, searchParams }: Props) {
       />
       <article
         aria-label={t("title", { code: ticket.display_code })}
-        className="flex flex-col items-stretch bg-white px-[3mm] py-[4mm] text-center text-black shadow-card print:shadow-none"
+        className="tk flex flex-col items-stretch bg-white text-center text-black shadow-card print:shadow-none"
         style={{ width: `${width}mm` }}
       >
         {/* Maquette v2 20 : noir sur blanc pour l'imprimante thermique, sections séparées par des pointillés,
             informations en chasse fixe (lisibles de loin), aucun nom de patient. */}
         <p className="text-[11pt] leading-tight font-bold uppercase">{branch.organization?.name}</p>
-        <p className="font-mono text-[8.5pt]">{branch.name}</p>
-        <hr className="my-[2mm] border-0 border-t border-dashed border-black" />
+        <p className="m">{branch.name}</p>
+        <hr />
         <p className="text-[10pt] font-semibold">{service?.name}</p>
-        <p className={width === "58" ? "my-[1mm] text-[34pt] leading-none font-extrabold" : "my-[1mm] text-[44pt] leading-none font-extrabold"}>
+        <p className="n">
           <span aria-hidden>{ticket.display_code}</span>
           <span className="sr-only">{spellTicketCode(ticket.display_code)}</span>
         </p>
         {position?.position ? (
-          <div className="font-mono text-[8.5pt] leading-snug">
+          <div className="m">
             <p>{t("ahead", { count: position.position - 1 })}</p>
             {position.wait_seconds ? <p>{t("wait", { minutes: waitMinutes(position.wait_seconds) })}</p> : null}
           </div>
         ) : null}
         {qr ? (
           <>
-            <hr className="my-[2mm] border-0 border-t border-dashed border-black" />
-            <svg
-              viewBox={`0 0 ${qr.size} ${qr.size}`}
-              role="img"
-              aria-label={t("track")}
-              className={width === "58" ? "mx-auto w-[26mm]" : "mx-auto w-[32mm]"}
-              shapeRendering="crispEdges"
-            >
+            <hr />
+            <svg viewBox={`0 0 ${qr.size} ${qr.size}`} role="img" aria-label={t("track")} className="q" shapeRendering="crispEdges">
               <rect width={qr.size} height={qr.size} fill="#fff" />
               <path d={qr.path} fill="#000" />
             </svg>
-            <p className="mt-[1.5mm] font-mono text-[8pt] leading-snug">{t("track")}</p>
+            <p className="m" style={{ marginTop: "1.5mm" }}>{t("track")}</p>
           </>
         ) : null}
-        <hr className="my-[2mm] border-0 border-t border-dashed border-black" />
-        <p className="font-mono text-[8pt] leading-snug">{t("keep")}</p>
-        <p className="mt-[1.5mm] font-mono text-[8pt]">{t("takenAt", { date, time })}</p>
+        <hr />
+        <p className="m">{t("keep")}</p>
+        <p className="m" style={{ marginTop: "1.5mm" }}>{t("takenAt", { date, time })}</p>
         {/* Logo horizontal, version claire (le ticket est toujours en clair). */}
-        <Logo className="mx-auto mt-[2mm] h-[6mm]" />
+        <Logo className="l" />
       </article>
     </main>
   );

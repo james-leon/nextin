@@ -17,7 +17,10 @@ export function AlertDialog({
   onAction,
   open,
   onOpenChange,
+  stacked,
 }: {
+  /** Boutons empilés (maquette v2 21) : action d'abord (rouge si destructive), puis « garder » en gras, le choix sûr. */
+  stacked?: boolean;
   trigger?: ReactNode;
   title: string;
   description?: string;
@@ -52,20 +55,34 @@ export function AlertDialog({
               </div>
             ) : null}
           </div>
-          <div className="grid grid-cols-2 hairline-t">
-            <AlertDialogPrimitive.Cancel className="h-11 text-body text-accent-text transition-colors active:bg-fill-tertiary">
-              {cancelLabel}
-            </AlertDialogPrimitive.Cancel>
-            <AlertDialogPrimitive.Action
-              onClick={onAction}
-              className={cn(
-                "h-11 text-body font-semibold shadow-[inset_0.5px_0_0_var(--separator)] transition-colors active:bg-fill-tertiary",
-                destructive ? "text-red-text" : "text-accent-text",
-              )}
-            >
-              {actionLabel}
-            </AlertDialogPrimitive.Action>
-          </div>
+          {stacked ? (
+            <div className="flex flex-col">
+              <AlertDialogPrimitive.Action
+                onClick={onAction}
+                className={cn("min-h-11 px-3 text-body hairline-t transition-colors active:bg-fill-tertiary", destructive ? "text-red-text" : "text-accent-text")}
+              >
+                {actionLabel}
+              </AlertDialogPrimitive.Action>
+              <AlertDialogPrimitive.Cancel className="min-h-11 px-3 text-body font-semibold text-accent-text hairline-t transition-colors active:bg-fill-tertiary">
+                {cancelLabel}
+              </AlertDialogPrimitive.Cancel>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 hairline-t">
+              <AlertDialogPrimitive.Cancel className="h-11 text-body text-accent-text transition-colors active:bg-fill-tertiary">
+                {cancelLabel}
+              </AlertDialogPrimitive.Cancel>
+              <AlertDialogPrimitive.Action
+                onClick={onAction}
+                className={cn(
+                  "h-11 text-body font-semibold shadow-[inset_0.5px_0_0_var(--separator)] transition-colors active:bg-fill-tertiary",
+                  destructive ? "text-red-text" : "text-accent-text",
+                )}
+              >
+                {actionLabel}
+              </AlertDialogPrimitive.Action>
+            </div>
+          )}
         </AlertDialogPrimitive.Content>
       </AlertDialogPrimitive.Portal>
     </AlertDialogPrimitive.Root>

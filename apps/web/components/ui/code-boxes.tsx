@@ -16,7 +16,12 @@ export function CodeBoxes({
   hint,
   length = 6,
   autoFocus,
+  value: controlled,
+  onValueChange,
 }: {
+  /** Valeur contrôlée (facultative) : sinon le composant garde lui-même la saisie. */
+  value?: string;
+  onValueChange?: (value: string) => void;
   name?: string;
   label: string;
   error?: string;
@@ -25,7 +30,12 @@ export function CodeBoxes({
   autoFocus?: boolean;
 }) {
   const id = useId();
-  const [value, setValue] = useState("");
+  const [own, setOwn] = useState("");
+  const value = controlled ?? own;
+  const setValue = (next: string) => {
+    if (controlled === undefined) setOwn(next);
+    onValueChange?.(next);
+  };
   const [focused, setFocused] = useState(Boolean(autoFocus));
   const digits = value.split("");
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;

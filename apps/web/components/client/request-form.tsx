@@ -12,7 +12,7 @@ import { NavigationBar } from "@/components/ui/navigation-bar";
 import { ServiceTile } from "@/components/ui/service-tile";
 import { parseIdentity, type IdentityRules } from "@nextin/shared/identity";
 import { CustomerIdentityFields, saveIdentity, useIdentityValue } from "./customer-identity-fields";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import { sendAppointmentRequest } from "@/lib/client/appointment-request";
 import { isOnlineUnavailable } from "@/lib/client/online-unavailable";
 import type { RequestChannel, RequestOptions } from "@/lib/client/types";
@@ -210,21 +210,38 @@ export function RequestForm({
           />
         </div>
       ) : null}
+      {/* Maquette v2 21 : coordonnées en liste groupée, comme le nom et l'âge (libellé et champ dans une même cellule). */}
       {channel === "email" ? (
-        <>
-          <TextField
-            label={t("email")}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder={t("emailPlaceholder")}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={emailError ?? undefined}
-            hint={t("emailFooter")}
-          />
+        <div className="flex flex-col gap-1.5">
+          <FormGroup>
+            <TextField
+              grouped
+              label={t("email")}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder={t("emailPlaceholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={emailError ?? undefined}
+            />
+            <TextField
+              grouped
+              label={t("phoneOptional")}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel-national"
+              placeholder={t("phonePlaceholder")}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              error={phoneError ?? undefined}
+            />
+          </FormGroup>
+          <p className="px-4 text-footnote text-label-secondary">
+            {t("emailFooter")} {t("phoneOptionalHint")}
+          </p>
           {branchPhone ? (
             <Button asChild variant="plain" className="self-start">
               <a href={`tel:${branchPhone}`}>
@@ -233,30 +250,24 @@ export function RequestForm({
               </a>
             </Button>
           ) : null}
-          <TextField
-            label={t("phoneOptional")}
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel-national"
-            placeholder={t("phonePlaceholder")}
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            error={phoneError ?? undefined}
-            hint={t("phoneOptionalHint")}
-          />
-        </>
+        </div>
       ) : (
-        <TextField
-          label={channel === "sms" ? t("phoneSms") : t("phone")}
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel-national"
-          placeholder={t("phonePlaceholder")}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          error={phoneError ?? undefined}
-          hint={channel === "sms" ? t("smsFooter") : t("contactFooter")}
-        />
+        <div className="flex flex-col gap-1.5">
+          <FormGroup>
+            <TextField
+              grouped
+              label={channel === "sms" ? t("phoneSms") : t("phone")}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel-national"
+              placeholder={t("phonePlaceholder")}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              error={phoneError ?? undefined}
+            />
+          </FormGroup>
+          <p className="px-4 text-footnote text-label-secondary">{channel === "sms" ? t("smsFooter") : t("contactFooter")}</p>
+        </div>
       )}
       <CustomerIdentityFields
         rules={identityRules}

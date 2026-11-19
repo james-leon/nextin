@@ -49,6 +49,8 @@ export default async function TicketPage({ params }: Params) {
         // Seules les erreurs possibles sur cette page (note du passage) : le dictionnaire entier alourdirait la page.
         paths={[
           "client.ticket",
+          // Ticket déjà fini : ses textes partent avec la page (sinon chargés à la fin, `/api/i18n/ticket-ended`).
+          ...(["served", "cancelled", "no_show"].includes(view.status) ? ["client.ticketEnded"] : []),
           // Textes du ticket à distance : seulement pour un ticket à distance.
           ...(view.remote ? ["client.ticketRemote"] : []),
           "counterKinds",

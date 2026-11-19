@@ -125,11 +125,12 @@ export function DayAgenda({
           return (
             <div
               key={p.id}
-              className={cn(
-                "relative border-l border-separator",
-                leave && "bg-[repeating-linear-gradient(135deg,var(--fill-tertiary)_0_10px,transparent_10px_20px)]",
-              )}
-              style={{ height: `${hours.length * HOUR_REM}rem` }}
+              className="relative border-l border-separator"
+              style={{
+                height: `${hours.length * HOUR_REM}rem`,
+                // Congé : colonne hachurée (style en ligne, hors de la feuille commune aux pages client).
+                ...(leave ? { backgroundImage: "repeating-linear-gradient(135deg, var(--fill-tertiary) 0 10px, transparent 10px 20px)" } : {}),
+              }}
             >
               {hours.slice(1).map((h) => (
                 <span key={h} aria-hidden className="absolute inset-x-0 border-t border-separator/60" style={{ top: top(h * 60) }} />

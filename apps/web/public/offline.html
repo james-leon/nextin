@@ -3,35 +3,47 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="format-detection" content="telephone=no, email=no, address=no" />
     <title>NextIn — Connexion</title>
     <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <!--
+      Maquette v2 21 « Connexion lente » : page servie par le service worker, sans réseau ni feuille de style externe.
+      Icône bleue sur fond teinté, titre, phrase, trois points qui sautent pendant les nouveaux essais (immobiles si
+      les animations sont réduites), puis le texte en anglais en petit. Couleurs = jetons de globals.css.
+    -->
     <style>
-      :root { color-scheme: light dark; --bg: #f2f2f7; --card: #fff; --label: #000; --secondary: rgb(60 60 67 / 0.6); --accent: #1a6bb5; }
-      @media (prefers-color-scheme: dark) { :root { --bg: #000; --card: #1c1c1e; --label: #fff; --secondary: rgb(235 235 245 / 0.6); --accent: #5ea8f0; } }
+      :root { color-scheme: light dark; --bg: #f2f2f7; --label: #000; --secondary: #6c6c70; --accent: #1a6bb5; --tint: #e8f0f9; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #000; --label: #fff; --secondary: #aeaeb2; --accent: #4a9be8; --tint: #12263b; } }
       * { box-sizing: border-box; }
       body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: var(--bg); color: var(--label);
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding: 24px; }
-      main { max-width: 22rem; width: 100%; background: var(--card); border-radius: 22px; padding: 32px 24px; text-align: center; }
-      svg { width: 44px; height: 44px; color: var(--secondary); }
-      h1 { font-size: 1.375rem; line-height: 1.75rem; margin: 16px 0 8px; }
-      p { font-size: 0.9375rem; line-height: 1.25rem; color: var(--secondary); margin: 0 0 4px; }
-      button { margin-top: 24px; height: 50px; width: 100%; border: 0; border-radius: 14px; background: #1a6bb5; color: #fff;
-        font: 600 1.0625rem/1 inherit; cursor: pointer; }
-      button:active { transform: scale(0.97); opacity: 0.85; }
-      .en { margin-top: 12px; font-size: 0.8125rem; }
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; padding: 24px; }
+      main { max-width: 20rem; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; }
+      .icon { width: 72px; height: 72px; border-radius: 18px; background: var(--tint); color: var(--accent); display: grid; place-items: center; }
+      .icon svg { width: 36px; height: 36px; }
+      h1 { font-size: 1.75rem; line-height: 2.125rem; margin: 20px 0 8px; text-wrap: balance; }
+      p { font-size: 1.0625rem; line-height: 1.375rem; color: var(--secondary); margin: 0; }
+      .dots { display: flex; gap: 7px; margin: 24px 0 20px; }
+      .dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: hop 1.2s ease-in-out infinite; }
+      .dots span:nth-child(2) { animation-delay: 0.15s; opacity: 0.75; }
+      .dots span:nth-child(3) { animation-delay: 0.3s; opacity: 0.5; }
+      @keyframes hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+      @media (prefers-reduced-motion: reduce) { .dots span { animation: none; } }
+      .en { font-size: 0.8125rem; line-height: 1.125rem; }
     </style>
   </head>
   <body>
     <main>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 20h.01" /><path d="M8.5 16.43a5 5 0 0 1 7 0" /><path d="M5 12.86a10 10 0 0 1 5.17-2.69" />
-        <path d="M19 12.86a10 10 0 0 0-2-1.43" /><path d="M2 8.82a15 15 0 0 1 4.18-2.65" /><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76" /><path d="m2 2 20 20" />
-      </svg>
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h.01" /><path d="M8.5 16.43a5 5 0 0 1 7 0" /><path d="M5 12.86a10 10 0 0 1 5.17-2.69" />
+          <path d="M19 12.86a10 10 0 0 0-2-1.43" /><path d="M2 8.82a15 15 0 0 1 4.18-2.65" /><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76" /><path d="m2 2 20 20" />
+        </svg>
+      </span>
       <h1>Connexion lente ou absente</h1>
       <p>Votre ticket reste valable. La page se recharge seule dès que le réseau répond.</p>
+      <div class="dots" role="status" aria-label="Nouvel essai en cours"><span></span><span></span><span></span></div>
       <p class="en" lang="en">Slow or no connection. Your ticket is still valid; the page reloads by itself.</p>
-      <button type="button" onclick="location.reload()">Réessayer</button>
     </main>
     <script>
       // Servie après 3 s sans réponse du réseau (service worker) : la page demandée continue de se charger en

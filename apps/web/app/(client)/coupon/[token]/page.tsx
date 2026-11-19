@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { CheckCircle2, Clock, Ticket, XCircle } from "lucide-react";
 import { absoluteUrl } from "@nextin/shared";
 import { formatCouponCode } from "@nextin/shared/ads";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { NavigationBar } from "@/components/ui/navigation-bar";
 import { callRpc } from "@/lib/client/supabase-public";
@@ -39,7 +39,7 @@ export default async function CouponPage({ params }: { params: Promise<{ token: 
   if (!coupon) {
     return (
       <main className="min-h-dvh pb-16">
-        <NavigationBar variant="inline" title={t("title")} back={{ href: "/", label: t("title") }} contentClassName="max-w-lg" />
+        <NavigationBar title={t("title")} back={{ href: "/t", label: t("back") }} contentClassName="max-w-lg" />
         <div className="mx-auto max-w-lg px-4 pt-3">
           <CalloutCard icon={<Ticket />} tone="red" role="alert">
             {t("notFound")}
@@ -51,38 +51,53 @@ export default async function CouponPage({ params }: { params: Promise<{ token: 
 
   const expired = isPast(coupon.expires_at);
   const reward = locale === "en" && coupon.reward_en ? coupon.reward_en : coupon.reward;
+  const usable = !coupon.redeemed_at && !expired;
+  // Maquette v2 21 : un vrai bon à découper — en-tête de couleur (annonceur et avantage), pointillés, QR et code ;
+  // utilisé ou expiré : QR grisé et pastille d'état.
   return (
     <main className="min-h-dvh pb-16">
-      <NavigationBar variant="inline" title={t("title")} contentClassName="max-w-lg" />
-      <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 pt-3">
-        <section className="squircle flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-7 text-center">
-          <p className="text-subheadline text-label-secondary">{t("by", { advertiser: coupon.advertiser })}</p>
-          <h1 className="text-title1 font-bold">{reward}</h1>
-          <QrImage value={absoluteUrl(`/coupon/${token}`)} label={t("title")} className="size-52 rounded-[12px]" />
-          <p className="text-footnote uppercase text-label-secondary">{t("code")}</p>
-          <p className="font-rounded text-title1 font-bold tracking-widest text-ticket-number">{formatCouponCode(coupon.code)}</p>
+      <NavigationBar title={t("title")} back={{ href: "/t", label: t("back") }} contentClassName="max-w-lg" />
+      <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 pt-3">
+        <section className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary">
+          <div className={usable ? "bg-called px-5 py-4 text-white" : "bg-fill-secondary px-5 py-4"}>
+            <p className={usable ? "text-footnote" : "text-footnote text-label-secondary"}>{t("by", { advertiser: coupon.advertiser })}</p>
+            <h1 className="text-title2 font-bold [text-wrap:balance]">{reward}</h1>
+          </div>
+          <div aria-hidden className={usable ? "border-t-2 border-dashed border-called" : "border-t-2 border-dashed border-separator"} />
+          <div className="flex flex-col items-center gap-2 px-6 py-6 text-center">
+            <QrImage
+              value={absoluteUrl(`/coupon/${token}`)}
+              label={t("title")}
+              className={usable ? "size-48 rounded-[12px]" : "size-48 rounded-[12px] opacity-30 grayscale"}
+            />
+            <p className="text-footnote text-label-secondary">{t("code")}</p>
+            <p className="font-rounded text-title1 font-bold tracking-widest text-ticket-number">{formatCouponCode(coupon.code)}</p>
+            {coupon.redeemed_at ? (
+              <Badge shape="pill" tone="neutral" role="status">
+                <CheckCircle2 aria-hidden />
+                {t("redeemed", { date: day(coupon.redeemed_at) })}
+              </Badge>
+            ) : expired ? (
+              <Badge shape="pill" tone="red" role="status">
+                <XCircle aria-hidden />
+                {t("expired")}
+              </Badge>
+            ) : (
+              <Badge shape="pill" tone="green">
+                <Clock aria-hidden />
+                {t("validUntil", { date: day(coupon.expires_at) })}
+              </Badge>
+            )}
+          </div>
         </section>
-        {coupon.redeemed_at ? (
-          <CalloutCard tone="green" icon={<CheckCircle2 />} role="status">
-            {t("redeemed", { date: day(coupon.redeemed_at) })}
-          </CalloutCard>
-        ) : expired ? (
-          <CalloutCard tone="red" icon={<XCircle />} role="status">
-            {t("expired")}
-          </CalloutCard>
-        ) : (
-          <CalloutCard tone="accent" icon={<Clock />}>
-            {t("validUntil", { date: day(coupon.expires_at) })}
-          </CalloutCard>
-        )}
-        {!coupon.redeemed_at && !expired ? (
-          <div className="flex flex-col items-center gap-1 pt-2">
-            <p className="text-footnote text-label-secondary">{t("merchant")}</p>
-            <Button asChild variant="plain">
-              <Link href={`/ads/redeem?code=${token}`} prefetch={false}>
-                {t("redeem")}
-              </Link>
-            </Button>
+        {usable ? (
+          <div className="flex flex-col items-start gap-1 px-4">
+            <p className="text-footnote text-label-secondary">
+              {t("show")} {t("merchant")}
+            </p>
+            <Link href={`/ads/redeem?code=${token}`} prefetch={false} className="inline-flex min-h-11 items-center text-subheadline font-semibold text-accent-text">
+              {t("redeem")}
+            </Link>
           </div>
         ) : null}
       </div>
