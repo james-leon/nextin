@@ -49,7 +49,7 @@ update public.branch_settings set public_listing_enabled = false where branch_id
 select tests.login_as('ad000000-0000-0000-0000-0000000000a1');
 insert into ids select 'adv', public.create_advertiser('Boutique Sept', 'retail', null, 'Douala');
 insert into ids select 'camp', public.save_campaign(null, tests.id('adv'), null, jsonb_build_object('name', 'Bronze', 'package_code', 'bronze',
-  'sector', 'retail', 'starts_on', current_date, 'surfaces', '["tv"]'::jsonb));
+  'sector', 'retail', 'starts_on', (now() at time zone 'Africa/Douala')::date, 'surfaces', '["tv"]'::jsonb));
 select public.save_creative(tests.id('camp'), null, jsonb_build_object('storage_path', tests.id('adv') || '/' || tests.id('camp') || '/v.png', 'headline', 'Offre'));
 
 -- ─── Choix des agences ────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ select tests.logout();
 -- Sans choix : tirage équitable dans la limite du plafond, agence masquée comprise (comptée, non nommée).
 select tests.login_as('ad000000-0000-0000-0000-0000000000a1');
 insert into ids select 'draw', public.save_campaign(null, tests.id('adv'), null, jsonb_build_object('name', 'Tirage', 'package_code', 'bronze',
-  'sector', 'retail', 'starts_on', current_date, 'surfaces', '["tv"]'::jsonb));
+  'sector', 'retail', 'starts_on', (now() at time zone 'Africa/Douala')::date, 'surfaces', '["tv"]'::jsonb));
 select tests.logout();
 select is(public.target_campaign_branches(tests.id('draw')), 5, 'sans choix : 5 agences tirées parmi les 7 du ciblage');
 

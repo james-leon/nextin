@@ -84,12 +84,12 @@ select lives_ok(format($$ select public.billing_overview(%L) $$, tests.id('org')
 select lives_ok($$ update public.memberships set active = false where id = tests.id('agent_m') $$, 'désactivation d''un membre : aal2 suffit');
 select throws_ok($$ update public.memberships set role = 'agent' where id = tests.id('agent_m') $$, 'P0401', 'mfa_recent_required',
   'changement de rôle : code de moins de 5 minutes exigé');
-select throws_ok(format($$ select public.stats_export(%L, null, current_date - 7, current_date, 'services') $$, tests.id('org')), 'P0401',
+select throws_ok(format($$ select public.stats_export(%L, null, (now() at time zone 'Africa/Douala')::date - 7, (now() at time zone 'Africa/Douala')::date, 'services') $$, tests.id('org')), 'P0401',
   'mfa_recent_required', 'export : code de moins de 5 minutes exigé');
 -- Code saisi il y a une minute.
 select tests.login_as('5f000000-0000-0000-0000-0000000000a1', 'aal2', 60);
 select lives_ok($$ update public.memberships set role = 'agent', active = true where id = tests.id('agent_m') $$, 'changement de rôle : accepté avec un code récent');
-select lives_ok(format($$ select public.stats_export(%L, null, current_date - 7, current_date, 'services') $$, tests.id('org')), 'export : accepté avec un code récent');
+select lives_ok(format($$ select public.stats_export(%L, null, (now() at time zone 'Africa/Douala')::date - 7, (now() at time zone 'Africa/Douala')::date, 'services') $$, tests.id('org')), 'export : accepté avec un code récent');
 
 -- L'agent (rôle sans obligation, sans facteur) n'est pas concerné.
 select tests.login_as('5f000000-0000-0000-0000-0000000000a2');

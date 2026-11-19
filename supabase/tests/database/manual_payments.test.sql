@@ -58,13 +58,13 @@ reset role;
 
 -- ─── Validation ──────────────────────────────────────────────────────────────
 select tests.login_as('8e000000-0000-0000-0000-0000000000a1');
-select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'cash', 'amount_xaf', %s, 'paid_on', current_date)) $$,
+select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'cash', 'amount_xaf', %s, 'paid_on', (now() at time zone 'Africa/Douala')::date)) $$,
   tests.v('inv'), tests.v('total')::integer - 1), '22023', 'amount_mismatch', 'montant différent du total : refusé');
-select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'transfer', 'amount_xaf', %s, 'paid_on', current_date)) $$,
+select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'transfer', 'amount_xaf', %s, 'paid_on', (now() at time zone 'Africa/Douala')::date)) $$,
   tests.v('inv'), tests.v('total')), '22023', 'reference_required', 'virement sans référence : refusé');
-select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'cash', 'amount_xaf', %s, 'paid_on', current_date + 1)) $$,
+select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'cash', 'amount_xaf', %s, 'paid_on', (now() at time zone 'Africa/Douala')::date + 1)) $$,
   tests.v('inv'), tests.v('total')), '22023', 'invalid_date', 'date future : refusée');
-select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'bitcoin', 'amount_xaf', %s, 'paid_on', current_date)) $$,
+select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'bitcoin', 'amount_xaf', %s, 'paid_on', (now() at time zone 'Africa/Douala')::date)) $$,
   tests.v('inv'), tests.v('total')), '22023', 'invalid_method', 'mode inconnu : refusé');
 
 -- ─── Paiement en espèces reçu hier ───────────────────────────────────────────
@@ -89,7 +89,7 @@ select is((public.invoice_document(tests.v('inv')::uuid)) ->> 'manual_method', '
 select is((select count(*)::integer from public.manual_payments), 0, 'administratrice de l''établissement : ne lit pas les paiements manuels');
 select tests.logout();
 select tests.login_as('8e000000-0000-0000-0000-0000000000a1');
-select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'cash', 'amount_xaf', %s, 'paid_on', current_date)) $$,
+select throws_ok(format($$ select public.admin_record_manual_payment(%L, jsonb_build_object('method', 'cash', 'amount_xaf', %s, 'paid_on', (now() at time zone 'Africa/Douala')::date)) $$,
   tests.v('inv'), tests.v('total')), 'P0409', 'invoice_not_open', 'facture déjà payée : refusé');
 
 -- ─── Annulation ──────────────────────────────────────────────────────────────

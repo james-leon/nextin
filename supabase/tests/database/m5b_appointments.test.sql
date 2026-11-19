@@ -225,10 +225,10 @@ update public.tickets set appointment_id = tests.id('a3') where id = (select tic
 update public.appointments set status = 'checked_in' where id = tests.id('a3');
 select is(public.appointment_json(tests.id('a3')) ->> 'display_status', 'waiting', 'arrivé, praticien en retard : « en attente »');
 select tests.login_as('b5b00000-0000-0000-0000-00000000000b');
-select throws_ok(format($$ select public.list_appointments(%L, current_date, current_date) $$, tests.id('akwa')), '42501', null,
+select throws_ok(format($$ select public.list_appointments(%L, (now() at time zone 'Africa/Douala')::date, (now() at time zone 'Africa/Douala')::date) $$, tests.id('akwa')), '42501', null,
   'isolation : rendez-vous d''un autre établissement inaccessibles');
 select is((select count(*)::int from public.appointments), 0, 'isolation : lecture directe');
-select throws_ok(format($$ select public.available_slots(%L, current_date) $$, tests.id('mbarga')), '42501', null, 'isolation : créneaux');
+select throws_ok(format($$ select public.available_slots(%L, (now() at time zone 'Africa/Douala')::date) $$, tests.id('mbarga')), '42501', null, 'isolation : créneaux');
 select tests.login_as('d5b00000-0000-0000-0000-00000000000d');
 select throws_ok($$ update public.appointments set status = 'completed' $$, '42501', null, 'écritures uniquement par RPC');
 select tests.logout();
