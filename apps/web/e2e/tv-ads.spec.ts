@@ -13,10 +13,16 @@ async function showAds(request: APIRequestContext, tv: Page): Promise<boolean> {
   return ((await res.json()) as { session: { show_ads: boolean } }).session.show_ads;
 }
 
-/** Fiche de l'écran chargée (navigation terminée, action d'enregistrement en place) avant d'y toucher. */
+/** Fiche de l'écran chargée (navigation terminée, enregistrement automatique prêt) avant d'y toucher. */
 async function openedCard(page: Page) {
   await page.waitForURL(/\/displays\/[0-9a-f-]{36}$/);
-  await expect(page.getByRole("button", { name: "Enregistrer" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Les changements s'enregistrent tout seuls." })).toBeVisible();
+}
+
+/** Enregistrement automatique terminé, puis retour à la liste des écrans. */
+async function savedThenBack(page: Page, displays: string) {
+  await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
+  await page.goto(displays);
 }
 
 test.describe("T1 — publicité sur les écrans TV", () => {
@@ -59,8 +65,7 @@ test.describe("T1 — publicité sur les écrans TV", () => {
     await expectAccessible(staff);
     await editSwitch.click();
     await expect(editSwitch).not.toBeChecked();
-    await staff.getByRole("button", { name: "Enregistrer" }).click();
-    await staff.waitForURL((u) => u.pathname === displays);
+    await savedThenBack(staff, displays);
     expect(await showAds(request, tv)).toBe(false);
 
     // Renommer : la publicité reste désactivée.
@@ -68,8 +73,7 @@ test.describe("T1 — publicité sur les écrans TV", () => {
     await openedCard(staff);
     await expect(staff.getByRole("switch", { name: "Publicité sur cet écran" })).not.toBeChecked();
     await staff.getByLabel("Nom de l'écran").fill("Hall d'accueil");
-    await staff.getByRole("button", { name: "Enregistrer" }).click();
-    await staff.waitForURL((u) => u.pathname === displays);
+    await savedThenBack(staff, displays);
     expect(await showAds(request, tv)).toBe(false);
 
     // Réactiver.
@@ -78,8 +82,7 @@ test.describe("T1 — publicité sur les écrans TV", () => {
     const again = staff.getByRole("switch", { name: "Publicité sur cet écran" });
     await again.click();
     await expect(again).toBeChecked();
-    await staff.getByRole("button", { name: "Enregistrer" }).click();
-    await staff.waitForURL((u) => u.pathname === displays);
+    await savedThenBack(staff, displays);
     expect(await showAds(request, tv)).toBe(true);
     await tvContext.close();
     await staffContext.close();

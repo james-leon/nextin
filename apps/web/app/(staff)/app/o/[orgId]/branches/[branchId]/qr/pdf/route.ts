@@ -63,6 +63,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ orgI
     },
   }) as unknown as React.ReactElement<DocumentProps>;
   const buffer = await renderToBuffer(element);
+  // Démarrage (maquette v2 19) : supports QR téléchargés = étape « Imprimer le QR code » faite. Réservé aux
+  // administrateurs par la base ; un autre rôle obtient quand même son PDF (erreur ignorée).
+  await supabase.rpc("set_onboarding_step", { p_org: orgId, p_step: 4 });
 
   const name = ["nextin", slugify(org.name), slugify(branch.name), serviceName ? slugify(serviceName) : null, format === "a5" ? "chevalet-a5" : "affiche-a4"]
     .filter(Boolean)

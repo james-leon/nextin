@@ -91,3 +91,22 @@ export function summarizeOpeningHours(
   }
   return parts.join(" · ");
 }
+
+/**
+ * État d'ouverture d'une agence à un instant donné, d'après ses horaires (jour ISO 1 = lundi … 7 = dimanche) et son
+ * fuseau : « ouverte jusqu'à 18:00 » ou « fermée ». Les fermetures exceptionnelles ne sont pas connues ici ; la base
+ * reste la référence pour la prise de ticket (`branch_is_open`).
+ */
+export function openingStatus(
+  rows: readonly { weekday: number; opens_at: string; closes_at: string }[],
+  at: Date,
+  timeZone: string,
+): { open: true; until: string } | { open: false } {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(at);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(get("weekday")) + 1;
+  const now = `${get("hour").padStart(2, "0")}:${get("minute").padStart(2, "0")}`;
+  const today = rows.find((r) => r.weekday === weekday);
+  if (today && formatTime(today.opens_at) <= now && now < formatTime(today.closes_at)) return { open: true, until: formatTime(today.closes_at) };
+  return { open: false };
+}

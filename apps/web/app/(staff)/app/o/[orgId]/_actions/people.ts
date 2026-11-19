@@ -21,6 +21,15 @@ function check(...ids: (string | null | undefined)[]) {
   if (ids.some((v) => v != null && !id.safeParse(v).success)) redirect("/app");
 }
 
+/** Modification enregistrée automatiquement (`autosave=1`) : la page reste ouverte ; sinon retour à la liste. */
+function saved(orgId: string, path: string, data: FormData): ActionResult {
+  if (data.get("autosave") === "1") {
+    revalidatePath(`/app/o/${orgId}`, "layout");
+    return { ok: true };
+  }
+  done(orgId, path);
+}
+
 function done(orgId: string, path: string): never {
   revalidatePath(`/app/o/${orgId}`, "layout");
   redirect(`${path}${path.includes("?") ? "&" : "?"}saved=1`);
@@ -41,7 +50,7 @@ export async function createSpecialty(orgId: string, _prev: ActionResult | null,
     const code = mapDbError(error, "name_taken");
     return code === "name_taken" ? { ok: false, error: code, fieldErrors: { name: code } } : { ok: false, error: code };
   }
-  done(orgId, `/app/o/${orgId}/practitioners`);
+  done(orgId, `/app/o/${orgId}/practitioners/specialties`);
 }
 
 export async function deleteSpecialty(orgId: string, specialtyId: string): Promise<ActionResult> {
@@ -52,7 +61,7 @@ export async function deleteSpecialty(orgId: string, specialtyId: string): Promi
     .select("id");
   if (error) return { ok: false, error: mapDbError(error) };
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, `/app/o/${orgId}/practitioners`);
+  done(orgId, `/app/o/${orgId}/practitioners/specialties`);
 }
 
 /* ─── Praticiens ──────────────────────────────────────────────────────────── */
@@ -74,7 +83,7 @@ export async function savePractitioner(
     ? await supabase.from("practitioners").update(row).eq("id", practitionerId).eq("organization_id", orgId)
     : await supabase.from("practitioners").insert({ ...row, organization_id: orgId });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(orgId, `/app/o/${orgId}/practitioners`);
+  return saved(orgId, `/app/o/${orgId}/practitioners`, data);
 }
 
 export async function deletePractitioner(orgId: string, practitionerId: string): Promise<ActionResult> {
@@ -189,7 +198,7 @@ export async function updateMembership(
     .select("id");
   if (error) return { ok: false, error: mapDbError(error) };
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, `/app/o/${orgId}/staff`);
+  return saved(orgId, `/app/o/${orgId}/staff`, data);
 }
 
 export async function setMembershipActive(orgId: string, membershipId: string, active: boolean): Promise<ActionResult> {

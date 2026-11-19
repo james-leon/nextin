@@ -54,13 +54,17 @@ export default async function CountersLayout({
                 segment={c.id}
                 href={`${base}/counters/${c.id}`}
                 icon={
-                  <ListIcon color="var(--brand-tile)">
+                  <ListIcon color="var(--icon-indigo)">
                     <DoorOpen />
                   </ListIcon>
                 }
                 title={<span className="font-semibold">{`${tk(c.kind)} ${c.number}`}</span>}
                 subtitle={[c.label ?? practitioner, prefixes].filter(Boolean).join(" · ") || undefined}
-                accessory={c.active ? "chevron" : <Badge>{ta("inactive")}</Badge>}
+                accessory={
+                  <Badge shape="pill" tone={c.active ? "green" : "neutral"}>
+                    {c.active ? t("statusOn") : t("statusOff")}
+                  </Badge>
+                }
               />
             );
           })}

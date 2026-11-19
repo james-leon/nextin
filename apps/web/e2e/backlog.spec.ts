@@ -28,7 +28,7 @@ async function alignedWithTitle(page: Page, action: import("@playwright/test").L
 test.describe("Backlog — ordinateur : gabarit du personnel", () => {
   test.beforeEach(({}, info) => test.skip(info.project.name !== "desktop", "mise en page ordinateur"));
 
-  test("actions alignées avec le titre, barre latérale sur toute la hauteur, pas de retour en double, établissements en grille", async ({ page }) => {
+  test("actions alignées avec le titre, barre latérale sur toute la hauteur, pas de retour en double, établissements en liste", async ({ page }) => {
     const b = await setUpBranch("Clinique Gabarit");
     await login(page, b.email);
     await expect(page.getByRole("list", { name: "Mes établissements" })).toBeVisible();

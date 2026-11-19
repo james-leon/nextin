@@ -81,11 +81,11 @@ select is(tests.alerts('mfa_disabled'), 'directrice@alerte.test,securite@wintek.
 
 -- ─── Export massif ───────────────────────────────────────────────────────────
 select tests.login_as('5a000000-0000-0000-0000-0000000000a1');
-select public.stats_export(tests.id('org'), null, current_date - 30, current_date, 'services');
+select public.stats_export(tests.id('org'), null, (now() at time zone 'Africa/Douala')::date - 30, (now() at time zone 'Africa/Douala')::date, 'services');
 select tests.logout();
 select is(tests.alerts('mass_export'), '', 'export de 30 jours : pas d''alerte');
 select tests.login_as('5a000000-0000-0000-0000-0000000000a1');
-select public.stats_export(tests.id('org'), null, current_date - 200, current_date, 'services');
+select public.stats_export(tests.id('org'), null, (now() at time zone 'Africa/Douala')::date - 200, (now() at time zone 'Africa/Douala')::date, 'services');
 select tests.logout();
 select is(tests.alerts('mass_export'), 'adjoint@alerte.test,directrice@alerte.test,securite@wintek.test',
   'export de plus de 92 jours : Wintek et les administrateurs');

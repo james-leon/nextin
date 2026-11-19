@@ -10,6 +10,7 @@ import { ExtensionList } from "@/components/billing/extension-list";
 import { PlanPicker } from "@/components/billing/plan-picker";
 import { QuotaPanel } from "@/components/billing/quota-panel";
 import { Badge } from "@/components/ui/badge";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { getOrgContext } from "@/lib/admin/context";
@@ -100,6 +101,19 @@ export default async function BillingPage({
               )}
             </div>
             <p className="text-body text-label-secondary">{statusLine}</p>
+            {/* Maquette v2 06 : progression de l'essai (durée réglée par Wintek, jamais en dur). */}
+            {s?.status === "trialing" && o.settings.trial_days > 0 ? (
+              <div className="flex max-w-md flex-col gap-1.5 pt-1">
+                <ProgressBar
+                  value={Math.min(1, Math.max(0, (o.settings.trial_days - (daysUntil(s.trial_ends_at, now) ?? 0)) / o.settings.trial_days))}
+                  label={t("trialProgress", { day: Math.max(1, o.settings.trial_days - (daysUntil(s.trial_ends_at, now) ?? 0)), total: o.settings.trial_days })}
+                  tone="orange"
+                />
+                <p className="text-footnote text-label-secondary">
+                  {t("trialProgress", { day: Math.max(1, o.settings.trial_days - (daysUntil(s.trial_ends_at, now) ?? 0)), total: o.settings.trial_days })}
+                </p>
+              </div>
+            ) : null}
             {nextPlan && s?.current_period_end ? (
               <p className="text-subheadline text-label-secondary">
                 {t("nextPlan", { plan: planName(nextPlan.code), date: formatDay(s.current_period_end, locale) })}

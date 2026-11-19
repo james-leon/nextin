@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, ChevronsUpDown, CreditCard, LayoutGrid, Megaphone, Settings, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
+import { Building2, ChevronsUpDown, CreditCard, Flag, LayoutGrid, Megaphone, Settings, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { SidebarPanel } from "@/components/shell/sidebar-shell";
 import { Logo } from "@/components/ui/logo";
@@ -36,9 +36,12 @@ export function AdminSidebar({
   orgName,
   orgSummary,
   user,
+  setup,
   canManageOrg,
   isPlatformAdmin,
 }: {
+  /** Progression du démarrage, tant que la mise en place n'est pas terminée. */
+  setup?: { done: number; total: number } | null;
   orgId: string;
   orgName: string;
   /** « 2 agences · Business ». */
@@ -51,8 +54,11 @@ export function AdminSidebar({
   const ts = useTranslations("settings");
   const pathname = usePathname();
   const items = adminNavItems(orgId, canManageOrg);
-  const activeKey =
-    [...items].reverse().find((i) => (i.path ? pathname.startsWith(i.href) : pathname === i.href))?.key ?? "overview";
+  const onSetup = pathname.startsWith(`/app/o/${orgId}/setup`);
+  // Sur « Démarrage », aucune autre rubrique n'est surlignée.
+  const activeKey = onSetup
+    ? null
+    : ([...items].reverse().find((i) => (i.path ? pathname.startsWith(i.href) : pathname === i.href))?.key ?? "overview");
   const organization = items.filter((i) => i.key !== "billing");
   const account = items.filter((i) => i.key === "billing");
 
@@ -97,6 +103,29 @@ export function AdminSidebar({
       </Link>
       <nav aria-label={t("navLabel")} className="flex flex-col gap-4">
         <ul role="list" className="flex flex-col gap-0.5">
+          {setup ? (
+            <li>
+              <Link
+                href={`/app/o/${orgId}/setup`}
+                aria-current={onSetup ? "page" : undefined}
+                className={cn(
+                  rowClass,
+                  onSetup
+                    ? "bg-accent-tint font-semibold text-label"
+                    : "text-label-secondary hover:bg-fill-tertiary hover:text-label",
+                )}
+              >
+                <Flag aria-hidden className="size-5 stroke-[1.75]" />
+                <span className="flex-1">{t("nav.setup")}</span>
+                <span className="rounded-full bg-accent px-2 py-0.5 text-caption font-semibold text-on-accent tabular">
+                  <span className="sr-only">{t("nav.setupProgress", { done: setup.done, total: setup.total })}</span>
+                  <span aria-hidden>
+                    {setup.done}/{setup.total}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ) : null}
           {organization.filter((i) => i.key === "overview").map(link)}
         </ul>
         <div className="flex flex-col gap-1">

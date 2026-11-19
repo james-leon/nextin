@@ -11,6 +11,13 @@ let failed = false;
 
 for (const file of readdirSync(DIR).filter((f) => f.endsWith(".test.sql")).sort()) {
   const sql = readFileSync(join(DIR, file), "utf8");
+  // Date du jour : toujours celle de Douala. `current_date` suit le fuseau de la session (UTC en CI) et donne la
+  // veille entre 23:00 et 24:00 UTC : tests différents selon l'heure du run.
+  if (/\bcurrent_date\b/i.test(sql)) {
+    console.log(`# ${file}\nnot ok - current_date interdit : utiliser (now() at time zone 'Africa/Douala')::date`);
+    failed = true;
+    continue;
+  }
   const r = spawnSync("docker", ["exec", "-i", CONTAINER, "psql", "-U", "postgres", "-X", "-q", "-At", "-v", "ON_ERROR_STOP=1"], {
     input: sql,
     encoding: "utf8",

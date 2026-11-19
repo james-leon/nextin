@@ -7,7 +7,12 @@ import type { ActionResult } from "@/lib/auth/errors";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 
-export type AutoSaveState = { status: "idle" | "saving" | "saved" | "error"; error: string | null };
+export type AutoSaveState = {
+  status: "idle" | "saving" | "saved" | "error";
+  error: string | null;
+  /** Dernière réponse de l'action (erreurs par champ comprises), pour `useFormErrors`. */
+  result: ActionResult | null;
+};
 
 /** Délai après le dernier changement avant l'enregistrement (les « + » successifs partent en une fois). */
 const DELAY_MS = 600;
@@ -27,44 +32,71 @@ export function useAutoSave(
   action: (prev: ActionResult | null, data: FormData) => Promise<ActionResult>,
   enabled = true,
 ): AutoSaveState {
-  const [state, setState] = useState<AutoSaveState>({ status: "idle", error: null });
+  const [state, setState] = useState<AutoSaveState>({ status: "idle", error: null, result: null });
   const sent = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
   const busy = useRef(false);
+  const actionRef = useRef(action);
+  useEffect(() => {
+    actionRef.current = action;
+  }, [action]);
 
+  // Compare l'état du formulaire au dernier envoyé et programme l'envoi (après un rendu ou une saisie au clavier).
+  const check = useRef(() => {});
+  useEffect(() => {
+    check.current = () => {
+      const el = form.current;
+      if (!el || !enabled) return;
+      if (sent.current === null) {
+        sent.current = snapshot(el);
+        return;
+      }
+      if (snapshot(el) === sent.current) return;
+      if (timer.current) window.clearTimeout(timer.current);
+      const run = async () => {
+        if (!form.current) return;
+        if (busy.current) {
+          timer.current = window.setTimeout(run, DELAY_MS);
+          return;
+        }
+        const data = new FormData(form.current);
+        const next = snapshot(form.current);
+        busy.current = true;
+        setState((prev) => ({ status: "saving", error: null, result: prev.result }));
+        try {
+          const result = await actionRef.current(null, data);
+          sent.current = next;
+          setState(result.ok ? { status: "saved", error: null, result } : { status: "error", error: result.error, result });
+        } catch {
+          setState({ status: "error", error: "generic", result: null });
+        } finally {
+          busy.current = false;
+        }
+      };
+      timer.current = window.setTimeout(run, DELAY_MS);
+    };
+  }, [form, enabled]);
+
+  // Après chaque rendu (champs contrôlés, cases, interrupteurs) …
+  useEffect(() => {
+    check.current();
+  });
+  // … à chaque saisie dans un champ non contrôlé, et à chaque changement d'un champ caché.
   useEffect(() => {
     const el = form.current;
     if (!el || !enabled) return;
-    // Premier rendu : l'état initial est déjà en base.
-    if (sent.current === null) {
-      sent.current = snapshot(el);
-      return;
-    }
-    const current = snapshot(el);
-    if (current === sent.current) return;
-    if (timer.current) window.clearTimeout(timer.current);
-    const run = async () => {
-      if (!form.current) return;
-      if (busy.current) {
-        timer.current = window.setTimeout(run, DELAY_MS);
-        return;
-      }
-      const data = new FormData(form.current);
-      const next = snapshot(form.current);
-      busy.current = true;
-      setState({ status: "saving", error: null });
-      try {
-        const result = await action(null, data);
-        sent.current = next;
-        setState(result.ok ? { status: "saved", error: null } : { status: "error", error: result.error });
-      } catch {
-        setState({ status: "error", error: "generic" });
-      } finally {
-        busy.current = false;
-      }
+    const onInput = () => check.current();
+    el.addEventListener("input", onInput);
+    el.addEventListener("change", onInput);
+    // Champs cachés tenus par des sous-composants (interrupteurs, cases) : valeur modifiée, ajoutés ou retirés.
+    const observer = new MutationObserver(onInput);
+    observer.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["value"] });
+    return () => {
+      el.removeEventListener("input", onInput);
+      el.removeEventListener("change", onInput);
+      observer.disconnect();
     };
-    timer.current = window.setTimeout(run, DELAY_MS);
-  });
+  }, [form, enabled]);
 
   useEffect(
     () => () => {

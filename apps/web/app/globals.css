@@ -554,3 +554,23 @@
 html body::before {
   content: none;
 }
+
+/*
+ * Remplissage automatique (Chrome, Edge, Safari) : le navigateur peint son fond bleu ou jaune sur le champ. On le
+ * remplace par la couleur de la cellule (clair et sombre) et on garde la couleur du texte : le fond ne couvre que la
+ * zone de saisie et le libellé d'une cellule groupée reste lisible (il est au-dessus du champ).
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-grouped-secondary) inset;
+  box-shadow: 0 0 0 1000px var(--bg-grouped-secondary) inset;
+  -webkit-text-fill-color: var(--label);
+  caret-color: var(--label);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+input:autofill {
+  box-shadow: 0 0 0 1000px var(--bg-grouped-secondary) inset;
+}

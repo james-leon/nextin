@@ -76,9 +76,20 @@ test.beforeAll(async () => {
       { name: "branches", path: `${root}/branches`, user: "owner", primary: (p) => p.getByRole("link", { name: "Nouvelle agence" }) },
       { name: "branch", path: base, user: "owner", primary: (p) => p.getByRole("link", { name: /Ouvrir les postes/ }) },
       { name: "services", path: `${base}/services`, user: "owner", primary: (p) => p.getByRole("link", { name: "Nouveau service" }) },
-      { name: "service", path: `${base}/services/${b.serviceId}`, user: "owner", primary: (p) => p.getByRole("button", { name: "Enregistrer" }) },
+      // Fiches enregistrées automatiquement (refonte v2, LOT 4) : pas de bouton principal.
+      { name: "service", path: `${base}/services/${b.serviceId}`, user: "owner" },
+      { name: "service-new", path: `${base}/services/new`, user: "owner", primary: (p) => p.getByRole("button", { name: "Créer le service" }) },
       { name: "counters", path: `${base}/counters`, user: "owner", primary: (p) => p.getByRole("link", { name: "Nouveau guichet ou cabinet" }) },
-      { name: "counter", path: `${base}/counters/${b.counterId}`, user: "owner", primary: (p) => p.getByRole("button", { name: "Enregistrer" }) },
+      { name: "counter", path: `${base}/counters/${b.counterId}`, user: "owner" },
+      { name: "counter-new", path: `${base}/counters/new`, user: "owner", primary: (p) => p.getByRole("button", { name: "Créer le poste" }) },
+      { name: "setup", path: `${root}/setup`, user: "owner" },
+      { name: "branch-new", path: `${root}/branches/new`, user: "owner", primary: (p) => p.getByRole("button", { name: "Créer l'agence" }) },
+      { name: "branch-edit", path: `${base}/edit`, user: "owner" },
+      { name: "hours", path: `${base}/hours`, user: "owner" },
+      { name: "qr", path: `${base}/qr`, user: "owner" },
+      { name: "announcements", path: `${base}/displays/announcements`, user: "owner" },
+      { name: "specialties", path: `${root}/practitioners/specialties`, user: "owner" },
+      { name: "staff-invite", path: `${root}/staff/invite`, user: "owner", primary: (p) => p.getByRole("button", { name: "Créer l'invitation" }) },
       { name: "practitioners", path: `${root}/practitioners`, user: "owner", primary: (p) => p.getByRole("link", { name: "Nouveau praticien" }) },
       { name: "staff", path: `${root}/staff`, user: "owner", primary: (p) => p.getByRole("link", { name: "Inviter un membre" }) },
       { name: "displays", path: `${base}/displays`, user: "owner" },
@@ -371,24 +382,28 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
     const box = (await invite.boundingBox())!;
     expect(box.y).toBeLessThan(title.y + title.height);
     expect(box.y + box.height).toBeGreaterThan(title.y);
-    // Le formulaire d'un service s'enregistre depuis la barre de titre.
-    const service = fixture.screens.find((s) => s.name === "service")!;
-    await visit(desktop.page, service.path);
-    await desktop.page.getByRole("button", { name: "Enregistrer" }).filter({ visible: true }).click();
-    await desktop.page.waitForURL(/\/services\?saved=1$/);
-    await expect(desktop.page.getByText("Modifications enregistrées").first()).toBeVisible();
+    // La création d'un service se valide depuis la barre de titre (la fiche, elle, s'enregistre automatiquement).
+    const serviceNew = fixture.screens.find((s) => s.name === "service-new")!;
+    await visit(desktop.page, serviceNew.path);
+    const create = desktop.page.getByRole("button", { name: "Créer le service" }).filter({ visible: true });
+    await expect(create).toHaveCount(1);
+    const newTitle = (await desktop.page.getByRole("heading", { level: 1, name: "Nouveau service" }).boundingBox())!;
+    const createBox = (await create.boundingBox())!;
+    expect(createBox.y).toBeLessThan(newTitle.y + newTitle.height);
+    expect(createBox.y + createBox.height).toBeGreaterThan(newTitle.y);
     await desktop.context.close();
 
     const tablet = await open(browser, TABLET_PORTRAIT, "owner");
-    await visit(tablet.page, staff.path);
+    await visit(tablet.page, serviceNew.path);
     const bar = tablet.page.locator(".safe-bottom").filter({ visible: true }).first();
-    const content = (await tablet.page.getByRole("heading", { level: 1 }).boundingBox())!;
-    const barBox = (await bar.locator("a").boundingBox())!;
+    const content = (await tablet.page.getByRole("heading", { level: 1, name: "Nouveau service" }).boundingBox())!;
+    const barBox = (await bar.getByRole("button", { name: "Créer le service" }).boundingBox())!;
     expect(Math.abs(barBox.x - content.x)).toBeLessThanOrEqual(2);
     await tablet.context.close();
   });
 
   test("téléphone : retour jamais tronqué, sous-titres sur deux lignes au plus, segmented control sur une ligne", async ({ browser }) => {
+    test.setTimeout(240_000);
     const { context, page } = await open(browser, PHONE_360, "owner");
     for (const screen of fixture.screens.filter((s) => s.user === "owner")) {
       await visit(page, screen.path);

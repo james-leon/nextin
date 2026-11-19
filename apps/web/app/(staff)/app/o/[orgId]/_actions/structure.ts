@@ -33,6 +33,18 @@ async function scope(orgId: string, branchId?: string) {
   return supabase;
 }
 
+/**
+ * Fin d'une modification : enregistrement automatique (champ caché `autosave=1`, fiches et réglages) → la page reste
+ * ouverte et reçoit `{ ok: true }` ; sinon (création), retour à la liste avec « Enregistré ».
+ */
+function saved(orgId: string, path: string, data: FormData): ActionResult {
+  if (data.get("autosave") === "1") {
+    revalidatePath(`/app/o/${orgId}`, "layout");
+    return { ok: true };
+  }
+  done(orgId, path);
+}
+
 function done(orgId: string, path: string): never {
   revalidatePath(`/app/o/${orgId}`, "layout");
   redirect(`${path}${path.includes("?") ? "&" : "?"}saved=1`);
@@ -81,7 +93,7 @@ export async function updateBranch(orgId: string, branchId: string, _prev: Actio
     } as never);
     if (locError) return { ok: false, error: mapDbError(locError) };
   }
-  done(orgId, base(orgId, branchId));
+  return saved(orgId, base(orgId, branchId), data);
 }
 
 /* ─── Services ────────────────────────────────────────────────────────────── */
@@ -126,7 +138,7 @@ export async function saveService(
       : { ok: false, error: code };
   }
   if (!affected?.length) return { ok: false, error: "not_allowed" };
-  done(orgId, `${base(orgId, branchId)}/services`);
+  return saved(orgId, `${base(orgId, branchId)}/services`, data);
 }
 
 export async function deleteService(orgId: string, branchId: string, serviceId: string): Promise<ActionResult> {
@@ -187,7 +199,7 @@ export async function saveCounter(
       .insert(v.serviceIds.map((service_id) => ({ organization_id: orgId, counter_id: id!, service_id })));
     if (insError) return { ok: false, error: mapDbError(insError) };
   }
-  done(orgId, `${base(orgId, branchId)}/counters`);
+  return saved(orgId, `${base(orgId, branchId)}/counters`, data);
 }
 
 function failCounter(error: { code?: string; message?: string }): ActionResult {
@@ -221,7 +233,8 @@ export async function saveOpeningHours(orgId: string, branchId: string, _prev: A
       const day = days[Number(issue.path[0])]?.weekday;
       if (day) fieldErrors[`day-${day}`] = issue.message === "hours_order" ? "hours_order" : "time_invalid";
     }
-    return { ok: false, error: "generic", fieldErrors };
+    // Enregistrement automatique : la raison (« fermeture avant l'ouverture »…) s'affiche aussi dans l'état.
+    return { ok: false, error: Object.values(fieldErrors)[0] ?? "generic", fieldErrors };
   }
   const open = parsed.data.filter((d) => d.open);
   const closed = parsed.data.filter((d) => !d.open).map((d) => d.weekday);
@@ -236,7 +249,7 @@ export async function saveOpeningHours(orgId: string, branchId: string, _prev: A
     );
     if (error) return { ok: false, error: mapDbError(error) };
   }
-  done(orgId, base(orgId, branchId));
+  return saved(orgId, base(orgId, branchId), data);
 }
 
 export async function saveBranchSettings(orgId: string, branchId: string, _prev: ActionResult | null, data: FormData): Promise<ActionResult> {

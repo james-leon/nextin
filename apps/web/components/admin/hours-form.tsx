@@ -1,46 +1,40 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ActionResult } from "@/lib/auth/errors";
-import { FormError } from "@/components/auth/form-error";
-import { BottomBar } from "@/components/ui/bottom-bar";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { AutoSaveStatus, useAutoSave } from "./use-auto-save";
 import { useFormErrors } from "./use-form-errors";
 
 type Day = { weekday: number; open: boolean; opensAt: string; closesAt: string };
 
+/**
+ * Horaires d'ouverture (maquette v2 17) : une ligne par jour, heures d'ouverture et de fermeture en pastilles, un
+ * interrupteur pour ouvrir ou fermer le jour. Enregistrement automatique.
+ */
 export function HoursForm({ action, initial, disabled }: { action: (p: ActionResult | null, d: FormData) => Promise<ActionResult>; initial: Day[]; disabled?: boolean }) {
   const t = useTranslations("hours");
   const tw = useTranslations("weekdays");
-  const ta = useTranslations("admin");
-  const [state, formAction, pending] = useActionState(action, null);
-  const { field, top } = useFormErrors(state);
   const [days, setDays] = useState(initial);
+  const formRef = useRef<HTMLFormElement>(null);
+  const saveState = useAutoSave(formRef, action, !disabled);
+  const { field } = useFormErrors(saveState.result);
   const set = (weekday: number, patch: Partial<Day>) => setDays((all) => all.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)));
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-5">
-      <FormError message={top} />
+    <form ref={formRef} onSubmit={(e) => e.preventDefault()} noValidate className="flex flex-col gap-3">
+      <input type="hidden" name="autosave" value="1" />
       <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
         {days.map((d) => {
           const name = tw(String(d.weekday) as "1");
           const error = field(`day-${d.weekday}`);
           return (
             <li key={d.weekday} className="group/row pl-4">
-              <div className="list-separator flex flex-wrap items-center gap-x-4 gap-y-1 py-1.5 pr-4">
-                <span id={`day-${d.weekday}`} className="w-24 text-body">
+              <div className="list-separator flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 pr-4">
+                <span id={`day-${d.weekday}`} className="min-w-20 flex-1 text-body">
                   {name}
                 </span>
-                <Switch
-                  name={`open-${d.weekday}`}
-                  value="on"
-                  checked={d.open}
-                  onCheckedChange={(open) => set(d.weekday, { open })}
-                  aria-label={t("openDay", { day: name })}
-                  disabled={disabled}
-                />
                 {d.open ? (
                   <span className="flex items-center gap-2">
                     <input
@@ -51,9 +45,8 @@ export function HoursForm({ action, initial, disabled }: { action: (p: ActionRes
                       aria-label={`${name} — ${t("opens")}`}
                       aria-invalid={error ? true : undefined}
                       disabled={disabled}
-                      className="h-11 rounded-[8px] bg-fill-tertiary px-2 text-body tabular"
+                      className="h-11 rounded-[8px] bg-fill-tertiary px-2 text-callout tabular"
                     />
-                    <span aria-hidden className="text-label-secondary">–</span>
                     <input
                       type="time"
                       name={`closes-${d.weekday}`}
@@ -62,12 +55,20 @@ export function HoursForm({ action, initial, disabled }: { action: (p: ActionRes
                       aria-label={`${name} — ${t("closes")}`}
                       aria-invalid={error ? true : undefined}
                       disabled={disabled}
-                      className="h-11 rounded-[8px] bg-fill-tertiary px-2 text-body tabular"
+                      className="h-11 rounded-[8px] bg-fill-tertiary px-2 text-callout tabular"
                     />
                   </span>
                 ) : (
                   <span className="text-body text-label-secondary">{t("closed")}</span>
                 )}
+                <Switch
+                  name={`open-${d.weekday}`}
+                  value="on"
+                  checked={d.open}
+                  onCheckedChange={(open) => set(d.weekday, { open })}
+                  aria-label={t("openDay", { day: name })}
+                  disabled={disabled}
+                />
                 {error ? (
                   <p role="alert" className="w-full text-footnote text-red-text">
                     {error}
@@ -78,13 +79,7 @@ export function HoursForm({ action, initial, disabled }: { action: (p: ActionRes
           );
         })}
       </ul>
-      {disabled ? null : (
-        <BottomBar>
-          <Button type="submit" block loading={pending} loadingLabel={ta("saving")}>
-            {ta("save")}
-          </Button>
-        </BottomBar>
-      )}
+      {disabled ? null : <AutoSaveStatus state={saveState} className="justify-center" />}
     </form>
   );
 }

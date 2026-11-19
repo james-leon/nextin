@@ -7,7 +7,8 @@ test.describe("M2 — structure de l'établissement", () => {
     const root = await createOrgViaUi(page, { orgName: "Clinique M2", email: uniqueEmail("m2") });
     await page.goto(root);
     await expect(page.getByRole("heading", { level: 1, name: "Vue d'ensemble" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Créer une agence/ })).toContainText("À faire");
+    // Démarrage (maquette v2 19) : la première étape à faire porte le seul bouton « Commencer ».
+    await expect(page.getByRole("link", { name: "Commencer · Créer une agence" })).toBeVisible();
 
     const branch = await createBranchViaUi(page, root, "Akwa");
     await expect(page.getByRole("heading", { level: 1, name: "Akwa" })).toBeVisible();
@@ -24,7 +25,7 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByRole("radio", { name: "15 min" }).click();
     await expectAccessible(page);
     await expectTouchTargets(page);
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await page.waitForURL(/\/services\?saved=1$/);
     await expect(page.getByText("Consultation générale")).toBeVisible();
     await expect(page.getByText("C-001 · 15 min")).toBeVisible();
@@ -34,10 +35,10 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByLabel("Nom du service", { exact: true }).fill("Caisse");
     await expect(page.getByLabel("Lettre du ticket")).toHaveValue("A");
     await page.getByLabel("Lettre du ticket").fill("C");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await expect(page.getByText("Cette lettre est déjà utilisée par un autre service de l'agence.")).toBeVisible();
     await page.getByLabel("Lettre du ticket").fill("K");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await page.waitForURL(/\/services\?saved=1$/);
     await expect(page.getByText("K-001 · 10 min")).toBeVisible();
 
@@ -47,7 +48,7 @@ test.describe("M2 — structure de l'établissement", () => {
     await expect(page.getByLabel("Numéro")).toHaveValue("1");
     await page.getByRole("checkbox", { name: /Consultation générale/ }).click();
     await expect(page.getByRole("checkbox", { name: /Consultation générale/ })).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le poste" }).click();
     await page.waitForURL(/\/counters\?saved=1$/);
     await expect(page.getByRole("link", { name: /Cabinet 1/ })).toContainText("C");
 
@@ -55,20 +56,20 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.goto(`${branch}/counters/new`);
     await page.getByRole("radio", { name: "Cabinet" }).click();
     await page.getByLabel("Numéro").fill("1");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le poste" }).click();
     await expect(page.getByText("Ce numéro existe déjà pour ce type dans l'agence.")).toBeVisible();
 
     // Horaires : fermeture avant ouverture refusée ; dimanche ouvert le matin.
     await page.goto(`${branch}/hours`);
+    // Enregistrement automatique (refonte v2) : la raison d'un refus s'affiche sous le jour et dans l'état.
     await page.getByLabel("Lundi — Fermeture").fill("06:00");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await expect(page.getByText("La fermeture doit suivre l'ouverture.")).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "La fermeture doit suivre l'ouverture." })).toBeVisible();
     await page.getByLabel("Lundi — Fermeture").fill("17:00");
     await page.getByRole("switch", { name: "Ouvert le Dimanche" }).click();
     await page.getByLabel("Dimanche — Ouverture").fill("09:00");
     await page.getByLabel("Dimanche — Fermeture").fill("12:00");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\?saved=1$/);
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
+    await page.goto(branch);
     await expect(page.getByText("Lun–Ven 07:30–17:00 · Sam 08:00–12:00 · Dim 09:00–12:00")).toBeVisible();
 
     // Réglages : ticket à distance désactivé par défaut, activable.
@@ -107,10 +108,11 @@ test.describe("M2 — structure de l'établissement", () => {
   test("spécialités et praticiens", async ({ page }) => {
     const root = await createOrgViaUi(page, { orgName: "Clinique Praticiens", email: uniqueEmail("prat") });
     await createBranchViaUi(page, root, "Bonapriso");
-    await page.goto(`${root}/practitioners`);
+    // Spécialités : page à part (maquette v2 18).
+    await page.goto(`${root}/practitioners/specialties`);
     await page.getByLabel("Nom de la spécialité").fill("Pédiatrie");
     await page.getByRole("button", { name: "Ajouter" }).click();
-    await page.waitForURL(/\?saved=1$/);
+    await page.waitForURL(/\/specialties\?saved=1$/);
     await page.getByLabel("Nom de la spécialité").fill("pédiatrie");
     await page.getByRole("button", { name: "Ajouter" }).click();
     await expect(page.getByText("Ce nom existe déjà.")).toBeVisible();
@@ -122,17 +124,19 @@ test.describe("M2 — structure de l'établissement", () => {
     await page.getByLabel("Spécialité", { exact: true }).selectOption({ label: "Pédiatrie" });
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await page.waitForURL(/\/practitioners\?saved=1$/);
-    await expect(page.getByRole("link", { name: /Dr Aline Ngo/ })).toContainText("Pédiatrie · Bonapriso");
+    // Liste regroupée par spécialité (maquette v2 18) : la spécialité en en-tête, l'agence sous le nom.
+    const group = page.locator("section").filter({ has: page.getByRole("heading", { name: "Pédiatrie" }) });
+    await expect(group.getByRole("link", { name: /Dr Aline Ngo/ })).toContainText("Bonapriso");
     await expectAccessible(page);
   });
 
-  test("invitation d'un membre, adhésion, accès en lecture seule et gestion des droits", async ({ page, browser }, info) => {
+  test("invitation d'un membre, adhésion, accès en lecture seule et gestion des droits", async ({ page, browser }) => {
     const adminEmail = uniqueEmail("dir");
     const root = await createOrgViaUi(page, { orgName: "Clinique Équipe", email: adminEmail });
     const branch = await createBranchViaUi(page, root, "Deïdo");
     await page.goto(`${branch}/services/new`);
     await page.getByLabel("Nom du service", { exact: true }).fill("Consultation");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Créer le service" }).click();
     await page.waitForURL(/\/services\?saved=1$/);
 
     await page.goto(`${root}/staff/invite`);
@@ -149,7 +153,9 @@ test.describe("M2 — structure de l'établissement", () => {
     const link = (await page.locator("p[title]").getAttribute("title"))!;
     expect(link).toMatch(/\/invite\/[A-Za-z0-9_-]+$/);
     await page.getByRole("link", { name: "Terminé" }).click();
-    await expect(page.getByText(memberEmail)).toBeVisible();
+    await page.waitForURL(/\/staff$/);
+    // Invitation en attente, dans la liste du personnel (maquette v2 18).
+    await expect(page.getByText(memberEmail, { exact: true })).toBeVisible();
 
     // Le membre rejoint l'équipe.
     const ctx = await browser.newContext();
@@ -175,19 +181,16 @@ test.describe("M2 — structure de l'établissement", () => {
     // L'administratrice change le rôle puis désactive l'accès.
     await page.goto(`${root}/staff`);
     await page.getByRole("link", { name: /Mireille Accueil/ }).click();
-    await page.getByRole("radio", { name: "Agent / praticien" }).click();
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/staff\?saved=1$/);
-    // Ordinateur : tableau (rôle et agence en colonnes) ; téléphone : liste.
-    const memberRow = info.project.name === "desktop" ? page.getByRole("row", { name: /Mireille Accueil/ }) : page.getByRole("link", { name: /Mireille Accueil/ });
-    await expect(memberRow).toContainText(info.project.name === "desktop" ? /Agent \/ praticien.*Deïdo/ : /Agent \/ praticien · Deïdo/);
+    await page.getByRole("radio", { name: /Agent \/ praticien/ }).click();
+    // Enregistrement automatique (maquette v2 18) ; la liste du personnel reste à côté sur ordinateur.
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
+    await page.goto(`${root}/staff`);
+    await expect(page.getByRole("link", { name: /Mireille Accueil/ })).toContainText(/Agent \/ praticien · Deïdo/);
     await page.getByRole("link", { name: /Mireille Accueil/ }).click();
     await page.getByRole("button", { name: "Désactiver l'accès" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Désactiver l'accès" }).click();
     await page.waitForURL(/\/staff\?saved=1$/);
-    await expect(
-      (info.project.name === "desktop" ? page.getByRole("row") : page.getByRole("listitem")).filter({ hasText: "Mireille Accueil" }),
-    ).toContainText("Accès désactivé");
+    await expect(page.getByRole("listitem").filter({ hasText: "Mireille Accueil" })).toContainText("Accès désactivé");
   });
 
   test("PDF protégés : connexion exigée et isolation entre établissements", async ({ page, browser, request }) => {

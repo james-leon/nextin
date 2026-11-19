@@ -127,9 +127,10 @@ test.describe("M6 — écran TV", () => {
     await page.getByLabel("De", { exact: true }).fill("12:00");
     await page.getByLabel("À", { exact: true }).fill("14:00");
     await expectAccessible(page);
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/displays\?saved=1$/);
-    const { data } = await b.staff.from("announcement_settings").select("languages, repeat_count, quiet_hours").single();
-    expect(data).toEqual({ languages: ["fr", "en"], repeat_count: 2, quiet_hours: [{ from: "12:00", to: "14:00" }] });
+    // Enregistrement automatique (maquette v2 19).
+    await expect(page.getByRole("status").filter({ hasText: "Enregistré automatiquement" })).toBeVisible();
+    await expect
+      .poll(async () => (await b.staff.from("announcement_settings").select("languages, repeat_count, quiet_hours").single()).data)
+      .toEqual({ languages: ["fr", "en"], repeat_count: 2, quiet_hours: [{ from: "12:00", to: "14:00" }] });
   });
 });

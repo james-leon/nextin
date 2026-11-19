@@ -49,7 +49,7 @@ declare v_id uuid;
 begin
   perform tests.login_as('ab000000-0000-0000-0000-0000000000a1');
   v_id := public.save_campaign(null, tests.id('adv'), null, jsonb_build_object('name', p_name, 'package_code', p_package, 'sector', p_sector,
-    'starts_on', current_date, 'surfaces', to_jsonb(p_surfaces), 'target_cities', to_jsonb(p_cities), 'target_org_types', to_jsonb(p_types)));
+    'starts_on', (now() at time zone 'Africa/Douala')::date, 'surfaces', to_jsonb(p_surfaces), 'target_cities', to_jsonb(p_cities), 'target_org_types', to_jsonb(p_types)));
   perform public.save_creative(v_id, null, jsonb_build_object('storage_path', tests.id('adv') || '/' || v_id || '/visuel.png',
     'headline', p_name || ' — offre', 'offer_text', '-10 %'));
   perform tests.logout();
@@ -122,11 +122,11 @@ insert into ids select 'adv2', public.create_advertiser('Autre Annonceur', 'reta
 select is((select count(*)::integer from public.advertisers), 1, 'un annonceur ne voit que son compte');
 select tests.login_as('ab000000-0000-0000-0000-0000000000a1');
 select throws_ok(format($$ select public.save_campaign(null, %L, null, '{"name":"X","package_code":"maison","sector":"food","starts_on":"%s","surfaces":["tv"]}') $$,
-  tests.id('adv'), current_date), 'P0409', 'invalid_state', 'formule Maison réservée aux établissements');
+  tests.id('adv'), (now() at time zone 'Africa/Douala')::date), 'P0409', 'invalid_state', 'formule Maison réservée aux établissements');
 select throws_ok(format($$ select public.save_campaign(null, %L, null, '{"name":"X","package_code":"bronze","sector":"food","starts_on":"%s","surfaces":["tv","app"]}') $$,
-  tests.id('adv'), current_date), 'P0422', 'surface_not_in_package', 'surface hors formule refusée (Bronze : TV seulement)');
+  tests.id('adv'), (now() at time zone 'Africa/Douala')::date), 'P0422', 'surface_not_in_package', 'surface hors formule refusée (Bronze : TV seulement)');
 select throws_ok(format($$ select public.save_campaign(null, %L, null, '{"name":"X","package_code":"bronze","sector":"food","starts_on":"%s","surfaces":["tv"]}') $$,
-  tests.id('adv'), current_date - 1), 'P0409', 'invalid_state', 'début dans le passé refusé');
+  tests.id('adv'), (now() at time zone 'Africa/Douala')::date - 1), 'P0409', 'invalid_state', 'début dans le passé refusé');
 select tests.logout();
 
 select tests.campaign('Pain', 'bronze', 'food', '{tv}', '{douala}');
@@ -163,11 +163,11 @@ select lives_ok(format($$ select public.save_quiz(%L, '{"title":"Santé","reward
 select throws_ok(format($$ select public.save_game_skin(%L, '{"plane_primary":"#0D2C54","plane_secondary":"#F58B1F","end_title":"Bravo","reward_text":"Bon"}') $$,
   tests.id('Pharma')), 'P0403', 'feature_unavailable', 'habillage de Sky Catch réservé à la formule Or');
 select lives_ok(format($$ select public.save_campaign(%L, null, null, jsonb_build_object('name', 'Pharma', 'package_code', 'argent', 'sector', 'pharmacy',
-  'starts_on', current_date, 'surfaces', '["tv","app","game"]'::jsonb, 'health_visa_number', 'MINSANTE-2026-0042',
+  'starts_on', (now() at time zone 'Africa/Douala')::date, 'surfaces', '["tv","app","game"]'::jsonb, 'health_visa_number', 'MINSANTE-2026-0042',
   'health_visa_document_path', %L)) $$, tests.id('Pharma'), tests.id('adv') || '/' || tests.id('Pharma') || '/visa.pdf'), 'visa et justificatif ajoutés');
 select is(public.submit_campaign(tests.id('Pharma'))::text, 'pending_review', 'soumise à la modération');
 select throws_ok(format($$ select public.save_campaign(%L, null, null, '{"name":"Modifiée","package_code":"argent","sector":"pharmacy","starts_on":"%s","surfaces":["tv"]}') $$,
-  tests.id('Pharma'), current_date), 'P0409', 'invalid_state', 'campagne en revue : plus modifiable');
+  tests.id('Pharma'), (now() at time zone 'Africa/Douala')::date), 'P0409', 'invalid_state', 'campagne en revue : plus modifiable');
 select throws_ok(format($$ select public.review_campaign(%L, true, null) $$, tests.id('Pharma')), '42501', 'not_allowed', 'modération réservée au super admin');
 select tests.logout();
 -- Justificatif retiré entre-temps : l'approbation refuse (contrôle serveur, pas seulement l'interface).
@@ -236,7 +236,7 @@ select tests.logout();
 select tests.submit_and_approve('Gold');
 select tests.login_as('ab000000-0000-0000-0000-0000000000c1');
 insert into ids select 'House', public.save_campaign(null, null, tests.id('clinic'), jsonb_build_object('name', 'Nos vaccins', 'package_code', 'maison',
-  'sector', 'health', 'starts_on', current_date, 'surfaces', '["tv","app"]'::jsonb));
+  'sector', 'health', 'starts_on', (now() at time zone 'Africa/Douala')::date, 'surfaces', '["tv","app"]'::jsonb));
 select public.save_creative(tests.id('House'), null, jsonb_build_object('storage_path', 'org-' || tests.id('clinic') || '/' || tests.id('House') || '/vaccins.png',
   'headline', 'Vaccination sans rendez-vous'));
 select is(public.submit_campaign(tests.id('House'))::text, 'active', 'annonce Maison : diffusée sans modération');
@@ -266,7 +266,7 @@ select tests.logout();
 insert into public.ad_schedules (campaign_id, weekday, start_time, end_time) values (tests.id('Pain'), 1, '08:00', '09:00');
 select is((select count(*)::integer from public.ad_candidates(tests.id('akwa'), 'tv', '2026-11-03 12:00+01') where campaign_id = tests.id('Pain')), 0,
   'plage horaire : hors créneau, pas de diffusion');
-select is((select count(*)::integer from public.ad_candidates(tests.id('akwa'), 'tv', ((current_date + (8 - extract(isodow from current_date))::integer % 7)::timestamp + time '08:30') at time zone 'Africa/Douala')
+select is((select count(*)::integer from public.ad_candidates(tests.id('akwa'), 'tv', (((now() at time zone 'Africa/Douala')::date + (8 - extract(isodow from (now() at time zone 'Africa/Douala')::date))::integer % 7)::timestamp + time '08:30') at time zone 'Africa/Douala')
   where campaign_id = tests.id('Pain')), 1, 'plage horaire : lundi 8 h 30, diffusée');
 delete from public.ad_schedules where campaign_id = tests.id('Pain');
 

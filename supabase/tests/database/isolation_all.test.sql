@@ -104,7 +104,7 @@ select tests.logout();
 delete from public.opening_hours where branch_id = tests.id('branch_a');
 insert into public.opening_hours (organization_id, branch_id, weekday, opens_at, closes_at)
 select tests.id('org_a'), tests.id('branch_a'), d, '00:00', '23:59:59' from generate_series(1, 7) d;
-insert into public.branch_closures (organization_id, branch_id, date) values (tests.id('org_a'), tests.id('branch_a'), current_date + 30);
+insert into public.branch_closures (organization_id, branch_id, date) values (tests.id('org_a'), tests.id('branch_a'), (now() at time zone 'Africa/Douala')::date + 30);
 select tests.login_as('15000000-0000-0000-0000-0000000000a1');
 select public.open_counter(tests.id('cab_a'));
 -- Ticket avec nom, numéro WhatsApp (consentement) : identité, contact, travaux de notification, événements.

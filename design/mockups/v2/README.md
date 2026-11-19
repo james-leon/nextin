@@ -20,3 +20,14 @@ Ouvrir chaque fichier dans un navigateur. Les jeux (10, 11, 12) sont jouables.
 | 13-nextin-aide-confidentialite-v2 | Aide (contact + FAQ) et politique de confidentialité |
 | 14-nextin-affiche-v2 | Affiche A4 QR code de l'accueil |
 | 15-nextin-facture-v2 | Facture A4 |
+| 16-nextin-etablissements-v2 | Mes établissements : un, plusieurs, aucun (téléphone et ordinateur) |
+| 17-nextin-agences-services-v2 | Agences et services : liste et fiche d'agence, services, guichets et cabinets, nouvelle agence, informations et photo, horaires, QR code et supports, nouveau service, aucune agence |
+| 18-nextin-personnel-praticiens-v2 | Personnel (membres et invitations, accès du membre, inviter, invitation envoyée), praticiens, horaires et congés, plages, spécialités |
+| 19-nextin-demarrage-ecrans-v2 | Démarrage en étapes, « Tout est prêt », écrans de la salle d'attente, appairage, réglages d'un écran, annonces vocales, révocation, aucun écran |
+| 20-nextin-postes-complements-v2 | Postes : agenda de l'accueil, demandes de rendez-vous, hors ligne, raccourcis, mode compact, choix du poste, nouveau ticket, actions sur un ticket, priorité, nom, transfert, absence, demande d'aide |
+| 21-nextin-patient-complements-v2 | Patient : états du ticket, aide demandée, annulation, paiement Mobile Money, bon de réduction, CGU, pages d'erreur, connexion lente |
+| 22-nextin-compte-complements-v2 | Compte : nouveau mot de passe, activer et désactiver la double authentification, action sensible, session fermée, invitation expirée |
+| 23-nextin-tv-complements-v2 | Écran TV : appairage, activer le son, aucun appel, sans publicité, hors ligne, service indisponible, écran révoqué |
+| 24-nextin-annonceur-v2 | Espace annonceur : campagnes, nouvelle campagne (ciblage, visuels, quiz, récapitulatif), statut, valider un bon, caissiers, publicité de l'établissement |
+| 25-nextin-console-wintek-v2 | Console Wintek : vue d'ensemble, abonnements, fiche, formules et extensions, modération, nouvel établissement, réglages, paiement manuel |
+| 26-nextin-emails-v2 | E-mails : code, invitation, alerte de sécurité, rendez-vous, abonnement (paiement, échéance, impayé, quota) |

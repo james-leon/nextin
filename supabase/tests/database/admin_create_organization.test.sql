@@ -68,7 +68,7 @@ select ok((tests.v('r') ->> 'token') ~ '^[A-Za-z0-9_-]{32}$', 'jeton d''invitati
 select is((select status::text from public.organizations where id = (tests.v('r') ->> 'organization_id')::uuid), 'active', 'établissement actif');
 select is((select count(*)::integer from public.memberships where organization_id = (tests.v('r') ->> 'organization_id')::uuid), 0,
   'le super admin n''en devient pas membre');
-select is((select status::text || ':' || (trial_ends_at::date - current_date) || ':' || billing_email from public.subscriptions
+select is((select status::text || ':' || ((trial_ends_at at time zone 'Africa/Douala')::date - (now() at time zone 'Africa/Douala')::date) || ':' || billing_email from public.subscriptions
   where organization_id = (tests.v('r') ->> 'organization_id')::uuid), 'trialing:45:responsable@console.test', 'essai de 45 jours sur la formule choisie');
 select is((select p.code from public.subscriptions s join public.plans p on p.id = s.plan_id
   where s.organization_id = (tests.v('r') ->> 'organization_id')::uuid), 'business', 'formule choisie');

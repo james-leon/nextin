@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { MailCheck, MessageCircle, UserPlus } from "lucide-react";
+import { Check, MailCheck, MessageCircle, UserPlus } from "lucide-react";
 import { MEMBER_ROLES, canAssignRole, type MemberRole } from "@nextin/shared";
 import type { ActionResult } from "@/lib/auth/errors";
 import { FormError } from "@/components/auth/form-error";
@@ -11,7 +11,7 @@ import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
 import { ListRow, ListSection } from "@/components/ui/list";
 import { SelectField } from "@/components/ui/select-field";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import { CopyButton } from "./copy-button";
 import { useFormErrors } from "./use-form-errors";
 
@@ -42,33 +42,40 @@ export function InviteForm({
 
   if (state?.ok && state.link) {
     const text = t("whatsappText", { org: orgName, url: state.link });
+    // Maquette v2 18 : confirmation centrée, puis le lien de secours (copier, WhatsApp) si l'e-mail n'arrive pas.
     return (
-      <div className="flex flex-col gap-5" role="status">
-        <section className="squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
-          {state.mailSent ? (
-            <span className="squircle flex size-12 items-center justify-center rounded-[14px] bg-green-tint text-green-text">
-              <MailCheck aria-hidden className="size-6 stroke-[1.75]" />
-            </span>
-          ) : null}
-          <h2 className="text-title3 font-semibold">{state.mailSent ? t("sentTitle") : t("createdTitle")}</h2>
-          <p className="text-body text-label-secondary">
+      <div className="flex flex-col gap-6" role="status">
+        <div className="flex flex-col items-center gap-3 pt-2 text-center">
+          <span
+            aria-hidden
+            className={`flex size-16 items-center justify-center rounded-full text-on-accent ${state.mailSent ? "bg-green" : "bg-accent"}`}
+          >
+            {state.mailSent ? <Check className="size-8 stroke-[2.5]" /> : <MailCheck className="size-8 stroke-[1.75]" />}
+          </span>
+          <h2 className="text-title2 font-bold text-balance">{state.mailSent ? t("sentTitle") : t("createdTitle")}</h2>
+          <p className="max-w-md text-body text-label-secondary">
             {state.mailSent ? t("sentBody", { email: state.email ?? "" }) : t("mailFailed", { email: state.email ?? "" })}
           </p>
-          {state.mailSent ? <p className="text-subheadline text-label-secondary">{t("fallbackHint")}</p> : null}
-          <p className="truncate rounded-[10px] bg-grouped-tertiary px-3 py-2.5 text-subheadline" title={state.link}>
-            {state.link}
-          </p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Button asChild variant={state.mailSent ? "tinted" : "filled"} block>
+        </div>
+        <ListSection header={t("fallbackHeader")} footer={state.mailSent ? t("fallbackHint") : undefined}>
+          <li className="px-4 py-3">
+            <p className="truncate rounded-[8px] bg-fill-tertiary px-3 py-2 font-mono text-footnote text-label-secondary" title={state.link}>
+              {state.link}
+            </p>
+          </li>
+          <li className="group/row px-2 py-1">
+            <CopyButton value={state.link} label={t("copyLink")} copiedLabel={t("copied")} variant="plain" />
+          </li>
+          <li className="group/row px-2 py-1">
+            <Button asChild variant="plain">
               <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
-                <MessageCircle aria-hidden className="size-5" />
+                <MessageCircle aria-hidden className="size-5 text-green-text" />
                 {t("shareWhatsapp")}
               </a>
             </Button>
-            <CopyButton value={state.link} label={t("copyLink")} copiedLabel={t("copied")} size="lg" block />
-          </div>
-        </section>
-        <Button asChild variant="plain" block>
+          </li>
+        </ListSection>
+        <Button asChild variant="tinted" block>
           <Link href={doneHref}>{t("done")}</Link>
         </Button>
       </div>
@@ -83,10 +90,12 @@ export function InviteForm({
   return (
     <form action={formAction} noValidate className="flex flex-col gap-5">
       <FormError message={top} />
-      <TextField name="email" type="email" inputMode="email" autoComplete="off" label={t("email")} placeholder="nom@etablissement.cm" required error={field("email")} />
+      <FormGroup>
+        <TextField grouped name="email" type="email" inputMode="email" autoComplete="off" label={t("email")} placeholder="nom@etablissement.cm" required error={field("email")} />
+      </FormGroup>
       <ListSection header={t("role")} radioGroupLabel={t("role")}>
         {roles.map((r) => (
-          <ListRow key={r} role="radio" selected={role === r} onClick={() => setRole(r)} title={tr(r)} accessory="check" />
+          <ListRow key={r} role="radio" selected={role === r} onClick={() => setRole(r)} title={tr(r)} subtitle={t(`roleHint.${r}`)} accessory="check" />
         ))}
       </ListSection>
       <input type="hidden" name="role" value={role} />

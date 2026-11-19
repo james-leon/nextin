@@ -29,9 +29,17 @@ export default async function MemberPage({ params }: { params: Promise<{ orgId: 
   const t = await getTranslations("staffMgmt");
   const tr = await getTranslations("roles");
   return (
-    <AdminPage narrow title={m.full_name || m.email} subtitle={[tr(m.role), m.full_name ? m.email : null].filter(Boolean).join(" · ")} back={{ href: `/app/o/${orgId}/staff`, label: t("title") }}>
+    <AdminPage
+      inSplit
+      title={m.full_name || m.email}
+      eyebrow={t("accessEyebrow")}
+      subtitle={m.full_name ? m.email : tr(m.role)}
+      back={{ href: `/app/o/${orgId}/staff`, label: t("title") }}
+    >
       <MembershipForm action={updateMembership.bind(null, orgId, membershipId)} actorRole={actorRole} initial={{ role: m.role, branchId: m.branch_id }} branches={branches} />
-      <div className="flex flex-col gap-1">
+      {/* Maquette v2 18 : « Désactiver l'accès » (réversible) et « Retirer de l'établissement » (rouge), groupés. */}
+      <div className="flex flex-col gap-1.5 @2xl:ml-auto @2xl:w-[calc(50%-0.75rem)]">
+      <div className="squircle flex flex-col overflow-hidden rounded-[var(--radius-lg)] bg-grouped-secondary px-2 py-1 [&>*+*]:hairline-t">
         <ConfirmAction
           action={setMembershipActive.bind(null, orgId, membershipId, !m.active)}
           label={m.active ? t("deactivate") : t("reactivate")}
@@ -39,7 +47,7 @@ export default async function MemberPage({ params }: { params: Promise<{ orgId: 
           body={m.full_name || m.email}
           confirmLabel={m.active ? t("deactivate") : t("reactivate")}
           destructive={m.active}
-          variant={m.active ? "destructive-plain" : "plain"}
+          variant="plain"
           icon={m.active ? <UserRoundX aria-hidden className="size-5" /> : <UserRoundCheck aria-hidden className="size-5" />}
         />
         <ConfirmAction
@@ -50,6 +58,8 @@ export default async function MemberPage({ params }: { params: Promise<{ orgId: 
           confirmLabel={t("remove")}
           icon={<UserMinus aria-hidden className="size-5" />}
         />
+      </div>
+      <p className="px-4 text-footnote text-label-secondary">{t("accessFooter")}</p>
       </div>
     </AdminPage>
   );

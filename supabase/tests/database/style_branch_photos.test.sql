@@ -100,13 +100,13 @@ select ok(public.branch_public((select id from ids where name = 'akwa')) -> 'pho
 
 -- ─── Tableau de bord : attente moyenne par jour (période précédente) ─────────
 select tests.login_as('a8000000-0000-0000-0000-00000000000a');
-select is(jsonb_array_length(public.daily_wait_series((select id from ids where name = 'clinic'), null, current_date - 6, current_date)), 7,
+select is(jsonb_array_length(public.daily_wait_series((select id from ids where name = 'clinic'), null, (now() at time zone 'Africa/Douala')::date - 6, (now() at time zone 'Africa/Douala')::date)), 7,
   'une valeur par jour de la période');
 select tests.login_as('b8000000-0000-0000-0000-00000000000b');
-select throws_ok($$ select public.daily_wait_series((select id from ids where name = 'clinic'), null, current_date - 6, current_date) $$, '42501', null,
+select throws_ok($$ select public.daily_wait_series((select id from ids where name = 'clinic'), null, (now() at time zone 'Africa/Douala')::date - 6, (now() at time zone 'Africa/Douala')::date) $$, '42501', null,
   'série refusée à un autre établissement');
 select tests.login_as('d8000000-0000-0000-0000-00000000000d');
-select throws_ok($$ select public.daily_wait_series((select id from ids where name = 'clinic'), null, current_date - 6, current_date) $$, '42501', null,
+select throws_ok($$ select public.daily_wait_series((select id from ids where name = 'clinic'), null, (now() at time zone 'Africa/Douala')::date - 6, (now() at time zone 'Africa/Douala')::date) $$, '42501', null,
   'un agent n''a pas accès aux statistiques');
 
 select * from finish();
