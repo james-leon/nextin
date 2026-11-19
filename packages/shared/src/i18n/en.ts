@@ -1,6 +1,32 @@
 import type { Messages } from "./fr";
 
 export const en: Messages = {
+  debugPwa: {
+    title: "App diagnostics",
+    intro: "Technical details to share with Wintek support if the app shows a blank screen. No personal data.",
+    swSection: "Service worker",
+    state: "Status",
+    active: "Active",
+    installing: "Installing",
+    none: "None",
+    unsupported: "Not supported by this browser",
+    disabled: "Turned off by configuration",
+    version: "Version",
+    unknown: "Unknown",
+    appSection: "App",
+    standalone: "Opened from the Home Screen",
+    yes: "Yes",
+    no: "No",
+    cachesSection: "Caches",
+    noCaches: "No cache",
+    entriesOne: "# entry",
+    entriesOther: "# entries",
+    errorSection: "Last error",
+    noError: "No error recorded",
+    reset: "Reset",
+    resetting: "Resetting…",
+    resetHint: "Uninstalls the service worker and clears the caches, then reloads the page. Your tickets stay saved on this device.",
+  },
   common: {
     appName: "NextIn",
     tagline: "Your turn, without the wait.",

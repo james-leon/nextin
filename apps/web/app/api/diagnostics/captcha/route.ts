@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { deviceFamily } from "@/lib/diagnostics/client-log";
 
 const reportSchema = z
   .object({
@@ -7,15 +8,6 @@ const reportSchema = z
     code: z.string().regex(/^[A-Za-z0-9_.-]{1,40}$/),
   })
   .strict();
-
-/** Famille d'appareil seulement (jamais le User-Agent complet) : suffit pour distinguer iOS en mode PWA. */
-function deviceFamily(userAgent: string | null): string {
-  if (!userAgent) return "unknown";
-  if (/iPhone|iPod/.test(userAgent)) return "iphone";
-  if (/iPad|Macintosh/.test(userAgent) && /Safari\//.test(userAgent) && !/Chrome|Firefox/.test(userAgent)) return "ipad-or-mac-safari";
-  if (/Android/.test(userAgent)) return "android";
-  return "other";
-}
 
 /**
  * POST /api/diagnostics/captcha — échec du captcha Turnstile dans le navigateur (code Cloudflare, ex. 110200 =

@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { themeInitScript } from "@/components/theme/theme-init";
 import { appleStartupFamily, startupImages, type StartupFamily } from "@/lib/pwa/startup-images";
 import { splashCss, splashHtml } from "@/lib/pwa/splash";
+import { clientErrorScript } from "@/lib/diagnostics/client-log";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
 
@@ -48,6 +49,11 @@ function AppleWebAppTags({ family, locale }: { family: StartupFamily | null; loc
   );
 }
 
+/** Lecture à l'exécution : un accès calculé n'est pas remplacé au build (interrupteur sans nouveau déploiement). */
+function runtimeEnv(name: string): string | undefined {
+  return process.env[name];
+}
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -65,6 +71,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: splashCss }} />
+        {/* Erreurs du navigateur vers /api/client-log (diagnostic de l'écran blanc), avant tout autre script. */}
+        <script dangerouslySetInnerHTML={{ __html: clientErrorScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <AppleWebAppTags family={family} locale={locale} />
       </head>
@@ -73,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             l'application n'est pas appliquée (`lib/pwa/splash.ts`, identique aux images iOS). */}
         <div id="nx-s" aria-hidden dangerouslySetInnerHTML={{ __html: splashHtml(t("appName"), t("tagline")) }} />
         {children}
-        <ServiceWorkerRegister />
+        <ServiceWorkerRegister enabled={runtimeEnv("NEXT_PUBLIC_SW_ENABLED") !== "false"} />
       </body>
     </html>
   );

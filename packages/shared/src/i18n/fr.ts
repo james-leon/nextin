@@ -1,4 +1,31 @@
 export const fr = {
+  // LOT 5a (E) — diagnostic de l'application installée (/debug/pwa), non indexé.
+  debugPwa: {
+    title: "Diagnostic de l'application",
+    intro: "Informations techniques à transmettre au support Wintek en cas d'écran blanc. Aucune donnée personnelle.",
+    swSection: "Service worker",
+    state: "État",
+    active: "Actif",
+    installing: "En cours d'installation",
+    none: "Aucun",
+    unsupported: "Non pris en charge par ce navigateur",
+    disabled: "Désactivé par la configuration",
+    version: "Version",
+    unknown: "Inconnue",
+    appSection: "Application",
+    standalone: "Ouverte depuis l'écran d'accueil",
+    yes: "Oui",
+    no: "Non",
+    cachesSection: "Caches",
+    noCaches: "Aucun cache",
+    entriesOne: "# entrée",
+    entriesOther: "# entrées",
+    errorSection: "Dernière erreur",
+    noError: "Aucune erreur enregistrée",
+    reset: "Réinitialiser",
+    resetting: "Réinitialisation…",
+    resetHint: "Désinstalle le service worker et vide les caches, puis recharge la page. Vos tickets restent enregistrés sur l'appareil.",
+  },
   common: {
     appName: "NextIn",
     // Slogan de l'écran de démarrage (filet HTML du gabarit et images iOS).

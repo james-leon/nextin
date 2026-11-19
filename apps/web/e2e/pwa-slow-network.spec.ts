@@ -24,7 +24,7 @@ test.describe("PWA : réseau lent avec service worker", () => {
     await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
     await page.reload();
     await expect
-      .poll(() => page.evaluate(async () => !!(await caches.match("/c", { cacheName: "nextin-v3-pages" }))), { timeout: 10_000 })
+      .poll(() => page.evaluate(async () => !!(await caches.match("/c", { cacheName: "nextin-v4-pages" }))), { timeout: 10_000 })
       .toBe(true);
 
     // Réseau lent : le serveur met 8 s à répondre à la page (requête faite par le service worker).
@@ -46,7 +46,7 @@ test.describe("PWA : réseau lent avec service worker", () => {
     // Page en cache dont un fichier /_next/static manque (nouvelle version déployée, cache vidé) : jamais servie
     // (elle serait blanche) ; la page « Connexion lente ou absente » s'affiche à la place, avant 4 s.
     await page.evaluate(async () => {
-      const statics = await caches.open("nextin-v3-static");
+      const statics = await caches.open("nextin-v4-static");
       const keys = await statics.keys();
       const css = keys.find((k) => /\/_next\/static\/.+\.css$/.test(k.url));
       if (!css) throw new Error("feuille de style absente du cache");
