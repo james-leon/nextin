@@ -77,7 +77,7 @@ export function TvPairing({ onPaired, revoked = false }: { onPaired: (deviceToke
   const box = (d: string, i: number) => (
     <span
       key={i}
-      className="grid h-[calc(var(--u)*10)] w-[calc(var(--u)*8)] place-items-center rounded-[calc(var(--u)*1.4)] bg-grouped-secondary font-rounded text-[calc(var(--u)*6)] font-bold text-ticket-number ring-[calc(var(--u)*0.15)] ring-separator"
+      className="grid u-h-10 u-w-8 place-items-center u-rounded-1_4 bg-grouped-secondary font-rounded u-text-6 font-bold text-ticket-number u-ring-0_15"
     >
       {d}
     </span>
@@ -86,28 +86,28 @@ export function TvPairing({ onPaired, revoked = false }: { onPaired: (deviceToke
   return (
     <main
       style={TV_UNIT_STYLE}
-      className="flex min-h-dvh flex-col items-center justify-center gap-[calc(var(--u)*1.6)] bg-grouped px-[calc(var(--u)*4)] text-center leading-snug text-label"
+      className="flex min-h-dvh flex-col items-center justify-center u-gap-1_6 bg-grouped u-px-4 text-center leading-snug text-label"
     >
       {revoked ? (
-        <p role="alert" className="rounded-full bg-red-tint px-[calc(var(--u)*1.8)] py-[calc(var(--u)*0.6)] text-[calc(var(--u)*1.6)] font-semibold text-red-on-tint">
+        <p role="alert" className="rounded-full bg-red-tint u-px-1_8 u-py-0_6 u-text-1_6 font-semibold text-red-on-tint">
           {t("revoked")}
         </p>
       ) : null}
-      <LogoMark className="size-[calc(var(--u)*7)]" />
-      <h1 className="text-[calc(var(--u)*3.6)] font-bold tracking-[-0.02em] text-balance">{t("pairTitle")}</h1>
-      {revoked ? null : <p className="max-w-[calc(var(--u)*60)] text-[calc(var(--u)*1.7)] text-balance text-label-secondary">{t("pairBody")}</p>}
-      <p aria-live="polite" data-pairing-code={pending?.code ?? ""} className="flex gap-[calc(var(--u)*1.2)]">
+      <LogoMark className="u-size-7" />
+      <h1 className="u-text-3_6 font-bold tracking-[-0.02em] text-balance">{t("pairTitle")}</h1>
+      {revoked ? null : <p className="u-max-w-60 u-text-1_7 text-balance text-label-secondary">{t("pairBody")}</p>}
+      <p aria-live="polite" data-pairing-code={pending?.code ?? ""} className="flex u-gap-1_2">
         <span className="sr-only">{pending ? `${pending.code.slice(0, 3)} ${pending.code.slice(3)}` : ""}</span>
-        <span aria-hidden className="flex gap-[calc(var(--u)*1.2)]">
+        <span aria-hidden className="flex u-gap-1_2">
           {digits.slice(0, 3).map(box)}
-          <i className="w-[calc(var(--u)*2)]" />
+          <i className="u-w-2" />
           {digits.slice(3).map((d, i) => box(d, i + 3))}
         </span>
       </p>
-      <span aria-hidden className="h-[calc(var(--u)*0.5)] w-[calc(var(--u)*30)] overflow-hidden rounded-full bg-separator">
+      <span aria-hidden className="u-h-0_5 u-w-30 overflow-hidden rounded-full bg-separator">
         <span className="block h-full bg-accent transition-[width] duration-1000 ease-linear motion-reduce:transition-none" style={{ width: `${remaining * 100}%` }} />
       </span>
-      <p className="text-[calc(var(--u)*1.4)] text-label-secondary">
+      <p className="u-text-1_4 text-label-secondary">
         {failed ? t("offline") : t("expires")}
         {host ? ` · ${host}/tv` : ""}
       </p>

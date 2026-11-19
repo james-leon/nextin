@@ -1,0 +1,88 @@
+/* Écran TV (refonte v2, LOT 5b) : tailles en multiples de --u (TV_UNIT_STYLE), feuille chargée seulement sur /tv pour ne pas alourdir les pages client (budget de 200 Ko). Une classe par taille utilisée (u-<propriété>-<multiple>, « _ » pour la virgule). */
+.u-border-t-0_15{border-top-width:calc(var(--u) * 0.15)}
+.u-bottom-6{bottom:calc(var(--u) * 6)}
+.u-fv-outline-0_3:focus-visible{outline-width:calc(var(--u) * 0.3)}
+.u-fv-outline-offset-0_3:focus-visible{outline-offset:calc(var(--u) * 0.3)}
+.u-gap-0_5{gap:calc(var(--u) * 0.5)}
+.u-gap-0_6{gap:calc(var(--u) * 0.6)}
+.u-gap-0_8{gap:calc(var(--u) * 0.8)}
+.u-gap-1{gap:calc(var(--u) * 1)}
+.u-gap-1_2{gap:calc(var(--u) * 1.2)}
+.u-gap-1_4{gap:calc(var(--u) * 1.4)}
+.u-gap-1_6{gap:calc(var(--u) * 1.6)}
+.u-gap-x-1_4{column-gap:calc(var(--u) * 1.4)}
+.u-h-0_5{height:calc(var(--u) * 0.5)}
+.u-h-0_6{height:calc(var(--u) * 0.6)}
+.u-h-10{height:calc(var(--u) * 10)}
+.u-h-13{height:calc(var(--u) * 13)}
+.u-left-1_2{left:calc(var(--u) * 1.2)}
+.u-max-w-60{max-width:calc(var(--u) * 60)}
+.u-mb-0_6{margin-bottom:calc(var(--u) * 0.6)}
+.u-mt-2{margin-top:calc(var(--u) * 2)}
+.u-nleft-1_4{left:calc(var(--u) * -1.4)}
+.u-p-0_8{padding:calc(var(--u) * 0.8)}
+.u-p-1_6{padding:calc(var(--u) * 1.6)}
+.u-p-4{padding:calc(var(--u) * 4)}
+.u-pb-1_4{padding-bottom:calc(var(--u) * 1.4)}
+.u-pt-1{padding-top:calc(var(--u) * 1)}
+.u-px-0_9{padding-left:calc(var(--u) * 0.9);padding-right:calc(var(--u) * 0.9)}
+.u-px-1{padding-left:calc(var(--u) * 1);padding-right:calc(var(--u) * 1)}
+.u-px-1_6{padding-left:calc(var(--u) * 1.6);padding-right:calc(var(--u) * 1.6)}
+.u-px-1_8{padding-left:calc(var(--u) * 1.8);padding-right:calc(var(--u) * 1.8)}
+.u-px-2{padding-left:calc(var(--u) * 2);padding-right:calc(var(--u) * 2)}
+.u-px-2_4{padding-left:calc(var(--u) * 2.4);padding-right:calc(var(--u) * 2.4)}
+.u-px-3_6{padding-left:calc(var(--u) * 3.6);padding-right:calc(var(--u) * 3.6)}
+.u-px-4{padding-left:calc(var(--u) * 4);padding-right:calc(var(--u) * 4)}
+.u-py-0_2{padding-top:calc(var(--u) * 0.2);padding-bottom:calc(var(--u) * 0.2)}
+.u-py-0_25{padding-top:calc(var(--u) * 0.25);padding-bottom:calc(var(--u) * 0.25)}
+.u-py-0_3{padding-top:calc(var(--u) * 0.3);padding-bottom:calc(var(--u) * 0.3)}
+.u-py-0_6{padding-top:calc(var(--u) * 0.6);padding-bottom:calc(var(--u) * 0.6)}
+.u-py-0_8{padding-top:calc(var(--u) * 0.8);padding-bottom:calc(var(--u) * 0.8)}
+.u-py-1{padding-top:calc(var(--u) * 1);padding-bottom:calc(var(--u) * 1)}
+.u-py-1_2{padding-top:calc(var(--u) * 1.2);padding-bottom:calc(var(--u) * 1.2)}
+.u-py-1_4{padding-top:calc(var(--u) * 1.4);padding-bottom:calc(var(--u) * 1.4)}
+.u-py-1_6{padding-top:calc(var(--u) * 1.6);padding-bottom:calc(var(--u) * 1.6)}
+.u-py-2_4{padding-top:calc(var(--u) * 2.4);padding-bottom:calc(var(--u) * 2.4)}
+.u-ring-0_15{box-shadow:0 0 0 calc(var(--u) * 0.15) var(--separator)}
+.u-rounded-0_8{border-radius:calc(var(--u) * 0.8)}
+.u-rounded-1{border-radius:calc(var(--u) * 1)}
+.u-rounded-1_4{border-radius:calc(var(--u) * 1.4)}
+.u-rounded-2{border-radius:calc(var(--u) * 2)}
+.u-rounded-2_4{border-radius:calc(var(--u) * 2.4)}
+.u-size-0_6{width:calc(var(--u) * 0.6);height:calc(var(--u) * 0.6)}
+.u-size-0_7{width:calc(var(--u) * 0.7);height:calc(var(--u) * 0.7)}
+.u-size-0_8{width:calc(var(--u) * 0.8);height:calc(var(--u) * 0.8)}
+.u-size-1_4{width:calc(var(--u) * 1.4);height:calc(var(--u) * 1.4)}
+.u-size-2{width:calc(var(--u) * 2);height:calc(var(--u) * 2)}
+.u-size-2_2{width:calc(var(--u) * 2.2);height:calc(var(--u) * 2.2)}
+.u-size-3_4{width:calc(var(--u) * 3.4);height:calc(var(--u) * 3.4)}
+.u-size-4_6{width:calc(var(--u) * 4.6);height:calc(var(--u) * 4.6)}
+.u-size-6{width:calc(var(--u) * 6);height:calc(var(--u) * 6)}
+.u-size-7{width:calc(var(--u) * 7);height:calc(var(--u) * 7)}
+.u-size-9{width:calc(var(--u) * 9);height:calc(var(--u) * 9)}
+.u-text-1{font-size:calc(var(--u) * 1)}
+.u-text-17{font-size:calc(var(--u) * 17)}
+.u-text-1_2{font-size:calc(var(--u) * 1.2)}
+.u-text-1_3{font-size:calc(var(--u) * 1.3)}
+.u-text-1_4{font-size:calc(var(--u) * 1.4)}
+.u-text-1_5{font-size:calc(var(--u) * 1.5)}
+.u-text-1_6{font-size:calc(var(--u) * 1.6)}
+.u-text-1_7{font-size:calc(var(--u) * 1.7)}
+.u-text-1_8{font-size:calc(var(--u) * 1.8)}
+.u-text-2{font-size:calc(var(--u) * 2)}
+.u-text-2_1{font-size:calc(var(--u) * 2.1)}
+.u-text-2_2{font-size:calc(var(--u) * 2.2)}
+.u-text-2_3{font-size:calc(var(--u) * 2.3)}
+.u-text-2_4{font-size:calc(var(--u) * 2.4)}
+.u-text-2_6{font-size:calc(var(--u) * 2.6)}
+.u-text-2_9{font-size:calc(var(--u) * 2.9)}
+.u-text-3{font-size:calc(var(--u) * 3)}
+.u-text-3_6{font-size:calc(var(--u) * 3.6)}
+.u-text-4_6{font-size:calc(var(--u) * 4.6)}
+.u-text-6{font-size:calc(var(--u) * 6)}
+.u-top-1_2{top:calc(var(--u) * 1.2)}
+.u-top-1_8{top:calc(var(--u) * 1.8)}
+.u-w-0_5{width:calc(var(--u) * 0.5)}
+.u-w-2{width:calc(var(--u) * 2)}
+.u-w-30{width:calc(var(--u) * 30)}
+.u-w-8{width:calc(var(--u) * 8)}

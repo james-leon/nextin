@@ -220,12 +220,12 @@ function FlashFor({ call, board }: { call: BoardCall; board: NonNullable<TvSessi
 function TvUnavailable() {
   const t = useLiteT("tv");
   return (
-    <main style={TV_UNIT_STYLE} className="flex min-h-dvh flex-col items-center justify-center gap-[calc(var(--u)*1.4)] bg-grouped p-[calc(var(--u)*4)] text-center leading-snug text-label">
-      <span aria-hidden className="grid size-[calc(var(--u)*9)] place-items-center rounded-[calc(var(--u)*2.4)] bg-grouped-secondary">
-        <Pause className="size-[calc(var(--u)*4.6)] stroke-[1.8] text-label-secondary" />
+    <main style={TV_UNIT_STYLE} className="flex min-h-dvh flex-col items-center justify-center u-gap-1_4 bg-grouped u-p-4 text-center leading-snug text-label">
+      <span aria-hidden className="grid u-size-9 place-items-center u-rounded-2_4 bg-grouped-secondary">
+        <Pause className="u-size-4_6 stroke-[1.8] text-label-secondary" />
       </span>
-      <h1 className="text-[calc(var(--u)*3.6)] font-bold text-balance">{t("unavailableTitle")}</h1>
-      <p className="text-[calc(var(--u)*2)] text-label-secondary">{t("unavailableBody")}</p>
+      <h1 className="u-text-3_6 font-bold text-balance">{t("unavailableTitle")}</h1>
+      <p className="u-text-2 text-label-secondary">{t("unavailableBody")}</p>
     </main>
   );
 }

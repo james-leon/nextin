@@ -41,7 +41,7 @@ export function TvAdSlot({ ads, adKey, children }: { ads: AdCandidate[]; adKey: 
   if (!current) return <>{children}</>;
   const src = adFileUrl(SUPABASE_URL, current.path);
   return (
-    <section aria-label={t("sponsored")} className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[calc(var(--u)*1.4)] bg-grouped-secondary animate-pop-in">
+    <section aria-label={t("sponsored")} className="flex min-h-0 flex-1 flex-col overflow-hidden u-rounded-1_4 bg-grouped-secondary animate-pop-in">
       <div className="relative min-h-0 flex-1 bg-navy">
         {current.kind === "video" ? (
           <video key={current.creative_id} src={src} autoPlay muted playsInline onEnded={() => setCurrent(null)} className="absolute inset-0 size-full object-cover" />
@@ -49,13 +49,13 @@ export function TvAdSlot({ ads, adKey, children }: { ads: AdCandidate[]; adKey: 
           // eslint-disable-next-line @next/next/no-img-element -- visuel du stockage public, déjà limité en poids
           <img key={current.creative_id} crossOrigin="anonymous" src={src} alt={current.headline} className="absolute inset-0 size-full object-cover" />
         )}
-        <span className="absolute top-[calc(var(--u)*1.2)] left-[calc(var(--u)*1.2)] rounded-full bg-black/60 px-[calc(var(--u)*0.9)] py-[calc(var(--u)*0.3)] text-[calc(var(--u)*1)] font-semibold text-white">
+        <span className="absolute u-top-1_2 u-left-1_2 rounded-full bg-black/60 u-px-0_9 u-py-0_3 u-text-1 font-semibold text-white">
           {t("sponsored")}
         </span>
       </div>
-      <div className="px-[calc(var(--u)*1.6)] py-[calc(var(--u)*1.2)]">
-        <p className="truncate text-[calc(var(--u)*2.3)] leading-tight font-bold">{current.headline}</p>
-        <p className="truncate text-[calc(var(--u)*1.3)] text-label-secondary">{current.offer ? `${current.offer} · ${current.advertiser}` : current.advertiser}</p>
+      <div className="u-px-1_6 u-py-1_2">
+        <p className="truncate u-text-2_3 leading-tight font-bold">{current.headline}</p>
+        <p className="truncate u-text-1_3 text-label-secondary">{current.offer ? `${current.offer} · ${current.advertiser}` : current.advertiser}</p>
       </div>
     </section>
   );

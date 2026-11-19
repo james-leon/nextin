@@ -28,13 +28,13 @@ export function TvFlash({ call, service }: { call: BoardCall; service: string })
       aria-hidden
       data-testid="tv-flash"
       style={TV_UNIT_STYLE}
-      className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-[calc(var(--u)*0.8)] bg-called text-center leading-snug text-white"
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center u-gap-0_8 bg-called text-center leading-snug text-white"
     >
-      <p className="text-[calc(var(--u)*2.6)] font-semibold opacity-90">{t("called")}</p>
-      <p className="font-rounded text-[calc(var(--u)*17)] leading-[0.95] font-bold tracking-[-0.02em] whitespace-nowrap">{call.code}</p>
-      <p className="text-[calc(var(--u)*4.6)] font-bold">{goTo}</p>
-      {service ? <p className="text-[calc(var(--u)*2)] opacity-85">{service}</p> : null}
-      <span className="mt-[calc(var(--u)*2)] h-[calc(var(--u)*0.6)] w-[calc(var(--u)*30)] overflow-hidden rounded-full bg-white/30">
+      <p className="u-text-2_6 font-semibold opacity-90">{t("called")}</p>
+      <p className="font-rounded u-text-17 leading-[0.95] font-bold tracking-[-0.02em] whitespace-nowrap">{call.code}</p>
+      <p className="u-text-4_6 font-bold">{goTo}</p>
+      {service ? <p className="u-text-2 opacity-85">{service}</p> : null}
+      <span className="u-mt-2 u-h-0_6 u-w-30 overflow-hidden rounded-full bg-white/30">
         <span
           className="block h-full rounded-full bg-white transition-[width] ease-linear motion-reduce:transition-none"
           style={{ width: started ? "0%" : "100%", transitionDuration: `${TV_FLASH_MS}ms` }}

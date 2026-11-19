@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { getLocale, getMessages } from "next-intl/server";
 import { TvApp } from "@/components/tv/tv-app";
 import { LiteIntlProvider } from "@/lib/i18n/lite";
+import "./tv.css";
 
 export const metadata: Metadata = { title: { absolute: "NextIn TV" }, robots: { index: false } };
 export const viewport: Viewport = { themeColor: "#0d2c54" };
