@@ -213,9 +213,9 @@ test.describe("M1 — authentification et établissements", () => {
     await expectTouchTargets(page);
     await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("Bonaberi2026neuf");
     await page.getByLabel("Confirmer le mot de passe", { exact: true }).fill("Bonaberi2026autre");
-    await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
-    await expect(page.getByText("Les deux mots de passe ne correspondent pas.")).toBeVisible();
-    // Les champs de mot de passe sont vidés après un refus (formulaire réinitialisé par React).
+    // Mots de passe différents : règle « identiques » à remplir, bouton grisé (le serveur refuse aussi, schéma Zod).
+    await expect(page.getByText("Les deux mots de passe sont identiques · à remplir")).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Enregistrer le mot de passe" })).toBeDisabled();
     await page.getByLabel("Nouveau mot de passe", { exact: true }).fill("Bonaberi2026neuf");
     await page.getByLabel("Confirmer le mot de passe", { exact: true }).fill("Bonaberi2026neuf");
     await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();

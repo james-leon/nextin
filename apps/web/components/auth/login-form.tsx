@@ -3,9 +3,10 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Check } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import { requestLoginCode, signInWithPassword, verifyLoginCode } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
+import { CalloutCard } from "@/components/ui/callout-card";
 import { CodeBoxes } from "@/components/ui/code-boxes";
 import { FormGroup, TextField } from "@/components/ui/text-field";
 import { Turnstile } from "@/components/security/turnstile";
@@ -87,7 +88,14 @@ export function LoginForm({ next, siteKey, initialError }: { next: string; siteK
 
       {mode === "password" ? (
         <form action={pwAction} className="flex flex-col gap-4" noValidate>
-          <FormError message={topError(pwState) ?? (initialError ? te(initialError as never) : null)} />
+          {/* Session fermée après inactivité (console Wintek) : bandeau bleu informatif, pas une erreur (maquette v2 22). */}
+          {initialError === "session_expired" && !topError(pwState) ? (
+            <CalloutCard icon={<Clock />} tone="accent" role="status">
+              {te("session_expired")}
+            </CalloutCard>
+          ) : (
+            <FormError message={topError(pwState) ?? (initialError ? te(initialError as never) : null)} />
+          )}
           <input type="hidden" name="next" value={next} />
           <FormGroup>
             <TextField

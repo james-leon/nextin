@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Clock, Link2Off, MailCheck } from "lucide-react";
+import { Link2Off, Mail, MailCheck } from "lucide-react";
 import { AcceptInvitationForm } from "@/components/auth/accept-invitation-form";
 import { Button } from "@/components/ui/button";
 import { getStaffSession } from "@/lib/auth/session";
@@ -39,11 +39,18 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   const invitation = rows?.[0];
   const here = `/invite/${token}`;
 
+  // Maquette v2 22 : expirée ou introuvable — icône grise, phrase, « Retour à la connexion » ; déjà utilisée —
+  // « Aller à mes établissements » en bleu nuit.
+  const backToLogin = (
+    <Button asChild block variant="tinted">
+      <Link href="/login">{ta("backToLogin")}</Link>
+    </Button>
+  );
   if (!invitation) {
-    return <StateMessage icon={<Link2Off aria-hidden />} title={t("invalidTitle")} body={t("invalidBody")} />;
+    return <StateMessage icon={<Link2Off aria-hidden />} title={t("invalidTitle")} body={t("invalidBody")} action={backToLogin} />;
   }
   if (invitation.state === "expired") {
-    return <StateMessage icon={<Clock aria-hidden />} title={t("expiredTitle")} body={t("expiredBody")} />;
+    return <StateMessage icon={<Mail aria-hidden />} title={t("expiredTitle")} body={t("expiredBody")} action={backToLogin} />;
   }
   if (invitation.state === "accepted") {
     return (
@@ -52,7 +59,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         title={t("acceptedTitle")}
         body={t("acceptedBody")}
         action={
-          <Button asChild block variant="tinted">
+          <Button asChild block>
             <Link href="/app">{t("goToApp")}</Link>
           </Button>
         }

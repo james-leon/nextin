@@ -14,7 +14,12 @@ export function PasswordField({
   leading,
   grouped,
   name = "password",
+  value,
+  onValueChange,
 }: {
+  /** Valeur contrôlée (facultative), pour vérifier les règles en direct. */
+  value?: string;
+  onValueChange?: (value: string) => void;
   label: string;
   showLabel: string;
   hideLabel: string;
@@ -38,6 +43,8 @@ export function PasswordField({
       hint={hint}
       error={error}
       autoComplete={autoComplete}
+      {...(value !== undefined ? { value } : {})}
+      onChange={onValueChange ? (e) => onValueChange(e.target.value) : undefined}
       required
       trailing={
         <button
