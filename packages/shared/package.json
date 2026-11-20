@@ -28,6 +28,8 @@
     "./money": "./src/money.ts",
     "./ads": "./src/ads/index.ts",
     "./ads/sky-catch": "./src/ads/sky-catch.ts",
+    "./games/quiz-bank": "./src/games/quiz-bank.ts",
+    "./games/pairs": "./src/games/pairs.ts",
     "./identity": "./src/identity.ts"
   },
   "scripts": {

@@ -5,6 +5,8 @@ import { Heart, Music, Pause, Play, RotateCcw, Volume2 } from "lucide-react";
 import { adFileUrl, type AdCandidate } from "@nextin/shared/ads";
 import {
   BEST_SCORE_KEY,
+  COIN_POINTS,
+  GEM_POINTS,
   WORLD,
   LIVES,
   advance,
@@ -375,14 +377,14 @@ export function SkyCatch({
         <ul role="list" className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-footnote" style={{ color: "var(--game-text-soft)" }}>
           {(
             [
-              ["--game-coin", "legendCoin"],
-              ["--game-gem", "legendGem"],
-              ["--game-danger", "legendObstacle"],
+              ["--game-coin", "legendCoin", COIN_POINTS],
+              ["--game-gem", "legendGem", GEM_POINTS],
+              ["--game-danger", "legendObstacle", 0],
             ] as const
-          ).map(([color, key]) => (
+          ).map(([color, key, points]) => (
             <li key={key} className="flex items-center gap-1.5">
               <span aria-hidden className="size-3 rounded-full" style={{ background: `var(${color})` }} />
-              {t(key)}
+              {t(key, { points })}
             </li>
           ))}
         </ul>
@@ -396,7 +398,7 @@ export function SkyCatch({
           {t("play")}
         </PlayButton>
         <p className="max-w-[30ch] text-footnote" style={{ color: "var(--game-text-soft)" }}>
-          {t("stopsAtCall")} <span className="max-md:hidden">{t("controls")}</span>
+          {t("autoStop")} <span className="max-md:hidden">{t("controls")}</span>
         </p>
         {best ? (
           <p className="tabular text-footnote" style={{ color: "var(--game-text-soft)" }}>

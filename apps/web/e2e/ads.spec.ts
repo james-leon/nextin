@@ -130,7 +130,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.goto(`/t/${token}`);
     const sponsored = page.getByRole("complementary", { name: "Sponsorisé" });
     // Pub sponsorisée montée seulement à l'arrivée à l'écran (hors du premier chargement).
-    await expect(page.getByRole("button", { name: "Choisir un jeu" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: /^Jouer en attendant/ })).toBeVisible({ timeout: 15_000 });
     await page.mouse.wheel(0, 2000);
     await expect(sponsored).toBeVisible({ timeout: 15_000 });
     await expect(sponsored.getByText(/^Pain chaud Quiz/)).toBeVisible();
@@ -138,11 +138,11 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await expectTouchTargets(page);
 
     // Feuille de jeu : numéro et attente toujours visibles.
-    await page.getByRole("button", { name: "Choisir un jeu" }).click();
+    await page.getByRole("button", { name: /^Jouer en attendant/ }).click();
     const sheet = page.getByRole("dialog");
     await expect(sheet.getByText("C-001")).toBeVisible();
     await expect(sheet.getByText(/Vous êtes le prochain/)).toBeVisible();
-    await sheet.getByRole("button", { name: /^Quiz/ }).click();
+    await sheet.getByRole("button", { name: /^Quiz sponsorisé/ }).click();
 
     await expect(sheet.getByText(/Question 1 sur 3/)).toBeVisible();
     await expectAccessible(page);
@@ -197,7 +197,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.addInitScript(() => localStorage.setItem("nextin.e2e", "1"));
     const token = await takeTicket(page, b);
     await page.goto(`/t/${token}`);
-    await expect(page.getByRole("button", { name: "Choisir un jeu" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: /^Jouer en attendant/ })).toBeVisible({ timeout: 15_000 });
 
     // Hors ligne juste après l'affichage de la pub : l'événement reste dans la file de l'appareil (envoi groupé après
     // 4 s), puis part au retour du réseau.
@@ -216,7 +216,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     const { count } = await admin.from("ad_events").select("*", { count: "exact", head: true }).eq("creative_id", creative.data!.id).eq("surface", "app");
     expect(count).toBeGreaterThan(0);
 
-    await page.getByRole("button", { name: "Choisir un jeu" }).click();
+    await page.getByRole("button", { name: /^Jouer en attendant/ }).click();
     const sheet = page.getByRole("dialog");
     await sheet.getByRole("button", { name: /^Sky Catch/ }).click();
 
@@ -289,8 +289,9 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await place("gem");
     await expect(sheet.getByTestId("sky-score")).toHaveText("50 pts");
     await rpc(b.staff, "call_next", { p_counter: b.counterId });
-    const turn = sheet.getByRole("alertdialog", { name: "C'est votre tour" });
+    const turn = sheet.getByRole("alertdialog", { name: "C'est votre tour !" });
     await expect(turn).toBeVisible({ timeout: 15_000 });
+    await expect(turn.getByText("C-001")).toBeVisible();
     await expect(turn.getByText("Présentez-vous : Cabinet 3")).toBeVisible();
     await expect(turn.getByTestId("sky-saved")).toHaveText("Votre partie est enregistrée. Score : 50");
     // Figée : le score ne bouge plus, même si un objet touche l'avion.
@@ -300,7 +301,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     const { data: plays } = await admin.from("ad_game_plays").select("score, finished_at").eq("ticket_id", (await admin.from("tickets").select("id").eq("public_token", token).single()).data!.id).order("started_at");
     expect(plays?.map((p) => p.score)).toEqual([200, 50]);
     await expectAccessible(page);
-    await turn.getByRole("button", { name: "J'arrive" }).click();
+    await turn.getByRole("button", { name: "Revenir à mon ticket" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText("C'est votre tour").first()).toBeVisible();
   });

@@ -1,22 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, CircleHelp, Plane, WifiOff, X } from "lucide-react";
+import { ChevronLeft, CircleHelp, Gift, Layers, Plane, WifiOff } from "lucide-react";
 import { interstitialDue, type AdCandidate } from "@nextin/shared/ads";
-import { IconButton } from "@/components/ui/button";
+import { BEST_SCORE_KEY } from "@nextin/shared/ads/sky-catch";
+import { PAIR_LEVELS } from "@nextin/shared/games/pairs";
+import { Button } from "@/components/ui/button";
+import { LiveIndicator } from "@/components/ui/badge";
 import { CalloutCard } from "@/components/ui/callout-card";
-import { ListIcon } from "@/components/ui/list";
 import { Spinner } from "@/components/ui/spinner";
 import type { GameSession, SkyCatchResult } from "@/lib/client/games";
 import { CouponCard } from "./coupon-card";
 import { flushAdEvents } from "@/lib/client/ad-events";
 import { callRpc } from "@/lib/client/supabase-public";
+import { cn } from "@/lib/cn";
 import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { PairsGame, readPairsBest } from "./pairs-game";
 import { QuizGame } from "./quiz-game";
+import { QuizSeries, readQuizBest } from "./quiz-series";
 import { SkyCatch } from "./sky-catch";
 
-export type GameKind = "quiz" | "sky";
+export type GameKind = "quiz" | "series" | "pairs" | "sky";
+
+/** Record de Sky Catch sur l'appareil (null si aucun ou stockage indisponible). */
+function readSkyBest(): number | null {
+  try {
+    const n = Number(localStorage.getItem(BEST_SCORE_KEY));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
 
 const subscribeOnline = (cb: () => void) => {
   window.addEventListener("online", cb);
@@ -27,10 +42,6 @@ const subscribeOnline = (cb: () => void) => {
   };
 };
 
-/**
- * Feuille « Jouer en attendant » (chargée à la demande) : plein écran, le numéro et l'attente restent visibles en
- * haut. À l'appel, le jeu se fige et « C'est votre tour » prend toute la place.
- */
 /**
  * Charge les textes des jeux (route légère, mise en cache) puis affiche la feuille, dans un portail : la page du ticket
  * derrière devient inerte (ni focus ni lecteur d'écran) tant que la feuille est ouverte.
@@ -137,27 +148,46 @@ function GameSheetContent({
   const ready = session !== null && session !== "error";
   const quiz = ready ? session.quiz : null;
   const sky = ready ? session.sky_catch : null;
+  const series = ready && session.quiz_bank === true;
   const en = locale === "en";
+  // Records de l'appareil, relus à chaque retour à la liste des jeux.
+  const records = useMemo(() => {
+    if (kind) return null;
+    const pairsLevel = PAIR_LEVELS.find((p) => readPairsBest(p) !== null);
+    return {
+      sky: readSkyBest(),
+      series: readQuizBest(),
+      pairs: pairsLevel ? { moves: readPairsBest(pairsLevel)!, level: PAIR_LEVELS.indexOf(pairsLevel) } : null,
+    };
+  }, [kind]);
+  const levelKeys = ["levelEasy", "levelMedium", "levelHard"] as const;
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="game-sheet-title" className="fixed inset-0 z-50 flex flex-col bg-grouped safe-top">
-      <header className="flex items-center gap-2 px-2 py-1.5 hairline-b">
+      <header className="flex items-center gap-2 px-2 pt-1.5">
         {kind ? (
-          <IconButton label={t("sheetTitle")} icon={<ChevronLeft />} variant="plain" onClick={() => setKind(null)} disabled={!!call} />
+          <Button ref={closeRef} variant="plain" leadingIcon={<ChevronLeft />} onClick={() => setKind(null)} disabled={!!call}>
+            {t("sheetTitle")}
+          </Button>
         ) : (
-          <IconButton ref={closeRef} label={t("close")} icon={<X />} variant="plain" onClick={onClose} />
+          <Button ref={closeRef} variant="plain" leadingIcon={<ChevronLeft />} onClick={onClose} aria-label={t("close")}>
+            {t("ticketTitle")}
+          </Button>
         )}
-        <div className="flex min-w-0 flex-1 flex-col items-center text-center">
-          <p id="game-sheet-title" className="text-headline font-extrabold text-ticket-number">
-            {code}
-          </p>
-          <p className="truncate text-footnote text-label-secondary">{status}</p>
-        </div>
-        {kind ? <IconButton ref={closeRef} label={t("close")} icon={<X />} variant="plain" onClick={onClose} /> : <span aria-hidden className="size-11" />}
       </header>
+      {/* Le ticket reste en haut : numéro, attente, « En direct ». */}
+      <div className="mx-auto w-full max-w-lg px-4 pt-1 pb-2">
+        <p className="flex items-center gap-2.5 rounded-[12px] bg-grouped-secondary px-3.5 py-2.5">
+          <span id="game-sheet-title" className="font-rounded text-title3 font-extrabold whitespace-nowrap text-ticket-number">
+            {code}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-footnote text-label-secondary">{status}</span>
+          <LiveIndicator label={t("live")} />
+        </p>
+      </div>
 
       {!online ? (
-        <CalloutCard icon={<WifiOff />} className="mx-4 mt-3" role="status">
+        <CalloutCard icon={<WifiOff />} className="mx-4 mb-2" role="status">
           {t("offline")}
         </CalloutCard>
       ) : null}
@@ -167,12 +197,16 @@ function GameSheetContent({
           <div className="flex flex-1 items-center justify-center">
             <Spinner label={t("loading")} />
           </div>
+        ) : kind === "pairs" ? (
+          <PairsGame frozen={!!call} />
         ) : session === "error" ? (
           <CalloutCard icon={<CircleHelp />} className="m-4" role="alert">
             {t("unavailable")}
           </CalloutCard>
         ) : kind === "quiz" && quiz ? (
           <QuizGame token={token} quiz={quiz} skipAfter={session.interstitial.skip_after} nextInterstitial={nextInterstitial} couponBaseUrl={couponBaseUrl} />
+        ) : kind === "series" && series ? (
+          <QuizSeries token={token} skipAfter={session.interstitial.skip_after} nextInterstitial={nextInterstitial} />
         ) : kind === "sky" && sky ? (
           <SkyCatch
             token={token}
@@ -184,66 +218,86 @@ function GameSheetContent({
             onSaved={setSaved}
           />
         ) : (
-          <div className="flex flex-col gap-3 p-4">
-            <h2 className="px-4 text-title2 font-bold">{t("sheetTitle")}</h2>
-            <ul role="list" className="squircle overflow-hidden rounded-[var(--radius-md)] bg-grouped-secondary">
-              {quiz ? (
-                <GameRow
-                  icon={<CircleHelp />}
-                  color="var(--accent-fill)"
-                  title={t("quiz")}
-                  subtitle={quiz.played ? t("quizPlayed") : t("quizBody", { title: en && quiz.title_en ? quiz.title_en : quiz.title })}
-                  onClick={() => setKind("quiz")}
-                />
-              ) : null}
+          <div className="flex flex-col gap-3 px-4 pt-2 pb-6">
+            <h2 className="font-bold text-large-title text-balance">{t("sheetTitle")}</h2>
+            <ul role="list" className="grid grid-cols-2 gap-3">
               {sky ? (
-                <GameRow
+                <GameCard
                   icon={<Plane />}
-                  color="var(--brand-tile)"
+                  color="var(--accent-fill)"
                   title={t("skyCatch")}
-                  subtitle={sky.skin ? `${t("skyCatchBody")} · ${t("sponsoredBy", { advertiser: sky.skin.advertiser })}` : t("skyCatchBody")}
+                  subtitle={sky.skin ? t("sponsoredBy", { advertiser: sky.skin.advertiser }) : t("skyCatchBody")}
+                  record={records?.sky ? t("best", { score: records.sky }) : null}
                   onClick={() => setKind("sky")}
                 />
               ) : null}
+              <GameCard
+                icon={<Layers />}
+                color="var(--green-fill)"
+                title={t("pairsTitle")}
+                subtitle={t("pairsBody")}
+                record={
+                  records?.pairs
+                    ? t("best", { score: `${t("moves", { count: records.pairs.moves })} · ${t(levelKeys[records.pairs.level]!, { pairs: PAIR_LEVELS[records.pairs.level]! })}` })
+                    : null
+                }
+                onClick={() => setKind("pairs")}
+              />
+              {series ? (
+                <GameCard
+                  wide
+                  icon={<CircleHelp />}
+                  color="var(--orange-fill)"
+                  title={t("quizSeries")}
+                  subtitle={t("quizSeriesBody")}
+                  record={records?.series ? t("best", { score: t("goodAnswers", { count: records.series }) }) : null}
+                  onClick={() => setKind("series")}
+                />
+              ) : null}
+              {quiz ? (
+                <GameCard
+                  wide
+                  icon={<Gift />}
+                  color="var(--icon-indigo)"
+                  title={t("quizSponsored")}
+                  subtitle={
+                    quiz.played
+                      ? t("quizPlayed")
+                      : `${en && quiz.title_en ? quiz.title_en : quiz.title} · ${en && quiz.reward_en ? quiz.reward_en : quiz.reward}`
+                  }
+                  record={t("sponsoredBy", { advertiser: quiz.advertiser })}
+                  onClick={() => setKind("quiz")}
+                />
+              ) : null}
             </ul>
-            {!quiz && !sky ? <CalloutCard icon={<CircleHelp />}>{t("unavailable")}</CalloutCard> : null}
           </div>
         )}
 
         {call ? (
-          // Maquette v2 12 : plein écran vert, numéro, lieu, partie enregistrée, « J'arrive ».
           <div
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="your-turn"
-            aria-describedby="your-turn-place"
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-called p-6 text-center text-white"
+            className="absolute inset-0 z-40 flex animate-fade-in flex-col items-center justify-center gap-3 overflow-y-auto bg-called p-6 text-center text-white"
           >
             <p id="your-turn" className="text-subheadline font-bold tracking-[0.14em] uppercase">
               {t("yourTurn")}
             </p>
-            <p className="font-rounded text-[3.5rem] leading-none font-extrabold">{code}</p>
-            <p id="your-turn-place" className="text-headline">
-              {t("goTo", { counter: call.counter })}
-            </p>
-            {saved ? (
+            <p className="font-rounded text-[56px] leading-none font-extrabold">{code}</p>
+            {call.counter ? <p className="text-headline">{t("presentAt", { counter: call.counter })}</p> : null}
+            {kind === "sky" && saved ? (
               <p className="tabular text-subheadline" data-testid="sky-saved">
                 {t("savedScore", { score: saved.score })}
               </p>
             ) : null}
-            {saved?.coupon ? (
+            {kind === "sky" && saved?.coupon ? (
               <div className="w-full max-w-sm text-label">
                 <CouponCard coupon={saved.coupon} couponBaseUrl={couponBaseUrl} />
               </div>
             ) : null}
-            <button
-              ref={turnRef}
-              type="button"
-              onClick={onClose}
-              className="pressable squircle mt-2 inline-flex min-h-12 w-full max-w-sm items-center justify-center rounded-[14px] bg-white px-6 text-headline font-bold text-green-text"
-            >
-              {t("imComing")}
-            </button>
+            <Button ref={turnRef} block className="mt-4 max-w-xs bg-white text-called hover:bg-white/90 active:bg-white/80" onClick={onClose}>
+              {t("backToTicket")}
+            </Button>
           </div>
         ) : null}
       </div>
@@ -251,17 +305,41 @@ function GameSheetContent({
   );
 }
 
-function GameRow({ icon, color, title, subtitle, onClick }: { icon: React.ReactNode; color: string; title: string; subtitle: string; onClick: () => void }) {
+/** Carte de jeu (maquette v2 01) : carré de couleur, nom, accroche et record de l'appareil. */
+function GameCard({
+  icon,
+  color,
+  title,
+  subtitle,
+  record,
+  wide,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  color: string;
+  title: string;
+  subtitle: string;
+  record: string | null;
+  wide?: boolean;
+  onClick: () => void;
+}) {
   return (
-    <li className="group/row pl-4">
-      <button type="button" onClick={onClick} className="pressable flex min-h-16 w-full items-center gap-3 text-left">
-        <ListIcon color={color}>{icon}</ListIcon>
-        <span className="flex min-w-0 flex-1 items-center gap-3 py-3 pr-4 list-separator">
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body font-semibold">{title}</span>
-            <span className="text-subheadline text-label-secondary">{subtitle}</span>
-          </span>
-          <ChevronRight aria-hidden className="size-5 shrink-0 text-label-tertiary" />
+    <li className={wide ? "col-span-2" : undefined}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "pressable flex h-full w-full gap-2.5 rounded-[16px] bg-grouped-secondary p-3.5 text-left focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-tint",
+          wide ? "flex-row items-center" : "min-h-[126px] flex-col",
+        )}
+      >
+        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[10px] text-white [&>svg]:size-[22px] [&>svg]:stroke-[1.75]" style={{ background: color }}>
+          {icon}
+        </span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-callout font-semibold">{title}</span>
+          <span className="text-footnote text-label-secondary">{subtitle}</span>
+          {record ? <span className="text-footnote font-semibold text-accent-text tabular">{record}</span> : null}
         </span>
       </button>
     </li>

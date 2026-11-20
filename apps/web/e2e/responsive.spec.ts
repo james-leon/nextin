@@ -437,15 +437,16 @@ test.describe("Revue responsive — critères d'acceptation (section 4)", () => 
       await context.addInitScript((token) => localStorage.setItem("nextin-tv-token", token), device);
       const page = await context.newPage();
       await page.goto("/tv");
-      await expect(page.getByText("File d'attente", { exact: true })).toBeVisible();
+      const anchor = page.getByText("Scannez, prenez votre ticket", { exact: true });
+      await expect(anchor).toBeVisible();
       await page.waitForTimeout(500);
       const label = `TV ${width}×${height}`;
       await expectNoOverflow(page, label);
       // Tout l'écran, sans défilement : la page tient exactement dans la télévision.
       const fits = await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 1);
       expect(fits, `${label} : défilement vertical`).toBe(true);
-      // Proportions : le titre de la file occupe la même part de la hauteur quelle que soit la définition.
-      const ratio = await page.getByText("File d'attente", { exact: true }).evaluate((el) => el.getBoundingClientRect().height / window.innerHeight);
+      // Proportions : le titre du QR code occupe la même part de la hauteur quelle que soit la définition.
+      const ratio = await anchor.evaluate((el) => el.getBoundingClientRect().height / window.innerHeight);
       expect(ratio, `${label} : proportion du titre`).toBeGreaterThan(0.02);
       expect(ratio, `${label} : proportion du titre`).toBeLessThan(0.06);
       await context.close();

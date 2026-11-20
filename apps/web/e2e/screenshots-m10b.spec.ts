@@ -100,17 +100,17 @@ for (const size of ["mobile", "tablet-portrait", "desktop"] as const) {
       const { context, page } = await open(browser, size, theme);
       const token = await takeTicket(page, b);
       await page.goto(`/t/${token}`);
-      await page.getByRole("button", { name: "Choisir un jeu" }).waitFor({ timeout: 15_000 });
+      await page.getByRole("button", { name: /^Jouer en attendant/ }).waitFor({ timeout: 15_000 });
       await page.mouse.wheel(0, 2000);
       await page.getByRole("complementary", { name: "Sponsorisé" }).waitFor({ timeout: 15_000 });
       await page.evaluate(() => window.scrollTo(0, 0));
       await shot(page, `09-ticket-ads-${size}-${theme}`);
 
-      await page.getByRole("button", { name: "Choisir un jeu" }).click();
+      await page.getByRole("button", { name: /^Jouer en attendant/ }).click();
       const sheet = page.getByRole("dialog");
-      await sheet.getByRole("button", { name: /^Quiz/ }).waitFor();
+      await sheet.getByRole("button", { name: /^Quiz sponsorisé/ }).waitFor();
       await shot(page, `10-games-${size}-${theme}`, false);
-      await sheet.getByRole("button", { name: /^Quiz/ }).click();
+      await sheet.getByRole("button", { name: /^Quiz sponsorisé/ }).click();
       await sheet.getByRole("radio", { name: "Bleu" }).click();
       await shot(page, `11-quiz-${size}-${theme}`, false);
       await sheet.getByRole("button", { name: "Suivant" }).click();

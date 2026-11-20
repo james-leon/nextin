@@ -16,10 +16,10 @@ for (const theme of ["light", "dark"] as const) {
     const tv = await tvContext.newPage();
     await tv.addInitScript(() => Object.defineProperty(window, "speechSynthesis", { value: { speak: () => undefined, getVoices: () => [], cancel: () => undefined } }));
     await tv.goto("/tv");
-    const codeEl = tv.locator("p[aria-live]");
-    await codeEl.filter({ hasText: /^\d{3} \d{3}$/ }).waitFor();
+    const codeEl = tv.locator("[data-pairing-code]");
+    await expect(codeEl).toHaveAttribute("data-pairing-code", /^\d{6}$/);
     if (theme === "light") await tv.screenshot({ path: `${OUT}/01-tv-pairing.png` });
-    const code = (await codeEl.innerText()).replace(/\D/g, "");
+    const code = (await codeEl.getAttribute("data-pairing-code"))!;
 
     const staffContext = await browser.newContext({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: 2, locale: "fr-FR", colorScheme: theme });
     const staff = await staffContext.newPage();
