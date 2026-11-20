@@ -166,13 +166,10 @@ export function TvBoard({
         )}
 
         <div className="flex min-h-0 flex-col u-gap-1_6">
-          {hasCalls ? (
-            <TvAdSlot ads={session.show_ads ? (session.ads ?? []) : []} adKey={adKey}>
-              {qrCard}
-            </TvAdSlot>
-          ) : (
-            qrCard
-          )}
+          {/* Publicité en alternance avec le QR code de l'agence, avec ou sans appel (règles de diffusion inchangées). */}
+          <TvAdSlot ads={session.show_ads ? (session.ads ?? []) : []} adKey={adKey}>
+            {qrCard}
+          </TvAdSlot>
           {hasCalls ? (
             <section aria-label={t("upNext")} className="u-rounded-1_4 bg-grouped-secondary u-px-1_6 u-py-1_2">
               <h2 className="u-mb-0_6 u-text-1_3 font-semibold tracking-[0.04em] text-label-secondary uppercase">{t("upNext")}</h2>
