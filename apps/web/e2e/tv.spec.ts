@@ -32,9 +32,11 @@ test.describe("M6 — écran TV", () => {
     await spyOnSpeech(tv);
     await tv.goto("/tv");
     await expect(tv.getByRole("heading", { name: "Appairez cet écran" })).toBeVisible();
-    const codeText = tv.locator("p[aria-live]");
-    await expect(codeText).toHaveText(/^\d{3} \d{3}$/);
-    const code = (await codeText.innerText()).replace(/\D/g, "");
+    // Code en deux groupes de trois cases (maquette v2 23) : lu dans l'attribut du bloc.
+    const codeBox = tv.locator("[data-pairing-code]");
+    await expect(codeBox).toHaveAttribute("data-pairing-code", /^\d{6}$/);
+    await expect(codeBox.locator(".sr-only")).toHaveText(/^\d{3} \d{3}$/);
+    const code = (await codeBox.getAttribute("data-pairing-code"))!;
 
     const staffContext = await browser.newContext({ locale: "fr-FR" });
     const staff = await staffContext.newPage();
@@ -59,43 +61,53 @@ test.describe("M6 — écran TV", () => {
       }, { timeout: 20_000 })
       .toContain("En ligne");
 
-    // L'écran passe seul à l'affichage de la file.
+    // L'écran passe seul à l'affichage de la file (maquette v2 23 : aucun appel, QR code de l'agence à droite).
     await expect(tv.getByText("Les appels s'afficheront ici.")).toBeVisible({ timeout: 15_000 });
-    await expect(tv.getByText("Clinique TV · Akwa")).toBeVisible();
+    await expect(tv.locator("header")).toContainText("Clinique TV");
+    await expect(tv.locator("header")).toContainText("Akwa");
     await expect(tv.getByRole("img", { name: "Scannez, prenez votre ticket" })).toBeVisible();
-    await expect(tv.getByText(`Code : ${b.shortCode}`)).toBeVisible();
-
-    // « Alerter le suivant » : ticket en héros, poste, annonce vocale.
-    for (let i = 0; i < 4; i++) await rpc(b.staff, "reception_create_ticket", { p_service: b.serviceId });
+    await expect(tv.getByText(`Code : ${b.shortCode}`)).toBeAttached();
     const previous = tv.getByRole("region", { name: "Appels précédents" });
-    const first = await rpc<{ id: string }>(b.staff, "call_next", { p_counter: b.counterId });
-    const hero = tv.getByRole("region", { name: "Ticket appelé" });
-    await expect(hero).toContainText("C-001");
-    await expect(hero).toContainText("Cabinet");
-    await expect(hero).toContainText("3");
-    await expect.poll(() => tv.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken)).toContain("Ticket C 1. Présentez-vous au cabinet 3.");
-    // Aucun appel précédent : un tiret discret, pas de tuiles vides.
     await expect(previous).toContainText("Aucun appel précédent");
-    await expect(previous.getByRole("listitem")).toHaveCount(0);
+    // « Activer le son » : un seul geste ; ensuite « Son activé » s'affiche.
+    const soundGate = tv.getByRole("button", { name: /Activer le son/ });
+    if (await soundGate.isVisible()) await soundGate.click();
+    await expect(soundGate).toBeHidden();
+
+    // « Alerter le suivant » : ligne marquée « Appel », flash vert plein écran, annonce vocale ; aucun nom.
+    for (let i = 0; i < 4; i++) await rpc(b.staff, "reception_create_ticket", { p_service: b.serviceId });
+    await expect(tv.getByText("4 personnes", { exact: true })).toBeVisible();
+    const first = await rpc<{ id: string }>(b.staff, "call_next", { p_counter: b.counterId });
+    const calls = tv.getByRole("region", { name: "Ticket appelé" });
+    await expect(calls.getByRole("listitem")).toHaveCount(1);
+    await expect(calls.getByRole("listitem").first()).toContainText("C-001");
+    await expect(calls.getByRole("listitem").first()).toContainText("Cabinet 3");
+    await expect(calls.getByRole("listitem").first()).toContainText("Appel");
+    const flash = tv.getByTestId("tv-flash");
+    await expect(flash).toContainText("C-001");
+    await expect(flash).toContainText("Allez au cabinet 3");
+    await expect(flash).toBeHidden({ timeout: 8_000 });
+    await expect(tv.getByRole("region", { name: "À suivre" })).toContainText(/C-002.*C-003.*C-004/);
+    await expect.poll(() => tv.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken)).toContain("Ticket C 1. Présentez-vous au cabinet 3.");
     await expectAccessible(tv);
 
-    // Rappel : nouvelle annonce ; appel suivant : l'ancien passe dans la rangée du bas.
+    // Rappel : nouvelle annonce et nouveau flash ; patient admis : l'étiquette « Appel » disparaît.
     await rpc(b.staff, "recall_ticket", { p_ticket: first.id });
     await expect
       .poll(() => tv.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken.filter((s) => s.startsWith("Ticket C 1.")).length))
       .toBe(2);
     await rpc(b.staff, "admit_ticket", { p_ticket: first.id });
+    await expect(calls.getByRole("listitem").first()).not.toContainText("Appel");
     await rpc(b.staff, "call_next", { p_counter: b.counterId, p_finish_current: true });
-    await expect(hero).toContainText("C-002");
+    await expect(calls.getByRole("listitem").first()).toContainText("C-002");
 
-    // Un seul cabinet appelle et termine trois tickets : les tuiles montrent les trois précédents, même terminés.
-    for (const code of ["C-002", "C-003"]) {
-      const { data } = await b.staff.from("tickets").select("id").eq("display_code", code).eq("branch_id", b.branchId).single();
-      await rpc(b.staff, "admit_ticket", { p_ticket: data!.id });
-      await rpc(b.staff, "call_next", { p_counter: b.counterId, p_finish_current: true });
-    }
-    await expect(hero).toContainText("C-004");
-    await expect(previous.getByRole("listitem")).toHaveText([/C-003.*Cabinet 3/, /C-002.*Cabinet 3/, /C-001.*Cabinet 3/]);
+    // Plus aucun appel en cours : message calme et appels précédents (terminés depuis moins de 30 minutes).
+    const { data: second } = await b.staff.from("tickets").select("id").eq("display_code", "C-002").eq("branch_id", b.branchId).single();
+    await rpc(b.staff, "admit_ticket", { p_ticket: second!.id });
+    await rpc(b.staff, "finish_ticket", { p_ticket: second!.id });
+    await expect(tv.getByText("Les appels s'afficheront ici.")).toBeVisible();
+    await expect(previous.getByRole("listitem")).toHaveText([/C-002.*Cabinet 3/, /C-001.*Cabinet 3/]);
+    await expectAccessible(tv);
 
     // Révocation : l'écran revient à l'appairage.
     await staff.getByRole("link", { name: /Salle d'attente/ }).click();
@@ -111,6 +123,7 @@ test.describe("M6 — écran TV", () => {
     await expect(staff.getByText("Écran révoqué.")).toBeVisible();
     await tv.reload();
     await expect(tv.getByRole("heading", { name: "Appairez cet écran" })).toBeVisible();
+    await expect(tv.getByRole("alert").filter({ hasText: "Cet écran n'est plus appairé." })).toBeVisible();
     await tvContext.close();
     await staffContext.close();
   });

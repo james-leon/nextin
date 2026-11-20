@@ -19,6 +19,8 @@ export type GameSkin = {
 
 export type GameSession = {
   quiz: { id: string; title: string; title_en: string | null; reward: string; reward_en: string | null; advertiser: string; played: boolean } | null;
+  /** Quiz « série sans fin » proposé (banque Wintek non vide, quiz autorisé par l'établissement) ; absent avant le LOT 5b. */
+  quiz_bank?: boolean;
   sky_catch: { skin: GameSkin | null } | null;
   interstitial: { skip_after: number; min_gap: number };
   ads: AdCandidate[];

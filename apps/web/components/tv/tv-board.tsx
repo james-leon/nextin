@@ -1,171 +1,281 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Volume2, VolumeX, WifiOff } from "lucide-react";
-import { waitMinutes } from "@nextin/shared/queue/estimate";
+import { Volume2, WifiOff } from "lucide-react";
 import type { BoardCall, BranchBoard } from "@nextin/shared/queue/live";
 import { spellTicketCode } from "@nextin/shared/ticket";
-import { Logo } from "@/components/ui/logo";
-import { ServiceTile } from "@/components/ui/service-tile";
+import { LogoMark } from "@/components/ui/logo";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
 import { qrMatrix } from "@/lib/qr/matrix";
-import { tvCalls } from "@/lib/tv/calls";
+import { presenceCodeOf, tvView } from "@/lib/tv/calls";
 import { cn } from "@/lib/cn";
 import { TvAdSlot } from "./tv-ad-slot";
 import type { TvSession } from "./types";
 
-/** Écran de salle d'attente (maquette 05) : ticket appelé en héros, appels précédents, files, QR code d'entrée. */
+/**
+ * Unité de l'écran TV : 1 % de la largeur d'un écran 16:9 (1vw), réduite si la fenêtre est moins large que haute
+ * (même rendu de 720p à la 4K, rien de rogné). Toutes les tailles sont des multiples de `--u`.
+ */
+export const TV_UNIT_STYLE = { "--u": "min(1vw, 1.7778vh)" } as React.CSSProperties;
+
+/** Libellé du poste (« Cabinet 2 », ou libellé personnalisé). */
+export function useCounterName() {
+  const tk = useLiteT("counterKinds");
+  return (c: BoardCall) => (c.counter_label ? c.counter_label : `${tk(c.counter_kind)} ${c.counter_number}`);
+}
+
+/** Nom du service d'un appel (langue de l'écran). */
+export function useServiceName(board: BranchBoard) {
+  const locale = useLiteLocale();
+  return (serviceId: string) => {
+    const s = board.services.find((x) => x.id === serviceId);
+    return s ? (locale === "en" && s.name_en ? s.name_en : s.name) : "";
+  };
+}
+
+/**
+ * Écran de salle d'attente (maquette v2 09), toujours clair et lisible à 3 m : bandeau bleu nuit, appels en cours
+ * (le dernier marqué d'un trait et de l'étiquette « Appel »), colonne publicité ou QR code de l'agence, « À suivre »,
+ * personnes en attente et code de présence. Aucun nom de patient : seulement les numéros et les postes.
+ */
 export function TvBoard({
   session,
   board,
   offline,
-  soundOn,
-  onEnableSound,
   adKey,
 }: {
   session: TvSession;
-  /** File des événements publicitaires de l'écran (jeton d'appareil). */
-  adKey: string;
   board: BranchBoard;
   offline: boolean;
-  soundOn: boolean;
-  onEnableSound: () => void;
+  /** File des événements publicitaires de l'écran (jeton d'appareil). */
+  adKey: string;
 }) {
   const t = useLiteT("tv");
-  const tk = useLiteT("counterKinds");
   const locale = useLiteLocale();
+  const counterName = useCounterName();
+  const serviceName = useServiceName(board);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 15_000);
     return () => clearInterval(id);
   }, []);
 
-  const { hero, others } = tvCalls(board, session.service_ids);
-  const services = board.services.filter((s) => session.service_ids.length === 0 || session.service_ids.includes(s.id));
+  const view = tvView(board, session.service_ids);
   const qrUrl = session.presence_url ?? session.entry_url;
   const qr = useMemo(() => (qrUrl ? qrMatrix(qrUrl, 2) : null), [qrUrl]);
-  const counterKind = (c: BoardCall) => (c.counter_label ? c.counter_label : tk(c.counter_kind));
-  const name = (s: (typeof services)[number]) => (locale === "en" && s.name_en ? s.name_en : s.name);
+  const presence = presenceCodeOf(session.presence_url);
   const clock = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", timeZone: session.branch.timezone }).format(now);
+  const hasCalls = view.current.length > 0;
+
+  const qrCard = qr ? (
+    <section className="flex min-h-0 flex-1 flex-col items-center justify-center u-gap-1 u-rounded-1_4 bg-navy u-p-1_6 text-center text-white">
+      <svg
+        viewBox={`0 0 ${qr.size} ${qr.size}`}
+        role="img"
+        aria-label={t("scanTitle")}
+        className="aspect-square u-h-13 max-h-[60%] shrink u-rounded-1 bg-white u-p-0_8"
+        shapeRendering="crispEdges"
+      >
+        <rect width={qr.size} height={qr.size} fill="#fff" />
+        <path d={qr.path} fill="#000" />
+      </svg>
+      <p className="u-text-2 font-bold text-balance">{t("scanTitle")}</p>
+      <p className="u-text-1_3 text-white/80">{t("scanBody")}</p>
+      {session.entry ? (
+        <p className="u-rounded-0_8 bg-white/12 u-px-1 u-py-0_2 font-rounded u-text-2_2 font-bold tracking-[0.15em]">
+          <span className="sr-only">{t("code", { code: session.entry.short_code })}</span>
+          <span aria-hidden>{session.entry.short_code}</span>
+        </p>
+      ) : null}
+    </section>
+  ) : null;
 
   return (
-    <main className="flex h-dvh flex-col gap-[2.2vh] overflow-hidden bg-tv px-[3.5vw] pt-[4vh] pb-[3.5vh] leading-snug text-white">
-      {/* Interligne sans unité et espacements en vh : proportions identiques de 720p à la 4K, aucun texte rogné. */}
-      <header className="flex items-center gap-[2.4vh]">
-        <Logo tone="inverse" className="h-[7vh]" />
-        <p className="truncate text-[2.8vh] text-white/80">
-          {session.organization.name} · {session.branch.name}
+    <main
+      style={TV_UNIT_STYLE}
+      className="relative grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden bg-grouped leading-snug text-label"
+    >
+      <header className="flex items-center u-gap-1_4 bg-navy u-px-2_4 u-py-1_6 text-white">
+        <LogoMark className="u-size-3_4 shrink-0" />
+        <p className="flex min-w-0 items-baseline u-gap-0_6">
+          <span className="truncate u-text-2_1 font-bold">{session.organization.name}</span>
+          <span className="truncate u-text-1_3 text-white/75">{session.branch.name}</span>
         </p>
-        <div className="ml-auto flex items-center gap-[1.6vh]">
-          {offline ? (
-            <span role="status" className="flex items-center gap-[0.8vh] rounded-full bg-white/10 px-[1.6vh] py-[0.8vh] text-[2vh]">
-              <WifiOff aria-hidden className="size-[2.4vh]" />
-              {t("offline")}
-            </span>
-          ) : null}
-          <button
-            type="button"
-            onClick={onEnableSound}
-            className={cn(
-              "pressable flex min-h-[max(2.75rem,5vh)] items-center gap-[0.8vh] rounded-full px-[1.6vh] py-[0.8vh] text-[2vh]",
-              soundOn ? "bg-white/10 text-white/80" : "bg-accent text-white",
-            )}
-          >
-            {soundOn ? <Volume2 aria-hidden className="size-[2.4vh]" /> : <VolumeX aria-hidden className="size-[2.4vh]" />}
-            {soundOn ? t("soundOn") : t("enableSound")}
-          </button>
-          <p className="text-[5.5vh] leading-none font-bold tabular">{clock}</p>
-        </div>
+        <p className="ml-auto font-rounded u-text-2_4 font-semibold tabular">{clock}</p>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[1.45fr_1fr] gap-[2.2vw]">
-        <div className="flex min-h-0 flex-col gap-[2.2vh]">
+      <div
+        className={cn(
+          "grid min-h-0 grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)] u-gap-1_6 u-px-2_4 u-py-1_6 transition-opacity",
+          offline && "opacity-55 grayscale-[0.4]",
+        )}
+      >
+        {hasCalls ? (
           <section
             aria-live="assertive"
             aria-label={t("called")}
-            className="squircle flex min-h-0 flex-1 items-center justify-between gap-[2.4vh] rounded-[2.4vw] bg-white px-[4vw] text-ticket-number"
+            className="flex min-h-0 flex-col overflow-hidden u-rounded-1_4 bg-grouped-secondary u-px-2 u-py-1_4"
           >
-            {hero ? (
-              <>
-                <div key={`${hero.code}-${hero.called_at}`} className="min-w-0 animate-pop-in">
-                  <p className="text-[3.2vh] font-bold tracking-[0.08em] text-label-secondary uppercase">{t("called")}</p>
-                  <p className="text-[min(20vh,11vw)] leading-[0.95] font-extrabold whitespace-nowrap">
-                    <span aria-hidden>{hero.code}</span>
-                    <span className="sr-only">{spellTicketCode(hero.code)}</span>
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-[2vw]">
-                  <ArrowRight aria-hidden className="size-[7vh] stroke-[2.5] text-orange" />
-                  <div className="text-right">
-                    <p className="text-[3.6vh] text-label-secondary">{counterKind(hero)}</p>
-                    {hero.counter_label ? null : <p className="text-[16vh] leading-none font-extrabold">{hero.counter_number}</p>}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="w-full text-center text-[4vh] text-label-secondary">{t("noCall")}</p>
-            )}
-          </section>
-          {/* Derniers appels : aucune tuile vide, un tiret discret tant qu'il n'y a pas d'appel précédent. */}
-          <section aria-label={t("previousCalls")} className="flex h-[11vh] shrink-0 flex-col">
-            {others.length ? (
-              <ul role="list" className="grid h-full grid-cols-3 gap-[1.6vw]">
-                {others.map((c) => (
-                  <li key={`${c.code}-${c.called_at}`} className="squircle flex items-center justify-between gap-[1.2vh] rounded-[1.4vw] bg-tv-surface px-[1.8vw]">
-                    <span className="shrink-0 text-[4.4vh] leading-none font-extrabold whitespace-nowrap">
+            <p aria-hidden className="u-mb-0_6 grid grid-cols-2 u-text-1_5 font-semibold tracking-[0.04em] text-label-secondary uppercase">
+              <span>{t("columnTicket")}</span>
+              <span>{t("columnGoTo")}</span>
+            </p>
+            <ul role="list" className="flex min-h-0 flex-col">
+              {view.current.map((c) => {
+                const latest = c === view.latest;
+                return (
+                  <li
+                    key={`${c.code}-${c.called_at}`}
+                    className="relative grid grid-cols-2 items-center u-border-t-0_15 border-separator u-py-1"
+                  >
+                    {latest ? (
+                      <span aria-hidden className="absolute inset-y-0 u-nleft-1_4 u-w-0_5 bg-orange" />
+                    ) : null}
+                    <span className="font-rounded u-text-6 leading-none font-bold whitespace-nowrap text-ticket-number">
                       <span aria-hidden>{c.code}</span>
                       <span className="sr-only">{spellTicketCode(c.code)}</span>
                     </span>
-                    <span className="min-w-0 truncate text-[2.4vh] text-white/80">
-                      {counterKind(c)} {c.counter_label ? "" : c.counter_number}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="flex h-full items-center px-[1.8vw] text-[2.4vh] text-white/80">
-                <span aria-hidden>–</span>
-                <span className="sr-only">{t("noPreviousCall")}</span>
-              </p>
-            )}
-          </section>
-        </div>
-
-        <div className="flex min-h-0 flex-col gap-[2.2vh]">
-          <TvAdSlot ads={session.show_ads ? (session.ads ?? []) : []} adKey={adKey}>
-            <section aria-label={t("waitingHeader")} className="squircle flex min-h-0 flex-1 flex-col rounded-[2.4vw] bg-tv-surface px-[2.2vw] py-[3vh]">
-              <h2 className="pb-[1.5vh] text-[2.4vh] font-semibold tracking-[0.1em] text-white/80 uppercase">{t("waitingHeader")}</h2>
-              <ul role="list" className="flex min-h-0 flex-col gap-[1.6vh] overflow-hidden">
-                {services.map((s) => (
-                  <li key={s.id} className="flex items-center gap-[1.2vw]">
-                    <ServiceTile letter={s.prefix} color={s.color} className="size-[6vh] rounded-[1.2vh] text-[3vh]" />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[2.8vh] leading-tight font-semibold">{name(s)}</span>
-                      <span className="truncate text-[2.3vh] text-white/80 tabular">
-                        {t("waiting", { count: s.waiting.length })}
-                        {s.waiting.length ? ` · ${t("wait", { minutes: waitMinutes(s.wait_seconds) })}` : ""}
+                    <span className="min-w-0">
+                      <span className="flex items-center u-gap-1 u-text-2_9 font-semibold">
+                        <span className="truncate">{counterName(c)}</span>
+                        {latest ? (
+                          <span className="shrink-0 rounded-full bg-orange u-px-0_9 u-py-0_25 u-text-1_2 font-bold text-label">
+                            {t("callTag")}
+                          </span>
+                        ) : null}
                       </span>
+                      <span className="block truncate u-text-1_4 text-label-secondary">{serviceName(c.service_id)}</span>
                     </span>
                   </li>
-                ))}
-              </ul>
-            </section>
+                );
+              })}
+            </ul>
+          </section>
+        ) : (
+          <section
+            aria-label={t("called")}
+            className="flex min-h-0 flex-col items-center justify-center u-gap-1 u-rounded-1_4 bg-grouped-secondary text-center u-text-2 text-label-secondary"
+          >
+            <span aria-hidden className="flex items-end u-gap-0_8">
+              {[0, 1, 2].map((i) => (
+                <i key={i} className="u-size-1_4 rounded-full bg-label-secondary opacity-35" />
+              ))}
+            </span>
+            {t("noCall")}
+          </section>
+        )}
+
+        <div className="flex min-h-0 flex-col u-gap-1_6">
+          {/* Publicité en alternance avec le QR code de l'agence, avec ou sans appel (règles de diffusion inchangées). */}
+          <TvAdSlot ads={session.show_ads ? (session.ads ?? []) : []} adKey={adKey}>
+            {qrCard}
           </TvAdSlot>
-          {qr ? (
-            <section className="squircle flex items-center gap-[1.6vw] rounded-[2.4vw] bg-white px-[1.8vw] py-[2.2vh] text-ticket-number">
-              <svg viewBox={`0 0 ${qr.size} ${qr.size}`} role="img" aria-label={t("scanTitle")} className="size-[15vh] shrink-0 rounded-[1vh]" shapeRendering="crispEdges">
-                <rect width={qr.size} height={qr.size} fill="#fff" />
-                <path d={qr.path} fill="#000" />
-              </svg>
-              <div className="min-w-0">
-                <p className="text-[3vh] leading-tight font-bold text-balance">{t("scanTitle")}</p>
-                <p className="text-[2.4vh] leading-snug text-label-secondary">{t("scanBody")}</p>
-                {session.entry ? <p className="mt-1 text-[2.4vh] font-semibold text-label-secondary tabular">{t("code", { code: session.entry.short_code })}</p> : null}
-              </div>
+          {hasCalls ? (
+            <section aria-label={t("upNext")} className="u-rounded-1_4 bg-grouped-secondary u-px-1_6 u-py-1_2">
+              <h2 className="u-mb-0_6 u-text-1_3 font-semibold tracking-[0.04em] text-label-secondary uppercase">{t("upNext")}</h2>
+              <p className="flex flex-wrap u-gap-x-1_4 font-rounded u-text-2_4 font-bold text-ticket-number">
+                {view.next.length ? view.next.map((code) => <span key={code}>{code}</span>) : <span className="text-label-secondary">–</span>}
+              </p>
             </section>
-          ) : null}
+          ) : (
+            <section aria-label={t("previousCalls")} className="u-rounded-1_4 bg-grouped-secondary u-px-1_6 u-py-1_2">
+              <h2 className="u-mb-0_6 u-text-1_3 font-semibold tracking-[0.04em] text-label-secondary uppercase">
+                {t("previousCalls")}
+              </h2>
+              {view.previous.length ? (
+                <ul role="list" className="flex flex-wrap u-gap-x-1_4 font-rounded u-text-2_2 font-bold text-label-secondary">
+                  {view.previous.map((c) => (
+                    <li key={`${c.code}-${c.called_at}`}>
+                      <span aria-hidden>{c.code}</span>
+                      <span className="sr-only">
+                        {spellTicketCode(c.code)} · {counterName(c)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="u-text-1_6 text-label-secondary">{t("noPreviousCall")}</p>
+              )}
+            </section>
+          )}
         </div>
       </div>
+
+      <footer className="flex items-center u-gap-1_6 u-px-2_4 u-pt-1 u-pb-1_4 u-text-1_4 text-label-secondary">
+        <span aria-hidden className="flex items-end u-gap-0_5">
+          <i className="u-size-0_8 rounded-full bg-accent" />
+          <i className="u-size-0_7 rounded-full bg-accent" />
+          <i className="u-size-0_6 rounded-full bg-accent" />
+        </span>
+        <p className="min-w-0 truncate">
+          <b className="font-semibold text-label">{view.waiting ? t("waitingPeople", { count: view.waiting }) : t("waitingNobody")}</b> {t("waitingSuffix")} · {t("scanHint")}
+        </p>
+        {presence ? (
+          <p className="ml-auto flex shrink-0 items-center u-gap-0_8">
+            {t("presenceCode")}
+            <span className="u-rounded-0_8 bg-grouped-secondary u-px-1 u-py-0_2 font-rounded u-text-2 font-bold tracking-[0.1em] text-label">
+              {presence}
+            </span>
+          </p>
+        ) : null}
+      </footer>
+
+      {offline ? (
+        <p
+          role="status"
+          className="absolute u-top-1_8 left-1/2 flex -translate-x-1/2 items-center u-gap-0_8 rounded-full bg-orange u-px-1_8 u-py-0_6 u-text-1_6 font-bold text-label"
+        >
+          <WifiOff aria-hidden className="u-size-2 stroke-[2.2]" />
+          {t("offline")}
+        </p>
+      ) : null}
     </main>
+  );
+}
+
+/**
+ * « Activer le son » (maquette v2 23) : voile sur l'écran et grand bouton blanc ; un seul geste à l'installation
+ * (télécommande ou souris). Ensuite, « Son activé » s'affiche 3 secondes.
+ */
+export function TvSoundGate({ soundOn, onEnable }: { soundOn: boolean; onEnable: () => void }) {
+  const t = useLiteT("tv");
+  // « Son activé » seulement après l'activation (pas si le navigateur l'autorisait déjà au premier affichage).
+  const [wasOff, setWasOff] = useState(!soundOn);
+  if (!soundOn && !wasOff) setWasOff(true);
+
+  if (soundOn) return wasOff ? <SoundConfirmed label={t("soundOn")} /> : null;
+  return (
+    <div style={TV_UNIT_STYLE} className="fixed inset-0 z-30 grid place-items-center bg-overlay">
+      <button
+        type="button"
+        autoFocus
+        onClick={onEnable}
+        className="pressable flex flex-col items-center u-gap-1 u-rounded-2 bg-white u-px-3_6 u-py-2_4 text-center text-navy u-fv-outline-0_3 u-fv-outline-offset-0_3 focus-visible:outline-accent"
+      >
+        <Volume2 aria-hidden className="u-size-6 stroke-[1.8]" />
+        <span className="u-text-3 font-bold">{t("enableSound")}</span>
+        <span className="u-text-1_5 text-label-secondary">{t("soundHint")}</span>
+      </button>
+    </div>
+  );
+}
+
+/** « Son activé » pendant 3 secondes. */
+function SoundConfirmed({ label }: { label: string }) {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const id = setTimeout(() => setVisible(false), 3_000);
+    return () => clearTimeout(id);
+  }, []);
+  if (!visible) return null;
+  return (
+    <p
+      role="status"
+      style={TV_UNIT_STYLE}
+      className="fixed u-bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center u-gap-0_8 rounded-full bg-navy u-px-2 u-py-0_8 u-text-1_8 font-semibold text-white shadow-floating"
+    >
+      <Volume2 aria-hidden className="u-size-2_2" />
+      {label}
+    </p>
   );
 }
