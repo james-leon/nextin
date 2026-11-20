@@ -189,10 +189,12 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     expect(again.error?.message).toBe("coupon_redeemed");
   });
 
-  test("Sky Catch : partie figée et « C'est votre tour » à l'appel ; statistiques gardées hors ligne", async ({ page, context }, info) => {
+  test("Sky Catch : vies, niveaux, pause, fin, partie figée et enregistrée à l'appel ; statistiques gardées hors ligne", async ({ page, context }, info) => {
     test.skip(info.project.name !== "mobile", "jeu sur téléphone");
     test.setTimeout(90_000);
     const { b, c } = await branchWithCampaign("Sky");
+    // Crochet de test du jeu (`window.__skyCatch`) : placer un objet devant l'avion.
+    await page.addInitScript(() => localStorage.setItem("nextin.e2e", "1"));
     const token = await takeTicket(page, b);
     await page.goto(`/t/${token}`);
     await expect(page.getByRole("button", { name: /^Jouer en attendant/ })).toBeVisible({ timeout: 15_000 });
@@ -217,20 +219,87 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.getByRole("button", { name: /^Jouer en attendant/ }).click();
     const sheet = page.getByRole("dialog");
     await sheet.getByRole("button", { name: /^Sky Catch/ }).click();
-    await sheet.getByRole("button", { name: "Commencer" }).click();
-    await expect(sheet.locator("canvas")).toBeVisible();
-    await expect(sheet.getByRole("button", { name: "Pause" })).toBeEnabled();
-    await page.keyboard.down("ArrowLeft");
-    await page.waitForTimeout(600);
-    await page.keyboard.up("ArrowLeft");
 
-    // Appel : le jeu se fige et l'appel prend toute la place.
+    // Présentation (maquette v2 12) : légende pièce / gemme / obstacle, « Jouer », arrêt automatique à l'appel.
+    await expect(sheet.getByRole("heading", { name: "Sky Catch" })).toBeVisible();
+    await expect(sheet.getByText("Gemme +50")).toBeVisible();
+    await expect(sheet.getByText("Le jeu s'arrête tout seul quand votre tour arrive.")).toBeVisible();
+    await expectAccessible(page);
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expectAccessible(page);
+    await page.emulateMedia({ colorScheme: "light" });
+    await sheet.getByRole("button", { name: "Jouer", exact: true }).click();
+
+    // Tableau de bord : score, niveau et décor, trois vies ; musique et effets coupables séparément.
+    const lives = sheet.getByTestId("sky-lives");
+    await expect(sheet.getByTestId("sky-score")).toHaveText("0 pts");
+    await expect(sheet.getByTestId("sky-level")).toHaveText("Niveau 1 · Matin sur Douala");
+    await expect(lives).toHaveAttribute("aria-label", "3 vies sur 3");
+    const music = sheet.getByRole("button", { name: "Musique" });
+    await expect(music).toHaveAttribute("aria-pressed", "true");
+    await music.click();
+    await expect(music).toHaveAttribute("aria-pressed", "false");
+    expect(await page.evaluate(() => localStorage.getItem("nextin.skycatch.sound"))).toBe('{"music":false,"sfx":true}');
+    await expect(sheet.getByRole("button", { name: "Effets sonores" })).toHaveAttribute("aria-pressed", "true");
+    await page.keyboard.down("ArrowLeft");
+    await page.waitForTimeout(400);
+    await page.keyboard.up("ArrowLeft");
+    await expectAccessible(page);
+
+    // Obstacle touché : une vie en moins.
+    const place = (type: "coin" | "gem" | "enemy") =>
+      page.evaluate((t) => (window as unknown as { __skyCatch: { place: (t: string) => void } }).__skyCatch.place(t), type);
+    await place("enemy");
+    await expect(lives).toHaveAttribute("data-lives", "2");
+    await expect(lives).toHaveAttribute("aria-label", "2 vies sur 3");
+
+    // 200 points : niveau suivant, nouveau décor (la pub interstitielle peut passer entre les deux).
+    await page.evaluate(() => (window as unknown as { __skyCatch: { score: (n: number) => void } }).__skyCatch.score(190));
+    await place("coin");
+    await expect(sheet.getByTestId("sky-level")).toHaveText("Niveau 2 · Coucher de soleil");
+    const adLabel = sheet.getByText("Publicité", { exact: true });
+    await page.waitForTimeout(500);
+    if (await adLabel.isVisible()) {
+      await sheet.getByRole("button", { name: "Passer", exact: true }).click({ timeout: 10_000 });
+      await expect(adLabel).toHaveCount(0);
+    }
+    await expect(sheet.getByTestId("sky-score")).toHaveText("200 pts");
+
+    // Pause au clavier (Espace) et reprise.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await page.keyboard.press(" ");
+    await expect(sheet.getByRole("heading", { name: "Pause" })).toBeVisible();
+    await sheet.getByRole("button", { name: "Reprendre" }).first().click();
+    await expect(sheet.getByRole("heading", { name: "Pause" })).toHaveCount(0);
+
+    // Deux autres chocs (après l'invulnérabilité) : partie terminée, meilleur score gardé sur l'appareil.
+    for (const left of ["1", "0"]) {
+      await page.waitForTimeout(1_700);
+      await place("enemy");
+      if (left === "1") await expect(lives).toHaveAttribute("data-lives", "1");
+    }
+    await expect(sheet.getByText("Partie terminée")).toBeVisible();
+    await expect(sheet.getByText("Meilleur score : 200")).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem("nextin.skycatch.best"))).toBe("200");
+    await expectAccessible(page);
+
+    // Nouvelle partie, puis appel : la partie se fige, son score est enregistré, « C'est votre tour » en plein écran.
+    await sheet.getByRole("button", { name: "Rejouer" }).click();
+    await expect(sheet.getByTestId("sky-score")).toHaveText("0 pts");
+    await place("gem");
+    await expect(sheet.getByTestId("sky-score")).toHaveText("50 pts");
     await rpc(b.staff, "call_next", { p_counter: b.counterId });
-    const turn = page.getByRole("alertdialog", { name: "C'est votre tour !" });
+    const turn = sheet.getByRole("alertdialog", { name: "C'est votre tour !" });
     await expect(turn).toBeVisible({ timeout: 15_000 });
     await expect(turn.getByText("C-001")).toBeVisible();
     await expect(turn.getByText("Présentez-vous : Cabinet 3")).toBeVisible();
-    await expect(sheet.getByRole("button", { name: "Reprendre" }).first()).toBeAttached();
+    await expect(turn.getByTestId("sky-saved")).toHaveText("Votre partie est enregistrée. Score : 50");
+    // Figée : le score ne bouge plus, même si un objet touche l'avion.
+    await place("coin");
+    await page.waitForTimeout(300);
+    await expect(sheet.getByTestId("sky-score")).toHaveText("50 pts");
+    const { data: plays } = await admin.from("ad_game_plays").select("score, finished_at").eq("ticket_id", (await admin.from("tickets").select("id").eq("public_token", token).single()).data!.id).order("started_at");
+    expect(plays?.map((p) => p.score)).toEqual([200, 50]);
     await expectAccessible(page);
     await turn.getByRole("button", { name: "Revenir à mon ticket" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);

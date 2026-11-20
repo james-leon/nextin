@@ -82,14 +82,7 @@
   --on-navy-control: rgb(255 255 255 / 0.14);
   /* Carte « C'est votre tour » : vert profond de la marque, texte blanc conforme AA (5,4:1), clair comme sombre. */
   --called-fill: #187a31;
-  /* Sky Catch (M10b) : ciel, pièces, orages, lus par le rendu du canvas. */
-  --game-sky-top: #5aa9e6;
-  --game-sky-bottom: #d7ecfb;
-  --game-cloud: rgb(255 255 255 / 0.7);
-  --game-coin: #f5b81f;
-  --game-coin-edge: #c98a0c;
-  --game-storm: #4b5563;
-  --game-bolt: #f58b1f;
+  /* Sky Catch : jetons `--game-*` déclarés sur le jeu lui-même (`SKY_TOKENS`, components/client/games/sky-scene.ts). */
 
   /* Aplats : aucune ombre sur les cartes ; ombre réservée aux éléments qui flottent (feuilles, menus, toasts). */
   --elev-card: none;
@@ -143,10 +136,6 @@
   --logo-name: #ffffff;
   --logo-tagline: #b8c4d6;
   --brand-tile: #1a6bb5;
-  --game-sky-top: #0b1f3b;
-  --game-sky-bottom: #1f4f86;
-  --game-cloud: rgb(255 255 255 / 0.12);
-  --game-storm: #8b95a5;
   --elev-card: none;
   --elev-floating: 0 8px 32px rgb(0 0 0 / 0.5);
   --sidebar-bg: #0b1a2e;

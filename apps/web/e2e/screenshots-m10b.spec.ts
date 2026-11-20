@@ -127,13 +127,13 @@ for (const size of ["mobile", "tablet-portrait", "desktop"] as const) {
       // Sky Catch : écran d'accueil, partie en cours, puis appel pendant le jeu.
       await sheet.getByRole("button", { name: "Jouer en attendant" }).click();
       await sheet.getByRole("button", { name: /^Sky Catch/ }).click();
-      await sheet.getByRole("button", { name: "Commencer" }).waitFor();
+      await sheet.getByRole("button", { name: "Jouer", exact: true }).waitFor();
       await shot(page, `14-skycatch-ready-${size}-${theme}`, false);
-      await sheet.getByRole("button", { name: "Commencer" }).click();
+      await sheet.getByRole("button", { name: "Jouer", exact: true }).click();
       await page.waitForTimeout(2_500);
       await page.screenshot({ path: `${OUT}/15-skycatch-playing-${size}-${theme}.png` });
       await rpc(b.staff, "call_next", { p_counter: b.counterId });
-      await page.getByRole("alertdialog", { name: "C'est votre tour !" }).waitFor({ timeout: 15_000 });
+      await page.getByRole("dialog").getByRole("alertdialog", { name: "C'est votre tour" }).waitFor({ timeout: 15_000 });
       await page.waitForTimeout(3_000);
       await page.screenshot({ path: `${OUT}/16-your-turn-${size}-${theme}.png` });
       await context.close();

@@ -253,13 +253,13 @@ test.describe("@screenshots refonte v2 LOT 5b", () => {
 
         // Sky Catch : accueil du jeu, partie en cours, pause.
         await sheet.getByRole("button", { name: /^Sky Catch/ }).click();
-        await sheet.getByRole("button", { name: "Commencer" }).waitFor();
+        await sheet.getByRole("button", { name: "Jouer", exact: true }).waitFor();
         await page.waitForTimeout(400);
         await snap(page, `sky-accueil-${suffix}`);
-        await sheet.getByRole("button", { name: "Commencer" }).click();
+        await sheet.getByRole("button", { name: "Jouer", exact: true }).click();
         await page.waitForTimeout(2_500);
         await snap(page, `sky-partie-${suffix}`);
-        await sheet.getByRole("button", { name: "Pause" }).click();
+        await sheet.getByRole("button", { name: "Pause", exact: true }).click();
         await page.waitForTimeout(300);
         await snap(page, `sky-pause-${suffix}`);
         await context.close();

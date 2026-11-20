@@ -1,6 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { adFileUrl, canSkip, formatCouponCode, interstitialDue, nextAd } from "./rotation";
-import { advance, createGame, hitsPlane, levelConfig, PLANE, POOL_SIZE, startLevel, step, WORLD, type GameInput } from "./sky-catch";
+import {
+  advance,
+  createGame,
+  GEM_POINTS,
+  INVULNERABLE_SECONDS,
+  levelForScore,
+  NO_INPUT,
+  placeOnPlane,
+  POOL_SIZE,
+  sceneOf,
+  SCENE_ENEMY,
+  spawn,
+  spawnDelay,
+  speedOf,
+  startGame,
+  step,
+  touches,
+  WORLD,
+} from "./sky-catch";
 
 /** Générateur déterministe (mulberry32). */
 function rng(seed: number) {
@@ -55,66 +73,149 @@ describe("rotation pondérée (même règle que public.ad_weighted_draw)", () =>
 });
 
 describe("Sky Catch", () => {
-  const idle: GameInput = { targetX: null, direction: 0 };
-  it("niveaux de 30 à 45 s, de plus en plus difficiles", () => {
-    expect([1, 2, 3, 4, 5, 9].map((l) => levelConfig(l).duration)).toEqual([30, 35, 40, 45, 45, 45]);
-    expect(levelConfig(3).fallSpeed).toBeGreaterThan(levelConfig(1).fallSpeed);
-    expect(levelConfig(3).stormEvery).toBeLessThan(levelConfig(1).stormEvery);
-    expect(levelConfig(50).stormEvery).toBeGreaterThanOrEqual(0.42);
-  });
-  it("l'avion suit le doigt à vitesse bornée et reste dans l'écran", () => {
+  const quiet = () => {
     const s = createGame();
-    startLevel(s);
-    step(s, { targetX: WORLD.width, direction: 0 }, () => 0.5);
-    expect(s.planeX).toBeCloseTo(WORLD.width / 2 + 7, 0);
-    for (let i = 0; i < 200; i++) step(s, { targetX: 9999, direction: 0 }, () => 0.5);
-    expect(s.planeX).toBeLessThanOrEqual(WORLD.width - PLANE.halfWidth);
-    for (let i = 0; i < 200; i++) step(s, { targetX: null, direction: -1 }, () => 0.5);
-    expect(s.planeX).toBeGreaterThanOrEqual(PLANE.halfWidth);
-  });
-  it("pièce attrapée : points ; orage : partie terminée", () => {
+    startGame(s);
+    s.spawnTimer = 1e9; // aucune apparition aléatoire
+    return s;
+  };
+  const tick = (s: ReturnType<typeof createGame>, n = 1) => {
+    for (let i = 0; i < n; i++) step(s, NO_INPUT, () => 0.5);
+  };
+
+  it("trois vies, score à zéro, niveau 1 au départ (bandeau du décor affiché)", () => {
     const s = createGame();
-    startLevel(s);
-    s.coinTimer = 99;
-    s.stormTimer = 99;
-    Object.assign(s.objects[0]!, { active: true, kind: "coin", x: s.planeX, y: PLANE.y - 5, r: 13 });
-    step(s, idle, () => 0.5);
-    expect([s.coins, s.score]).toEqual([1, 10]);
-    Object.assign(s.objects[1]!, { active: true, kind: "storm", x: s.planeX, y: PLANE.y - 5, r: 20 });
-    step(s, idle, () => 0.5);
-    expect(s.status).toBe("game_over");
+    startGame(s);
+    expect([s.status, s.lives, s.score, s.level, s.levelsCompleted]).toEqual(["playing", 3, 0, 1, 0]);
+    expect(s.banner).toBeGreaterThan(0);
   });
-  it("collision : un orage à côté de l'avion ne touche pas", () => {
-    expect(hitsPlane(100, { x: 100 + 22 + 25, y: PLANE.y, r: 20 })).toBe(false);
-    expect(hitsPlane(100, { x: 100 + 22 + 10, y: PLANE.y, r: 20 })).toBe(true);
+
+  it("pièce +10, gemme +50", () => {
+    const s = quiet();
+    placeOnPlane(s, "coin");
+    tick(s);
+    expect([s.score, s.coins]).toEqual([10, 1]);
+    placeOnPlane(s, "gem");
+    tick(s);
+    expect([s.score, s.gems]).toEqual([10 + GEM_POINTS, 1]);
+    expect(s.events.map((e) => e.type)).toEqual(["coin", "gem"]);
   });
-  it("niveau terminé à la fin du temps, puis niveau suivant plus rapide", () => {
-    const s = createGame();
-    startLevel(s);
-    s.stormTimer = 1e9;
-    const acc = { t: 0 };
-    for (let i = 0; i < 31 * 4; i++) advance(s, idle, 0.25, acc, () => 0.5);
-    expect(s.status).toBe("level_complete");
-    expect(s.levelsCompleted).toBe(1);
-    expect(s.score).toBeGreaterThanOrEqual(50);
-    startLevel(s);
-    expect([s.level, s.timeLeft, s.status]).toEqual([2, 35, "playing"]);
-    expect(s.objects.every((o) => !o.active)).toBe(true);
+
+  it("obstacle touché : une vie en moins, tremblement, invulnérable ~1 s ; troisième choc = fin de partie", () => {
+    const s = quiet();
+    placeOnPlane(s, "enemy");
+    tick(s);
+    expect(s.lives).toBe(2);
+    expect(s.shake).toBeGreaterThan(0);
+    expect(s.invulnerable).toBeGreaterThan(1);
+    // Pendant l'invulnérabilité : aucun choc compté.
+    placeOnPlane(s, "enemy");
+    tick(s);
+    expect(s.lives).toBe(2);
+    // L'obstacle traverse l'avion sans effet (il est retiré ici pour la suite du test).
+    for (const o of s.objects) o.active = false;
+    tick(s, Math.ceil(INVULNERABLE_SECONDS * 60) + 1);
+    expect(s.invulnerable).toBe(0);
+    placeOnPlane(s, "enemy");
+    tick(s, 2);
+    expect(s.lives).toBe(1);
+    tick(s, Math.ceil(INVULNERABLE_SECONDS * 60) + 1);
+    placeOnPlane(s, "enemy");
+    tick(s, 2);
+    expect([s.lives, s.status]).toEqual([0, "game_over"]);
+    expect(s.events.at(-1)?.type).toBe("over");
+    // Plus rien ne bouge après la fin.
+    const score = s.score;
+    placeOnPlane(s, "coin");
+    tick(s);
+    expect(s.score).toBe(score);
   });
+
+  it("nouveau décor tous les 200 points, puis les décors recommencent, plus vite", () => {
+    expect([0, 199, 200, 399, 400, 800].map(levelForScore)).toEqual([1, 1, 2, 2, 3, 5]);
+    expect([1, 2, 3, 4, 5, 8].map(sceneOf)).toEqual(["douala", "sunset", "night", "storm", "douala", "storm"]);
+    expect(SCENE_ENEMY).toEqual({ douala: "bird", sunset: "vulture", night: "drone", storm: "spark" });
+    expect(speedOf(5)).toBeGreaterThan(speedOf(1));
+    expect(spawnDelay(5, 0)).toBeLessThan(spawnDelay(1, 0));
+    expect(spawnDelay(50, 0)).toBeGreaterThanOrEqual(14 / 60);
+
+    const s = quiet();
+    s.score = 190;
+    placeOnPlane(s, "coin");
+    tick(s);
+    expect([s.level, s.levelsCompleted]).toEqual([2, 1]);
+    expect(s.events.map((e) => e.type)).toEqual(["coin", "level"]);
+    expect(s.banner).toBeGreaterThan(0);
+    // Gemme de 50 qui fait franchir un niveau.
+    s.score = 360;
+    placeOnPlane(s, "gem");
+    tick(s);
+    expect([s.level, s.levelsCompleted]).toEqual([3, 2]);
+  });
+
+  it("obstacles du décor : oiseaux, puis vautours plus gros et plus rapides", () => {
+    const s = quiet();
+    spawn(s, 0.5, 0.9, 0.5);
+    const bird = s.objects.find((o) => o.active)!;
+    expect([bird.type, bird.enemy]).toEqual(["enemy", "bird"]);
+    s.level = 2;
+    spawn(s, 0.5, 0.9, 0.5);
+    const vulture = s.objects.filter((o) => o.active)[1]!;
+    expect(vulture.enemy).toBe("vulture");
+    expect(vulture.r).toBeGreaterThan(bird.r);
+    expect(vulture.vy).toBeGreaterThan(bird.vy);
+    // Pièces et gemmes : gemmes plus rares (7 % des apparitions contre 55 %).
+    spawn(s, 0.5, 0.1, 0.5);
+    spawn(s, 0.5, 0.6, 0.5);
+    expect(s.objects.filter((o) => o.active).map((o) => o.type)).toEqual(["enemy", "enemy", "coin", "gem"]);
+  });
+
+  it("pilotage : flèches dans les quatre directions, doigt rejoint ; l'avion reste dans sa zone", () => {
+    const s = quiet();
+    const x0 = s.planeX;
+    step(s, { target: null, dx: 1, dy: 0 }, () => 0.5);
+    expect(s.planeX).toBeCloseTo(x0 + 6, 5);
+    for (let i = 0; i < 300; i++) step(s, { target: null, dx: -1, dy: -1 }, () => 0.5);
+    expect(s.planeX).toBe(30);
+    expect(s.planeY).toBeCloseTo(WORLD.height * 0.42, 5);
+    for (let i = 0; i < 300; i++) step(s, { target: { x: 300, y: 560 }, dx: 0, dy: 0 }, () => 0.5);
+    expect(s.planeX).toBeCloseTo(300, 0);
+    expect(s.planeY).toBeCloseTo(560, 0);
+  });
+
+  it("contact : un objet à côté de l'avion ne touche pas", () => {
+    expect(touches(100, 500, { x: 100 + 12 + 16 + 2, y: 504, r: 12 })).toBe(false);
+    expect(touches(100, 500, { x: 100 + 20, y: 504, r: 12 })).toBe(true);
+  });
+
   it("réserve d'objets : jamais plus de 48 objets, aucune allocation", () => {
     const s = createGame();
-    startLevel(s);
+    startGame(s);
     const pool = s.objects;
     const r = rng(1);
-    for (let i = 0; i < 60 * 20 && s.status === "playing"; i++) step(s, { targetX: 0, direction: 0 }, r);
+    for (let i = 0; i < 60 * 30 && s.status === "playing"; i++) {
+      step(s, { target: { x: 30 + r() * 300, y: 500 }, dx: 0, dy: 0 }, r);
+      s.events.length = 0;
+    }
     expect(s.objects).toBe(pool);
     expect(s.objects).toHaveLength(POOL_SIZE);
   });
+
+  it("nouvelle partie : tout est remis à zéro, même réserve", () => {
+    const s = quiet();
+    s.score = 420;
+    s.lives = 1;
+    placeOnPlane(s, "coin");
+    const pool = s.objects;
+    startGame(s);
+    expect([s.score, s.lives, s.level, s.status]).toEqual([0, 3, 1, "playing"]);
+    expect(s.objects).toBe(pool);
+    expect(s.objects.every((o) => !o.active)).toBe(true);
+  });
+
   it("pas fixe : un long arrêt (onglet masqué) ne fait pas sauter le jeu", () => {
-    const s = createGame();
-    startLevel(s);
-    s.stormTimer = 1e9;
-    expect(advance(s, idle, 10, { t: 0 }, () => 0.5)).toBe(15);
-    expect(advance(s, idle, 0.004, { t: 0 }, () => 0.5)).toBe(0);
+    const s = quiet();
+    expect(advance(s, NO_INPUT, 10, { t: 0 }, () => 0.5)).toBe(15);
+    expect(advance(s, NO_INPUT, 0.004, { t: 0 }, () => 0.5)).toBe(0);
   });
 });

@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { LiveIndicator } from "@/components/ui/badge";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { Spinner } from "@/components/ui/spinner";
-import type { GameSession } from "@/lib/client/games";
+import type { GameSession, SkyCatchResult } from "@/lib/client/games";
+import { CouponCard } from "./coupon-card";
 import { flushAdEvents } from "@/lib/client/ad-events";
 import { callRpc } from "@/lib/client/supabase-public";
 import { cn } from "@/lib/cn";
@@ -97,6 +98,8 @@ function GameSheetContent({
   const locale = useLiteLocale();
   const [session, setSession] = useState<GameSession | null | "error">(null);
   const [kind, setKind] = useState<GameKind | null>(null);
+  // Partie de Sky Catch enregistrée à l'appel : score (et bon éventuel) rappelés sur « C'est votre tour ».
+  const [saved, setSaved] = useState<SkyCatchResult | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const turnRef = useRef<HTMLButtonElement>(null);
   const lastAd = useRef<number | null>(null);
@@ -212,6 +215,7 @@ function GameSheetContent({
             skipAfter={session.interstitial.skip_after}
             nextInterstitial={nextInterstitial}
             couponBaseUrl={couponBaseUrl}
+            onSaved={setSaved}
           />
         ) : (
           <div className="flex flex-col gap-3 px-4 pt-2 pb-6">
@@ -274,13 +278,23 @@ function GameSheetContent({
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="your-turn"
-            className="absolute inset-0 z-20 flex animate-fade-in flex-col items-center justify-center gap-3 bg-called p-6 text-center text-white"
+            className="absolute inset-0 z-40 flex animate-fade-in flex-col items-center justify-center gap-3 overflow-y-auto bg-called p-6 text-center text-white"
           >
             <p id="your-turn" className="text-subheadline font-bold tracking-[0.14em] uppercase">
               {t("yourTurn")}
             </p>
             <p className="font-rounded text-[56px] leading-none font-extrabold">{code}</p>
             {call.counter ? <p className="text-headline">{t("presentAt", { counter: call.counter })}</p> : null}
+            {kind === "sky" && saved ? (
+              <p className="tabular text-subheadline" data-testid="sky-saved">
+                {t("savedScore", { score: saved.score })}
+              </p>
+            ) : null}
+            {kind === "sky" && saved?.coupon ? (
+              <div className="w-full max-w-sm text-label">
+                <CouponCard coupon={saved.coupon} couponBaseUrl={couponBaseUrl} />
+              </div>
+            ) : null}
             <Button ref={turnRef} block className="mt-4 max-w-xs bg-white text-called hover:bg-white/90 active:bg-white/80" onClick={onClose}>
               {t("backToTicket")}
             </Button>
