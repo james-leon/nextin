@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { BellRing, ChevronLeft, ChevronRight, CircleHelp, Plane, WifiOff, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleHelp, Plane, WifiOff, X } from "lucide-react";
 import { interstitialDue, type AdCandidate } from "@nextin/shared/ads";
-import { Button, IconButton } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { ListIcon } from "@/components/ui/list";
 import { Spinner } from "@/components/ui/spinner";
-import type { GameSession } from "@/lib/client/games";
+import type { GameSession, SkyCatchResult } from "@/lib/client/games";
+import { CouponCard } from "./coupon-card";
 import { flushAdEvents } from "@/lib/client/ad-events";
 import { callRpc } from "@/lib/client/supabase-public";
 import { LiteIntlProvider, useLiteLocale, useLiteT } from "@/lib/i18n/lite";
@@ -86,6 +87,8 @@ function GameSheetContent({
   const locale = useLiteLocale();
   const [session, setSession] = useState<GameSession | null | "error">(null);
   const [kind, setKind] = useState<GameKind | null>(null);
+  // Partie de Sky Catch enregistrée à l'appel : score (et bon éventuel) rappelés sur « C'est votre tour ».
+  const [saved, setSaved] = useState<SkyCatchResult | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const turnRef = useRef<HTMLButtonElement>(null);
   const lastAd = useRef<number | null>(null);
@@ -178,6 +181,7 @@ function GameSheetContent({
             skipAfter={session.interstitial.skip_after}
             nextInterstitial={nextInterstitial}
             couponBaseUrl={couponBaseUrl}
+            onSaved={setSaved}
           />
         ) : (
           <div className="flex flex-col gap-3 p-4">
@@ -207,17 +211,39 @@ function GameSheetContent({
         )}
 
         {call ? (
-          <div role="alertdialog" aria-modal="true" aria-labelledby="your-turn" className="call-flash absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-grouped p-6 text-center">
-            <span className="squircle flex size-16 items-center justify-center rounded-[18px] bg-green-tint text-green-text">
-              <BellRing aria-hidden className="size-8 stroke-[1.75]" />
-            </span>
-            <p id="your-turn" className="text-large-title font-bold">
+          // Maquette v2 12 : plein écran vert, numéro, lieu, partie enregistrée, « J'arrive ».
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="your-turn"
+            aria-describedby="your-turn-place"
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-called p-6 text-center text-white"
+          >
+            <p id="your-turn" className="text-subheadline font-bold tracking-[0.14em] uppercase">
               {t("yourTurn")}
             </p>
-            <p className="text-body text-label-secondary">{t("yourTurnBody", { code, counter: call.counter })}</p>
-            <Button ref={turnRef} block className="max-w-sm" onClick={onClose}>
-              {t("backToTicket")}
-            </Button>
+            <p className="font-rounded text-[3.5rem] leading-none font-extrabold">{code}</p>
+            <p id="your-turn-place" className="text-headline">
+              {t("goTo", { counter: call.counter })}
+            </p>
+            {saved ? (
+              <p className="tabular text-subheadline" data-testid="sky-saved">
+                {t("savedScore", { score: saved.score })}
+              </p>
+            ) : null}
+            {saved?.coupon ? (
+              <div className="w-full max-w-sm text-label">
+                <CouponCard coupon={saved.coupon} couponBaseUrl={couponBaseUrl} />
+              </div>
+            ) : null}
+            <button
+              ref={turnRef}
+              type="button"
+              onClick={onClose}
+              className="pressable squircle mt-2 inline-flex min-h-12 w-full max-w-sm items-center justify-center rounded-[14px] bg-white px-6 text-headline font-bold text-green-text"
+            >
+              {t("imComing")}
+            </button>
           </div>
         ) : null}
       </div>
