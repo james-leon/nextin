@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
-import { pairDisplay } from "./ads-helpers";
+import { branchWithCampaign, pairDisplay, takeTicket } from "./ads-helpers";
+import { answerWrong, importExampleBank, winPairs } from "./games-helpers";
 import { addDoctors, rpc, setUpBranch } from "./queue-helpers";
 
 // Captures de la refonte v2, LOT 5b (écran TV et jeux) → docs/captures/v2-lot5b/ (ou V2_SHOTS_OUT).
@@ -179,4 +180,96 @@ test.describe("@screenshots refonte v2 LOT 5b", () => {
     }
     await close();
   });
+
+  test("jeux (maquettes 01, 10, 11 et 12)", async ({ browser }) => {
+    test.setTimeout(600_000);
+    await importExampleBank();
+    const { b } = await branchWithCampaign("Jeux");
+    for (const theme of ["light", "dark"] as const) {
+      for (const size of GAME_SIZES) {
+        const context = await browser.newContext({ viewport: { width: size.width, height: size.height }, locale: "fr-FR", colorScheme: theme, hasTouch: size.width < 1024 });
+        await context.addInitScript((t) => {
+          localStorage.setItem("nextin.theme", t);
+          localStorage.setItem("nextin.skycatch.best", "1240");
+          localStorage.setItem("nextin.pairs.best.6", "9");
+          localStorage.setItem("nextin.quiz.best", "7");
+        }, theme);
+        const page = await context.newPage();
+        const token = await takeTicket(page, b);
+        await page.goto(`/t/${token}`);
+        const open = page.getByRole("button", { name: /^Jouer en attendant/ });
+        await open.waitFor({ timeout: 20_000 });
+        const suffix = `${size.tag}-${theme}`;
+        await open.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(400);
+        await snap(page, `jeux-carte-ticket-${suffix}`);
+        await open.click();
+        const sheet = page.getByRole("dialog");
+        await sheet.getByRole("button", { name: /^Paires/ }).waitFor();
+        await page.waitForTimeout(400);
+        await snap(page, `jeux-liste-${suffix}`);
+
+        // Paires : plateau, deux cartes retournées, puis partie gagnée.
+        await sheet.getByRole("button", { name: /^Paires/ }).click();
+        await sheet.getByRole("group", { name: "Plateau de cartes" }).getByRole("button").first().waitFor();
+        await page.waitForTimeout(400);
+        await snap(page, `paires-${suffix}`);
+        await winPairs(page);
+        await expect(sheet.getByText("Toutes les paires !")).toBeVisible();
+        await page.waitForTimeout(500);
+        await snap(page, `paires-gagne-${suffix}`);
+        await sheet.getByRole("button", { name: "Jouer en attendant" }).click();
+
+        // Quiz sans fin : question, réponse vérifiée, fin de partie.
+        await sheet.getByRole("button", { name: /^Quiz Questions sans fin/ }).click();
+        await sheet.getByRole("radiogroup").waitFor();
+        await page.waitForTimeout(300);
+        await snap(page, `quiz-question-${suffix}`);
+        await sheet.getByRole("radio").first().click();
+        await snap(page, `quiz-choix-${suffix}`);
+        await sheet.getByRole("button", { name: "Valider" }).click();
+        await sheet.getByRole("button", { name: /Question suivante|Voir mon résultat/ }).waitFor();
+        await page.waitForTimeout(300);
+        await snap(page, `quiz-reponse-${suffix}`);
+        for (let i = 0; i < 12; i++) {
+          if (await sheet.getByText(/^Résultat$/i).isVisible()) break;
+          const next = sheet.getByRole("button", { name: /Question suivante|Voir mon résultat/ });
+          if (await next.isVisible()) {
+            await next.click();
+            await page.waitForTimeout(600);
+            continue;
+          }
+          const skip = sheet.getByRole("button", { name: "Passer", exact: true });
+          if (await sheet.getByText("Publicité", { exact: true }).isVisible()) {
+            await skip.click({ timeout: 10_000 });
+            continue;
+          }
+          await answerWrong(page);
+        }
+        await expect(sheet.getByText(/^Résultat$/i)).toBeVisible();
+        await page.waitForTimeout(800);
+        await snap(page, `quiz-resultat-${suffix}`);
+        await sheet.getByRole("button", { name: "Jouer en attendant" }).click();
+
+        // Sky Catch : accueil du jeu, partie en cours, pause.
+        await sheet.getByRole("button", { name: /^Sky Catch/ }).click();
+        await sheet.getByRole("button", { name: "Commencer" }).waitFor();
+        await page.waitForTimeout(400);
+        await snap(page, `sky-accueil-${suffix}`);
+        await sheet.getByRole("button", { name: "Commencer" }).click();
+        await page.waitForTimeout(2_500);
+        await snap(page, `sky-partie-${suffix}`);
+        await sheet.getByRole("button", { name: "Pause" }).click();
+        await page.waitForTimeout(300);
+        await snap(page, `sky-pause-${suffix}`);
+        await context.close();
+      }
+    }
+  });
 });
+
+const GAME_SIZES = [
+  { tag: "360", width: 360, height: 780 },
+  { tag: "768", width: 768, height: 1024 },
+  { tag: "1280", width: 1280, height: 800 },
+] as const;

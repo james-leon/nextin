@@ -367,7 +367,7 @@ export function TicketLive({
           <LiteIntlProvider locale={locale} messages={{ games: gameCards }}>
             <LazyMount>
               <div className="flex flex-col gap-4">
-                <PlayCard token={token} onOpen={() => setPlaying(true)} />
+                <PlayCard onOpen={() => setPlaying(true)} />
                 <SponsoredCard token={token} />
               </div>
             </LazyMount>
