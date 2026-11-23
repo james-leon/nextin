@@ -33,11 +33,11 @@
     "whatsapp:simulate": "node --env-file-if-exists=apps/web/.env.local scripts/whatsapp-simulate.mjs"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "2.119.0",
+    "@supabase/supabase-js": "2.119.2",
     "@types/node": "22.20.5",
-    "supabase": "2.122.0",
+    "supabase": "2.122.1",
     "tsx": "4.23.15",
-    "turbo": "2.11.10",
+    "turbo": "2.11.13",
     "typescript": "5.9.3"
   }
 }
