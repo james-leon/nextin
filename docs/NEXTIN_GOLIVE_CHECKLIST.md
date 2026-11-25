@@ -46,6 +46,7 @@ Sans ces points, aucun client ne peut s'inscrire, payer ou se connecter en produ
 | — | Page « Mon ticket » : attente sans débordement, barre de progression, « Annuler » discret avec confirmation, agence fermée / aucun poste ouvert, « Vous êtes le prochain » | 🤖 | ✅ `beac9a4`, `d6350b8` |
 | T1 | **Publicité sur les écrans TV** : `displays.show_ads` n'est réglable nulle part (`updateDisplay` envoie toujours `false`, l'appairage ne le passe pas). Interrupteur « Publicité sur cet écran » (appairage et modification, activé par défaut), seed de démo, test Playwright | 🤖 | ✅ `f590967` |
 | — | **Refonte v2 LOT 6a** : espace annonceur (maquette 24 : campagnes en maître-détail, statut en une phrase, nouvelle campagne en cinq étapes avec récapitulatif, formules, bons, caissiers), Publicité de l'établissement à enregistrement automatique et annonce Maison, affiche QR (14) et facture (15 : montant en lettres, lien de paiement créé au téléchargement). Aucune migration. Note `docs/modules/REFONTE-V2-LOT6A.md` | 🤖 | ✅ LOT 6a |
+| — | **Correctifs après le LOT 6a** : réaction immédiate à chaque navigation (lien en cours, barre au-delà de 150 ms), aperçu des publicités filtré (`safeMediaSrc`), code de présence de l'écran TV seulement avec les tickets à distance. Aucune migration. Note `docs/modules/UX-NAVIGATION.md` | 🤖 | ✅ |
 
 ---
 

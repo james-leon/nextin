@@ -42,7 +42,12 @@ test.describe("Navigation : réaction immédiate", () => {
     const row = page.getByRole("link", { name: new RegExp(org!.name) }).first();
     await expect(row).toBeVisible();
     await slowDown(page, new RegExp(`/app/o/${b.orgId}`));
+    // Pendant le chargement : chevron masqué, indicateur affiché à sa place (cercle du personnel).
+    const indicator = row.locator("[data-nav-indicator]");
+    const spinning = () =>
+      indicator.evaluate((el) => getComputedStyle(el, "::after").content !== "none" && getComputedStyle(el.querySelector("svg")!).visibility === "hidden");
     await expectFeedback(page, row, async () => {
+      expect(await spinning()).toBe(true);
       await page.waitForURL(new RegExp(`/app/o/${b.orgId}$`), { timeout: 15_000 });
     });
     await expectAccessible(page);
