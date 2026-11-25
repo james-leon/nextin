@@ -1542,6 +1542,20 @@ isOneToOne: false
       referencedColumns: ["organization_id","id"]
     }
                   ]
+                },"quiz_bank_questions": {
+                  Row: {
+                    "active": boolean,"answers": NonNullable<Json>,"category": string,"correct": number,"created_at": string,"difficulty": number,"explanation": string | null,"explanation_en": string | null,"id": string,"illustration": string | null,"question": string,"question_en": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"answers": NonNullable<Json>,"category": string,"correct": number,"created_at"?: string,"difficulty": number,"explanation"?: string | null,"explanation_en"?: string | null,"id": string,"illustration"?: string | null,"question": string,"question_en"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"answers"?: NonNullable<Json>,"category"?: string,"correct"?: number,"created_at"?: string,"difficulty"?: number,"explanation"?: string | null,"explanation_en"?: string | null,"id"?: string,"illustration"?: string | null,"question"?: string,"question_en"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"quota_extensions": {
                   Row: {
                     "created_at": string,"id": string,"invoice_id": string | null,"kind": string,"month": string,"organization_id": string,"pack_id": string | null,"quantity": number
@@ -3276,6 +3290,12 @@ isOneToOne: false
                            },
 "purge_rate_limits":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"quiz_bank_check":
+{ Args: { "p_answer": number,"p_question": string,"p_ticket_token": string }; Returns: Json
+                           },
+"quiz_bank_draw":
+{ Args: { "p_count"?: number,"p_exclude"?: (string)[],"p_ticket_token": string }; Returns: Json
                            },
 "quota_item":
 { Args: { "p_base": number,"p_extra": number,"p_reached_on": string,"p_today": string,"p_used": number }; Returns: Json

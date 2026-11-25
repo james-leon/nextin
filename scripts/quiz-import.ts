@@ -1,6 +1,9 @@
 // Import de la banque de questions du quiz « série sans fin » (LOT 5b) : `pnpm quiz:import <fichier.csv> [--dry-run]`.
 // Fichier UTF-8, séparateur point-virgule, en-tête :
 //   id;categorie;difficulte;question_fr;question_en;reponse1_fr;reponse1_en;reponse2_fr;reponse2_en;reponse3_fr;reponse3_en;reponse4_fr;reponse4_en;bonne_reponse
+// puis, facultatif (LOT 5c) : ;explication_fr;explication_en;illustration (explications de 400 caractères au plus,
+// affichées après la réponse ; illustration : mont, eau, fleuve, moustique, mains, trophee ou vide). Sans ces colonnes,
+// les explications et illustrations déjà en base ne sont pas touchées.
 // Idempotent par identifiant : une ligne déjà importée est mise à jour (et réactivée), jamais dupliquée ; les questions
 // absentes du fichier ne sont pas touchées. Rien n'est écrit si une seule ligne est invalide.
 // Service role (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, lues dans apps/web/.env.local s'il existe) ;

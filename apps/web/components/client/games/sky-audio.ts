@@ -1,4 +1,5 @@
 import { SOUND_PREFS_KEY } from "@nextin/shared/ads/sky-catch";
+import { createAudioCore } from "./game-audio";
 
 /**
  * Sons de Sky Catch (maquette v2 12), tous générés par Web Audio : aucun fichier à télécharger (3G). Le contexte audio
@@ -33,85 +34,42 @@ const SCALES = [
 ];
 const MELODY = [0, 2, 4, 2, 3, 1, 2, 0, 4, 3, 2, 4, 1, 2, 0, 2];
 
-type Ctx = { ac: AudioContext; music: GainNode; sfx: GainNode };
+type Gains = { music: GainNode; sfx: GainNode };
 
 export function createSkyAudio(initial: SoundPrefs) {
-  let ctx: Ctx | null = null;
+  let gains: Gains | null = null;
   let prefs = initial;
   let timer: ReturnType<typeof setInterval> | null = null;
   let beat = 0;
   let level = 1;
-
+  // Socle commun des jeux (`game-audio.ts`) : musique et effets sur deux sorties séparées.
+  const core = createAudioCore((ac) => {
+    const music = ac.createGain();
+    music.gain.value = 0.3;
+    music.connect(ac.destination);
+    const sfx = ac.createGain();
+    sfx.connect(ac.destination);
+    gains = { music, sfx };
+  });
   /** À appeler dans un geste de l'utilisateur : crée ou réveille le contexte audio. */
-  function unlock(): void {
-    try {
-      const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
-      if (session) session.type = "playback"; // iPhone : son même en mode silencieux
-    } catch {
-      // Sans effet ailleurs.
-    }
-    if (!ctx) {
-      const AC = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AC) return;
-      try {
-        const ac = new AC();
-        const music = ac.createGain();
-        music.gain.value = 0.3;
-        music.connect(ac.destination);
-        const sfx = ac.createGain();
-        sfx.connect(ac.destination);
-        ctx = { ac, music, sfx };
-      } catch {
-        return;
-      }
-    }
-    if (ctx.ac.state !== "running") void ctx.ac.resume().catch(() => undefined);
-  }
+  const unlock = core.unlock;
 
   function tone(freq: number, dur: number, type: OscillatorType, vol: number, when = 0, dest?: AudioNode, slideTo?: number) {
-    if (!ctx) return;
-    const t = ctx.ac.currentTime + when;
-    const o = ctx.ac.createOscillator();
-    const g = ctx.ac.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, t);
-    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g);
-    g.connect(dest ?? ctx.sfx);
-    o.start(t);
-    o.stop(t + dur + 0.02);
+    if (!gains) return;
+    core.tone(freq, dur, type, vol, when, dest ?? gains.sfx, slideTo);
   }
 
   function noise(dur: number, vol: number) {
-    if (!ctx) return;
-    const { ac } = ctx;
-    const length = Math.floor(ac.sampleRate * dur);
-    const buffer = ac.createBuffer(1, length, ac.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
-    const source = ac.createBufferSource();
-    const filter = ac.createBiquadFilter();
-    const gain = ac.createGain();
-    source.buffer = buffer;
-    filter.type = "lowpass";
-    filter.frequency.value = 900;
-    gain.gain.value = vol;
-    source.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.sfx);
-    source.start();
+    if (gains) core.noise(dur, vol, gains.sfx);
   }
 
   function musicTick() {
-    if (!ctx || !prefs.music) return;
+    if (!gains || !prefs.music) return;
     const scale = SCALES[(level - 1) % 4]!;
     const note = MELODY[beat % 16]!;
-    tone(scale[note]! * 2, 0.18, "triangle", 0.5, 0, ctx.music);
-    if (beat % 4 === 0) tone(scale[0]! / 2, 0.36, "sine", 0.7, 0, ctx.music);
-    if (beat % 8 === 6) tone(scale[2]! / 2, 0.3, "sine", 0.5, 0, ctx.music);
+    tone(scale[note]! * 2, 0.18, "triangle", 0.5, 0, gains.music);
+    if (beat % 4 === 0) tone(scale[0]! / 2, 0.36, "sine", 0.7, 0, gains.music);
+    if (beat % 8 === 6) tone(scale[2]! / 2, 0.3, "sine", 0.5, 0, gains.music);
     beat += 1;
   }
 
@@ -143,7 +101,7 @@ export function createSkyAudio(initial: SoundPrefs) {
   return {
     unlock,
     play(effect: keyof typeof effects) {
-      if (prefs.sfx && ctx) effects[effect]();
+      if (prefs.sfx && gains) effects[effect]();
     },
     /** Musique en boucle, tempo selon le niveau (plus vive à chaque niveau). */
     startMusic(currentLevel: number) {
@@ -162,8 +120,8 @@ export function createSkyAudio(initial: SoundPrefs) {
     close() {
       if (timer) clearInterval(timer);
       timer = null;
-      void ctx?.ac.close().catch(() => undefined);
-      ctx = null;
+      core.close();
+      gains = null;
     },
   };
 }

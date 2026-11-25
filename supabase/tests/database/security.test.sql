@@ -5,7 +5,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 grant execute on function public.create_organization(text, text, public.org_type, text, integer) to authenticated;
 
-select plan(16);
+select plan(17);
 alter table public.branch_settings alter column customer_name_mode set default 'off';
 
 -- ─── Base de données ─────────────────────────────────────────────────────────
@@ -38,6 +38,14 @@ select ok(not has_function_privilege('anon', 'public.call_next(uuid, uuid, boole
   'fonctions du personnel fermées au rôle anonyme (appel, agence, membres)');
 select ok(has_function_privilege('authenticated', 'public.call_next(uuid, uuid, boolean)', 'execute'),
   'personnel : droits conservés (contrôlés dans la fonction)');
+-- LOT 5c : l'explication d'une question donne la réponse (comme `correct`) : jamais lisible par anon ni authenticated.
+select ok(not has_column_privilege('anon', 'public.quiz_bank_questions', 'explanation', 'select')
+  and not has_column_privilege('anon', 'public.quiz_bank_questions', 'explanation_en', 'select')
+  and not has_column_privilege('authenticated', 'public.quiz_bank_questions', 'explanation', 'select')
+  and not has_column_privilege('authenticated', 'public.quiz_bank_questions', 'explanation_en', 'select')
+  and not has_column_privilege('anon', 'public.quiz_bank_questions', 'correct', 'select')
+  and has_column_privilege('anon', 'public.quiz_bank_questions', 'illustration', 'select'),
+  'banque du quiz : bonne réponse et explications illisibles, illustration lisible');
 select ok(not has_table_privilege('authenticated', 'public.audit_log', 'update')
   and not has_table_privilege('authenticated', 'public.audit_log', 'delete')
   and not has_table_privilege('authenticated', 'public.ticket_events', 'delete'),

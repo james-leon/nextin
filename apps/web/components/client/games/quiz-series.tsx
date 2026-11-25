@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, CircleHelp, RotateCcw } from "lucide-react";
+import { ArrowRight, Check, CircleHelp, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import type { AdCandidate } from "@nextin/shared/ads";
 import {
   QUIZ_BEST_KEY,
@@ -9,19 +9,25 @@ import {
   QUIZ_LIVES,
   QUIZ_SEEN_KEY,
   answerSeries,
+  endTune,
   interstitialAfter,
   isRecord,
   newSeries,
   parseSeen,
   rememberSeen,
+  resultTitleKey,
+  ringFraction,
   seriesOver,
+  type QuizBankCheck,
   type QuizBankQuestion,
 } from "@nextin/shared/games/quiz-bank";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
 import { Spinner } from "@/components/ui/spinner";
 import { callRpc } from "@/lib/client/supabase-public";
 import { useLiteLocale, useLiteT } from "@/lib/i18n/lite";
+import { quizArt } from "@/lib/games/quiz-art";
+import { useGameSounds } from "./game-sounds";
 import { Interstitial } from "./interstitial";
 import { AnswerPill, Lives, QuizCard, ResultRing, type AnswerState } from "./quiz-ui";
 
@@ -47,24 +53,30 @@ export function readQuizBest(): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-type Check = { correct: boolean; answer: number };
+type Check = QuizBankCheck;
 
 /**
  * Quiz « série sans fin » (maquette v2 10) : questions de la banque Wintek tirées au hasard par la base, sans répétition
  * sur l'appareil ; 3 vies, score = bonnes réponses, record gardé sur l'appareil ; chaque réponse est vérifiée par la
  * base (la bonne réponse n'est jamais envoyée avant). Interstitielle existante toutes les N questions (espacement
- * minimal de la plateforme).
+ * minimal de la plateforme). Après « Valider », l'explication de la question (envoyée par la base seulement à ce moment)
+ * s'ouvre en tiroir. Sons de la maquette 10 (bouton « Sons »). Pendant l'appel (`frozen`), plus aucune réponse :
+ * la partie reste en l'état.
  */
 export function QuizSeries({
   token,
   skipAfter,
   nextInterstitial,
+  frozen = false,
 }: {
   token: string;
   skipAfter: number;
   nextInterstitial: () => AdCandidate | null;
+  /** Appel en cours : aucune réponse possible, partie gardée. */
+  frozen?: boolean;
 }) {
   const t = useLiteT("games");
+  const sounds = useGameSounds();
   const en = useLiteLocale() === "en";
   const [series, setSeries] = useState(newSeries);
   const [question, setQuestion] = useState<QuizBankQuestion | null>(null);
@@ -137,13 +149,14 @@ export function QuizSeries({
   }, [draw, takeNext]);
 
   async function validate() {
-    if (selected === null || !question) return;
+    if (selected === null || !question || frozen) return;
     setSending(true);
     const { data } = await callRpc<Check>("quiz_bank_check", { p_ticket_token: token, p_question: question.id, p_answer: selected });
     setSending(false);
     if (!data) return setFailed(true);
     setCheck(data);
     setSeries((s) => answerSeries(s, data.correct));
+    sounds.play(data.correct ? "correct" : "wrong");
     if (!data.correct) {
       try {
         navigator.vibrate?.(60);
@@ -155,11 +168,13 @@ export function QuizSeries({
   }
 
   function proceed() {
+    if (frozen) return;
     if (seriesOver(series)) {
       const best = readQuizBest();
       const record = isRecord(series.score, best);
       if (record) write(QUIZ_BEST_KEY, String(series.score));
       setOver({ score: series.score, best: record ? series.score : best, record });
+      sounds.play(endTune(series.score) === "good" ? "endGood" : "endBad");
       return;
     }
     if (interstitialAfter(series.asked)) {
@@ -198,11 +213,12 @@ export function QuizSeries({
   }
 
   if (over) {
-    const title = over.score >= 8 ? t("resultExcellent") : over.score >= 4 ? t("resultGood") : t("resultKeepGoing");
+    const title = t(resultTitleKey(over.score));
     return (
       <section aria-live="polite" className="flex flex-1 flex-col items-center justify-center gap-3.5 p-6 text-center">
         <p className="text-caption font-bold tracking-[0.14em] text-orange-text uppercase">{t("resultEyebrow")}</p>
-        <ResultRing value={over.score} fraction={over.best ? over.score / over.best : 0} label={t("goodAnswersLabel", { count: over.score })} />
+        {/* Anneau : part de l'objectif de 8 bonnes réponses (maquette v2 10). */}
+        <ResultRing value={over.score} fraction={ringFraction(over.score)} label={t("goodAnswersLabel", { count: over.score })} />
         <h2 className="font-rounded text-title1 font-extrabold">{title}</h2>
         <p className="max-w-[30ch] text-subheadline text-label-secondary">
           {over.record ? t("newRecord") : t("yourRecord", { count: over.best ?? 0 })}
@@ -226,28 +242,43 @@ export function QuizSeries({
   const state = (k: number): AnswerState =>
     check ? (k === check.answer ? "correct" : k === selected ? "wrong" : "dim") : selected === k ? "selected" : "idle";
   const finished = check !== null && seriesOver(series);
+  const art = quizArt(question.illustration);
+  const explanation = check ? (en && check.explanation_en ? check.explanation_en : check.explanation) : null;
 
   return (
     <div className="flex flex-col gap-3.5 p-4">
       <div className="flex items-center gap-2.5">
         <span className="font-rounded text-subheadline font-bold tabular">{t("goodAnswers", { count: series.score })}</span>
         <Lives lives={series.lives} total={QUIZ_LIVES} />
+        <SoundsButton on={sounds.on} onToggle={sounds.toggle} />
       </div>
       <QuizCard
         number={series.asked + (check ? 0 : 1)}
         verdict={check ? (check.correct ? "correct" : "wrong") : null}
         category={question.category}
         question={en && question.question_en ? question.question_en : question.question}
+        illustration={art ? { svg: art, label: t(`illustrations.${question.illustration}`) } : null}
+        explanation={explanation}
       >
         {question.answers.map((a, k) => (
-          <AnswerPill key={`${question.id}-${k}`} index={k} text={text(a)} state={state(k)} disabled={check !== null || sending} onSelect={() => setSelected(k)} />
+          <AnswerPill
+            key={`${question.id}-${k}`}
+            index={k}
+            text={text(a)}
+            state={state(k)}
+            disabled={check !== null || sending || frozen}
+            onSelect={() => {
+              setSelected(k);
+              sounds.play("pick");
+            }}
+          />
         ))}
       </QuizCard>
       <Button
         ref={ctaRef}
         block
         className="h-16 rounded-[22px] font-rounded text-title3 font-extrabold"
-        disabled={!check && selected === null}
+        disabled={frozen || (!check && selected === null)}
         loading={sending}
         loadingLabel={t("loading")}
         trailingIcon={check ? <ArrowRight /> : <Check />}
@@ -257,4 +288,10 @@ export function QuizSeries({
       </Button>
     </div>
   );
+}
+
+/** Bouton « Sons » des jeux calmes (quiz, Paires) : réglage gardé sur l'appareil. */
+export function SoundsButton({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  const t = useLiteT("games");
+  return <IconButton label={t("sounds")} aria-pressed={on} icon={on ? <Volume2 /> : <VolumeX />} variant="gray" onClick={onToggle} />;
 }

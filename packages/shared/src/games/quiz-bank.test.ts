@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  QUIZ_CSV_EXTRA,
   QUIZ_CSV_HEADER,
+  QUIZ_ILLUSTRATIONS,
   QUIZ_LIVES,
+  endTune,
+  isQuizIllustration,
+  resultTitleKey,
+  ringFraction,
   answerSeries,
   interstitialAfter,
   isRecord,
@@ -108,5 +114,49 @@ describe("import CSV", () => {
   });
   it("en-tête différent : refusé", () => {
     expect(parseQuizCsv("id;question\nQ1;x").errors).toEqual([{ line: 1, message: expect.stringContaining("en-tête attendu") }]);
+  });
+  it("colonnes facultatives : explications et illustration (LOT 5c)", () => {
+    const line = (extra: string) => `Q1;Cameroun;1;Plus haut sommet ?;;Mont Oku;;Mont Cameroun;;;;;;2${extra}`;
+    const { rows, errors } = parseQuizCsv([`${HEADER};${QUIZ_CSV_EXTRA.join(";")}`, line(";Plus de 4 000 m.;Above 4,000 m.;mont")].join("\n"));
+    expect(errors).toEqual([]);
+    expect(rows[0]).toMatchObject({ explanation: "Plus de 4 000 m.", explanation_en: "Above 4,000 m.", illustration: "mont" });
+    // Colonnes présentes mais vides : null (pas de tiroir, pas d'image).
+    const empty = parseQuizCsv([`${HEADER};${QUIZ_CSV_EXTRA.join(";")}`, line(";;;")].join("\n"));
+    expect(empty.rows[0]).toMatchObject({ explanation: null, explanation_en: null, illustration: null });
+  });
+  it("fichier sans les colonnes facultatives : accepté, explications en base non touchées", () => {
+    const { rows, errors } = parseQuizCsv([HEADER, "Q1;Cameroun;1;Plus haut sommet ?;;Mont Oku;;Mont Cameroun;;;;;;2"].join("\n"));
+    expect(errors).toEqual([]);
+    expect(rows[0]).not.toHaveProperty("explanation");
+    expect(rows[0]).not.toHaveProperty("illustration");
+  });
+  it("colonnes facultatives : illustration hors liste, explication trop longue, anglais seul refusés", () => {
+    const head = `${HEADER};${QUIZ_CSV_EXTRA.join(";")}`;
+    const base = (id: string) => `${id};Cameroun;1;Plus haut sommet ?;;Mont Oku;;Mont Cameroun;;;;;;2`;
+    const { rows, errors } = parseQuizCsv(
+      [head, `${base("A")};;;photo`, `${base("B")};${"x".repeat(401)};;`, `${base("C")};;English only;`, `${base("D")};ok`].join("\n"),
+    );
+    expect(rows).toEqual([]);
+    expect(errors.map((e) => e.line)).toEqual([2, 3, 4, 5]);
+    expect(errors[0]!.message).toContain("illustration");
+    expect(errors[1]!.message).toContain("400");
+    expect(errors[2]!.message).toContain("explication_en sans explication_fr");
+    expect(errors[3]!.message).toContain("colonnes");
+  });
+  it("illustrations : liste fermée de la maquette", () => {
+    expect([...QUIZ_ILLUSTRATIONS]).toEqual(["mont", "eau", "fleuve", "moustique", "mains", "trophee"]);
+    expect(isQuizIllustration("mont")).toBe(true);
+    expect(isQuizIllustration("photo")).toBe(false);
+    expect(isQuizIllustration(null)).toBe(false);
+  });
+});
+
+describe("fin de série (maquette v2 10)", () => {
+  it("anneau rempli selon min(bonnes réponses / 8, 1)", () => {
+    expect([0, 2, 4, 8, 12].map((n) => ringFraction(n))).toEqual([0, 0.25, 0.5, 1, 1]);
+  });
+  it("titre et mélodie de fin", () => {
+    expect([0, 3, 4, 7, 8, 20].map(resultTitleKey)).toEqual(["resultKeepGoing", "resultKeepGoing", "resultGood", "resultGood", "resultExcellent", "resultExcellent"]);
+    expect([3, 4].map(endTune)).toEqual(["bad", "good"]);
   });
 });

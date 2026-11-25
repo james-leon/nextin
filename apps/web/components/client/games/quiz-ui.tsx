@@ -12,19 +12,26 @@ const LETTERS = ["A", "B", "C", "D"];
 
 /**
  * Carte de question du quiz (maquette v2 10) : grande carte bleu nuit, numéro en onglet (vert ou rouge après la
- * réponse), catégorie, question, réponses en pilules avec une lettre dans un rond.
+ * réponse), catégorie, question, illustration éventuelle, réponses en pilules avec une lettre dans un rond, puis le
+ * tiroir « Explication » une fois la réponse vérifiée.
  */
 export function QuizCard({
   number,
   verdict,
   category,
   question,
+  illustration,
+  explanation,
   children,
 }: {
   number: number;
   verdict: "correct" | "wrong" | null;
   category?: string;
   question: string;
+  /** Dessin de la question (maquette 10 : cadre blanc penché entre la question et les réponses). */
+  illustration?: { svg: string; label: string } | null;
+  /** Explication, affichée seulement après la réponse (null : pas de tiroir). */
+  explanation?: string | null;
   children: ReactNode;
 }) {
   const t = useLiteT("games");
@@ -43,10 +50,40 @@ export function QuizCard({
       <h2 id="quiz-question" className="mx-1.5 mb-4 text-center font-rounded text-title3 leading-snug font-bold text-balance">
         {question}
       </h2>
+      {illustration ? (
+        // Cadre blanc arrondi, légèrement penché, 62 % de la largeur (240 px au plus) ; valeurs propres à ce cadre en
+        // style en ligne (hors de la feuille commune aux pages client).
+        <div
+          role="img"
+          aria-label={illustration.label}
+          data-testid="quiz-illustration"
+          className="mx-auto mb-4 bg-white shadow-floating"
+          style={{ width: "62%", maxWidth: 240, padding: 7, borderRadius: 20, transform: "rotate(-1.5deg)" }}
+        >
+          <div aria-hidden className="overflow-hidden [&>svg]:block [&>svg]:h-auto [&>svg]:w-full" style={{ borderRadius: 14 }} dangerouslySetInnerHTML={{ __html: illustration.svg }} />
+        </div>
+      ) : null}
       <div role="radiogroup" aria-labelledby="quiz-question" className="flex flex-col gap-2.5">
         {children}
       </div>
+      {explanation ? <Explanation text={explanation} /> : null}
     </section>
+  );
+}
+
+/** Tiroir « Explication » (maquette v2 10) : onglet et texte en italique, centré, sur bleu nuit foncé, sous les réponses. */
+function Explanation({ text }: { text: string }) {
+  const t = useLiteT("games");
+  return (
+    <div data-testid="quiz-explanation" className="-mx-4 -mb-4 mt-4 pb-4 animate-fade-in">
+      <p
+        className="mx-auto w-max bg-navy-deep text-footnote font-extrabold text-white uppercase"
+        style={{ padding: "8px 22px 6px", borderRadius: "14px 14px 0 0", letterSpacing: "0.16em" }}
+      >
+        {t("explanation")}
+      </p>
+      <p className="bg-navy-deep px-5 pt-3.5 pb-1 text-center text-callout leading-normal text-white/90 italic">{text}</p>
+    </div>
   );
 }
 

@@ -214,7 +214,11 @@ export function TicketLive({
   const wait = waitText();
 
   const active = view.status === "waiting" || view.status === "called";
-  const closeGame = useCallback(() => setPlaying(false), []);
+  // Fermer le jeu pendant l'appel (« J'arrive » de son écran vert) vaut lecture de l'appel : pas de second écran vert.
+  const closeGame = useCallback(() => {
+    setPlaying(false);
+    if (callKey) setCalledSeen(callKey);
+  }, [callKey]);
   const heroCommon = {
     code: view.display_code,
     service: view.remote ? `${serviceName} · ${t("remoteShort")}` : serviceName,
@@ -436,8 +440,9 @@ export function TicketLive({
         />
       ) : null}
 
-      {/* C'est votre tour : écran vert plein, par-dessus tout (y compris le jeu), jusqu'à « J'arrive ». */}
-      {callKey && calledSeen !== callKey ? (
+      {/* C'est votre tour : écran vert plein jusqu'à « J'arrive ». Jeu ouvert : c'est l'écran vert de la feuille de jeu
+          (maquettes 10 à 12 : partie gardée ou enregistrée) qui l'affiche, jamais deux écrans l'un sur l'autre. */}
+      {callKey && calledSeen !== callKey && !playing ? (
         <CalledScreen
           title={t("calledTitle")}
           code={view.display_code}

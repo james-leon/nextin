@@ -2873,7 +2873,6 @@ export const fr = {
     controls: "Au clavier : flèches pour piloter, Espace pour la pause.",
     yourTurn: "C'est votre tour !",
     yourTurnBody: "Ticket {code} · présentez-vous : {counter}",
-    backToTicket: "Revenir à mon ticket",
     loading: "Chargement du jeu…",
     offline: "Hors ligne : le jeu continue, vos statistiques partiront au retour du réseau.",
     // Sky Catch v2 (maquette 12) : vies, gemmes, quatre décors, sons.
@@ -2895,6 +2894,20 @@ export const fr = {
     bestScore: "Meilleur score : {score}",
     canvasLabel: "Jeu Sky Catch : glissez le doigt ou utilisez les flèches pour piloter l'avion.",
     savedScore: "Votre partie est enregistrée. Score : {score}",
+    // LOT 5c (maquettes 10 et 11) : sons, explication, illustrations, partie gardée à l'appel.
+    sounds: "Sons",
+    imComing: "J'arrive",
+    explanation: "Explication",
+    quizKept: "Votre quiz est gardé : vous pourrez le finir plus tard.",
+    pairsKept: "Votre partie est gardée : reprenez-la plus tard si vous voulez.",
+    illustrations: {
+      mont: "Dessin d'une montagne au sommet enneigé",
+      eau: "Dessin d'une goutte d'eau et de deux verres",
+      fleuve: "Dessin d'un pont sur un fleuve",
+      moustique: "Dessin d'un moustique",
+      mains: "Dessin de deux mains et de bulles de savon",
+      trophee: "Dessin d'un trophée aux couleurs du Cameroun",
+    },
     unavailable: "Jeu indisponible pour le moment.",
     questionTab: "Question {n}",
     validate: "Valider",

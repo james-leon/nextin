@@ -25,8 +25,21 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { PAIR_ART } from "@/lib/games/pair-art";
 import { cn } from "@/lib/cn";
 import { useLiteT } from "@/lib/i18n/lite";
+import { useGameSounds } from "./game-sounds";
+import { SoundsButton } from "./quiz-series";
 
 const GAP = 8;
+/** Paire ratée : bordure rouge et secousse 380 ms après la deuxième carte (fin du retournement), comme la maquette. */
+const MISS_SHOW_MS = 380;
+/**
+ * Secousse d'une carte ratée (0,35 s, maquette v2 11) et couleurs des étoiles : propres à ce jeu, chargé à la demande
+ * (rien dans la feuille commune des pages client). Aucune secousse si les animations sont réduites.
+ */
+const PAIRS_CSS =
+  "@keyframes pairs-shake{25%{transform:rotateY(180deg) translateX(-4px)}75%{transform:rotateY(180deg) translateX(4px)}}" +
+  ".pairs-miss{animation:pairs-shake .35s}@media(prefers-reduced-motion:reduce){.pairs-miss{animation:none}}" +
+  // Jetons du jeu : étoiles de la maquette (or), identiques en clair et en sombre.
+  ".pairs-game{--pairs-star:#f5b82e;--pairs-star-edge:#e39b12}";
 const LEVEL_KEYS = ["levelEasy", "levelMedium", "levelHard"] as const;
 
 /** Record d'un niveau (le moins de coups) gardé sur l'appareil ; null si aucun ou stockage indisponible. */
@@ -59,10 +72,14 @@ function CardBack() {
 /**
  * Paires (maquette v2 11) : jeu de mémoire calme, sans lecture. Trois niveaux (6, 8 ou 10 paires), plateau à la
  * hauteur de l'écran (aucun défilement), chrono et coups, étoiles, record par niveau sur l'appareil. Retournement
- * léger (aucune animation si elles sont réduites). Figé pendant l'appel (`frozen`) : chrono arrêté, cartes bloquées.
+ * léger (aucune animation si elles sont réduites). Paire ratée : bordure rouge et secousse, puis cartes retournées
+ * après 1 s. Sons de la maquette 11 (bouton « Sons »). Figé pendant l'appel (`frozen`) : chrono arrêté, cartes
+ * bloquées, partie gardée.
  */
 export function PairsGame({ frozen }: { frozen: boolean }) {
   const t = useLiteT("games");
+  const sounds = useGameSounds();
+  const [missShown, setMissShown] = useState(false);
   const [level, setLevel] = useState<PairLevel>(PAIR_LEVELS[0]);
   const [game, setGame] = useState<PairsState>(() => newPairs(PAIR_LEVELS[0]));
   // Horloge de la page (`performance.now()`, même origine que `event.timeStamp`).
@@ -91,12 +108,23 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
     return () => clearInterval(id);
   }, [running]);
 
-  // Deux cartes différentes : retournées après un court instant.
+  // Deux cartes différentes : bordure rouge, secousse et son après le retournement, puis cartes retournées après 1 s.
+  const { play } = sounds;
   useEffect(() => {
     if (!isMiss(game)) return;
-    const id = setTimeout(() => setGame(hideMiss), PAIRS_MISS_DELAY_MS);
-    return () => clearTimeout(id);
-  }, [game]);
+    const show = setTimeout(() => {
+      setMissShown(true);
+      play("miss");
+    }, MISS_SHOW_MS);
+    const hide = setTimeout(() => {
+      setMissShown(false);
+      setGame(hideMiss);
+    }, PAIRS_MISS_DELAY_MS);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(hide);
+    };
+  }, [game, play]);
 
   function start(pairs: PairLevel) {
     setLevel(pairs);
@@ -111,7 +139,10 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
     if (next === game) return;
     setGame(next);
     setNow(at);
+    sounds.play("flip");
+    if (pairsFound(next) > pairsFound(game)) sounds.play("match");
     if (isWon(next)) {
+      sounds.play("win");
       const previous = readPairsBest(next.pairs);
       const record = isBetterPairs(next.moves, previous);
       if (record) writePairsBest(next.pairs, next.moves);
@@ -126,12 +157,14 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
   const nextLevel = PAIR_LEVELS[levelIndex + 1];
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="pairs-game relative flex min-h-0 flex-1 flex-col">
+      <style>{PAIRS_CSS}</style>
       <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
         <div className="min-w-0 flex-1">
           <p className="text-caption font-bold tracking-[0.12em] text-label-secondary uppercase">{t("pairsEyebrow")}</p>
           <h2 className="font-rounded text-title2 font-extrabold">{t("pairsTitle")}</h2>
         </div>
+        <SoundsButton on={sounds.on} onToggle={sounds.toggle} />
         <IconButton label={t("restart")} icon={<RotateCcw />} variant="gray" onClick={() => start(level)} />
       </div>
       <div className="px-4 py-1">
@@ -160,7 +193,7 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
             {game.deck.map((face, i) => {
               const up = game.open.includes(i);
               const done = game.matched[i];
-              const miss = up && isMiss(game);
+              const miss = up && isMiss(game) && missShown;
               const name = t(`faces.${face}`);
               return (
                 <button
@@ -185,7 +218,7 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
                     <span
                       className={cn(
                         "absolute inset-0 grid place-items-center rounded-[14px] border-[1.5px] bg-white [backface-visibility:hidden] [transform:rotateY(180deg)]",
-                        done ? "border-green ring-[3px] ring-green/25" : miss ? "border-red" : "border-separator",
+                        done ? "border-green ring-[3px] ring-green/25" : miss ? "pairs-miss border-red" : "border-separator",
                       )}
                     >
                       <span aria-hidden className="grid aspect-square w-[76%] place-items-center rounded-full" style={{ background: PAIR_ART[face].disc }}>
@@ -216,7 +249,8 @@ export function PairsGame({ frozen }: { frozen: boolean }) {
               <Star
                 key={n}
                 aria-hidden
-                className={cn("size-10 stroke-[1.5]", n <= stars ? "fill-[var(--game-coin)] text-[var(--game-coin-edge)]" : "fill-none text-label-tertiary")}
+                className={cn("size-10 stroke-[1.5]", n > stars && "fill-none text-label-tertiary")}
+                style={n <= stars ? { fill: "var(--pairs-star)", color: "var(--pairs-star-edge)" } : undefined}
               />
             ))}
           </p>
