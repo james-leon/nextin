@@ -186,7 +186,7 @@ export function CampaignWizard(props: WizardProps) {
   return (
     <div className="flex flex-col gap-6">
       <Stepper current={step} progress={progress} href={href} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[var(--lg-cols)] lg:items-start" style={{ "--lg-cols": "minmax(0,1fr) 20rem" } as React.CSSProperties}>
         <div className="@container flex min-w-0 flex-col gap-6">{content}</div>
         {step !== "submit" ? (
           <aside aria-label={t("summaryTitle")} className="hidden flex-col gap-1.5 lg:sticky lg:top-6 lg:flex">

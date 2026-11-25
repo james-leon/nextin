@@ -51,7 +51,8 @@ export function startupImages(family?: StartupFamily, locale: StartupLocale = "f
   return STARTUP_DEVICES.filter((d) => !family || d.family === family).flatMap((d) =>
     (["light", "dark"] as const).map((scheme) => ({
       url: `/startup/${startupFileName(d, scheme, locale)}`,
-      media: `(device-width: ${d.width}px) and (device-height: ${d.height}px) and (-webkit-device-pixel-ratio: ${d.ratio}) and (orientation: portrait) and (prefers-color-scheme: ${scheme})`,
+      // Écriture compacte (sans espace après « : ») : 24 balises envoyées deux fois par page (budget de 200 Ko).
+      media: `(device-width:${d.width}px) and (device-height:${d.height}px) and (-webkit-device-pixel-ratio:${d.ratio}) and (orientation:portrait) and (prefers-color-scheme:${scheme})`,
     })),
   );
 }

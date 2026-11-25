@@ -125,7 +125,7 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
   );
 
   return (
-    <form action={formAction} noValidate className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <form action={formAction} noValidate className="grid grid-cols-1 gap-7 lg:grid-cols-[var(--lg-cols)] lg:items-start xl:grid-cols-[var(--xl-cols)]" style={{ "--lg-cols": "minmax(0,1fr) 20rem", "--xl-cols": "minmax(0,1fr) 22rem" } as React.CSSProperties}>
       {/* Ordinateur : récapitulatif du prix collé à droite pendant le défilement. */}
       <div className="hidden lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:block">{summary}</div>
       <div className="flex min-w-0 flex-col gap-7 lg:col-start-1 lg:row-start-1">

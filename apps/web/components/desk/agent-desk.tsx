@@ -379,7 +379,7 @@ export function AgentDesk({
         <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p>
       </header>
 
-      <div className="flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_20rem] md:items-start md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8">
+      <div className="flex flex-col gap-5 md:grid md:grid-cols-[var(--md-cols)] md:items-start md:gap-6 lg:grid-cols-[var(--lg-cols)] lg:gap-8" style={{ "--md-cols": "minmax(0,1fr) 20rem", "--lg-cols": "minmax(0,1fr) 24rem" } as React.CSSProperties}>
         <div className="flex min-w-0 flex-col gap-5">
           {!online || pending.length ? (
             // Maquette v2 20 : bandeau orange qui compte les actions en attente ; rien n'est bloqué.

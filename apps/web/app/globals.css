@@ -526,14 +526,6 @@
   background-position: center;
 }
 
-/* Appel pendant un jeu : éclair doux de l'écran (désactivé si l'utilisateur réduit les animations). */
-@keyframes call-flash {
-  0%, 100% { background-color: var(--bg-grouped); }
-  50% { background-color: var(--accent-tint); }
-}
-@utility call-flash {
-  animation: call-flash 900ms var(--ease-ios) 3;
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,

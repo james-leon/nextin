@@ -118,7 +118,7 @@ export function DesignShowcase() {
         <p className="mt-1 text-subheadline text-label-secondary">{t("subtitle")}</p>
       </NavigationBar>
 
-      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-8 px-4 pt-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-8 px-4 pt-4 lg:grid-cols-[var(--lg-cols)]" style={{ "--lg-cols": "15rem minmax(0,1fr)" } as React.CSSProperties}>
         <aside className="hidden lg:block">
           <nav aria-label={t("title")} className="sticky top-16">
             <ListSection>

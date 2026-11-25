@@ -310,7 +310,7 @@ export function AppointmentsView({ ctx, initialView = "day", pendingRequests = 0
         ) : null}
 
         {view === "requests" ? null : view === "day" ? (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_24rem]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[var(--lg-cols)] lg:items-start xl:grid-cols-[var(--xl-cols)]" style={{ "--lg-cols": "minmax(0,1fr) 22rem", "--xl-cols": "minmax(0,1fr) 24rem" } as React.CSSProperties}>
             <section aria-label={title}>
               {items === null ? (
                 loading

@@ -92,7 +92,7 @@ export function RequestsInbox({
   const detail = selected ? <RequestDetail key={selected.id} request={selected} ctx={ctx} onHandled={handled} /> : null;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[var(--lg-cols)] lg:items-start xl:grid-cols-[var(--xl-cols)]" style={{ "--lg-cols": "minmax(0,22rem) minmax(0,1fr)", "--xl-cols": "minmax(0,26rem) minmax(0,1fr)" } as React.CSSProperties}>
       <section aria-label={t("title")}>
         {items === null ? (
           <div role="status" className="flex flex-col gap-2">

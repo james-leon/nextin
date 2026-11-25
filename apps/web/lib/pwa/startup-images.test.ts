@@ -40,7 +40,7 @@ describe("écrans de démarrage iOS", () => {
     expect(startupImages("iphone").length + startupImages("ipad").length).toBe(images.length);
     expect(startupImages("iphone", "en").every((i) => i.url.endsWith("-en.png"))).toBe(true);
     expect(startupImages("iphone", "fr").some((i) => i.url.endsWith("-en.png"))).toBe(false);
-    expect(images[0]!.media).toMatch(/device-width: \d+px.*device-height: \d+px.*-webkit-device-pixel-ratio: \d.*orientation: portrait.*prefers-color-scheme: (light|dark)/);
+    expect(images[0]!.media).toMatch(/device-width: ?\d+px.*device-height: ?\d+px.*-webkit-device-pixel-ratio: ?\d.*orientation: ?portrait.*prefers-color-scheme: ?(light|dark)/);
   });
 
   it("balises envoyées aux seuls navigateurs Apple, pour leur famille d'appareils", () => {

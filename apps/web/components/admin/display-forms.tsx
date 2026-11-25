@@ -201,7 +201,7 @@ export function AnnouncementSettingsForm({ action, initial, disabled }: { action
             value={v.volume}
             onChange={(e) => setV({ ...v, volume: Number(e.target.value) })}
             disabled={disabled}
-            className="h-11 w-full accent-[var(--accent-fill)]"
+            className="h-11 w-full" style={{ accentColor: "var(--accent-fill)" }}
           />
         </div>
       </section>

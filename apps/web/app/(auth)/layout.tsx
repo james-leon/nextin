@@ -20,7 +20,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const benefits = [t("benefitQr"), t("benefitWhatsapp"), t("benefitTv")];
   return (
     <NextIntlClientProvider messages={{ common: m.common, auth: m.auth, errors: m.errors, mfa: m.mfa }}>
-      <div className="min-h-dvh bg-grouped lg:grid lg:grid-cols-[minmax(0,9fr)_minmax(0,11fr)]">
+      <div className="min-h-dvh bg-grouped lg:grid lg:grid-cols-[var(--lg-cols)]" style={{ "--lg-cols": "minmax(0,9fr) minmax(0,11fr)" } as React.CSSProperties}>
         {/* Panneau de marque : bleu nuit uni dans les deux apparences (couleur de marque, texte blanc). */}
         <aside
           aria-label={t("panelLabel")}
@@ -33,7 +33,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             <ul className="mt-8 flex flex-col gap-3 text-body text-white/85">
               {benefits.map((benefit) => (
                 <li key={benefit} className="flex items-baseline gap-3">
-                  <span aria-hidden className="size-1.5 shrink-0 translate-y-[-0.15em] rounded-full bg-white" />
+                  <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-white" style={{ transform: "translateY(-0.15em)" }} />
                   {benefit}
                 </li>
               ))}

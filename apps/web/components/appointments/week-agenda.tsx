@@ -39,7 +39,7 @@ export function WeekAgenda({
 
   return (
     <section aria-label={t("agendaLabel")} className="squircle overflow-hidden rounded-[var(--radius-xl)] bg-grouped-secondary shadow-card">
-      <div className="grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))] hairline-b">
+      <div className="grid hairline-b" style={{ gridTemplateColumns: "3.5rem repeat(7, minmax(0, 1fr))" }}>
         <span aria-hidden />
         {days.map((d) => {
           const s = shortDay(d, locale);
@@ -58,7 +58,7 @@ export function WeekAgenda({
           );
         })}
       </div>
-      <div className="grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]" style={{ height }}>
+      <div className="grid" style={{ height, gridTemplateColumns: "3.5rem repeat(7, minmax(0, 1fr))" }}>
         {/* Heures */}
         <div aria-hidden className="relative">
           {hours.map((h, i) => (
@@ -74,8 +74,8 @@ export function WeekAgenda({
               key={d}
               role="list"
               aria-label={longDay(d, locale)}
-              className="relative border-l-[0.5px] border-separator"
-              style={{ backgroundImage: `repeating-linear-gradient(to bottom, var(--separator) 0 0.5px, transparent 0.5px ${HOUR_PX}px)` }}
+              className="relative border-separator"
+              style={{ borderLeftWidth: "0.5px", backgroundImage: `repeating-linear-gradient(to bottom, var(--separator) 0 0.5px, transparent 0.5px ${HOUR_PX}px)` }}
             >
               {placed.map(({ item: a, start, end, lane, lanes }) => (
                 <li

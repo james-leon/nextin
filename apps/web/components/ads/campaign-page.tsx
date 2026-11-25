@@ -153,7 +153,7 @@ export async function CampaignPage({
         </CalloutCard>
       ) : null}
       {notice}
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[var(--lg-cols)] lg:items-start" style={{ "--lg-cols": "minmax(0,1fr) 22rem" } as React.CSSProperties}>
         <div className="flex min-w-0 flex-col gap-7">
           {!house && sector.requires_health_visa ? (
             <VisaCard campaignId={c.id} owner={ownerFolder} number={c.health_visa_number} hasDocument={!!c.health_visa_document_path} editable={editable} />

@@ -55,7 +55,7 @@ export default async function QrPage({
           </ScannerFrame>
           <div className="text-center">
             <p className="text-footnote uppercase text-label-secondary">{t("shortCode")}</p>
-            <p className="mt-1 text-title1 font-bold tracking-[0.25em] text-ticket-number">{main.short_code}</p>
+            <p className="mt-1 text-title1 font-bold text-ticket-number" style={{ letterSpacing: "0.25em" }}>{main.short_code}</p>
             <p className="mt-1 text-footnote text-label-secondary">{t("shortCodeHint")}</p>
           </div>
           <p className="max-w-full truncate text-subheadline text-label-secondary" title={link}>

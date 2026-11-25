@@ -176,7 +176,7 @@ export function MfaSetup({ enrolled, required, next }: { enrolled: boolean; requ
       className="flex flex-col gap-5"
     >
       <p className="px-4 text-subheadline text-label-secondary">{t("intro")}</p>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_16rem]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[var(--md-cols)]" style={{ "--md-cols": "minmax(0,1fr) 16rem" } as React.CSSProperties}>
         {steps}
         <div className="squircle flex flex-col items-center gap-2 rounded-[var(--radius-lg)] bg-grouped-secondary p-5 text-center">
           <div className="rounded-[12px] bg-white p-2">

@@ -188,7 +188,7 @@ export async function LegalPage({ docKey }: { docKey: LegalDocKey }) {
           </p>
         ) : null}
 
-        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[var(--lg-cols)] lg:items-start lg:gap-8" style={{ "--lg-cols": "16rem minmax(0,1fr)" } as React.CSSProperties}>
         <nav aria-labelledby="legal-toc" className="squircle rounded-[var(--radius-xl)] bg-grouped-secondary p-5 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
           <h2 id="legal-toc" className="text-headline font-semibold">
             {t("legalContents")}

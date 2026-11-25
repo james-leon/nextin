@@ -385,7 +385,7 @@ export function DashboardView({
           ))}
         </StatGroup>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[var(--lg-cols)]" style={{ "--lg-cols": "minmax(0,1.45fr) minmax(0,1fr)" } as React.CSSProperties}>
           {singleDay ? (
             hourlyPanel
           ) : (
