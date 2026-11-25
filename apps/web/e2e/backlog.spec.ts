@@ -66,7 +66,7 @@ test.describe("Backlog — téléphone : barre de navigation", () => {
   test("une action longue reste entière, dans son bouton et dans l'écran", async ({ page }, info) => {
     test.skip(info.project.name !== "mobile", "barre compacte du téléphone");
     const b = await setUpBranch("Clinique Barre");
-    await login(page, b.email, `/app/o/${b.orgId}/ads`);
+    await login(page, b.email, `/app/o/${b.orgId}/ads/house`);
     const action = page.getByRole("link", { name: "Nouvelle annonce Maison" });
     const box = (await action.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
