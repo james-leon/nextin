@@ -8,6 +8,7 @@ import { isLocale, type Locale } from "@nextin/shared/i18n";
 import { AdminPage } from "@/components/admin/admin-page";
 import { Button } from "@/components/ui/button";
 import { CalloutCard } from "@/components/ui/callout-card";
+import { TintedCallout } from "@/components/ui/tinted-callout";
 import { dayRange, longDay } from "@/lib/ads/format";
 import type { CampaignStats } from "@/lib/ads/types";
 import { formatShortDay } from "@/lib/billing/format";
@@ -100,7 +101,7 @@ export async function CampaignDetail({ campaignId, advertiserId, submitted }: { 
           {t("submittedNotice")}
         </CalloutCard>
       ) : null}
-      <CalloutCard tinted tone={notice.tone} role={c.status === "rejected" ? "alert" : "status"} icon={NOTICE_ICON[c.status]} data-testid="campaign-notice">
+      <TintedCallout tone={notice.tone} role={c.status === "rejected" ? "alert" : "status"} icon={NOTICE_ICON[c.status]} data-testid="campaign-notice">
         {notice.title ? (
           <>
             <span className="block font-semibold text-orange-text">{t("awaitingTitle")}</span>
@@ -109,7 +110,7 @@ export async function CampaignDetail({ campaignId, advertiserId, submitted }: { 
         ) : (
           sentence
         )}
-      </CalloutCard>
+      </TintedCallout>
       {running && stats ? (
         <CampaignStatsView stats={stats} />
       ) : (

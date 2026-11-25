@@ -12,7 +12,7 @@ import { FormError } from "@/components/auth/form-error";
 import { useFormErrors } from "@/components/admin/use-form-errors";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button, IconButton } from "@/components/ui/button";
-import { CalloutCard } from "@/components/ui/callout-card";
+import { TintedCallout } from "@/components/ui/tinted-callout";
 import { ListIcon, ListRow, ListSection } from "@/components/ui/list";
 import { SelectField } from "@/components/ui/select-field";
 import { Sheet } from "@/components/ui/sheet";
@@ -158,10 +158,10 @@ export function CampaignWizard(props: WizardProps) {
     content =
       offer === "none" ? (
         <div className="flex flex-col gap-6">
-          <CalloutCard tinted tone="neutral" icon={<Gamepad2 />} data-testid="games-none">
+          <TintedCallout tone="neutral" icon={<Gamepad2 />} data-testid="games-none">
             <span className="block font-semibold">{t("wizard.gamesNone", { name: pkgName ?? "" })}</span>
             {t("wizard.gamesNoneHint")}
-          </CalloutCard>
+          </TintedCallout>
           <ContinueBar href={href(5)} />
         </div>
       ) : (
