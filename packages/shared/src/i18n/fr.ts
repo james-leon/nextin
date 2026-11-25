@@ -2332,7 +2332,7 @@ export const fr = {
     issuedOn: "Émise le",
     dueOn: "À régler avant le",
     periodLabel: "Période",
-    periodRange: "{from} → {to}",
+    periodRange: "{from} – {to}",
     words: "Arrêtée à la somme de {amount}.",
     payTitle: "Payer par Mobile Money",
     payScan: "Scannez ce code ou ouvrez le lien :",

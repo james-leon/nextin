@@ -84,7 +84,7 @@ Textes `poster.*` (FR/EN). Contraste du QR testé (`poster.test.ts`).
 ## F. Facture (`lib/pdf/invoice.tsx`)
 
 En-tête logo + « by Wintek · <raison sociale> », « Facture », numéro, pastille « À régler » (orange) / « Payée » (vert)
-/ « Annulée » ; trois colonnes Émise par (NIU masqué si vide), Facturée à, Dates (période « 21 nov. → 20 déc. ») ;
+/ « Annulée » ; trois colonnes Émise par (NIU masqué si vide), Facturée à, Dates (période « 21 nov. – 20 déc. », tiret : la police embarquée n'a pas la flèche) ;
 tableau, remise « −5 990 », sous-total, « TVA (x %) », « Total à payer » ; « Arrêtée à la somme de … francs CFA. »
 (`amountInWords`, FR et EN, testé). Facture ouverte : encadré « Payer par Mobile Money » avec QR et lien `/pay/<jeton>`
 créé au téléchargement (`create_pay_link`, service role, seulement pour un administrateur de l'établissement ou le
@@ -119,7 +119,7 @@ le … · MTN MoMo · réf. … » (référence du paiement confirmé). Pied « 
   questions sur la page, chacune titrée « Question n sur N ».
 - **Pastilles des formules** : bronze, argent et or assombris (`--medal-*`) pour un texte blanc lisible (AA).
 - **Téléphone** : rubriques en pastilles en haut des pages (au lieu d'un retour « Annonceur »).
-- **Affiche** : tailles légèrement réduites (titre 9 %, QR 40 % de la largeur) pour tenir sur une page A4 et A5.
+- **Affiche** : tailles légèrement réduites (titre 8,4 %, QR 31 % de la largeur, marges resserrées) pour tenir sur une page A4 et A5.
 - **Facture** : pas de seconde ligne grise sous les désignations (l'instantané n'en contient pas) ; orange de la
   pastille assombri (`#B85E0F`) pour l'impression.
 - **Annonce Maison** : un brouillon reste si l'on quitte après avoir choisi le visuel (visible dans la liste).

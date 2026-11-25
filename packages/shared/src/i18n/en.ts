@@ -2331,7 +2331,7 @@ export const en: Messages = {
     issuedOn: "Issued on",
     dueOn: "Due by",
     periodLabel: "Period",
-    periodRange: "{from} → {to}",
+    periodRange: "{from} – {to}",
     words: "Amount in words: {amount}.",
     payTitle: "Pay with Mobile Money",
     payScan: "Scan this code or open the link:",

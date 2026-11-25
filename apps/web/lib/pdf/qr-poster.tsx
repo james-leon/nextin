@@ -41,24 +41,24 @@ export function QrPosterDocument({ format, orgName, branchLine, url, domain, sho
   registerFonts();
   const u = WIDTH[format] / 100;
   const qr = qrMatrix(url, 0);
-  const qrSide = 40 * u;
+  const qrSide = 31 * u;
 
   const styles = StyleSheet.create({
     page: { fontFamily: "Inter", color: NAVY, backgroundColor: PAPER },
-    top: { paddingTop: 7 * u, paddingHorizontal: 8 * u, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 3 * u },
+    top: { paddingTop: 6 * u, paddingHorizontal: 8 * u, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 3 * u },
     org: { fontSize: 4.6 * u, fontWeight: 700, maxWidth: 55 * u },
     branch: { fontSize: 2.6 * u, color: GREY, textAlign: "right", maxWidth: 30 * u },
-    mid: { paddingTop: 4.5 * u, paddingHorizontal: 8 * u, alignItems: "center" },
-    headline: { fontSize: 9 * u, lineHeight: 1.02, fontWeight: 800, letterSpacing: -0.035 * 9 * u, textAlign: "center" },
+    mid: { paddingTop: 3 * u, paddingHorizontal: 8 * u, alignItems: "center" },
+    headline: { fontSize: 8.4 * u, lineHeight: 1.02, fontWeight: 800, letterSpacing: -0.035 * 8.4 * u, textAlign: "center" },
     secondary: { marginTop: 2 * u, fontSize: 3.2 * u, color: GREY, fontWeight: 500, textAlign: "center" },
     serviceLine: { marginTop: 1.4 * u, fontSize: 3 * u, fontWeight: 700, textAlign: "center" },
-    qrBox: { marginTop: 4.5 * u, padding: 3 * u, borderWidth: 0.5 * u, borderColor: NAVY, borderRadius: 4.4 * u, alignItems: "center" },
+    qrBox: { marginTop: 3.6 * u, padding: 2.6 * u, borderWidth: 0.5 * u, borderColor: NAVY, borderRadius: 4.4 * u, alignItems: "center" },
     tagWrap: { position: "absolute", bottom: -1.9 * u, left: 0, right: 0, alignItems: "center" },
     tag: { backgroundColor: PAPER, paddingHorizontal: 2.4 * u, fontSize: 2.6 * u, fontWeight: 700, letterSpacing: 0.14 * 2.6 * u },
-    code: { marginTop: 4.8 * u, fontSize: 3 * u, color: GREY, textAlign: "center", lineHeight: 1.5 },
+    code: { marginTop: 4 * u, fontSize: 3 * u, color: GREY, textAlign: "center", lineHeight: 1.5 },
     domain: { color: NAVY, fontWeight: 700 },
     codeValue: { fontSize: 5.4 * u, color: NAVY, fontWeight: 700, letterSpacing: 0.3 * 5.4 * u },
-    steps: { marginTop: 4 * u, borderTopWidth: 0.25 * u, borderTopColor: LINE, paddingTop: 3.6 * u, flexDirection: "row", gap: 4 * u, width: "100%" },
+    steps: { marginTop: 3 * u, borderTopWidth: 0.25 * u, borderTopColor: LINE, paddingTop: 3 * u, flexDirection: "row", gap: 4 * u, width: "100%" },
     step: { flex: 1 },
     stepNum: { fontSize: 4.2 * u, fontWeight: 700, color: ORANGE, lineHeight: 1 },
     stepTitle: { marginTop: 1.4 * u, fontSize: 3 * u, fontWeight: 700, lineHeight: 1.25 },
