@@ -53,7 +53,9 @@ export function CashiersManager({ advertiserId, cashiers }: { advertiserId: stri
           ))}
         </ListSection>
       ) : (
-        <EmptyState variant="inline" title={t("cashiersEmpty")} icon={<UsersRound />} />
+        <ListSection>
+          <EmptyState variant="inline" title={t("cashiersEmpty")} icon={<UsersRound />} />
+        </ListSection>
       )}
       <form action={action} noValidate className="flex flex-col gap-1.5">
         <FormError message={top} />

@@ -76,10 +76,10 @@ export function HouseAdForm({ orgId, orgName }: { orgId: string; orgName: string
       </FormGroup>
       <div className="flex flex-col gap-1.5">
         <div className="squircle overflow-hidden rounded-[var(--radius-lg)] bg-grouped-secondary">
-          <label className="pressable flex min-h-11 cursor-pointer items-center gap-3 px-4 text-accent-text">
+          <label className="pressable relative flex min-h-11 cursor-pointer items-center gap-3 px-4 text-accent-text">
             <ImagePlus aria-hidden className="size-5" />
             <span className="text-body">{uploading ? ta("uploading") : path ? t("houseVisualChange") : t("houseVisual")}</span>
-            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} data-testid="house-visual" />
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => onFile(e.target.files?.[0])} data-testid="house-visual" />
           </label>
         </div>
         <p className="px-4 text-footnote text-label-secondary">{path ? ta("creativesHint") : t("houseVisualRequired")}</p>

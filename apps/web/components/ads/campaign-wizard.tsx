@@ -582,7 +582,7 @@ function QuizStep({ campaignId, campaignName, quiz, next }: { campaignId: string
         <TextField grouped type="number" inputMode="numeric" min={1} max={365} label={t("couponValidity")} value={validity} onChange={(e) => setValidity(Number(e.target.value))} />
       </FormGroup>
       {questions.map((q, i) => (
-        <fieldset key={i} className="flex flex-col gap-1.5">
+        <fieldset key={i} className="flex min-w-0 flex-col gap-1.5">
           <legend className="sr-only">{t("wizard.questionOf", { n: i + 1, total: questions.length })}</legend>
           <div className="flex min-h-11 items-center justify-between gap-2 px-4">
             <span aria-hidden className="text-footnote tracking-wide text-label-secondary uppercase">
@@ -599,7 +599,7 @@ function QuizStep({ campaignId, campaignName, quiz, next }: { campaignId: string
               maxLength={160}
               onChange={(e) => update(i, (x) => ({ ...x, question: e.target.value }))}
               placeholder={t("question", { n: i + 1 })}
-              className="min-h-12 bg-transparent px-4 text-body text-label outline-none placeholder:text-label-tertiary focus-visible:shadow-[inset_0_0_0_2px_var(--accent-fill)]"
+              className="min-h-12 w-full min-w-0 bg-transparent px-4 text-body text-label outline-none placeholder:text-label-tertiary focus-visible:shadow-[inset_0_0_0_2px_var(--accent-fill)]"
             />
             <div role="radiogroup" aria-label={t("correct")} className="flex flex-col">
               {q.answers.map((a, k) => (
@@ -677,7 +677,7 @@ function SubmitStep({ campaignId, owner, visa, summary }: { campaignId: string; 
     else setUploadError(r.error === "file_too_large" ? t("tooLarge", { max: "10 Mo" }) : te("generic"));
   }
 
-  const fileInput = <input type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} data-testid="visa-file" />;
+  const fileInput = <input type="file" accept="application/pdf,image/jpeg,image/png" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => onFile(e.target.files?.[0])} data-testid="visa-file" />;
   return (
     <form action={action} noValidate className="flex flex-col gap-6">
       {summary}
@@ -694,13 +694,13 @@ function SubmitStep({ campaignId, owner, visa, summary }: { campaignId: string; 
               <div className="flex min-h-11 items-center gap-3 px-4" data-testid="visa-document">
                 <CheckCircle2 aria-hidden className="size-5 shrink-0 text-green-text" />
                 <span className="flex-1 text-body">{t("visaUploaded")}</span>
-                <label className="pressable flex min-h-11 cursor-pointer items-center text-subheadline text-accent-text">
+                <label className="pressable relative flex min-h-11 cursor-pointer items-center text-subheadline text-accent-text">
                   {t("wizard.visaReplace")}
                   {fileInput}
                 </label>
               </div>
             ) : (
-              <label className="pressable flex min-h-11 cursor-pointer items-center gap-3 px-4 text-accent-text">
+              <label className="pressable relative flex min-h-11 cursor-pointer items-center gap-3 px-4 text-accent-text">
                 <FileUp aria-hidden className="size-5" />
                 <span className="text-body">{uploading ? t("uploading") : t("wizard.visaAdd")}</span>
                 {fileInput}
