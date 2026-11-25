@@ -437,7 +437,7 @@ function TargetingStep({
                     type="button"
                     onClick={() => setExpanded(true)}
                     aria-label={t("wizard.citiesMoreLabel", { count: shown.hidden })}
-                    className="pressable min-h-11 rounded-full bg-fill-tertiary px-4 text-subheadline text-accent-text"
+                    className="pressable min-h-11 rounded-full bg-fill-tertiary px-4 text-subheadline font-semibold text-label"
                   >
                     {t("wizard.citiesMore", { count: shown.hidden })}
                   </button>

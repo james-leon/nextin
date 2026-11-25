@@ -133,3 +133,9 @@ le … · MTN MoMo · réf. … » (référence du paiement confirmé). Pied « 
 - Playwright : `ads-lot6a.spec.ts` (Bronze en cinq étapes avec récapitulatif et reprise, quiz Argent, bon valable puis
   déjà utilisé, caissier limité, PDF affiche A4/A5 et facture ouverte puis payée), `ads.spec.ts` (parcours complet
   jusqu'au paiement, visa exigé, Publicité et annonce Maison), `backlog.spec.ts`, `responsive.spec.ts`.
+
+## Vérifications
+
+ESLint et TypeScript propres ; Vitest 436 tests ; pgTAP inchangé et vert ; `pnpm audit --prod` sans vulnérabilité ;
+Playwright complet : 222 réussis (les 4 échecs du premier passage — contraste du bouton « + n » des villes en sombre —
+corrigés puis revérifiés).
