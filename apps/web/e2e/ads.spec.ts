@@ -301,7 +301,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     const { data: plays } = await admin.from("ad_game_plays").select("score, finished_at").eq("ticket_id", (await admin.from("tickets").select("id").eq("public_token", token).single()).data!.id).order("started_at");
     expect(plays?.map((p) => p.score)).toEqual([200, 50]);
     await expectAccessible(page);
-    await turn.getByRole("button", { name: "Revenir à mon ticket" }).click();
+    await turn.getByRole("button", { name: "J'arrive" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText("C'est votre tour").first()).toBeVisible();
   });

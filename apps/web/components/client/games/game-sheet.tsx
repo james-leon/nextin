@@ -206,7 +206,7 @@ function GameSheetContent({
         ) : kind === "quiz" && quiz ? (
           <QuizGame token={token} quiz={quiz} skipAfter={session.interstitial.skip_after} nextInterstitial={nextInterstitial} couponBaseUrl={couponBaseUrl} />
         ) : kind === "series" && series ? (
-          <QuizSeries token={token} skipAfter={session.interstitial.skip_after} nextInterstitial={nextInterstitial} />
+          <QuizSeries token={token} skipAfter={session.interstitial.skip_after} nextInterstitial={nextInterstitial} frozen={!!call} />
         ) : kind === "sky" && sky ? (
           <SkyCatch
             token={token}
@@ -285,6 +285,16 @@ function GameSheetContent({
             </p>
             <p className="font-rounded text-[56px] leading-none font-extrabold">{code}</p>
             {call.counter ? <p className="text-headline">{t("presentAt", { counter: call.counter })}</p> : null}
+            {/* Partie gardée : le quiz sans fin et les Paires restent en l'état derrière cet écran. */}
+            {kind === "series" ? (
+              <p className="max-w-[30ch] text-subheadline text-white/90" data-testid="game-kept">
+                {t("quizKept")}
+              </p>
+            ) : kind === "pairs" ? (
+              <p className="max-w-[30ch] text-subheadline text-white/90" data-testid="game-kept">
+                {t("pairsKept")}
+              </p>
+            ) : null}
             {kind === "sky" && saved ? (
               <p className="tabular text-subheadline" data-testid="sky-saved">
                 {t("savedScore", { score: saved.score })}
@@ -296,7 +306,7 @@ function GameSheetContent({
               </div>
             ) : null}
             <Button ref={turnRef} block className="mt-4 max-w-xs bg-white text-called hover:bg-white/90 active:bg-white/80" onClick={onClose}>
-              {t("backToTicket")}
+              {t("imComing")}
             </Button>
           </div>
         ) : null}

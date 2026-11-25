@@ -82,8 +82,8 @@ select ok(not (public.quiz_bank_draw(tests.v('token'), '{}', 10)::text ~ '"corre
 select is((select array_agg(q ->> 'id' order by q ->> 'id') from jsonb_array_elements(public.quiz_bank_draw(tests.v('token'), array['Q1', 'Q3'], 5)) q),
   array['Q2'], 'tirage : questions déjà vues sur l''appareil exclues');
 select is(public.quiz_bank_draw(tests.v('token'), array['Q1', 'Q2', 'Q3'], 5), '[]'::jsonb, 'tout vu : liste vide (l''appareil recommence un tour)');
-select is(public.quiz_bank_check(tests.v('token'), 'Q1', 1::smallint), '{"answer": 1, "correct": true}'::jsonb, 'bonne réponse vérifiée par la base');
-select is(public.quiz_bank_check(tests.v('token'), 'Q3', 2::smallint), '{"answer": 0, "correct": false}'::jsonb, 'mauvaise réponse : la bonne est donnée après coup');
+select is(public.quiz_bank_check(tests.v('token'), 'Q1', 1::smallint), '{"answer": 1, "correct": true, "explanation": null, "explanation_en": null}'::jsonb, 'bonne réponse vérifiée par la base');
+select is(public.quiz_bank_check(tests.v('token'), 'Q3', 2::smallint), '{"answer": 0, "correct": false, "explanation": null, "explanation_en": null}'::jsonb, 'mauvaise réponse : la bonne est donnée après coup');
 select throws_ok(format($$ select public.quiz_bank_check(%L, 'Q4', 0::smallint) $$, tests.v('token')), 'P0404', 'not_found', 'question retirée : refusée');
 select throws_ok($$ select public.quiz_bank_draw('JetonInconnu00000000xx', '{}', 5) $$, 'P0404', 'not_found', 'jeton inconnu : refusé');
 reset role;

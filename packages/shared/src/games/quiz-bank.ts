@@ -18,6 +18,38 @@ export const QUIZ_BEST_KEY = "nextin.quiz.best";
 export const QUIZ_SEEN_KEY = "nextin.quiz.seen";
 
 export type QuizBankAnswer = { text: string; text_en: string | null };
+
+/**
+ * Illustrations dessinées (maquette v2 10), liste fermée : la clé est gardée dans `quiz_bank_questions.illustration`
+ * (contrainte de la base identique) et le dessin dans `apps/web/lib/games/quiz-art.ts`. Clé inconnue ou vide : pas
+ * d'image.
+ */
+export const QUIZ_ILLUSTRATIONS = ["mont", "eau", "fleuve", "moustique", "mains", "trophee"] as const;
+export type QuizIllustration = (typeof QUIZ_ILLUSTRATIONS)[number];
+
+export function isQuizIllustration(value: unknown): value is QuizIllustration {
+  return typeof value === "string" && (QUIZ_ILLUSTRATIONS as readonly string[]).includes(value);
+}
+
+/** Explication affichée après la réponse : 400 caractères au plus (contrainte de la base). */
+export const QUIZ_EXPLANATION_MAX = 400;
+/** Objectif montré par l'anneau de fin de série : rempli à 8 bonnes réponses (maquette v2 10). */
+export const QUIZ_RING_GOAL = 8;
+
+/** Remplissage de l'anneau de fin de série : min(bonnes réponses / 8, 1). */
+export function ringFraction(score: number, goal = QUIZ_RING_GOAL): number {
+  return goal > 0 ? Math.min(Math.max(score, 0) / goal, 1) : 0;
+}
+
+/** Titre de fin de série : « Excellent ! » dès 8, « Bien joué ! » dès 4, sinon « Continuez ! ». */
+export function resultTitleKey(score: number): "resultExcellent" | "resultGood" | "resultKeepGoing" {
+  return score >= 8 ? "resultExcellent" : score >= 4 ? "resultGood" : "resultKeepGoing";
+}
+
+/** Mélodie de fin de série : montante à partir de 4 bonnes réponses, descendante sinon. */
+export function endTune(score: number): "good" | "bad" {
+  return score >= 4 ? "good" : "bad";
+}
 /** Question telle que la base l'envoie : jamais la bonne réponse. */
 export type QuizBankQuestion = {
   id: string;
@@ -25,8 +57,13 @@ export type QuizBankQuestion = {
   difficulty: number;
   question: string;
   question_en: string | null;
+  /** Clé d'illustration (LOT 5c) ; absente pour une base qui n'a pas encore la migration. */
+  illustration?: string | null;
   answers: QuizBankAnswer[];
 };
+
+/** Réponse vérifiée par la base, avec l'explication (seulement après la réponse ; null si la question n'en a pas). */
+export type QuizBankCheck = { correct: boolean; answer: number; explanation?: string | null; explanation_en?: string | null };
 
 export type SeriesState = { asked: number; score: number; lives: number };
 
@@ -90,6 +127,9 @@ export const QUIZ_CSV_HEADER = [
   "bonne_reponse",
 ] as const;
 
+/** Colonnes facultatives à la fin (LOT 5c) : un fichier sans elles reste accepté. */
+export const QUIZ_CSV_EXTRA = ["explication_fr", "explication_en", "illustration"] as const;
+
 /** Ligne prête pour la table `quiz_bank_questions` (`correct` : index 0 à 3). */
 export type QuizBankRow = {
   id: string;
@@ -99,6 +139,13 @@ export type QuizBankRow = {
   question_en: string | null;
   answers: QuizBankAnswer[];
   correct: number;
+  /**
+   * Présents seulement si le fichier a les colonnes facultatives : sinon l'import ne touche pas aux explications et
+   * illustrations déjà en base.
+   */
+  explanation?: string | null;
+  explanation_en?: string | null;
+  illustration?: QuizIllustration | null;
 };
 
 export type QuizCsvError = { line: number; message: string };
@@ -144,10 +191,12 @@ export function splitCsv(text: string, separator = ";"): { line: number; cells: 
   return rows.filter((r) => r.cells.some((c) => c.trim() !== ""));
 }
 
-const LIMITS = { id: 40, category: 40, question: 300, answer: 160 } as const;
+const LIMITS = { id: 40, category: 40, question: 300, answer: 160, explanation: QUIZ_EXPLANATION_MAX } as const;
 
 /**
- * Lecture du fichier d'import de la banque (UTF-8, `;`, en-tête exact `QUIZ_CSV_HEADER`) : difficulté 1, 2 ou 3 ;
+ * Lecture du fichier d'import de la banque (UTF-8, `;`, en-tête exact `QUIZ_CSV_HEADER`, suivi ou non des trois
+ * colonnes facultatives `QUIZ_CSV_EXTRA` : explications FR et EN, 400 caractères au plus, et clé d'illustration de la
+ * liste `QUIZ_ILLUSTRATIONS`, vides acceptées) : difficulté 1, 2 ou 3 ;
  * bonne réponse 1 à 4 ; réponses 3 et 4 facultatives (mais la 4 sans la 3 est refusée) ; identifiants uniques.
  * Toutes les erreurs sont rendues avec leur ligne ; aucune ligne n'est gardée à moitié.
  */
@@ -156,14 +205,17 @@ export function parseQuizCsv(text: string): { rows: QuizBankRow[]; errors: QuizC
   const errors: QuizCsvError[] = [];
   const rows: QuizBankRow[] = [];
   const header = table[0]?.cells.map((c) => c.trim().toLowerCase());
-  if (!header || header.join(";") !== QUIZ_CSV_HEADER.join(";")) {
-    return { rows, errors: [{ line: 1, message: `en-tête attendu : ${QUIZ_CSV_HEADER.join(";")}` }] };
+  const full = [...QUIZ_CSV_HEADER, ...QUIZ_CSV_EXTRA];
+  const extended = header?.join(";") === full.join(";");
+  if (!header || (!extended && header.join(";") !== QUIZ_CSV_HEADER.join(";"))) {
+    return { rows, errors: [{ line: 1, message: `en-tête attendu : ${QUIZ_CSV_HEADER.join(";")} (puis, facultatif : ;${QUIZ_CSV_EXTRA.join(";")})` }] };
   }
+  const columns = extended ? full.length : QUIZ_CSV_HEADER.length;
   const seen = new Set<string>();
   for (const { line, cells } of table.slice(1)) {
     const fail = (message: string) => errors.push({ line, message });
-    if (cells.length !== QUIZ_CSV_HEADER.length) {
-      fail(`${cells.length} colonnes au lieu de ${QUIZ_CSV_HEADER.length}`);
+    if (cells.length !== columns) {
+      fail(`${cells.length} colonnes au lieu de ${columns}`);
       continue;
     }
     const v = Object.fromEntries(QUIZ_CSV_HEADER.map((k, i) => [k, cells[i]!.trim()])) as Record<(typeof QUIZ_CSV_HEADER)[number], string>;
@@ -190,6 +242,19 @@ export function parseQuizCsv(text: string): { rows: QuizBankRow[]; errors: QuizC
     const good = Number(v.bonne_reponse);
     if (!/^[1-4]$/.test(v.bonne_reponse)) fail("bonne_reponse : 1 à 4");
     else if (good > answers.length) fail(`bonne_reponse ${good} : la réponse ${good} est vide`);
+    let extra: Pick<QuizBankRow, "explanation" | "explanation_en" | "illustration"> = {};
+    if (extended) {
+      const [explanation, explanationEn, illustration] = QUIZ_CSV_EXTRA.map((_, i) => cells[QUIZ_CSV_HEADER.length + i]!.trim());
+      if (explanation!.length > LIMITS.explanation) fail("explication_fr : 400 caractères au plus");
+      if (explanationEn!.length > LIMITS.explanation) fail("explication_en : 400 caractères au plus");
+      if (explanationEn && !explanation) fail("explication_en sans explication_fr");
+      if (illustration && !isQuizIllustration(illustration)) fail(`illustration : ${QUIZ_ILLUSTRATIONS.join(", ")} ou vide`);
+      extra = {
+        explanation: explanation || null,
+        explanation_en: explanationEn || null,
+        illustration: isQuizIllustration(illustration) ? illustration : null,
+      };
+    }
     seen.add(v.id);
     if (errors.length > before) continue;
     rows.push({
@@ -200,6 +265,7 @@ export function parseQuizCsv(text: string): { rows: QuizBankRow[]; errors: QuizC
       question_en: v.question_en || null,
       answers,
       correct: good - 1,
+      ...extra,
     });
   }
   return { rows, errors };
