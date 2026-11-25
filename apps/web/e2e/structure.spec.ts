@@ -84,7 +84,7 @@ test.describe("M2 — structure de l'établissement", () => {
 
     // QR code : code court, PDF A5 et A4, régénération.
     await page.goto(`${branch}/qr`);
-    const code = page.locator("p.tracking-\\[0\\.25em\\]");
+    const code = page.getByTestId("qr-short-code");
     const before = (await code.textContent())!.trim();
     expect(before).toMatch(/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/);
     await expect(page.getByRole("img", { name: "QR code de Akwa" })).toBeVisible();

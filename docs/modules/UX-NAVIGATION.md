@@ -78,3 +78,10 @@ La marge reste faible : tout ajout aux pages client doit être compensé.
   indicateur, barre visible, tout disparaît à l'arrivée ; barre latérale ; onglet client ; écran TV sans ticket à
   distance sans code, avec code affiché), `e2e/backlog.spec.ts` (code accepté par `confirm_presence`),
   `e2e/pwa-ios-meta.spec.ts`, budgets client.
+
+## Vérifications
+
+ESLint et TypeScript propres ; Vitest 438 tests ; Playwright complet : 230 réussis, puis `structure.spec.ts` corrigé
+(il visait la classe `tracking-[0.25em]` du code de l'agence, devenue un style en ligne : sélecteur `qr-short-code`)
+et revérifié (10 réussis). Le contrôle CodeQL n'a pas pu être lu d'ici (aucun outil d'accès aux alertes) : à vérifier
+sur GitHub après la CI de ce commit.
