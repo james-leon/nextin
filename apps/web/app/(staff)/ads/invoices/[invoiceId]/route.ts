@@ -19,5 +19,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ inv
   if (error || !data) return new Response("Not found", { status: error?.code === "42501" ? 403 : 404 });
   const invoice = data as unknown as InvoiceDocumentData;
   if (!invoice.advertiser_id) return new Response("Not found", { status: 404 });
-  return invoicePdfResponse(invoice);
+  // Lien de paiement dans le PDF : propriétaire ou éditeur de l'annonceur (jamais un caissier ni la console).
+  const { data: member } = await supabase.from("advertiser_members").select("role").eq("user_id", user.id).eq("advertiser_id", invoice.advertiser_id).in("role", ["owner", "editor"]).limit(1).maybeSingle();
+  return invoicePdfResponse(invoice, member ? user.id : null);
 }

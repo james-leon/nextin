@@ -22,5 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ org
   if (error || !data) return new Response("Not found", { status: error?.code === "42501" ? 403 : 404 });
   const invoice = data as unknown as InvoiceDocumentData;
   if (invoice.organization_id !== orgId) return new Response("Not found", { status: 404 });
-  return invoicePdfResponse(invoice);
+  // Lien de paiement dans le PDF : seulement pour un administrateur de l'établissement (celui qui paie l'abonnement).
+  const { data: admin } = await supabase.from("memberships").select("role").eq("user_id", user.id).eq("organization_id", orgId).eq("role", "org_admin").eq("active", true).limit(1).maybeSingle();
+  return invoicePdfResponse(invoice, admin ? user.id : null);
 }

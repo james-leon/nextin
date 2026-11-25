@@ -16,6 +16,7 @@ import {
   QUEUE_BODIES,
   QUEUE_CLIP,
   QUEUE_HEADS,
+  WORDMARK_DARK,
   WORDMARK_LIGHT,
   WORDMARK_NAME,
   WORDMARK_TAGLINE,
@@ -33,8 +34,12 @@ import {
 const shadeX = (x: number) => (x - (214 - ICON_STROKE / 2)) / (578 - 214 + ICON_STROKE);
 const shadeY = (y: number) => (y - (334 - ICON_STROKE / 2)) / (640 - 334 + ICON_STROKE);
 
-/** Logo horizontal « NextIn by Wintek » ; `height` en points PDF. */
-export function PdfLogo({ height }: { height: number }) {
+/**
+ * Logo horizontal « NextIn by Wintek » ; `height` en points PDF. `tone="dark"` : mot-symbole blanc, pour un fond bleu
+ * nuit (bandeau de l'affiche).
+ */
+export function PdfLogo({ height, tone = "light" }: { height: number; tone?: "light" | "dark" }) {
+  const wordmark = tone === "dark" ? WORDMARK_DARK : WORDMARK_LIGHT;
   return (
     <Svg width={(height * LOGO_WIDTH) / LOGO_HEIGHT} height={height} viewBox={`0 0 ${LOGO_WIDTH} ${LOGO_HEIGHT}`}>
       <Defs>
@@ -64,8 +69,8 @@ export function PdfLogo({ height }: { height: number }) {
         ))}
         <Path d={GROUND} fill="#FFFFFF" />
       </G>
-      <Path d={WORDMARK_NAME} fill={WORDMARK_LIGHT.name} />
-      <Path d={WORDMARK_TAGLINE} fill={WORDMARK_LIGHT.tagline} />
+      <Path d={WORDMARK_NAME} fill={wordmark.name} />
+      <Path d={WORDMARK_TAGLINE} fill={wordmark.tagline} />
     </Svg>
   );
 }

@@ -39,24 +39,45 @@ const invoice: InvoiceDocumentData = {
   seller_snapshot: { legal_name: "Wintek SARL", rc: "RC/DLA/2024/B/1234", niu: "M012345678901A", address: "Akwa, Douala", phone: "", email: "", footer: "Merci" },
 };
 
-describe("facture PDF : contenu depuis l'instantané figé", () => {
-  it("lignes, remise, TVA non applicable, cachet « payée »", () => {
-    const c = invoiceContent(invoice, "fr", t, (k) => (k === "orange_money" ? "Orange Money" : k));
+describe("facture PDF (maquette v2 15) : contenu depuis l'instantané figé", () => {
+  it("parties, lignes, remise, TVA à 0 %, montant en lettres, « Payée » avec le canal et la référence", () => {
+    const c = invoiceContent(invoice, "fr", t, (k) => (k === "orange_money" ? "Orange Money" : k), { paymentRef: "nx_ABC" });
     expect(c.number).toBe("FAC-2026-000042");
-    expect(c.seller.lines).toEqual(["Wintek SARL", "Akwa, Douala", "rc:RC/DLA/2024/B/1234", "niu:M012345678901A"]);
-    expect(c.buyer.lines[0]).toBe("DOUALA CLINIC");
-    expect(c.lines.map((l) => l.amount)).toEqual([formatXafPlain(450000, "fr"), "", formatXafPlain(-45000, "fr")]);
-    expect(c.totals.map((r) => r.label)).toEqual(["subtotal", "discount", "noTax", "total"]);
+    expect(c.brandLine).toBe("byWintek:Wintek SARL");
+    expect(c.state).toEqual({ text: "statePaid", tone: "paid" });
+    expect(c.seller.name).toBe("Wintek SARL");
+    expect(c.seller.lines).toEqual(["Akwa, Douala", "rc:RC/DLA/2024/B/1234", "niu:M012345678901A"]);
+    expect(c.buyer).toMatchObject({ name: "DOUALA CLINIC", lines: ["Douala", "+237677000000"] });
+    expect(c.lines.map((l) => l.amount)).toEqual(["450 000", "", "−45 000"]);
+    expect(c.totals.map((r) => r.label)).toEqual(["subtotal", "discount", "tax:0", "total"]);
     expect(c.totals.at(-1)).toMatchObject({ value: formatXafPlain(405000, "fr"), strong: true });
-    expect(c.stamp).toEqual({ text: expect.stringContaining("Orange Money"), tone: "paid" });
+    expect(c.words).toBe("words:quatre cent cinq mille francs CFA");
+    expect(c.pay).toBeNull();
+    expect(c.settled).toContain("Orange Money");
+    expect(c.settled).toContain("paidRef:nx_ABC");
+  });
+  it("NIU masqué quand il n'est pas renseigné", () => {
+    const c = invoiceContent({ ...invoice, seller_snapshot: { ...invoice.seller_snapshot, niu: "" } }, "fr", t, (k) => k);
+    expect(c.seller.lines.some((l) => l.startsWith("niu"))).toBe(false);
   });
   it("montants sans espace fine (absente de la police embarquée)", () => {
-    expect(formatXafPlain(1900000, "fr")).not.toMatch(/[  ]/);
+    expect(formatXafPlain(1900000, "fr")).not.toMatch(/[\u00a0\u202f]/);
+  });
+  it("facture ouverte : encadré de paiement avec lien seulement s'il est fourni", () => {
+    const open = { ...invoice, status: "open" as const, paid_at: null, kind: "campaign" };
+    const withLink = invoiceContent(open, "fr", t, (k) => k, { payUrl: "https://nextin.example/pay/AbC" });
+    expect(withLink.state.tone).toBe("open");
+    expect(withLink.pay).toMatchObject({ url: "https://nextin.example/pay/AbC", display: "nextin.example/pay/…", body: "payBody.campaign" });
+    const without = invoiceContent(open, "fr", t, (k) => k);
+    expect(without.pay).toMatchObject({ url: null, scan: null });
+    expect(without.pay?.body).toContain("payNoLink");
   });
   it("TVA appliquée et facture annulée", () => {
     const c = invoiceContent({ ...invoice, status: "void", vat_rate: 19.25, tax_xaf: 77963 }, "en", t, (k) => k);
     expect(c.totals[2]).toEqual({ label: "tax:19.25", value: formatXafPlain(77963, "en") });
-    expect(c.stamp).toEqual({ text: "voided", tone: "void" });
+    expect(c.state).toEqual({ text: "stateVoid", tone: "void" });
+    expect(c.settled).toBe("voidLine");
+    expect(c.words).toBe("words:four hundred and five thousand CFA francs");
     expect(c.lines[0]!.label).toBe("Pro");
   });
 });
