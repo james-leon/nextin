@@ -68,7 +68,7 @@ export function AdPreferencesForm({
                     role="checkbox"
                     aria-checked={on}
                     onClick={() => toggle(s.code)}
-                    className={cn("pressable min-h-11 rounded-full px-4 text-subheadline", on ? "bg-primary font-semibold text-on-primary" : "bg-fill-tertiary text-label")}
+                    className={cn("pressable min-h-11 rounded-full px-4 text-subheadline", on ? "bg-primary font-semibold text-on-accent" : "bg-fill-tertiary text-label")}
                   >
                     {sectorName(s)}
                   </button>

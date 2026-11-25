@@ -223,7 +223,7 @@ function Stepper({ current, progress, href }: { current: CampaignStep; progress:
                   aria-hidden
                   className={cn(
                     "flex size-6 shrink-0 items-center justify-center rounded-full font-rounded text-caption font-bold",
-                    on && "bg-primary text-on-primary",
+                    on && "bg-primary text-on-accent",
                     done && "bg-green text-white",
                     !on && !done && "text-label-secondary shadow-[inset_0_0_0_1.5px_var(--label-tertiary)]",
                   )}
@@ -337,7 +337,7 @@ function PackageStep({
                   {p.description ? <span className="text-footnote text-label-secondary">{locale === "en" ? (p.description_en ?? p.description) : p.description}</span> : null}
                   <span className="flex flex-wrap gap-1.5 pt-0.5">
                     {packageBadges(p).map((b) => (
-                      <span key={b} className="rounded-full bg-fill-tertiary px-2 py-0.5 text-caption font-semibold text-label-secondary">
+                      <span key={b} className="rounded-full bg-fill-tertiary px-2 py-0.5 text-caption font-semibold text-label">
                         {t(`badges.${b}` as "badges.tv")}
                       </span>
                     ))}
@@ -374,7 +374,7 @@ function Pills({ label, options, selected, onChange, more }: { label: string; op
             role="checkbox"
             aria-checked={on}
             onClick={() => onChange(on ? selected.filter((x) => x !== o.value) : [...selected, o.value])}
-            className={cn("pressable min-h-11 rounded-full px-4 text-subheadline", on ? "bg-primary font-semibold text-on-primary" : "bg-fill-tertiary text-label")}
+            className={cn("pressable min-h-11 rounded-full px-4 text-subheadline", on ? "bg-primary font-semibold text-on-accent" : "bg-fill-tertiary text-label")}
           >
             {o.label}
           </button>
@@ -661,6 +661,8 @@ function SubmitStep({ campaignId, owner, visa, summary }: { campaignId: string; 
   const [state, action, pending] = useActionState(submitCampaignStep.bind(null, campaignId), null);
   const { field, top } = useFormErrors(state);
   const [path, setPath] = useState("");
+  // Champ contrôlé : React vide un formulaire après son action, le numéro saisi doit rester affiché après un refus.
+  const [number, setNumber] = useState(visa.number ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const hasDocument = visa.hasDocument || !!path;
@@ -687,7 +689,7 @@ function SubmitStep({ campaignId, owner, visa, summary }: { campaignId: string; 
             {t("visaTitle")}
           </h2>
           <FormGroup>
-            <TextField grouped name="visaNumber" label={t("visaNumber")} defaultValue={visa.number ?? ""} maxLength={60} error={field("visaNumber")} />
+            <TextField grouped name="visaNumber" label={t("visaNumber")} value={number} onChange={(e) => setNumber(e.target.value)} maxLength={60} error={field("visaNumber")} />
             {hasDocument ? (
               <div className="flex min-h-11 items-center gap-3 px-4" data-testid="visa-document">
                 <CheckCircle2 aria-hidden className="size-5 shrink-0 text-green-text" />

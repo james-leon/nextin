@@ -26,7 +26,7 @@ export async function PackageList({ packages }: { packages: PackageRow[] }) {
               {p.description ? <span className="text-footnote text-label-secondary">{locale === "en" ? (p.description_en ?? p.description) : p.description}</span> : null}
               <span className="flex flex-wrap gap-1.5 pt-0.5">
                 {packageBadges(p).map((b) => (
-                  <span key={b} className="rounded-full bg-fill-tertiary px-2 py-0.5 text-caption font-semibold text-label-secondary">
+                  <span key={b} className="rounded-full bg-fill-tertiary px-2 py-0.5 text-caption font-semibold text-label">
                     {t(`badges.${b}` as "badges.tv")}
                   </span>
                 ))}
