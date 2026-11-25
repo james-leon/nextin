@@ -24,9 +24,15 @@ export function BranchesSection({
   max,
   options,
   list,
+  returnTo,
+  asRow,
 }: {
   campaignId: string;
   max: number | null;
+  /** Parcours en étapes : étape où revenir après l'enregistrement. */
+  returnTo?: string;
+  /** Étape « Ciblage » : une ligne « Agences  3 sur 15 › » qui ouvre la feuille, dans une liste groupée. */
+  asRow?: { title: string; detail: string };
   /** Campagne modifiable et formule plafonnée : agences proposées. */
   options: BranchOption[] | null;
   /** Campagne validée : agences retenues. */
@@ -43,6 +49,65 @@ export function BranchesSection({
     title: b.organization,
     subtitle: [b.name, b.city].filter(Boolean).join(" · "),
   });
+
+  const sheet =
+    options && max != null ? (
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        title={t("branchesChoose")}
+        description={t("branchesHint", { max })}
+        closeLabel={tc("close")}
+        footer={
+          <Button type="submit" form="branches-form" block loading={pending} loadingLabel={t("saving")}>
+            {t("save")} · {t("branchesLimit", { count: chosen.length, max })}
+          </Button>
+        }
+      >
+        <form id="branches-form" action={action} noValidate className="flex flex-col gap-4 pt-2">
+          <FormError message={top} />
+          {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
+          {options.length ? null : <p className="px-4 text-footnote text-label-secondary">{t("branchesEmpty")}</p>}
+          <ListSection checkboxGroupLabel={t("branches")}>
+            {options.map((b) => {
+              const checked = chosen.includes(b.id);
+              const full = !checked && chosen.length >= max;
+              return (
+                <ListRow
+                  key={b.id}
+                  role="checkbox"
+                  selected={checked}
+                  disabled={full}
+                  onClick={() => !full && setChosen((cur) => (checked ? cur.filter((x) => x !== b.id) : [...cur, b.id]))}
+                  icon={<ListIcon color="var(--brand-tile)"><OrgTypeIcon type={b.type} /></ListIcon>}
+                  title={b.organization}
+                  subtitle={`${[b.name, b.city].filter(Boolean).join(" · ")} · ${tt(b.type as "clinic")}`}
+                  accessory="check"
+                />
+              );
+            })}
+          </ListSection>
+          {chosen.map((id) => (
+            <input key={id} type="hidden" name="branchIds" value={id} />
+          ))}
+        </form>
+      </Sheet>
+    ) : null;
+
+  if (asRow) {
+    return (
+      <>
+        <ListRow
+          onClick={sheet ? () => setOpen(true) : undefined}
+          icon={<ListIcon color="var(--brand-tile)"><MapPin /></ListIcon>}
+          title={asRow.title}
+          detail={asRow.detail}
+          accessory={sheet ? "chevron" : undefined}
+        />
+        {sheet}
+      </>
+    );
+  }
 
   if (options && max != null) {
     const saved = options.filter((o) => o.chosen);
@@ -63,44 +128,7 @@ export function BranchesSection({
             <ListRow key={b.id} icon={<ListIcon color="var(--brand-tile)"><OrgTypeIcon type={b.type} /></ListIcon>} {...label(b)} />
           ))}
         </ListSection>
-        <Sheet
-          open={open}
-          onOpenChange={setOpen}
-          title={t("branchesChoose")}
-          description={t("branchesHint", { max })}
-          closeLabel={tc("close")}
-          footer={
-            <Button type="submit" form="branches-form" block loading={pending} loadingLabel={t("saving")}>
-              {t("save")} · {t("branchesLimit", { count: chosen.length, max })}
-            </Button>
-          }
-        >
-          <form id="branches-form" action={action} noValidate className="flex flex-col gap-4 pt-2">
-            <FormError message={top} />
-            <ListSection checkboxGroupLabel={t("branches")}>
-              {options.map((b) => {
-                const checked = chosen.includes(b.id);
-                const full = !checked && chosen.length >= max;
-                return (
-                  <ListRow
-                    key={b.id}
-                    role="checkbox"
-                    selected={checked}
-                    disabled={full}
-                    onClick={() => !full && setChosen((cur) => (checked ? cur.filter((x) => x !== b.id) : [...cur, b.id]))}
-                    icon={<ListIcon color="var(--brand-tile)"><OrgTypeIcon type={b.type} /></ListIcon>}
-                    title={b.organization}
-                    subtitle={`${[b.name, b.city].filter(Boolean).join(" · ")} · ${tt(b.type as "clinic")}`}
-                    accessory="check"
-                  />
-                );
-              })}
-            </ListSection>
-            {chosen.map((id) => (
-              <input key={id} type="hidden" name="branchIds" value={id} />
-            ))}
-          </form>
-        </Sheet>
+        {sheet}
       </section>
     );
   }

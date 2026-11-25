@@ -8,37 +8,42 @@ import { FormError } from "@/components/auth/form-error";
 import { useFormErrors } from "@/components/admin/use-form-errors";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
-import { SelectField } from "@/components/ui/select-field";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import type { SectorRow } from "@/lib/ads/types";
+import { SelectRow } from "./select-row";
 
-/** Ouverture d'un espace annonceur : entreprise, secteur, téléphone, ville. */
+/**
+ * Ouverture d'un espace annonceur (maquette v2 24) : pictogramme orange, accroche, quatre champs groupés (nom,
+ * secteur, téléphone, ville) et une seule action. Le secteur décide si un visa santé sera exigé.
+ */
 export function AdvertiserSignup({ sectors }: { sectors: SectorRow[] }) {
   const t = useTranslations("ads");
   const locale = useLocale();
   const [state, action, pending] = useActionState(createAdvertiser, null);
   const { field, top } = useFormErrors(state);
   return (
-    <form action={action} noValidate className="flex flex-col gap-6">
-      <section className="flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-8 text-center shadow-card">
-        <span className="squircle flex size-14 items-center justify-center rounded-[16px] bg-accent-tint text-accent-on-tint">
-          <Megaphone aria-hidden className="size-7 stroke-[1.5]" />
-        </span>
-        <h2 className="text-title2 font-bold">{t("onboardingTitle")}</h2>
+    <main className="mx-auto flex w-full max-w-[40rem] flex-col gap-6 px-4 pt-8 pb-36 md:px-8 md:pb-10">
+      <span aria-hidden className="squircle flex size-13 items-center justify-center rounded-[14px] bg-orange text-white [&_svg]:size-7 [&_svg]:stroke-[1.75]">
+        <Megaphone />
+      </span>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-title1 font-bold text-balance">{t("onboardingTitle")}</h1>
         <p className="text-body text-label-secondary">{t("onboardingBody")}</p>
-      </section>
-      <FormError message={top} />
-      <TextField name="name" label={t("advertiserName")} autoComplete="organization" required maxLength={120} error={field("name")} />
-      <SelectField name="sector" label={t("sector")} options={sectors.map((s) => ({ value: s.code, label: locale === "en" ? s.name_en : s.name }))} />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <TextField name="phone" type="tel" inputMode="tel" autoComplete="tel-national" label={t("phone")} error={field("phone")} />
-        <TextField name="city" label={t("city")} autoComplete="address-level2" maxLength={80} />
       </div>
-      <BottomBar>
-        <Button type="submit" block loading={pending} loadingLabel={t("creating")}>
-          {t("createAccount")}
-        </Button>
-      </BottomBar>
-    </form>
+      <form action={action} noValidate className="flex flex-col gap-6">
+        <FormError message={top} />
+        <FormGroup>
+          <TextField grouped name="name" label={t("advertiserName")} autoComplete="organization" required maxLength={120} error={field("name")} />
+          <SelectRow name="sector" label={t("sector")} options={sectors.map((s) => ({ value: s.code, label: locale === "en" ? s.name_en : s.name }))} />
+          <TextField grouped name="phone" type="tel" inputMode="tel" autoComplete="tel-national" label={t("phone")} error={field("phone")} />
+          <TextField grouped name="city" label={t("city")} autoComplete="address-level2" maxLength={80} />
+        </FormGroup>
+        <BottomBar dock={false}>
+          <Button type="submit" block loading={pending} loadingLabel={t("creating")}>
+            {t("createAccount")}
+          </Button>
+        </BottomBar>
+      </form>
+    </main>
   );
 }
