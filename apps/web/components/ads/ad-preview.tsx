@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
+import { safeMediaSrc } from "@/lib/ads/media-src";
 import { cn } from "@/lib/cn";
 
 /**
  * Aperçu d'une annonce telle qu'elle passe sur l'écran TV (maquette v2 24) : format 16:9, étiquette « Publicité » (ou
  * nom de l'établissement pour une annonce Maison) en haut à gauche, titre et offre en bas sur un bandeau sombre uni
- * (lisible sur toute image, sans dégradé). Sans visuel : fond teinté et consigne.
+ * (lisible sur toute image, sans dégradé). Sans visuel : fond teinté et consigne. La source passe par `safeMediaSrc` :
+ * seulement un fichier local (`blob:`) ou un fichier du bucket `ad-creatives` ; sinon, l'état vide.
  */
 export function AdPreview({
   src,
@@ -24,17 +26,18 @@ export function AdPreview({
   empty?: ReactNode;
   className?: string;
 }) {
+  const media = safeMediaSrc(src, process.env.NEXT_PUBLIC_SUPABASE_URL);
   return (
     <figure
       data-testid="ad-preview"
       className={cn("squircle relative isolate aspect-video w-full overflow-hidden rounded-[var(--radius-lg)] bg-accent-tint text-white", className)}
     >
-      {src ? (
+      {media ? (
         video ? (
-          <video src={src} muted playsInline preload="metadata" aria-hidden className="absolute inset-0 -z-10 size-full object-cover" />
+          <video src={media} muted playsInline preload="metadata" aria-hidden className="absolute inset-0 -z-10 size-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- fichier du stockage public ou aperçu local (objet Blob)
-          <img src={src} alt="" className="absolute inset-0 -z-10 size-full object-cover" />
+          <img src={media} alt="" className="absolute inset-0 -z-10 size-full object-cover" />
         )
       ) : (
         <span className="absolute inset-0 -z-10 flex items-center justify-center px-6 text-center text-subheadline text-accent-on-tint">{empty}</span>

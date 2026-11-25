@@ -573,3 +573,53 @@ select:-webkit-autofill {
 input:autofill {
   box-shadow: 0 0 0 1000px var(--bg-grouped-secondary) inset;
 }
+
+/*
+ * Navigation en cours (`lib/ui/nav-feedback.ts`) : réaction visible en moins de 100 ms à chaque lien touché, barre de
+ * progression au-delà de 150 ms. Jamais de saut de mise en page ; immobile si les animations sont réduites.
+ */
+.nav-progress {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 2px;
+  pointer-events: none;
+  background: var(--accent-fill);
+  transform-origin: left;
+  transform: scaleX(0);
+  opacity: 0;
+}
+.nav-progress[data-on] {
+  opacity: 1;
+  animation: nx-nav 8s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+}
+@keyframes nx-nav {
+  from { transform: scaleX(0.1); }
+  to { transform: scaleX(0.92); }
+}
+a[aria-busy="true"] { cursor: progress; }
+a[aria-busy="true"]:not([data-row-link]) { opacity: 0.6; }
+a[data-row-link][aria-busy="true"] { background-color: var(--fill-tertiary); }
+[data-nav-indicator] { position: relative; display: inline-flex; flex-shrink: 0; }
+[data-nav-indicator]:empty { display: none; }
+a[aria-busy="true"] [data-nav-indicator]:empty { display: inline-flex; width: 1.125rem; height: 1.125rem; }
+a[aria-busy="true"] [data-nav-indicator] > svg { visibility: hidden; }
+a[aria-busy="true"] [data-nav-indicator]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  border: 2px solid var(--label-secondary);
+  border-top-color: transparent;
+  animation: nx-spin 0.7s linear infinite;
+}
+@keyframes nx-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress[data-on] { animation: none; transform: scaleX(1); }
+  a[aria-busy="true"] [data-nav-indicator]::after { animation: none; }
+}

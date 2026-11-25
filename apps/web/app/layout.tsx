@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { getLocale, getTranslations } from "next-intl/server";
 import { themeInitScript } from "@/components/theme/theme-init";
+import { navFeedbackScript } from "@/lib/ui/nav-feedback";
 import { appleStartupFamily, startupImages, type StartupFamily } from "@/lib/pwa/startup-images";
 import { splashCss, splashHtml } from "@/lib/pwa/splash";
 import { clientErrorScript } from "@/lib/diagnostics/client-log";
@@ -74,12 +75,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Erreurs du navigateur vers /api/client-log (diagnostic de l'écran blanc), avant tout autre script. */}
         <script dangerouslySetInnerHTML={{ __html: clientErrorScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* Réaction immédiate à chaque navigation : lien marqué « en cours », barre après 150 ms (`lib/ui/nav-feedback.ts`). */}
+        <script dangerouslySetInnerHTML={{ __html: navFeedbackScript }} />
         <AppleWebAppTags family={family} locale={locale} />
       </head>
       <body>
         {/* Filet de la première peinture (sans JS ni police) : écran de démarrage tant que la feuille de style de
             l'application n'est pas appliquée (`lib/pwa/splash.ts`, identique aux images iOS). */}
         <div id="nx-s" aria-hidden dangerouslySetInnerHTML={{ __html: splashHtml(t("appName"), t("tagline")) }} />
+        <div id="nx-nav" className="nav-progress" aria-hidden />
         {children}
         <ServiceWorkerRegister enabled={runtimeEnv("NEXT_PUBLIC_SW_ENABLED") !== "false"} />
       </body>

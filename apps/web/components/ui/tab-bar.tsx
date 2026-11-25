@@ -82,7 +82,7 @@ export function TabBar({
             </>
           );
           const cls = cn(
-            "flex h-full w-full flex-col items-center justify-center gap-0.5 transition-colors",
+            "pressable flex h-full w-full flex-col items-center justify-center gap-0.5 transition-colors",
             selected ? "text-accent-text" : "text-label-secondary",
             sidebar && "lg:min-h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-[10px] lg:px-3",
             // Ligne choisie façon barre latérale du Mac : fond d'accent plein, texte blanc (contraste AA sur tout fond).
