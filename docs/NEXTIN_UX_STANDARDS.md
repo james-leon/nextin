@@ -115,3 +115,5 @@ Chaque écran qui affiche des données prévoit ces 5 états :
 4. Testé à 360 px, 768 px et 1280 px de large.
 5. Aucun texte en dur hors des fichiers de traduction ; aucun texte anglais dans l'interface française.
 6. Budget de 200 Ko respecté pour les pages client.
+7. Toute navigation donne une réaction visible en moins de 100 ms (ligne pressée + indicateur sur le lien, barre de
+   progression au-delà de 150 ms). Jamais d'écran qui semble figé.

@@ -19,7 +19,7 @@ export default async function RedeemPage({ searchParams }: { searchParams: Promi
   return (
     <AdminPage narrow title={t("redeemTitle")} eyebrow={advertiser?.name ?? t("title")}>
       <AdsNav variant="inline" role={role} />
-      {role === "cashier" ? <p className="px-4 text-footnote text-label-secondary">{t("cashierNotice")}</p> : null}
+      <p className="px-4 text-subheadline text-label-secondary">{role === "cashier" ? t("cashierNotice") : t("redeemBody")}</p>
       <RedeemForm key={initial} initialCode={initial} />
     </AdminPage>
   );

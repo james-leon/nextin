@@ -35,24 +35,28 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.getByRole("button", { name: "Créer mon espace annonceur" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Campagnes" })).toBeVisible();
 
-    // Nouvelle campagne Argent : TV, application et jeux.
-    await page.getByRole("link", { name: "Nouvelle campagne" }).click();
+    // Nouvelle campagne Argent (TV, application et jeux) : parcours en cinq étapes (maquette v2 24).
+    await page.getByRole("link", { name: "Nouvelle campagne" }).first().click();
     await page.getByRole("radio", { name: /Argent/ }).click();
     await page.getByLabel("Nom de la campagne").fill("Rentrée gourmande");
-    for (const s of ["Application", "Jeux"]) await page.getByRole("checkbox", { name: s }).click();
     await expectAccessible(page);
     await expectTouchTargets(page);
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/ads\/campaigns\/[0-9a-f-]{36}\?saved=1$/);
-    await expect(page.getByText("Campagne enregistrée.")).toBeVisible();
+    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.waitForURL(/\/ads\/campaigns\/[0-9a-f-]{36}\/edit\?step=2$/);
+    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.waitForURL(/step=3$/);
 
     // Visuel déposé dans le stockage depuis le navigateur.
     await page.getByRole("button", { name: "Ajouter un visuel" }).click();
     await page.getByLabel("Fichier").setInputFiles({ name: "visuel.png", mimeType: "image/png", buffer: bannerPng("#1A6BB5", "#0D2C54") });
-    await expect(page.getByText(/\.png$/)).toBeVisible();
     await page.getByLabel("Titre").fill("Pain tout chaud");
     await page.getByRole("button", { name: "Enregistrer" }).last().click();
-    await expect(page.getByText("Pain tout chaud")).toBeVisible();
+    await expect(page.getByTestId("ad-preview").getByText("Pain tout chaud")).toBeVisible();
+    await page.getByRole("link", { name: "Continuer" }).click();
+    await page.waitForURL(/step=4$/);
+    // Quiz facultatif : rien saisi, « Continuer » passe à l'envoi.
+    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.waitForURL(/step=5$/);
 
     await page.getByRole("button", { name: "Soumettre à la validation" }).click();
     await expect(page.getByText("Campagne envoyée : l'équipe Wintek la valide en général sous 24 h.")).toBeVisible();
@@ -77,7 +81,8 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
 
     // Paiement avec le même agrégateur que les abonnements.
     await page.goto(campaignUrl);
-    await expect(page.getByText(/Campagne validée\. Payez pour lancer la diffusion/)).toBeVisible();
+    await expect(page.getByTestId("campaign-notice")).toContainText("Campagne validée");
+    await expect(page.getByTestId("campaign-notice")).toContainText("Payez pour lancer la diffusion");
     await page.getByRole("button", { name: /^Payer 40\s000\sFCFA$/ }).click();
     await page.waitForURL(/\/pay\/[A-Za-z0-9]{32}$/);
     await expect(page.getByText(/Campagne « Rentrée gourmande » · Boulangerie du Wouri/)).toBeVisible();
@@ -87,6 +92,7 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
 
     await page.goto(campaignUrl);
     await expect(page.getByText("Diffusée").first()).toBeVisible();
+    await page.getByRole("button", { name: /^Factures/ }).click();
     const link = page.getByRole("link", { name: /FAC-\d{4}-\d{6}/ });
     const pdf = await page.request.get((await link.getAttribute("href"))!);
     expect(pdf.status()).toBe(200);
@@ -111,14 +117,18 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.goto("/login");
     await signInViaUi(page, email);
     await page.waitForURL(/\/app$/);
-    await page.goto(`/ads/campaigns/${campaignId}`);
+    // Étape « Envoi » : sans justificatif, l'envoi est refusé avec la raison ; avec, la campagne part en validation.
+    await page.goto(`/ads/campaigns/${campaignId}/edit?step=5`);
     await expect(page.getByRole("heading", { name: "Visa du ministère de la Santé" })).toBeVisible();
     await page.getByLabel("Numéro de visa").fill("MINSANTE-E2E-1");
-    await page.getByLabel("Justificatif (PDF ou photo)").setInputFiles({ name: "visa.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF\n") });
-    await page.waitForTimeout(800);
-    await page.locator("form").filter({ has: page.getByLabel("Numéro de visa") }).getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByRole("button", { name: "Soumettre à la validation" }).click();
+    await expect(page.getByText("Le visa du ministère de la Santé et son justificatif sont obligatoires pour ce secteur.")).toBeVisible();
+    await page.getByTestId("visa-file").setInputFiles({ name: "visa.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF\n") });
     await expect(page.getByText("Justificatif ajouté")).toBeVisible();
     await expectAccessible(page);
+    await page.getByRole("button", { name: "Soumettre à la validation" }).click();
+    await page.waitForURL(new RegExp(`/ads/campaigns/${campaignId}\\?saved=1$`));
+    await expect(page.getByText("En validation").first()).toBeVisible();
   });
 
   test("ticket : pub sponsorisée, quiz avec interstitielle à passer, bon à QR code validé en caisse", async ({ page, browser }, info) => {
@@ -361,23 +371,23 @@ test.describe("M10b — publicité, jeux et bons de réduction", () => {
     await page.getByRole("checkbox", { name: "Paris et jeux d'argent" }).click();
     await expectAccessible(page);
     await expectTouchTargets(page);
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await expect(page.getByText("Réglages enregistrés.")).toBeVisible();
+    // Enregistrement automatique (comme les autres réglages).
+    await expect(page.getByText("Enregistré automatiquement")).toBeVisible();
+    await page.reload();
     await expect(page.getByRole("switch", { name: "Quiz sponsorisé" })).toHaveAttribute("aria-checked", "false");
     await expect(page.getByRole("checkbox", { name: "Paris et jeux d'argent" })).toHaveAttribute("aria-checked", "true");
 
     // Annonce Maison : gratuite, publiée sans validation.
+    await page.getByRole("link", { name: /^Annonces Maison/ }).click();
     await page.getByRole("link", { name: "Nouvelle annonce Maison" }).click();
-    await page.getByLabel("Nom de la campagne").fill("Vaccination le samedi");
-    await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/ads\/[0-9a-f-]{36}\?saved=1$/);
-    await page.getByRole("button", { name: "Ajouter un visuel" }).click();
-    await page.getByLabel("Fichier").setInputFiles({ name: "maison.png", mimeType: "image/png", buffer: bannerPng("#0D2C54", "#1A6BB5") });
-    await expect(page.getByText(/\.png$/)).toBeVisible();
     await page.getByLabel("Titre").fill("Vaccination sans rendez-vous");
-    await page.getByRole("button", { name: "Enregistrer" }).last().click();
-    await expect(page.getByText("Vaccination sans rendez-vous")).toBeVisible();
+    await page.getByLabel("Offre").fill("Tous les mercredis");
+    await page.getByTestId("house-visual").setInputFiles({ name: "maison.png", mimeType: "image/png", buffer: bannerPng("#0D2C54", "#1A6BB5") });
+    await expect(page.getByText("Changer le visuel")).toBeVisible();
+    await expectAccessible(page);
     await page.getByRole("button", { name: "Publier l'annonce" }).click();
+    await page.waitForURL(/\/ads\/house\?saved=1$/);
+    await expect(page.getByText("Vaccination sans rendez-vous")).toBeVisible();
     await expect(page.getByText("Diffusée").first()).toBeVisible();
     await expectAccessible(page);
 

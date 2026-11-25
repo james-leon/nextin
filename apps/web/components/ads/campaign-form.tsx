@@ -125,7 +125,7 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
   );
 
   return (
-    <form action={formAction} noValidate className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <form action={formAction} noValidate className="grid grid-cols-1 gap-7 lg:grid-cols-[var(--lg-cols)] lg:items-start xl:grid-cols-[var(--xl-cols)]" style={{ "--lg-cols": "minmax(0,1fr) 20rem", "--xl-cols": "minmax(0,1fr) 22rem" } as React.CSSProperties}>
       {/* Ordinateur : récapitulatif du prix collé à droite pendant le défilement. */}
       <div className="hidden lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:block">{summary}</div>
       <div className="flex min-w-0 flex-col gap-7 lg:col-start-1 lg:row-start-1">
@@ -147,10 +147,10 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
                     role="radio"
                     aria-checked={selected}
                     onClick={() => setPackageCode(p.code)}
+                    style={selected ? { boxShadow: "0 0 0 2px var(--accent-fill)" } : undefined}
                     className={cn(
                       "pressable squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 text-left shadow-card",
                       "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-tint)]",
-                      selected && "shadow-[0_0_0_2px_var(--accent-fill)]",
                     )}
                   >
                     <span className="flex items-center justify-between gap-2">

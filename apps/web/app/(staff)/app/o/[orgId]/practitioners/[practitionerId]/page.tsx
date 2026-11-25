@@ -54,7 +54,7 @@ export default async function EditPractitionerPage({ params }: { params: Promise
       back={{ href: `/app/o/${orgId}/practitioners`, label: t("title") }}
     >
       <ReadOnlyNotice show={!canManage} />
-      <div className="grid grid-cols-1 gap-6 @3xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] @3xl:items-start">
+      <div className="grid grid-cols-1 gap-6 @3xl:grid-cols-[var(--cq-cols)] @3xl:items-start" style={{ "--cq-cols": "minmax(0,1.4fr) minmax(0,1fr)" } as React.CSSProperties}>
         {/* Maquette v2 18 : la semaine de consultation en colonnes, les plages se modifient dans « Horaires et congés ». */}
         <section aria-labelledby="week-title" className="flex min-w-0 flex-col gap-1.5">
           <h2 id="week-title" className="px-4 text-footnote text-label-secondary uppercase">

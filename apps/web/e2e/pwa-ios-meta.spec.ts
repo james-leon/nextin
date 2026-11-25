@@ -31,7 +31,7 @@ test.describe("PWA iOS : balises de web app", () => {
         (link) =>
           link.includes('href="/startup/startup-1284x2778-light.png"') &&
           link.includes(
-            'media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)"',
+            'media="(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait) and (prefers-color-scheme:light)"',
           ),
       ),
     ).toBe(true);

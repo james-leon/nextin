@@ -113,14 +113,21 @@ export function ListRow({
         </span>
         {detail !== undefined ? <span className="shrink-0 text-body text-label-secondary">{detail}</span> : null}
         {accessory === "chevron" ? (
-          <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
+          // Indicateur de navigation : le chevron laisse place à un indicateur tant que la page demandée arrive.
+          <span data-nav-indicator className="relative inline-flex shrink-0">
+            <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
+          </span>
         ) : accessory === "check" ? (
           <Check
             aria-hidden
             className={cn("size-5 shrink-0 stroke-[2.5] text-accent-text", !selected && "invisible")}
           />
         ) : (
-          accessory
+          <>
+            {accessory}
+            {/* Ligne-lien sans chevron (pastille d'état) : l'indicateur n'apparaît que pendant la navigation. */}
+            {href && !download ? <span data-nav-indicator aria-hidden className="relative hidden shrink-0" /> : null}
+          </>
         )}
       </span>
     </>
@@ -134,7 +141,7 @@ export function ListRow({
   if (href && download) {
     return (
       <li className={liClass}>
-        <a href={href} download={download === true ? true : undefined} className={cn(base, interactive)}>
+        <a href={href} download={download === true ? true : undefined} data-no-nav-feedback className={cn(base, interactive)}>
           {content}
         </a>
         {side}
@@ -144,7 +151,7 @@ export function ListRow({
   if (href) {
     return (
       <li className={liClass}>
-        <Link href={href} prefetch={prefetch} aria-current={current ? "page" : undefined} className={cn(base, current ? "bg-accent-tint" : interactive)}>
+        <Link href={href} prefetch={prefetch} aria-current={current ? "page" : undefined} data-row-link className={cn(base, current ? "bg-accent-tint" : interactive)}>
           {content}
         </Link>
         {side}

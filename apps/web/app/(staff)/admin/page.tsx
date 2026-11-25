@@ -70,7 +70,7 @@ export default async function PlatformHome({ searchParams }: { searchParams: Pro
         <StatCard label={t("trials")} value={<span className="tabular">{t("trialsValue", { converted: revenue.trials_converted, started: revenue.trials_started })}</span>} />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[var(--lg-cols)]" style={{ "--lg-cols": "minmax(0,2fr) minmax(0,1fr)" } as React.CSSProperties}>
         <section aria-labelledby="collected-title" className="squircle flex min-w-0 flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 shadow-card">
           <div className="flex items-baseline justify-between gap-3">
             <h2 id="collected-title" className="text-headline">

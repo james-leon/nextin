@@ -16,15 +16,23 @@ export async function GET(request: NextRequest) {
   });
   if (error) return json({ ok: false, error: "generic" }, 500);
   if (!data) return json({ ok: false, error: "not_allowed" }, 401);
-  const session = data as { entry: { token: string; short_code: string } | null; show_ads?: boolean };
+  const session = data as { entry: { token: string; short_code: string } | null; show_ads?: boolean; branch?: { id: string } };
   // Publicité (M10b) : visuels pondérés de l'agence, seulement si l'écran l'affiche.
   const admin = getSupabaseAdminClient();
   const ads = session.show_ads ? ((await admin.rpc("tv_ad_rotation", { p_device_token: token })).data ?? []) : [];
-  // QR code de l'écran : adresse d'entrée + code de présence de la minute (confirme la présence d'un ticket à distance).
-  const presence = session.entry ? ((await admin.rpc("tv_presence_code", { p_device_token: token })).data as { code: string } | null) : null;
+  // QR code de l'écran : adresse d'entrée, plus le code de présence de la minute seulement si l'agence accepte les
+  // tickets à distance (il sert uniquement à confirmer la présence d'un ticket à distance) ; sinon, ni code ni « ?p= ».
+  const remote = session.entry && session.branch?.id ? await remoteTicketsEnabled(session.branch.id) : false;
+  const presence = remote ? ((await admin.rpc("tv_presence_code", { p_device_token: token })).data as { code: string } | null) : null;
   const entryUrl = session.entry ? qrEntryUrl(session.entry.token) : null;
   return json({
     ok: true,
     session: { ...session, ads, entry_url: entryUrl, presence_url: entryUrl && presence?.code ? `${entryUrl}?p=${presence.code}` : entryUrl },
   });
+}
+
+/** Tickets à distance activés pour l'agence de l'écran (lecture en service role, après validation du jeton). */
+async function remoteTicketsEnabled(branchId: string): Promise<boolean> {
+  const { data } = await getSupabaseAdminClient().from("branch_settings").select("remote_tickets_enabled").eq("branch_id", branchId).maybeSingle();
+  return data?.remote_tickets_enabled === true;
 }

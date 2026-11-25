@@ -30,7 +30,7 @@ export async function QuotaBanner({ quota, alertPercent, orgId, canManage }: { q
     <div
       role="status"
       data-quota={`${worst}-${state}`}
-      className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 bg-grouped-secondary px-4 py-2 text-subheadline text-label shadow-[inset_0_-0.5px_0_var(--separator)] lg:px-8"
+      className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 bg-grouped-secondary px-4 py-2 text-subheadline text-label hairline-b lg:px-8"
     >
       <span
         aria-hidden

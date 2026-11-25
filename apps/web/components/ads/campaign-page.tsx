@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { CheckCircle2, Clock, Pause, Pencil, Radio, XCircle } from "lucide-react";
 import { formatXaf } from "@nextin/shared";
+import { CAMPAIGN_STATUS_TONE } from "@nextin/shared/ads";
 import { isLocale, type Locale } from "@nextin/shared/i18n";
 import { AdminPage } from "@/components/admin/admin-page";
 import { ConfirmAction } from "@/components/admin/confirm-action";
@@ -21,15 +22,8 @@ import { QuizEditor } from "./quiz-editor";
 import { SkinEditor } from "./skin-editor";
 import { VisaCard } from "./visa-card";
 
-export const CAMPAIGN_TONE = {
-  draft: "neutral",
-  pending_review: "orange",
-  rejected: "red",
-  awaiting_payment: "accent",
-  active: "green",
-  paused: "orange",
-  ended: "neutral",
-} as const;
+/** Couleur d'un statut (maquette v2 24) : la même partout (liste, détail, console Wintek). */
+export const CAMPAIGN_TONE = CAMPAIGN_STATUS_TONE;
 
 /**
  * Page d'une campagne (espace annonceur) ou d'une annonce Maison (back-office) : statut, réglages, visa, visuels,
@@ -159,7 +153,7 @@ export async function CampaignPage({
         </CalloutCard>
       ) : null}
       {notice}
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[var(--lg-cols)] lg:items-start" style={{ "--lg-cols": "minmax(0,1fr) 22rem" } as React.CSSProperties}>
         <div className="flex min-w-0 flex-col gap-7">
           {!house && sector.requires_health_visa ? (
             <VisaCard campaignId={c.id} owner={ownerFolder} number={c.health_visa_number} hasDocument={!!c.health_visa_document_path} editable={editable} />
@@ -172,6 +166,7 @@ export async function CampaignPage({
             editable={editable}
             videoAllowed={c.surfaces.length === 1 && c.surfaces[0] === "tv"}
             supabaseUrl={supabaseUrl}
+            tag={house ? (owner?.name ?? undefined) : undefined}
           />
           {pkg.quiz_allowed ? <QuizEditor campaignId={c.id} quiz={quizData} editable={editable} /> : null}
           {pkg.game_skin_allowed ? <SkinEditor campaignId={c.id} owner={ownerFolder} skin={skin} editable={editable} supabaseUrl={supabaseUrl} /> : null}

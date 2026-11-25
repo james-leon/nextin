@@ -66,7 +66,7 @@ test.describe("Backlog — téléphone : barre de navigation", () => {
   test("une action longue reste entière, dans son bouton et dans l'écran", async ({ page }, info) => {
     test.skip(info.project.name !== "mobile", "barre compacte du téléphone");
     const b = await setUpBranch("Clinique Barre");
-    await login(page, b.email, `/app/o/${b.orgId}/ads`);
+    await login(page, b.email, `/app/o/${b.orgId}/ads/house`);
     const action = page.getByRole("link", { name: "Nouvelle annonce Maison" });
     const box = (await action.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
@@ -219,15 +219,16 @@ test.describe("Backlog — publicité", () => {
     await adv.storage.from("ad-creatives").upload(path, bannerPng("#1A6BB5", "#0D2C54"), { contentType: "image/png" });
     await rpc(adv, "save_creative", { p_campaign: campaignId, p_creative: null, p_fields: { storage_path: path, kind: "image", headline: "Offre", duration_seconds: 8 } });
 
-    await login(page, email, `/ads/campaigns/${campaignId}`);
-    await expect(page.getByRole("heading", { name: "Agences de diffusion" })).toBeVisible();
-    await page.getByRole("button", { name: "Choisir les agences" }).click();
+    // LOT 6a : le choix se fait à l'étape « Ciblage » du parcours (ligne « Agences › »).
+    await login(page, email, `/ads/campaigns/${campaignId}/edit?step=2`);
+    await page.getByRole("button", { name: /^Agences/ }).click();
     const sheet = page.getByRole("dialog", { name: "Choisir les agences" });
     await sheet.getByRole("checkbox", { name: new RegExp(branchName) }).click();
     await expectAccessible(page);
     await sheet.getByRole("button", { name: /Enregistrer · 1 sur 5/ }).click();
-    await expect(page.getByText("1 agence choisie")).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Agences.*1 sur 5/ })).toBeVisible();
 
+    await page.goto(`/ads/campaigns/${campaignId}/edit?step=5`);
     await page.getByRole("button", { name: "Soumettre à la validation" }).click();
     await expect(page.getByText("En validation").first()).toBeVisible();
     const wintek = await platformAdmin();

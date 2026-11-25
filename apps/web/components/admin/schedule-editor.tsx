@@ -75,7 +75,7 @@ export function ScheduleEditor({
     new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
 
   return (
-    <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+    <div className="grid grid-cols-1 gap-7 lg:grid-cols-[var(--lg-cols)] lg:items-start" style={{ "--lg-cols": "minmax(0,3fr) minmax(0,2fr)" } as React.CSSProperties}>
       <div className="flex flex-col gap-7">
         <ListSection header={t("week")} footer={t("weekFooter")}>
           {[1, 2, 3, 4, 5, 6, 7].map((weekday) => {

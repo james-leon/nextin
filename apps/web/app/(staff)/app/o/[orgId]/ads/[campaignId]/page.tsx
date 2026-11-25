@@ -30,7 +30,7 @@ export default async function HouseAdPage({
     <CampaignPage
       campaignId={campaignId}
       organizationId={orgId}
-      back={{ href: `/app/o/${orgId}/ads`, label: t("title") }}
+      back={{ href: `/app/o/${orgId}/ads/house`, label: t("house") }}
       editHref={`/app/o/${orgId}/ads/${campaignId}/edit`}
       stopAction={stopHouseCampaign.bind(null, orgId, campaignId)}
       saved={!!saved}

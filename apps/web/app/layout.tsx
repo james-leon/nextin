@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { getLocale, getTranslations } from "next-intl/server";
 import { themeInitScript } from "@/components/theme/theme-init";
+import { NavFeedback } from "@/components/ui/nav-feedback";
 import { appleStartupFamily, startupImages, type StartupFamily } from "@/lib/pwa/startup-images";
 import { splashCss, splashHtml } from "@/lib/pwa/splash";
 import { clientErrorScript } from "@/lib/diagnostics/client-log";
@@ -81,6 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             l'application n'est pas appliquée (`lib/pwa/splash.ts`, identique aux images iOS). */}
         <div id="nx-s" aria-hidden dangerouslySetInnerHTML={{ __html: splashHtml(t("appName"), t("tagline")) }} />
         {children}
+        <NavFeedback />
         <ServiceWorkerRegister enabled={runtimeEnv("NEXT_PUBLIC_SW_ENABLED") !== "false"} />
       </body>
     </html>

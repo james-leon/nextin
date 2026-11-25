@@ -1,17 +1,17 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCircle2, Clock, ScanLine, Ticket, XCircle } from "lucide-react";
+import { Check, ScanLine, X } from "lucide-react";
 import { redeemCoupon } from "@/app/(staff)/ads/actions";
 import { FormError } from "@/components/auth/form-error";
 import { useFormErrors } from "@/components/admin/use-form-errors";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Button } from "@/components/ui/button";
-import { CalloutCard } from "@/components/ui/callout-card";
-import { TextField } from "@/components/ui/text-field";
+import { FormGroup, TextField } from "@/components/ui/text-field";
 import { formatDay } from "@/lib/billing/format";
 import { useQrCamera } from "@/lib/client/qr-camera";
+import { cn } from "@/lib/cn";
 
 /** Jeton d'un bon lu dans un QR code (`…/coupon/<jeton>`) ou code saisi tel quel. */
 function couponFromScan(text: string): string | null {
@@ -21,18 +21,23 @@ function couponFromScan(text: string): string | null {
 }
 
 /**
- * Validation d'un bon en caisse : vérification (récompense, validité) puis validation explicite. Le QR code du client
- * se scanne ici avec la caméra (page sécurisée), ou ouvre `/coupon/<jeton>` qui renvoie ici avec le jeton pré-rempli ;
- * sinon, saisie du code.
+ * Valider un bon en caisse (maquette v2 24) : zone sombre de la caméra (« Visez le QR code du client ») ou code saisi,
+ * puis « Vérifier ». Résultat : grand rond vert « Bon valable » (offre, campagne, validité) et « Valider le bon » ;
+ * après validation « Bon validé le … » ; bon expiré ou déjà utilisé : écran rouge avec la date. Remonté (clé) pour
+ * vérifier un autre bon.
  */
 export function RedeemForm({ initialCode }: { initialCode: string }) {
+  const [round, setRound] = useState(0);
+  return <RedeemRound key={round} initialCode={round ? "" : initialCode} onAnother={() => setRound((r) => r + 1)} />;
+}
+
+function RedeemRound({ initialCode, onAnother }: { initialCode: string; onAnother: () => void }) {
   const t = useTranslations("ads");
+  const tr = useTranslations("ads.redeemResult");
   const locale = useLocale() === "en" ? "en" : "fr";
   const [state, action, pending] = useActionState(redeemCoupon, null);
   const { field, top } = useFormErrors(state);
   const coupon = state?.ok ? state.coupon : undefined;
-  const reward = coupon ? (locale === "en" && coupon.reward_en ? coupon.reward_en : coupon.reward) : "";
-  const usable = coupon && !coupon.redeemed_at && !coupon.expired;
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { video, phase, scanning, start, stop } = useQrCamera((text) => {
@@ -42,88 +47,116 @@ export function RedeemForm({ initialCode }: { initialCode: string }) {
     formRef.current?.requestSubmit();
     return true;
   });
-  const cameraMessage =
-    phase === "invalid" ? t("scanInvalid") : phase === "unavailable" ? t("scanUnavailable") : phase === "denied" ? t("scanDenied") : null;
+  const cameraMessage = phase === "invalid" ? t("scanInvalid") : phase === "unavailable" ? t("scanUnavailable") : phase === "denied" ? t("scanDenied") : null;
+
+  if (coupon) {
+    const reward = locale === "en" && coupon.reward_en ? coupon.reward_en : coupon.reward;
+    const confirmed = !!(state?.ok && state.confirmed && coupon.redeemed_at);
+    const outcome = confirmed ? "redeemed" : coupon.redeemed_at ? "used" : coupon.expired ? "expired" : "valid";
+    const good = outcome === "valid" || outcome === "redeemed";
+    return (
+      <section aria-live="polite" data-testid="coupon-result" data-outcome={outcome} className="flex flex-col items-center gap-5 text-center">
+        <span aria-hidden className={cn("mt-4 flex items-center justify-center rounded-full text-white", good ? "bg-green" : "bg-red")} style={{ width: "4.5rem", height: "4.5rem" }}>
+          {good ? <Check style={{ width: "2.25rem", height: "2.25rem", strokeWidth: 2.6 }} /> : <X style={{ width: "2.25rem", height: "2.25rem", strokeWidth: 2.6 }} />}
+        </span>
+        <h2 className="text-title2 font-bold">{tr(outcome)}</h2>
+        <dl className="squircle flex w-full flex-col gap-2.5 rounded-[var(--radius-lg)] bg-grouped-secondary p-4 text-left text-subheadline">
+          <div className="flex justify-between gap-3">
+            <dt className="shrink-0 text-label-secondary">{tr("offer")}</dt>
+            <dd className="min-w-0 text-right">{reward}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="shrink-0 text-label-secondary">{tr("campaign")}</dt>
+            <dd className="min-w-0 text-right">{coupon.campaign}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="shrink-0 text-label-secondary">{tr("validUntil")}</dt>
+            <dd className="min-w-0 text-right">{formatDay(coupon.expires_at, locale)}</dd>
+          </div>
+        </dl>
+        <p role={good ? "status" : "alert"} className={cn("px-4 text-subheadline", good ? "text-label-secondary" : "font-semibold text-red-text")}>
+          {outcome === "valid"
+            ? tr("oneUse")
+            : outcome === "redeemed"
+              ? tr("redeemedOn", { date: formatDay(coupon.redeemed_at!, locale) })
+              : outcome === "used"
+                ? tr("usedOn", { date: formatDay(coupon.redeemed_at!, locale) })
+                : tr("expiredOn", { date: formatDay(coupon.expires_at, locale) })}
+        </p>
+        <FormError message={top} />
+        {outcome === "valid" ? (
+          <form action={action} className="contents">
+            <input type="hidden" name="code" value={coupon.code} />
+            <input type="hidden" name="confirm" value="1" />
+            <BottomBar dock={false} className="w-full">
+              <Button type="submit" block loading={pending} loadingLabel={t("checking")}>
+                {t("redeem")}
+              </Button>
+              <Button type="button" variant="plain" block onClick={onAnother}>
+                {tr("another")}
+              </Button>
+            </BottomBar>
+          </form>
+        ) : (
+          <BottomBar dock={false} className="w-full">
+            <Button type="button" variant="tinted" block onClick={onAnother} leadingIcon={<ScanLine />}>
+              {tr("another")}
+            </Button>
+          </BottomBar>
+        )}
+      </section>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="px-4 text-subheadline text-label-secondary">{t("redeemBody")}</p>
-      {/* Tablette et ordinateur : la caméra à gauche, la saisie du code à droite. */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-start">
-      <section className="flex flex-col gap-3">
-        {/* Un seul élément vidéo (le flux de la caméra y est attaché), visible pendant la visée. */}
-        <div
-          className={
-            scanning ? "squircle relative aspect-square w-full max-w-sm self-center overflow-hidden rounded-[var(--radius-xl)] bg-scanner" : "hidden"
-          }
-        >
-          <video ref={video} muted playsInline aria-hidden className="absolute inset-0 size-full object-cover" />
-          <span className="absolute inset-x-0 bottom-4 mx-auto w-fit rounded-full bg-black/60 px-3 py-1 text-footnote text-white">{t("scanAim")}</span>
-        </div>
-        <Button type="button" variant="tinted" leadingIcon={<ScanLine />} onClick={scanning ? stop : start} className="h-auto min-h-[3.125rem] max-w-full self-start py-2 whitespace-normal md:w-full md:self-stretch md:mt-[1.375rem]">
-          {scanning ? t("scanStop") : t("scan")}
-        </Button>
-        <p role="status" aria-live="polite" className="px-4 text-footnote text-label-secondary empty:hidden">
-          {cameraMessage}
-        </p>
-      </section>
+      {/* Zone sombre de la caméra : le flux s'y affiche pendant la visée (une seule balise vidéo). */}
+      <div className="squircle relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[var(--radius-xl)] bg-scanner" data-testid="redeem-camera">
+        <video ref={video} muted playsInline aria-hidden className={cn("absolute inset-0 size-full object-cover", !scanning && "hidden")} />
+        <span aria-hidden className="absolute" style={{ inset: "22%", borderRadius: 18, boxShadow: "0 0 0 999px rgb(0 0 0 / 0.45)" }}>
+          <span className="absolute -top-0.5 -left-0.5 size-7 border-t-4 border-l-4 border-white" style={{ borderTopLeftRadius: 12 }} />
+          <span className="absolute -right-0.5 -bottom-0.5 size-7 border-r-4 border-b-4 border-white" style={{ borderBottomRightRadius: 12 }} />
+        </span>
+        {scanning ? (
+          <Button type="button" variant="gray" size="md" onClick={stop} className="absolute top-3 right-3">
+            {t("scanStop")}
+          </Button>
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <Button type="button" variant="tinted" leadingIcon={<ScanLine />} onClick={start}>
+              {t("scan")}
+            </Button>
+          </span>
+        )}
+        <span className="absolute inset-x-0 bottom-3 text-center text-footnote text-white">{t("scanAim")}</span>
+      </div>
+      <p role="status" aria-live="polite" className="px-4 text-footnote text-label-secondary empty:hidden">
+        {cameraMessage}
+      </p>
       <form ref={formRef} action={action} noValidate className="flex flex-col gap-4" id="redeem-check">
         <FormError message={top} />
-        <TextField
-          ref={inputRef}
-          name="code"
-          label={t("code")}
-          defaultValue={initialCode}
-          autoCapitalize="characters"
-          autoComplete="off"
-          spellCheck={false}
-          maxLength={22}
-          required
-          error={field("code")}
-          className="[&_input]:font-mono [&_input]:tracking-widest"
-        />
-        <Button type="submit" variant="gray" loading={pending && !usable} loadingLabel={t("checking")} className="self-start md:self-stretch">
-          {t("check")}
-        </Button>
+        <FormGroup>
+          <TextField
+            ref={inputRef}
+            grouped
+            name="code"
+            label={t("code")}
+            defaultValue={initialCode}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={22}
+            required
+            error={field("code")}
+            className="[&_input]:font-mono [&_input]:tracking-widest"
+          />
+        </FormGroup>
+        <BottomBar dock={false}>
+          <Button type="submit" variant="tinted" block loading={pending} loadingLabel={t("checking")}>
+            {t("check")}
+          </Button>
+        </BottomBar>
       </form>
-      </div>
-
-      {coupon ? (
-        <section aria-live="polite" className="squircle flex flex-col items-center gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary px-6 py-7 text-center shadow-card">
-          <span className="squircle flex size-14 items-center justify-center rounded-[16px] bg-accent-tint text-accent-on-tint">
-            <Ticket aria-hidden className="size-7 stroke-[1.5]" />
-          </span>
-          <p className="font-mono text-title2 font-bold tracking-widest">{coupon.code}</p>
-          <p className="text-headline">{reward}</p>
-          <p className="text-subheadline text-label-secondary">{coupon.campaign}</p>
-          {coupon.redeemed_at ? (
-            <CalloutCard tone="green" icon={<CheckCircle2 />} role="status" className="w-full text-left">
-              {t("redeemed", { date: formatDay(coupon.redeemed_at, locale) })}
-            </CalloutCard>
-          ) : coupon.expired ? (
-            <CalloutCard tone="red" icon={<XCircle />} role="alert" className="w-full text-left">
-              {t("expired", { date: formatDay(coupon.expires_at, locale) })}
-            </CalloutCard>
-          ) : (
-            <p className="flex items-center gap-1.5 text-footnote text-label-secondary">
-              <Clock aria-hidden className="size-4" />
-              {t("validUntil", { date: formatDay(coupon.expires_at, locale) })}
-            </p>
-          )}
-        </section>
-      ) : null}
-
-      {usable ? (
-        <form action={action}>
-          <input type="hidden" name="code" value={coupon.code} />
-          <input type="hidden" name="confirm" value="1" />
-          <BottomBar>
-            <Button type="submit" block loading={pending} loadingLabel={t("checking")}>
-              {t("redeem")}
-            </Button>
-          </BottomBar>
-        </form>
-      ) : null}
     </div>
   );
 }

@@ -92,7 +92,7 @@ export function SidebarPanel({ children }: { children: ReactNode }) {
         className={cn(
           "w-64 shrink-0 bg-sidebar lg:block",
           open
-            ? "fixed inset-y-0 left-0 z-50 block overflow-y-auto shadow-[0_0_40px_rgb(0_0_0/0.25)] motion-safe:animate-slide-in-left lg:static lg:z-auto lg:shadow-none"
+            ? "fixed inset-y-0 left-0 z-50 block overflow-y-auto shadow-floating motion-safe:animate-slide-in-left lg:static lg:z-auto lg:shadow-none"
             : "hidden",
         )}
       >

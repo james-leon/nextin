@@ -91,6 +91,10 @@
   /* Carrés d'icône des listes de réglages (rubriques neutres et apparence), comme Réglages iOS. */
   --icon-gray: #8e8e93;
   --icon-indigo: #5856d6;
+  /* Pastilles des formules publicitaires (maquette v2 24) : métal assombri pour un texte blanc lisible (AA). */
+  --medal-bronze: #8b5a1e;
+  --medal-silver: #636366;
+  --medal-gold: #8a6d00;
   /* Barre latérale bleu nuit (back-office, console, espace annonceur). */
   --sidebar-bg: #0d2c54;
   /* Graphiques : barres, prévision atténuée (pic en orange). */
@@ -522,14 +526,6 @@
   background-position: center;
 }
 
-/* Appel pendant un jeu : éclair doux de l'écran (désactivé si l'utilisateur réduit les animations). */
-@keyframes call-flash {
-  0%, 100% { background-color: var(--bg-grouped); }
-  50% { background-color: var(--accent-tint); }
-}
-@utility call-flash {
-  animation: call-flash 900ms var(--ease-ios) 3;
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -569,3 +565,15 @@ select:-webkit-autofill {
 input:autofill {
   box-shadow: 0 0 0 1000px var(--bg-grouped-secondary) inset;
 }
+
+/*
+ * Navigation en cours (`lib/ui/nav-feedback.ts`), pages client comprises (règles courtes : budget de 200 Ko) : lien
+ * touché atténué (ligne de liste : fond pressé), barre de progression au-delà de 150 ms, immobile si les animations
+ * sont réduites. L'indicateur des lignes du personnel est dans `NAV_INDICATOR_CSS` (gabarit du personnel).
+ */
+#nx-nav{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;z-index:1000;height:2px;pointer-events:none;background:var(--accent-fill);transform-origin:left;transform:scaleX(0);opacity:0}
+#nx-nav[data-on]{opacity:1;animation:nxn 8s cubic-bezier(.1,.6,.2,1) forwards}
+@keyframes nxn{0%{transform:scaleX(.1)}to{transform:scaleX(.92)}}
+a[aria-busy=true]{cursor:progress;opacity:.6}
+a[data-row-link][aria-busy=true]{opacity:1;background:var(--fill-tertiary)}
+@media (prefers-reduced-motion:reduce){#nx-nav[data-on]{animation:none;transform:none}}

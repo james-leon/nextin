@@ -258,7 +258,7 @@ export function AgentDesk({
             <ListRow
               key={sc.key}
               icon={
-                <kbd className="min-w-7 rounded-[6px] bg-fill-tertiary px-1.5 py-0.5 text-center font-sans text-footnote font-semibold text-label shadow-[inset_0_-1px_0_var(--separator)]">
+                <kbd className="min-w-7 rounded-[6px] bg-fill-tertiary px-1.5 py-0.5 text-center font-sans text-footnote font-semibold text-label" style={{ boxShadow: "inset 0 -1px 0 var(--separator)" }}>
                   {sc.key === "space" ? t("shortcuts.space") : sc.key === "enter" ? t("shortcuts.enter") : sc.key.toUpperCase()}
                 </kbd>
               }
@@ -379,7 +379,7 @@ export function AgentDesk({
         <p className="mt-1 text-subheadline text-label-secondary">{subtitle}</p>
       </header>
 
-      <div className="flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_20rem] md:items-start md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8">
+      <div className="flex flex-col gap-5 md:grid md:grid-cols-[var(--md-cols)] md:items-start md:gap-6 lg:grid-cols-[var(--lg-cols)] lg:gap-8" style={{ "--md-cols": "minmax(0,1fr) 20rem", "--lg-cols": "minmax(0,1fr) 24rem" } as React.CSSProperties}>
         <div className="flex min-w-0 flex-col gap-5">
           {!online || pending.length ? (
             // Maquette v2 20 : bandeau orange qui compte les actions en attente ; rien n'est bloqué.

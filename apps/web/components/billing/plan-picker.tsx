@@ -154,10 +154,10 @@ export function PlanPicker({ orgId, plans, currentPlanId, status, paidPeriodRunn
               aria-checked={isSelected}
               disabled={!p.fits}
               onClick={() => setSelectedId(p.id)}
+              style={isSelected ? { boxShadow: "0 0 0 2px var(--accent-fill)" } : undefined}
               className={cn(
                 "pressable squircle flex flex-col gap-3 rounded-[var(--radius-xl)] bg-grouped-secondary p-5 text-left shadow-card transition-shadow",
                 "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-tint)]",
-                isSelected && "shadow-[0_0_0_2px_var(--accent-fill)]",
                 !p.fits && "opacity-60",
                 plans.length > 1 && p.id !== viewId && "hidden md:flex",
               )}

@@ -21,12 +21,15 @@ export function SkinEditor({
   skin,
   editable,
   supabaseUrl,
+  returnTo,
 }: {
   campaignId: string;
   owner: string;
   skin: SkinRow | null;
   editable: boolean;
   supabaseUrl: string;
+  /** Parcours en étapes : étape où revenir après l'enregistrement. */
+  returnTo?: string;
 }) {
   const t = useTranslations("ads");
   const ta = useTranslations("admin");
@@ -86,7 +89,7 @@ export function SkinEditor({
         <p className="px-4 text-footnote text-label-secondary">{t("skinHint")}</p>
       )}
       {skin && editable ? (
-        <ConfirmAction action={deleteSkin.bind(null, campaignId)} label={t("deleteSkin")} title={t("deleteSkin")} body={skin.end_title} confirmLabel={ta("delete")} size="md" />
+        <ConfirmAction action={deleteSkin.bind(null, campaignId, returnTo)} label={t("deleteSkin")} title={t("deleteSkin")} body={skin.end_title} confirmLabel={ta("delete")} size="md" />
       ) : null}
 
       <Sheet
@@ -103,6 +106,7 @@ export function SkinEditor({
       >
         <form id="skin-form" action={action} noValidate className="flex flex-col gap-5 pt-2">
           <FormError message={top ?? uploadError} />
+          {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
           <div className="grid grid-cols-2 gap-3">
             <TextField type="color" name="planePrimary" label={t("planePrimary")} value={primary} onChange={(e) => setPrimary(e.target.value.toUpperCase())} className="[&_input]:p-1" />
             <TextField type="color" name="planeSecondary" label={t("planeSecondary")} value={secondary} onChange={(e) => setSecondary(e.target.value.toUpperCase())} className="[&_input]:p-1" />

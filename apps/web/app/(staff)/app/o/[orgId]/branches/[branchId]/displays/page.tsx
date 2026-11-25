@@ -60,7 +60,7 @@ export default async function DisplaysPage({ params, searchParams }: Props) {
     <AdminPage title={t("title")} eyebrow={branch.name} back={{ href: base, label: branch.name }}>
       <SavedNotice show={!!saved || !!paired || !!revoked} message={paired ? t("paired") : revoked ? t("revoked") : undefined} />
       {/* Ordinateur : écrans en grille de cartes à gauche, appairage à droite. */}
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[var(--lg-cols)] lg:items-start" style={{ "--lg-cols": "minmax(0,1fr) 24rem" } as React.CSSProperties}>
         <div className="flex min-w-0 flex-col gap-7">
           {/* Maquette v2 19 : une ligne par écran, état en direct dans le sous-titre (vert quand l'écran répond). */}
           {displays.data?.length ? (

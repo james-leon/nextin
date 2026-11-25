@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { CampaignPage } from "@/components/ads/campaign-page";
+import { CampaignDetail } from "@/components/ads/campaign-detail";
 import { getAdvertiserContext } from "@/lib/ads/context";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Détail d'une campagne, à droite de la liste (maître-détail). */
 export default async function AdvertiserCampaignPage({
   params,
   searchParams,
@@ -21,14 +22,7 @@ export default async function AdvertiserCampaignPage({
   const { campaignId } = await params;
   const { saved } = await searchParams;
   if (!UUID.test(campaignId)) notFound();
-  await getAdvertiserContext(`/ads/campaigns/${campaignId}`);
-  const t = await getTranslations("ads");
-  return (
-    <CampaignPage
-      campaignId={campaignId}
-      back={{ href: "/ads", label: t("nav.campaigns") }}
-      editHref={`/ads/campaigns/${campaignId}/edit`}
-      saved={!!saved}
-    />
-  );
+  const { advertiser } = await getAdvertiserContext(`/ads/campaigns/${campaignId}`);
+  if (!advertiser) redirect("/ads");
+  return <CampaignDetail campaignId={campaignId} advertiserId={advertiser.id} submitted={!!saved} />;
 }
