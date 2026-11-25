@@ -296,8 +296,8 @@ function Swatch({ name, value, bg, ring }: { name: string; value: string; bg: st
     <div className="flex flex-col gap-2">
       <span
         aria-hidden
-        className={cn("squircle block h-16 rounded-[var(--radius-lg)]", ring && "shadow-[inset_0_0_0_0.5px_var(--separator)]")}
-        style={{ background: bg }}
+        className="squircle block h-16 rounded-[var(--radius-lg)]"
+        style={{ background: bg, boxShadow: ring ? "inset 0 0 0 0.5px var(--separator)" : undefined }}
       />
       <span className="flex flex-col px-1">
         <span className="text-subheadline font-medium">{name}</span>
@@ -677,9 +677,9 @@ function PhoneFrame({
       <div
         className={cn(
           "squircle relative h-[44rem] w-full max-w-[24.375rem] overflow-hidden rounded-[2.75rem] bg-grouped",
-          "shadow-[0_0_0_10px_#1c1c1e,0_0_0_11px_#3a3a3c,var(--elev-floating)]",
           className,
         )}
+        style={{ boxShadow: "0 0 0 10px #1c1c1e, 0 0 0 11px #3a3a3c, var(--elev-floating)" }}
       >
         {children}
       </div>

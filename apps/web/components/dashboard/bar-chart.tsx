@@ -60,7 +60,7 @@ export function BarChart({
               >
                 <span
                   className={cn(
-                    "block w-full max-w-10 rounded-t-[4px] transition-[height,opacity] duration-300 ease-[var(--ease-spring)]",
+                    "block w-full max-w-10 rounded-t-[4px] transition-all duration-300 ease-[var(--ease-spring)]",
                     i === highlight ? "bg-orange" : "bg-accent",
                     active !== null && active !== i && "opacity-60",
                   )}

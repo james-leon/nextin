@@ -114,7 +114,7 @@ export function ListRow({
         {detail !== undefined ? <span className="shrink-0 text-body text-label-secondary">{detail}</span> : null}
         {accessory === "chevron" ? (
           // Indicateur de navigation : le chevron laisse place à un indicateur tant que la page demandée arrive.
-          <span data-nav-indicator>
+          <span data-nav-indicator className="relative inline-flex shrink-0">
             <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
           </span>
         ) : accessory === "check" ? (
@@ -126,7 +126,7 @@ export function ListRow({
           <>
             {accessory}
             {/* Ligne-lien sans chevron (pastille d'état) : l'indicateur n'apparaît que pendant la navigation. */}
-            {href && !download ? <span data-nav-indicator aria-hidden /> : null}
+            {href && !download ? <span data-nav-indicator aria-hidden className="relative hidden shrink-0" /> : null}
           </>
         )}
       </span>

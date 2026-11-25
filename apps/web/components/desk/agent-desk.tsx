@@ -258,7 +258,7 @@ export function AgentDesk({
             <ListRow
               key={sc.key}
               icon={
-                <kbd className="min-w-7 rounded-[6px] bg-fill-tertiary px-1.5 py-0.5 text-center font-sans text-footnote font-semibold text-label shadow-[inset_0_-1px_0_var(--separator)]">
+                <kbd className="min-w-7 rounded-[6px] bg-fill-tertiary px-1.5 py-0.5 text-center font-sans text-footnote font-semibold text-label" style={{ boxShadow: "inset 0 -1px 0 var(--separator)" }}>
                   {sc.key === "space" ? t("shortcuts.space") : sc.key === "enter" ? t("shortcuts.enter") : sc.key.toUpperCase()}
                 </kbd>
               }

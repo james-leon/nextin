@@ -147,10 +147,10 @@ export function CampaignForm({ mode, packages, sectors, cities, today, initial, 
                     role="radio"
                     aria-checked={selected}
                     onClick={() => setPackageCode(p.code)}
+                    style={selected ? { boxShadow: "0 0 0 2px var(--accent-fill)" } : undefined}
                     className={cn(
                       "pressable squircle flex flex-col gap-2 rounded-[var(--radius-xl)] bg-grouped-secondary p-4 text-left shadow-card",
                       "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-tint)]",
-                      selected && "shadow-[0_0_0_2px_var(--accent-fill)]",
                     )}
                   >
                     <span className="flex items-center justify-between gap-2">

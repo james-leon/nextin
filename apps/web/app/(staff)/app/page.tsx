@@ -176,7 +176,9 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                     <li key={org.id} className="group/row">
                       <Link
                         href={`/app/o/${org.id}`}
-                        className="flex w-full items-center gap-3 pl-4 transition-colors hover:bg-fill-tertiary/50 focus-visible:shadow-[inset_0_0_0_3px_var(--accent-tint)] focus-visible:outline-none active:bg-fill-tertiary"
+                        data-row-link
+                        className="pressable flex w-full items-center gap-3 pl-4 transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary"
+                        style={{ outlineOffset: -3 }}
                       >
                         <span
                           aria-hidden
@@ -193,7 +195,9 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                               <span className="hidden lg:inline"> · {ta("sidebar.branches", { count: branchCount.get(org.id) ?? 0 })}</span>
                             </span>
                           </span>
-                          <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
+                          <span data-nav-indicator className="relative inline-flex shrink-0">
+                            <ChevronRight aria-hidden className="size-[1.125rem] shrink-0 stroke-[2.25] text-label-tertiary" />
+                          </span>
                         </span>
                       </Link>
                     </li>
@@ -202,7 +206,9 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
                     <li className="group/row">
                       <Link
                         href="/app/new"
-                        className="flex w-full items-center gap-3 pl-4 text-accent-text transition-colors hover:bg-fill-tertiary/50 focus-visible:shadow-[inset_0_0_0_3px_var(--accent-tint)] focus-visible:outline-none active:bg-fill-tertiary"
+                        data-row-link
+                        className="pressable flex w-full items-center gap-3 pl-4 text-accent-text transition-colors hover:bg-fill-tertiary/50 active:bg-fill-tertiary"
+                        style={{ outlineOffset: -3 }}
                       >
                         <span aria-hidden className="squircle flex size-9 shrink-0 items-center justify-center rounded-[8px] bg-accent-tint">
                           <Plus className="size-5 stroke-2" />

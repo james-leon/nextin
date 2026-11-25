@@ -14,7 +14,7 @@ export async function BillingBanner({ banner, orgId, canPay }: { banner: Banner;
   const text = banner.kind === "trial" ? t("trial", { days: banner.daysLeft }) : banner.kind === "past_due" ? t("past_due", { days: banner.daysLeft }) : t("read_only");
   const urgent = banner.kind !== "trial";
   return (
-    <div role="status" className="flex min-h-11 items-center gap-3 bg-grouped-secondary px-4 py-2 text-subheadline text-label shadow-[inset_0_-0.5px_0_var(--separator)] lg:px-8">
+    <div role="status" className="flex min-h-11 items-center gap-3 bg-grouped-secondary px-4 py-2 text-subheadline text-label hairline-b lg:px-8">
       <span
         aria-hidden
         className={cn(

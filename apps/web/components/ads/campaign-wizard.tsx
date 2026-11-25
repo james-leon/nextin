@@ -186,7 +186,7 @@ export function CampaignWizard(props: WizardProps) {
   return (
     <div className="flex flex-col gap-6">
       <Stepper current={step} progress={progress} href={href} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_18.75rem] lg:items-start">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="@container flex min-w-0 flex-col gap-6">{content}</div>
         {step !== "submit" ? (
           <aside aria-label={t("summaryTitle")} className="hidden flex-col gap-1.5 lg:sticky lg:top-6 lg:flex">
@@ -225,7 +225,7 @@ function Stepper({ current, progress, href }: { current: CampaignStep; progress:
                     "flex size-6 shrink-0 items-center justify-center rounded-full font-rounded text-caption font-bold",
                     on && "bg-primary text-on-accent",
                     done && "bg-green text-white",
-                    !on && !done && "text-label-secondary shadow-[inset_0_0_0_1.5px_var(--label-tertiary)]",
+                    !on && !done && "border-[1.5px] border-label-tertiary text-label-secondary",
                   )}
                 >
                   {done ? <Check className="size-3.5 stroke-[3]" /> : n}
@@ -325,7 +325,7 @@ function PackageStep({
                 data-package={p.code}
                 onClick={() => onPackage(p.code)}
                 className={cn(
-                  "pressable flex w-full items-start gap-3 px-4 py-3 text-left focus-visible:shadow-[inset_0_0_0_2px_var(--accent-fill)] focus-visible:outline-none",
+                  "pressable flex w-full items-start gap-3 px-4 py-3 text-left focus-visible:outline-none",
                   selected && "bg-accent-tint",
                 )}
               >
@@ -599,7 +599,8 @@ function QuizStep({ campaignId, campaignName, quiz, next }: { campaignId: string
               maxLength={160}
               onChange={(e) => update(i, (x) => ({ ...x, question: e.target.value }))}
               placeholder={t("question", { n: i + 1 })}
-              className="min-h-12 w-full min-w-0 bg-transparent px-4 text-body text-label outline-none placeholder:text-label-tertiary focus-visible:shadow-[inset_0_0_0_2px_var(--accent-fill)]"
+              className="min-h-12 w-full min-w-0 bg-transparent px-4 text-body text-label placeholder:text-label-tertiary"
+              style={{ outlineOffset: -3 }}
             />
             <div role="radiogroup" aria-label={t("correct")} className="flex flex-col">
               {q.answers.map((a, k) => (
@@ -614,7 +615,7 @@ function QuizStep({ campaignId, campaignName, quiz, next }: { campaignId: string
                   >
                     <span
                       aria-hidden
-                      className={cn("size-[1.375rem] rounded-full", a.correct ? "shadow-[inset_0_0_0_7px_var(--green-fill)]" : "shadow-[inset_0_0_0_1.5px_var(--label-tertiary)]")}
+                      className={cn("size-[1.375rem] rounded-full", a.correct ? "border-[7px] border-green" : "border-[1.5px] border-label-tertiary")}
                     />
                   </button>
                   <input

@@ -97,7 +97,7 @@ export async function SetupChecklist({ orgId, onboardingStep }: { orgId: string;
               className={
                 isNext
                   ? "flex size-[1.625rem] items-center justify-center rounded-full bg-primary text-footnote font-semibold text-on-accent"
-                  : "flex size-[1.625rem] items-center justify-center rounded-full text-footnote font-semibold text-label-secondary shadow-[inset_0_0_0_1.5px_var(--label-tertiary)]"
+                  : "flex size-[1.625rem] items-center justify-center rounded-full text-footnote font-semibold border-[1.5px] border-label-tertiary text-label-secondary"
               }
             >
               {i + 1}

@@ -23,7 +23,7 @@ export function AdvertiserSignup({ sectors }: { sectors: SectorRow[] }) {
   const { field, top } = useFormErrors(state);
   return (
     <main className="mx-auto flex w-full max-w-[40rem] flex-col gap-6 px-4 pt-8 pb-36 md:px-8 md:pb-10">
-      <span aria-hidden className="squircle flex size-13 items-center justify-center rounded-[14px] bg-orange text-white [&_svg]:size-7 [&_svg]:stroke-[1.75]">
+      <span aria-hidden className="squircle flex items-center justify-center bg-orange text-white [&_svg]:size-7 [&_svg]:stroke-[1.75]" style={{ width: "3.25rem", height: "3.25rem", borderRadius: 14 }}>
         <Megaphone />
       </span>
       <div className="flex flex-col gap-2">

@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ToastProvider } from "@/components/ui/toast";
+import { NAV_INDICATOR_CSS } from "@/lib/ui/nav-feedback";
 
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const m = await getMessages();
@@ -47,6 +48,8 @@ export default async function StaffLayout({ children }: { children: React.ReactN
         mfa: m.mfa,
       }}
     >
+      {/* Indicateur de navigation des lignes de liste (le chevron devient un cercle qui tourne). */}
+      <style dangerouslySetInnerHTML={{ __html: NAV_INDICATOR_CSS }} />
       <ToastProvider>{children}</ToastProvider>
     </NextIntlClientProvider>
   );

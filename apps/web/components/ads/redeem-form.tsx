@@ -56,8 +56,8 @@ function RedeemRound({ initialCode, onAnother }: { initialCode: string; onAnothe
     const good = outcome === "valid" || outcome === "redeemed";
     return (
       <section aria-live="polite" data-testid="coupon-result" data-outcome={outcome} className="flex flex-col items-center gap-5 text-center">
-        <span aria-hidden className={cn("mt-4 flex size-18 items-center justify-center rounded-full text-white [&_svg]:size-9 [&_svg]:stroke-[2.6]", good ? "bg-green" : "bg-red")}>
-          {good ? <Check /> : <X />}
+        <span aria-hidden className={cn("mt-4 flex items-center justify-center rounded-full text-white", good ? "bg-green" : "bg-red")} style={{ width: "4.5rem", height: "4.5rem" }}>
+          {good ? <Check style={{ width: "2.25rem", height: "2.25rem", strokeWidth: 2.6 }} /> : <X style={{ width: "2.25rem", height: "2.25rem", strokeWidth: 2.6 }} />}
         </span>
         <h2 className="text-title2 font-bold">{tr(outcome)}</h2>
         <dl className="squircle flex w-full flex-col gap-2.5 rounded-[var(--radius-lg)] bg-grouped-secondary p-4 text-left text-subheadline">
@@ -113,9 +113,9 @@ function RedeemRound({ initialCode, onAnother }: { initialCode: string; onAnothe
       {/* Zone sombre de la caméra : le flux s'y affiche pendant la visée (une seule balise vidéo). */}
       <div className="squircle relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[var(--radius-xl)] bg-scanner" data-testid="redeem-camera">
         <video ref={video} muted playsInline aria-hidden className={cn("absolute inset-0 size-full object-cover", !scanning && "hidden")} />
-        <span aria-hidden className="absolute inset-[22%] rounded-[18px] shadow-[0_0_0_999px_rgb(0_0_0/0.45)]">
-          <span className="absolute -top-0.5 -left-0.5 size-7 rounded-tl-[12px] border-t-4 border-l-4 border-white" />
-          <span className="absolute -right-0.5 -bottom-0.5 size-7 rounded-br-[12px] border-r-4 border-b-4 border-white" />
+        <span aria-hidden className="absolute" style={{ inset: "22%", borderRadius: 18, boxShadow: "0 0 0 999px rgb(0 0 0 / 0.45)" }}>
+          <span className="absolute -top-0.5 -left-0.5 size-7 border-t-4 border-l-4 border-white" style={{ borderTopLeftRadius: 12 }} />
+          <span className="absolute -right-0.5 -bottom-0.5 size-7 border-r-4 border-b-4 border-white" style={{ borderBottomRightRadius: 12 }} />
         </span>
         {scanning ? (
           <Button type="button" variant="gray" size="md" onClick={stop} className="absolute top-3 right-3">
