@@ -11,11 +11,12 @@ import { cn } from "@/lib/cn";
  * Vue maître-détail façon Réglages d'iPad (revue responsive R1, R2), posée par un `layout.tsx` :
  * - à partir de la tablette (≥ 768 px) : liste à gauche (≈ 300 à 380 px, défilement propre), détail à droite ;
  * - téléphone : la liste seule sur la page de liste, le détail seul sur la page d'un élément (navigation iPhone) ;
- * - pages plus profondes (`depth` segments au-delà) : pleine largeur, sans la liste.
+ * - pages plus profondes (`depth` segments au-delà) : pleine largeur, sans la liste ;
+ * - segments listés dans `full` (ex. « new » : parcours de création en étapes) : pleine largeur aussi.
  */
-export function MasterDetail({ list, children, depth = 1 }: { list: ReactNode; children: ReactNode; depth?: number }) {
+export function MasterDetail({ list, children, depth = 1, full }: { list: ReactNode; children: ReactNode; depth?: number; full?: string[] }) {
   const segments = useSelectedLayoutSegments();
-  if (segments.length > depth) return <>{children}</>;
+  if (segments.length > depth || (segments[0] && full?.includes(segments[0]))) return <>{children}</>;
   const hasDetail = segments.length > 0;
   return (
     <div className="mx-auto max-w-7xl md:flex md:items-start md:px-4 lg:px-6">

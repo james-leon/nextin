@@ -91,6 +91,10 @@
   /* Carrés d'icône des listes de réglages (rubriques neutres et apparence), comme Réglages iOS. */
   --icon-gray: #8e8e93;
   --icon-indigo: #5856d6;
+  /* Pastilles des formules publicitaires (maquette v2 24) : métal assombri pour un texte blanc lisible (AA). */
+  --medal-bronze: #8b5a1e;
+  --medal-silver: #636366;
+  --medal-gold: #8a6d00;
   /* Barre latérale bleu nuit (back-office, console, espace annonceur). */
   --sidebar-bg: #0d2c54;
   /* Graphiques : barres, prévision atténuée (pic en orange). */

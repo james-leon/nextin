@@ -44,6 +44,16 @@ async function loadCampaign(campaignId: string) {
   return { supabase, c };
 }
 
+/**
+ * Retour après un enregistrement fait depuis le parcours en cinq étapes (champ `returnTo`) : seulement une étape de la
+ * même campagne (`/ads/campaigns/<id>/edit?step=n`), jamais une adresse libre.
+ */
+function stepReturn(value: FormDataEntryValue | string | null | undefined, c: Pick<CampaignRow, "id">): string | null {
+  if (typeof value !== "string") return null;
+  const n = value.slice(-1);
+  return /^[1-5]$/.test(n) && value === `/ads/campaigns/${c.id}/edit?step=${n}` ? value : null;
+}
+
 function done(path: string): never {
   revalidatePath("/ads", "layout");
   revalidatePath(path);
@@ -78,6 +88,53 @@ export async function saveCampaign(
   _prev: ActionResult | null,
   data: FormData,
 ): Promise<ActionResult> {
+  const result = await writeCampaign(owner, data);
+  if (!result.ok) return result;
+  done(owner.organizationId ? `/app/o/${owner.organizationId}/ads/${result.campaignId}` : `/ads/campaigns/${result.campaignId}`);
+}
+
+/**
+ * Parcours « Nouvelle campagne » (maquette v2 24) : « Continuer » enregistre le brouillon (`save_campaign`) puis ouvre
+ * l'étape suivante. Une campagne quittée en cours de route reste un brouillon et rouvre à sa première étape incomplète.
+ */
+export async function saveCampaignStep(
+  owner: { advertiserId?: string; campaignId?: string },
+  next: number,
+  _prev: ActionResult | null,
+  data: FormData,
+): Promise<ActionResult> {
+  if (!Number.isInteger(next) || next < 2 || next > 5) return { ok: false, error: "generic" };
+  const result = await writeCampaign(owner, data);
+  if (!result.ok) return result;
+  revalidatePath("/ads", "layout");
+  redirect(`/ads/campaigns/${result.campaignId}/edit?step=${next}`);
+}
+
+/**
+ * Étape « Envoi » : visa santé (numéro et justificatif déjà déposé) enregistré s'il change, puis soumission à la
+ * validation (`submit_campaign`, qui refuse sans visa pour la santé et la pharmacie).
+ */
+export async function submitCampaignStep(campaignId: string, _prev: ActionResult | null, data: FormData): Promise<ActionResult> {
+  const { supabase, c } = await loadCampaign(campaignId);
+  const number = String(data.get("visaNumber") ?? "").trim().slice(0, 60);
+  const path = String(data.get("visaPath") ?? "").trim().slice(0, 300);
+  if (data.has("visaNumber") && (number !== (c.health_visa_number ?? "") || path)) {
+    if (number.length < 3) return { ok: false, error: "health_visa_required", fieldErrors: { visaNumber: "name_too_short" } };
+    const { data: schedules } = await supabase.from("ad_schedules").select("weekday, start_time, end_time").eq("campaign_id", c.id);
+    const fields = { ...campaignFields(c, schedules ?? []), health_visa_number: number, health_visa_document_path: path || (c.health_visa_document_path ?? "") };
+    const { error } = await supabase.rpc("save_campaign", { p_campaign: c.id, p_advertiser: null as unknown as string, p_organization: null as unknown as string, p_fields: fields });
+    if (error) return { ok: false, error: mapDbError(error) };
+  }
+  const { error } = await supabase.rpc("submit_campaign", { p_campaign: c.id });
+  if (error) return { ok: false, error: mapDbError(error) };
+  done(campaignPath(c));
+}
+
+/** Écriture commune (`save_campaign`) : Zod, puis le visa existant gardé quand le formulaire ne l'envoie pas. */
+async function writeCampaign(
+  owner: { advertiserId?: string; organizationId?: string; campaignId?: string },
+  data: FormData,
+): Promise<ActionResult<{ campaignId: string }>> {
   const supabase = await client();
   let raw: unknown;
   try {
@@ -114,7 +171,7 @@ export async function saveCampaign(
     const code = mapDbError(error);
     return { ok: false, error: code, fieldErrors: code === "invalid_state" && error.details === "starts_on" ? { startsOn: "invalid_state" } : undefined };
   }
-  done(owner.organizationId ? `/app/o/${owner.organizationId}/ads/${campaignId}` : `/ads/campaigns/${campaignId}`);
+  return { ok: true, campaignId: campaignId as string };
 }
 
 /** Visa santé : numéro et justificatif (déjà déposé dans `ad-documents`). */
@@ -141,15 +198,15 @@ export async function saveCreative(campaignId: string, creativeId: string | null
     p_fields: { storage_path: v.storagePath, kind: v.kind, headline: v.headline, offer_text: v.offerText ?? "", cta_url: v.ctaUrl ?? "", duration_seconds: v.durationSeconds },
   });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(campaignPath(c));
+  done(stepReturn(data.get("returnTo"), c) ?? campaignPath(c));
 }
 
-export async function deleteCreative(campaignId: string, creativeId: string): Promise<ActionResult> {
+export async function deleteCreative(campaignId: string, creativeId: string, back?: string): Promise<ActionResult> {
   const { supabase, c } = await loadCampaign(campaignId);
   if (!id.safeParse(creativeId).success) return { ok: false, error: "not_found" };
   const { error } = await supabase.rpc("delete_creative", { p_creative: creativeId });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(campaignPath(c));
+  done(stepReturn(back, c) ?? campaignPath(c));
 }
 
 export async function saveQuiz(campaignId: string, _prev: ActionResult | null, data: FormData): Promise<ActionResult> {
@@ -174,7 +231,7 @@ export async function saveQuiz(campaignId: string, _prev: ActionResult | null, d
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(campaignPath(c));
+  done(stepReturn(data.get("returnTo"), c) ?? campaignPath(c));
 }
 
 export async function deleteQuiz(campaignId: string): Promise<ActionResult> {
@@ -203,14 +260,14 @@ export async function saveSkin(campaignId: string, _prev: ActionResult | null, d
     },
   });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(campaignPath(c));
+  done(stepReturn(data.get("returnTo"), c) ?? campaignPath(c));
 }
 
-export async function deleteSkin(campaignId: string): Promise<ActionResult> {
+export async function deleteSkin(campaignId: string, back?: string): Promise<ActionResult> {
   const { supabase, c } = await loadCampaign(campaignId);
   const { error } = await supabase.rpc("delete_game_skin", { p_campaign: c.id });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(campaignPath(c));
+  done(stepReturn(back, c) ?? campaignPath(c));
 }
 
 /** Soumission à la modération (annonce Maison : publication directe). */
@@ -234,14 +291,18 @@ export async function checkoutCampaign(campaignId: string): Promise<ActionResult
 export type CouponCheck = { code: string; reward: string; reward_en: string | null; expires_at: string; redeemed_at: string | null; campaign: string; expired: boolean };
 
 /** Vérification (`confirm` absent) puis validation d'un bon, par son code ou le jeton de son QR code. */
-export async function redeemCoupon(_prev: ActionResult<{ coupon?: CouponCheck }> | null, data: FormData): Promise<ActionResult<{ coupon?: CouponCheck }>> {
+export async function redeemCoupon(
+  _prev: ActionResult<{ coupon?: CouponCheck; confirmed?: boolean }> | null,
+  data: FormData,
+): Promise<ActionResult<{ coupon?: CouponCheck; confirmed?: boolean }>> {
   const supabase = await client("/ads/redeem");
   const parsed = couponCodeSchema.safeParse(data.get("code"));
   if (!parsed.success) return { ok: false, error: "not_found", fieldErrors: { code: "not_found" } };
   const confirm = data.get("confirm") === "1";
   const { data: coupon, error } = await supabase.rpc("redeem_coupon", { p_code: parsed.data, p_confirm: confirm });
   if (error) return { ok: false, error: mapDbError(error) };
-  return { ok: true, coupon: coupon as unknown as CouponCheck };
+  // `confirmed` : validé à l'instant (écran vert « Bon validé le … »), à distinguer d'un bon déjà utilisé (écran rouge).
+  return { ok: true, coupon: coupon as unknown as CouponCheck, confirmed: confirm };
 }
 
 /* ─── Agences choisies (formules plafonnées) ──────────────────────────────── */
@@ -252,7 +313,7 @@ export async function saveCampaignBranches(campaignId: string, _prev: ActionResu
   if (ids.length > 200 || !ids.every((v) => id.safeParse(v).success)) return { ok: false, error: "generic" };
   const { error } = await supabase.rpc("set_campaign_branches", { p_campaign: c.id, p_branches: ids });
   if (error) return { ok: false, error: mapDbError(error) };
-  done(campaignPath(c));
+  done(stepReturn(data.get("returnTo"), c) ?? campaignPath(c));
 }
 
 /* ─── Caissiers (propriétaire) ────────────────────────────────────────────── */

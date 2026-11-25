@@ -5,7 +5,7 @@
 const SIDEBAR_DESTINATIONS = [
   /^\/app$/,
   /^\/app\/o\/[^/]+(\/(branches|practitioners|staff|ads|billing))?$/,
-  /^\/ads(\/redeem)?$/,
+  /^\/ads(\/(redeem|campaigns|packages|cashiers))?$/,
   /^\/admin(\/(plans|ads|settings))?$/,
 ];
 
